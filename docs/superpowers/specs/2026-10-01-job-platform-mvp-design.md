@@ -52,9 +52,9 @@
 
 | Слой | Выбор |
 |---|---|
-| Монорепо | Turborepo + pnpm, TypeScript strict |
-| Web | Next.js 15 (App Router, Server Components, Server Actions), Vercel |
-| UI | Tailwind CSS v4, shadcn/ui, Motion (анимации), Lucide, dnd-kit, TanStack Query |
+| Монорепо | Turborepo + pnpm 12, TypeScript 6.0 strict (7.x не поддерживается typescript-eslint) |
+| Web | Next.js 16 (App Router, Server Components, Server Actions, `proxy.ts`), Vercel |
+| UI | Tailwind CSS v4, shadcn/ui, Motion (анимации), Lucide, dnd-kit (`@dnd-kit/core` + `@dnd-kit/sortable`), TanStack Query |
 | i18n | next-intl, префикс локали в URL (`/uk`, `/ru`, `/en`) |
 | Темы | next-themes (light / dark / system) |
 | БД / Auth / Storage | Supabase: Postgres + RLS, Auth (email magic link + Google), Storage, Realtime |
@@ -89,7 +89,7 @@
                     │ Realtime                         │
                     └────────────────┬─────────────────┘
                                      ▼
-              Next.js: лента · доска · профиль · настройки · (подготовка — скоро)
+              Next.js 16: лента · доска · аналитика · профиль · (подготовка — скоро)
 ```
 
 ### 4.3 Структура репозитория
@@ -212,7 +212,9 @@ applications       (id, user_id, job_id NULL, column_id, rank text,
                     rejection_reasons text[],     -- ключи таксономии (см. 7.4)
                     rejection_note text,
                     created_at, updated_at)
-labels             (id, user_id, name, color, is_system bool)
+labels             (id, user_id, key text NULL, name text NULL, color,
+                    CHECK (key IS NOT NULL OR name IS NOT NULL))
+                    -- key = стандартный лейбл (перевод из i18n), name = пользовательский
 application_labels (application_id, label_id, PK both)
 application_messages (id, application_id, user_id,
                     direction: 'in'|'out', channel: 'email'|'linkedin'|'djinni'
