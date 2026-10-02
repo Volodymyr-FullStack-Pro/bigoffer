@@ -1,8 +1,12 @@
 {
-  "app": { "name": "BigOffer", "tagline": "Fresh jobs. Fast applications. Zero chaos." },
+  "app": {
+    "name": "BigOffer",
+    "tagline": "Fresh jobs. Fast applications. Zero chaos."
+  },
   "nav": {
     "today": "Today",
     "board": "Board",
+    "search": "Search",
     "analytics": "Analytics",
     "prep": "Prep",
     "profile": "Profile",
@@ -20,13 +24,27 @@
     "or": "or",
     "google": "Continue with Google"
   },
-  "theme": { "light": "Light theme", "dark": "Dark theme", "system": "System theme" },
-  "locale": { "label": "Language" },
+  "theme": {
+    "light": "Light theme",
+    "dark": "Dark theme",
+    "system": "System theme"
+  },
+  "locale": {
+    "label": "Language"
+  },
   "pages": {
-    "today": { "title": "Today" },
-    "board": { "title": "Application board" },
-    "analytics": { "title": "Analytics" },
-    "prep": { "title": "Interview prep" }
+    "today": {
+      "title": "Today"
+    },
+    "board": {
+      "title": "Application board"
+    },
+    "analytics": {
+      "title": "Analytics"
+    },
+    "prep": {
+      "title": "Interview prep"
+    }
   },
   "comingSoon": {
     "badge": "Soon",
@@ -50,5 +68,37 @@
     "saved": "Saved",
     "invalid": "Check these fields: {fields}",
     "error": "Couldn't save. Please try again."
+  },
+  "search": {
+    "title": "Job search settings",
+    "intro": "Tell us what you are looking for — we'll collect matching jobs from DOU, Djinni, robota.ua, remote boards and more every hour.",
+    "name": "Profile name",
+    "keywords": "Role keywords",
+    "keywordsHint": "Comma-separated, up to 5. Example: full stack, react developer",
+    "skills": "Your skills",
+    "skillsHint": "Comma-separated. Used for scoring. Example: React, Node.js, PostgreSQL",
+    "exclude": "Exclude jobs mentioning",
+    "excludeHint": "Comma-separated stop words. Example: 1C, gambling",
+    "seniority": "Seniority",
+    "remoteType": "Work format",
+    "remote_any": "Any",
+    "remote_remote": "Remote only",
+    "remote_hybrid": "Hybrid",
+    "remote_office": "Office",
+    "locations": "Cities (for office/hybrid)",
+    "salaryMin": "Minimum salary, USD / month",
+    "active": "Active",
+    "save": "Save",
+    "saved": "Saved — fresh jobs will appear on Today within an hour",
+    "invalid": "Check these fields: {fields}",
+    "error": "Couldn't save. Please try again.",
+    "delete": "Delete",
+    "add": "Add another search profile",
+    "newProfile": "New search",
+    "level_intern": "Intern",
+    "level_junior": "Junior",
+    "level_middle": "Middle",
+    "level_senior": "Senior",
+    "level_lead": "Lead"
   }
 }
