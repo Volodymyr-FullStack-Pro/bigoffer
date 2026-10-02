@@ -1,8 +1,10 @@
+import { hasLocale } from 'next-intl';
 import type { ReactNode } from 'react';
 import { BottomNav } from '@/components/shell/bottom-nav';
 import { Header } from '@/components/shell/header';
 import { Sidebar } from '@/components/shell/sidebar';
 import { redirect } from '@/i18n/navigation';
+import { routing } from '@/i18n/routing';
 import { createClient } from '@/lib/supabase/server';
 
 export default async function AppLayout({
@@ -12,7 +14,8 @@ export default async function AppLayout({
   children: ReactNode;
   params: Promise<{ locale: string }>;
 }) {
-  const { locale } = await params;
+  const { locale: requested } = await params;
+  const locale = hasLocale(routing.locales, requested) ? requested : routing.defaultLocale;
   const supabase = await createClient();
   const { data } = await supabase.auth.getClaims();
   if (!data?.claims) redirect({ href: '/login', locale });
