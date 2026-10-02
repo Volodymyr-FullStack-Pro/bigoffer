@@ -1,6 +1,6 @@
 import { decodeEntities } from './text';
 
-type RemoteType = 'remote' | 'hybrid' | 'office' | 'unknown';
+import type { RemoteType } from './job';
 
 const COMPANY_SUFFIXES = new Set([
   'llc', 'inc', 'ltd', 'gmbh', 'corp', 'corporation', 'co', 'plc', 'sa', 'bv',
