@@ -29,10 +29,60 @@ function escapeRegex(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-function containsTerm(haystack: string, term: string): boolean {
-  const t = term.trim().toLowerCase();
-  if (!t) return false;
-  return new RegExp(`(^|[^\\p{L}\\p{N}+#])${escapeRegex(t)}($|[^\\p{L}\\p{N}+#])`, 'iu').test(haystack);
+const AMBIGUOUS = new Set(['go', 'r', 'c', 'd', 'swift', 'dart', 'express', 'spring']);
+
+function normalizeText(s: string): string {
+  return s
+    .normalize('NFC')
+    .toLowerCase()
+    .replace(/\.js\b/g, '')
+    .replace(/[-_/]/g, ' ')
+    .replace(/\bfullstack\b/g, 'full stack')
+    .replace(/\bfrontend\b/g, 'front end')
+    .replace(/\bbackend\b/g, 'back end')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function wordPattern(word: string): string {
+  if (/^\p{Script=Cyrillic}+$/u.test(word) && word.length >= 5) {
+    return `${escapeRegex(word.slice(0, -2))}\\p{Script=Cyrillic}{0,3}`;
+  }
+  return escapeRegex(word);
+}
+
+const regexCache = new Map<string, RegExp>();
+
+function isStrictTerm(term: string): boolean {
+  const t = term.trim();
+  return t.length <= 2 || AMBIGUOUS.has(t.toLowerCase());
+}
+
+/** strict: case-sensitive match against the original text (for short/ambiguous skills). */
+function termRegex(term: string, strict: boolean): RegExp {
+  const key = `${strict ? 's' : 'n'}:${term}`;
+  let re = regexCache.get(key);
+  if (!re) {
+    const t = term.trim();
+    const short = t.length <= 2;
+    const right = strict ? '\\p{L}\\p{N}+#-' : short ? '\\p{L}\\p{N}+#' : '\\p{L}\\p{N}';
+    const body = strict
+      ? escapeRegex(t.normalize('NFC'))
+      : normalizeText(t).split(' ').map(wordPattern).join('\\s+');
+    re = new RegExp(`(^|[^\\p{L}\\p{N}])${body}($|[^${right}])`, strict ? 'u' : 'iu');
+    regexCache.set(key, re);
+  }
+  return re;
+}
+
+function containsTerm(normalized: string, term: string): boolean {
+  if (!term.trim()) return false;
+  return termRegex(term, false).test(normalized);
+}
+
+function containsSkill(raw: string, normalized: string, term: string): boolean {
+  if (!term.trim()) return false;
+  return isStrictTerm(term) ? termRegex(term, true).test(raw) : termRegex(term, false).test(normalized);
 }
 
 function seniorityPoints(wanted: Seniority[], actual: Seniority | null): number {
@@ -66,17 +116,20 @@ export function scoreJob(
   profile: SearchProfile,
   job: ScorableJob,
 ): { score: number; hidden: boolean; breakdown: MatchBreakdown } | null {
-  const title = job.title.toLowerCase();
-  const text = `${title}\n${job.tags.join(' ').toLowerCase()}\n${job.descriptionText.toLowerCase()}`;
+  const title = normalizeText(job.title);
+  const raw = `${job.title}\n${job.tags.join(' ')}\n${job.descriptionText}`;
+  const text = normalizeText(raw);
 
   const inTitle = profile.keywords.some((k) => containsTerm(title, k));
   const inText = inTitle || profile.keywords.some((k) => containsTerm(text, k));
   const jobSkills = (job.skills ?? []).map((s) => s.toLowerCase());
   const matchedSkills = profile.skills.filter(
-    (s) => jobSkills.includes(s.toLowerCase()) || containsTerm(text, s),
+    (s) => jobSkills.includes(s.toLowerCase()) || containsSkill(raw, text, s),
   );
 
-  if (!inText && matchedSkills.length === 0) return null;
+  const relevant =
+    inText || matchedSkills.length >= 2 || (matchedSkills.length === 1 && profile.skills.length === 1);
+  if (!relevant) return null;
 
   const role = inTitle ? 25 : inText ? 12 : 0;
   const skills =

@@ -42,4 +42,16 @@ describe('normalizeJob', () => {
     expect(await normalizeJob({ ...base, url: 'not a url' })).toBeNull();
     expect(await normalizeJob({ ...base, title: '   ' })).toBeNull();
   });
+
+  it('treats remoteHint unknown as no hint', async () => {
+    const job = await normalizeJob({ ...base, remoteHint: 'unknown' });
+    expect(job!.remoteType).toBe('remote');
+  });
+
+  it('parses numeric string postedAt and rejects non-positive', async () => {
+    expect((await normalizeJob({ ...base, postedAt: '1790950918' }))!.postedAt?.getUTCFullYear()).toBe(2026);
+    expect((await normalizeJob({ ...base, postedAt: '1790950918000' }))!.postedAt?.getUTCFullYear()).toBe(2026);
+    expect((await normalizeJob({ ...base, postedAt: 0 }))!.postedAt).toBeNull();
+    expect((await normalizeJob({ ...base, postedAt: '-5' }))!.postedAt).toBeNull();
+  });
 });

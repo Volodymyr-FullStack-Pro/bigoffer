@@ -70,4 +70,41 @@ describe('scoreJob', () => {
     const r = scoreJob(profile, { ...job, title: 'Software Engineer', descriptionText: 'Full stack role with React' })!;
     expect(r.breakdown.role).toBe(12);
   });
+
+  const mk = (over: Partial<SearchProfile>): SearchProfile => ({ ...profile, ...over });
+  const j = (title: string, descriptionText = ''): ScorableJob => ({ ...job, title, descriptionText });
+
+  it('matches compounds and hyphens', () => {
+    const p = mk({ keywords: ['full stack'], skills: [] });
+    expect(scoreJob(p, j('Full-Stack Developer'))!.breakdown.role).toBe(25);
+    expect(scoreJob(p, j('Fullstack Engineer'))!.breakdown.role).toBe(25);
+    expect(scoreJob(mk({ keywords: ['front end'], skills: [] }), j('Front-end Developer'))!.breakdown.role).toBe(25);
+    expect(scoreJob(mk({ keywords: ['react developer'], skills: [] }), j('React.js Developer'))!.breakdown.role).toBe(25);
+  });
+
+  it('handles Cyrillic morphology', () => {
+    const p = mk({ keywords: ['розробник'], skills: [] });
+    expect(scoreJob(p, j('Junior розробника'))).not.toBeNull();
+    expect(scoreJob(p, j('Нові розробники'))).not.toBeNull();
+    expect(scoreJob(mk({ keywords: ['разработчик'], skills: [] }), j('Нужен разработчика'))).not.toBeNull();
+  });
+
+  it('matches ambiguous skills case-sensitively', () => {
+    const p = mk({ keywords: ['zzz'], skills: ['Go'] });
+    expect(scoreJob(p, j('Dev', 'ready to go'))).toBeNull();
+    expect(scoreJob(p, j('Dev', 'We use Go and Postgres'))).not.toBeNull();
+    expect(scoreJob(p, j('Dev', 'Go-to-market lead'))).toBeNull();
+  });
+
+  it('requires 2 skills unless profile has a single skill', () => {
+    expect(scoreJob(mk({ keywords: ['zzz'] }), j('Dev', 'We use Go and cars'))).toBeNull();
+    expect(scoreJob(mk({ keywords: ['zzz'], skills: ['Python'] }), j('Dev', 'python'))).not.toBeNull();
+  });
+
+  it('handles + and # boundaries', () => {
+    const p = mk({ keywords: ['zzz'], skills: ['React', 'Redux'] });
+    expect(scoreJob(p, j('Dev', 'React+Redux'))!.breakdown.matchedSkills).toEqual(['React', 'Redux']);
+    expect(scoreJob(mk({ keywords: ['zzz'], skills: ['C'] }), j('Dev', 'C++ developer'))).toBeNull();
+    expect(scoreJob(mk({ keywords: ['zzz'], skills: ['C#'] }), j('Dev', 'C# / .NET'))).not.toBeNull();
+  });
 });

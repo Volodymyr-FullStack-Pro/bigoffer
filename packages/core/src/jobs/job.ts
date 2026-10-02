@@ -31,7 +31,10 @@ export const rawJobSchema = z.object({
     .default(null)
     .transform((v) => {
       if (v == null || v === '') return null;
-      const d = typeof v === 'number' ? new Date(v < 1e12 ? v * 1000 : v) : new Date(v);
+      const numeric = typeof v === 'string' && /^\s*-?\d+(\.\d+)?\s*$/.test(v) ? Number(v) : v;
+      if (typeof numeric === 'number' && !(numeric > 0)) return null;
+      const d =
+        typeof numeric === 'number' ? new Date(numeric < 1e12 ? numeric * 1000 : numeric) : new Date(numeric);
       return Number.isNaN(d.getTime()) ? null : d;
     }),
   remoteHint: z.enum(REMOTE_TYPES).optional(),
@@ -66,7 +69,7 @@ export async function normalizeJob(raw: RawJob): Promise<NormalizedJob | null> {
   const descriptionText = htmlToText(r.description).slice(0, 20_000);
   const location = r.location ? normalizeWhitespace(decodeEntities(r.location)) || null : null;
   const remoteType =
-    r.remoteHint ?? detectRemote(`${r.title} ${location ?? ''} ${descriptionText.slice(0, 3000)}`);
+    (r.remoteHint !== 'unknown' ? r.remoteHint : undefined) ?? detectRemote(`${r.title} ${location ?? ''} ${descriptionText.slice(0, 3000)}`);
   const salary = r.salaryRaw ? parseSalary(r.salaryRaw, r.salaryPeriod) : null;
   const companyNormalized = normalizeCompany(r.company) || r.company.toLowerCase();
 
