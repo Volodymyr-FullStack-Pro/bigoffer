@@ -7,3 +7,4 @@ export * from './jobs/text';
 export * from './jobs/normalize';
 export * from './jobs/detect';
 export * from './jobs/job';
+export * from './jobs/search';
