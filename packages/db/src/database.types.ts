@@ -113,13 +113,13 @@ isOneToOne: false
                   ]
                 },"jobs": {
                   Row: {
-                    "company_id": string,"description_text": string,"enrich_error": string | null,"enriched_at": string | null,"fingerprint": string,"first_seen_at": string,"id": string,"lang": string | null,"last_seen_at": string,"location": string | null,"posted_at": string | null,"remote_type": string,"role_id": string | null,"salary_max_usd": number | null,"salary_min_usd": number | null,"salary_raw": string | null,"seniority": string | null,"skills": (string)[],"status": string,"summary": Json | null,"tags": (string)[],"title": string
+                    "company_id": string,"description_text": string,"enrich_error": string | null,"enriched_at": string | null,"fingerprint": string,"first_seen_at": string,"id": string,"lang": string | null,"last_seen_at": string,"location": string | null,"posted_at": string | null,"remote_type": string,"role_id": string | null,"salary_max_usd": number | null,"salary_min_usd": number | null,"salary_raw": string | null,"seniority": string | null,"skills": (string)[],"status": string,"summary": Json | null,"tags": (string)[],"title": string,"title_normalized": string | null
                   }
                   Insert: {
-                    "company_id": string,"description_text"?: string,"enrich_error"?: string | null,"enriched_at"?: string | null,"fingerprint": string,"first_seen_at"?: string,"id"?: string,"lang"?: string | null,"last_seen_at"?: string,"location"?: string | null,"posted_at"?: string | null,"remote_type"?: string,"role_id"?: string | null,"salary_max_usd"?: number | null,"salary_min_usd"?: number | null,"salary_raw"?: string | null,"seniority"?: string | null,"skills"?: (string)[],"status"?: string,"summary"?: Json | null,"tags"?: (string)[],"title": string
+                    "company_id": string,"description_text"?: string,"enrich_error"?: string | null,"enriched_at"?: string | null,"fingerprint": string,"first_seen_at"?: string,"id"?: string,"lang"?: string | null,"last_seen_at"?: string,"location"?: string | null,"posted_at"?: string | null,"remote_type"?: string,"role_id"?: string | null,"salary_max_usd"?: number | null,"salary_min_usd"?: number | null,"salary_raw"?: string | null,"seniority"?: string | null,"skills"?: (string)[],"status"?: string,"summary"?: Json | null,"tags"?: (string)[],"title": string,"title_normalized"?: string | null
                   }
                   Update: {
-                    "company_id"?: string,"description_text"?: string,"enrich_error"?: string | null,"enriched_at"?: string | null,"fingerprint"?: string,"first_seen_at"?: string,"id"?: string,"lang"?: string | null,"last_seen_at"?: string,"location"?: string | null,"posted_at"?: string | null,"remote_type"?: string,"role_id"?: string | null,"salary_max_usd"?: number | null,"salary_min_usd"?: number | null,"salary_raw"?: string | null,"seniority"?: string | null,"skills"?: (string)[],"status"?: string,"summary"?: Json | null,"tags"?: (string)[],"title"?: string
+                    "company_id"?: string,"description_text"?: string,"enrich_error"?: string | null,"enriched_at"?: string | null,"fingerprint"?: string,"first_seen_at"?: string,"id"?: string,"lang"?: string | null,"last_seen_at"?: string,"location"?: string | null,"posted_at"?: string | null,"remote_type"?: string,"role_id"?: string | null,"salary_max_usd"?: number | null,"salary_min_usd"?: number | null,"salary_raw"?: string | null,"seniority"?: string | null,"skills"?: (string)[],"status"?: string,"summary"?: Json | null,"tags"?: (string)[],"title"?: string,"title_normalized"?: string | null
                   }
                   Relationships: [
                     {
@@ -309,6 +309,12 @@ isOneToOne: false
           Functions: {
             "find_similar_job":
 { Args: { "p_company_id": string,"p_title": string }; Returns: string
+                           },
+"text_array_max_len":
+{ Args: { "arr": (string)[] }; Returns: number
+                           },
+"upsert_job_matches":
+{ Args: { "rows": Json }; Returns: undefined
                            }
           }
           Enums: {

@@ -45,8 +45,8 @@ select throws_ok($$ select public.find_similar_job('c0000000-0000-0000-0000-0000
 select lives_ok($$ insert into public.search_profiles (user_id, name, keywords)
   values ('11111111-1111-1111-1111-111111111111', 'Mine', '{full stack}') $$, 'can create own search profile');
 select is((select count(*)::int from public.search_profiles), 1, 'sees only own search profiles');
-select throws_ok($$ insert into public.search_profiles (user_id, name)
-  values ('22222222-2222-2222-2222-222222222222', 'Evil') $$, '42501', null, 'cannot create profile for another user');
+select throws_ok($$ insert into public.search_profiles (user_id, name, keywords)
+  values ('22222222-2222-2222-2222-222222222222', 'Evil', '{x}') $$, '42501', null, 'cannot create profile for another user');
 
 reset role;
 set local role anon;
