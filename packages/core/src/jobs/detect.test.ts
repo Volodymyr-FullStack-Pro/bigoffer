@@ -10,6 +10,17 @@ describe('detectRemote', () => {
     ['Офіс у Львові', 'office'],
     ['On-site in Berlin', 'office'],
     ['Great team', 'unknown'],
+    ['not remote', 'unknown'],
+    ['No remote, office in Kyiv', 'office'],
+    ['non-remote position', 'unknown'],
+    ['remote control systems', 'unknown'],
+    ['Hybrid cloud engineer', 'unknown'],
+    ['MS Office, Office 365, Microsoft Office', 'unknown'],
+    ['Anywhere you like', 'unknown'],
+    ['Work from anywhere', 'remote'],
+    ['anywhere in the world', 'remote'],
+    ['Видалення дублікатів, удаление данных', 'unknown'],
+    ['Удалённая работа', 'remote'],
   ] as const)('%s → %s', (text, expected) => {
     expect(detectRemote(text)).toBe(expected);
   });
@@ -25,6 +36,13 @@ describe('detectSeniority', () => {
     ['Стажер-розробник', 'intern'],
     ['Мідл Python розробник', 'middle'],
     ['Full Stack Developer', null],
+    ['Lead generation manager', null],
+    ['Staff accountant', null],
+    ['Mid-Market Account Executive', null],
+    ['Staff Software Engineer', 'lead'],
+    ['Tech Lead', 'lead'],
+    ['Head of Sales', 'lead'],
+    ['Middleware engineer', null],
   ] as const)('%s → %s', (title, expected) => {
     expect(detectSeniority(title)).toBe(expected);
   });
@@ -49,5 +67,15 @@ describe('parseSalary', () => {
   });
   it('returns null when nothing parseable', () => {
     expect(parseSalary('competitive')).toBeNull();
+  });
+  it('applies a shared trailing k to the whole range', () => {
+    expect(parseSalary('30-40k EUR/year')).toEqual({ minUsd: 2700, maxUsd: 3600 });
+    expect(parseSalary('5-7k $')).toEqual({ minUsd: 5000, maxUsd: 7000 });
+  });
+  it('decides annual once per salary', () => {
+    expect(parseSalary('$18k - $25k')).toEqual({ minUsd: 1500, maxUsd: 2083 });
+  });
+  it('does not mistake Europe for EUR', () => {
+    expect(parseSalary('3000 USD, Europe')).toEqual({ minUsd: 3000, maxUsd: 3000 });
   });
 });

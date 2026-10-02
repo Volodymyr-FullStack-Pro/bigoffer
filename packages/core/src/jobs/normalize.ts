@@ -9,6 +9,7 @@ const COMPANY_SUFFIXES = new Set([
 
 function tokens(s: string): string[] {
   return decodeEntities(s)
+    .normalize('NFC')
     .toLowerCase()
     .replace(/[^\p{L}\p{N}]+/gu, ' ')
     .trim()

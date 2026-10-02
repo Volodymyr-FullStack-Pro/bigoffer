@@ -9,6 +9,16 @@ describe('normalizeCompany', () => {
   });
 });
 
+describe('entities and unicode forms', () => {
+  it('decodes guillemet entities in company names', () => {
+    expect(normalizeCompany('&laquo;Інфотех&raquo;')).toBe('інфотех');
+  });
+  it('treats decomposed and composed й as equal', () => {
+    expect(normalizeTitle('Розробни\u0438\u0306к')).toBe(normalizeTitle('Розробни\u0439к'));
+    expect(normalizeTitle('Йога')).toBe(normalizeTitle('\u0418\u0306ога'));
+  });
+});
+
 describe('normalizeTitle', () => {
   it('lowercases and strips punctuation', () => {
     expect(normalizeTitle('Senior Front-End Developer (React + TS)!')).toBe('senior front end developer react ts');

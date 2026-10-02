@@ -5,13 +5,29 @@ const NAMED: Record<string, string> = {
   quot: '"',
   apos: "'",
   nbsp: ' ',
+  mdash: '\u2014',
+  ndash: '\u2013',
+  laquo: '\u00ab',
+  raquo: '\u00bb',
+  hellip: '\u2026',
+  euro: '\u20ac',
+  rsquo: '\u2019',
+  lsquo: '\u2018',
+  ldquo: '\u201c',
+  rdquo: '\u201d',
+  bull: '\u2022',
+  copy: '\u00a9',
 };
+
+function safeCodePoint(n: number, original: string): string {
+  return Number.isInteger(n) && n >= 0 && n <= 0x10ffff ? String.fromCodePoint(n) : original;
+}
 
 export function decodeEntities(s: string): string {
   return s
-    .replace(/&#x([0-9a-f]+);/gi, (_, hex: string) => String.fromCodePoint(parseInt(hex, 16)))
-    .replace(/&#(\d+);/g, (_, dec: string) => String.fromCodePoint(Number(dec)))
-    .replace(/&(amp|lt|gt|quot|apos|nbsp);/g, (_, name: string) => NAMED[name] ?? `&${name};`);
+    .replace(/&#x([0-9a-f]+);/gi, (m, hex: string) => safeCodePoint(parseInt(hex, 16), m))
+    .replace(/&#(\d+);/g, (m, dec: string) => safeCodePoint(Number(dec), m))
+    .replace(/&([a-z]+);/g, (m, name: string) => NAMED[name] ?? m);
 }
 
 export function normalizeWhitespace(s: string): string {
@@ -26,7 +42,7 @@ export function htmlToText(html: string): string {
     .replace(/<[^>]+>/g, '');
   return decodeEntities(withBreaks)
     .split('\n')
-    .map((line) => line.replace(/[ \t ]+/g, ' ').trim())
+    .map((line) => line.replace(/[ \t\u00a0]+/g, ' ').trim())
     .filter(Boolean)
     .join('\n');
 }
