@@ -1,8 +1,10 @@
 type LdAddress = {
-  addressLocality?: string | null;
-  addressRegion?: string | null;
+  addressLocality?: string | string[] | null;
+  addressRegion?: string | string[] | null;
   addressCountry?: string | { name?: string } | null;
 };
+
+type LdArea = { address?: LdAddress; name?: string };
 
 export type JobPostingLd = {
   '@type'?: string;
@@ -13,7 +15,7 @@ export type JobPostingLd = {
   datePosted?: string;
   hiringOrganization?: { name?: string };
   jobLocationType?: string;
-  applicantLocationRequirements?: { address?: LdAddress; name?: string };
+  applicantLocationRequirements?: LdArea | LdArea[];
   jobLocation?: { address?: LdAddress } | { address?: LdAddress }[];
   employmentType?: string | string[];
 };
@@ -36,18 +38,19 @@ export function extractJobPostings(html: string): JobPostingLd[] {
   return out;
 }
 
+const first = (v: string | string[] | null | undefined): string | null =>
+  (Array.isArray(v) ? v.find(Boolean) : v) || null;
+
 function addressText(a: LdAddress | undefined): string | null {
   if (!a) return null;
   const country = typeof a.addressCountry === 'object' ? a.addressCountry?.name : a.addressCountry;
-  return a.addressLocality || a.addressRegion || country || null;
+  return first(a.addressLocality) || first(a.addressRegion) || country || null;
 }
 
 export function ldLocation(p: JobPostingLd): string | null {
   const jobLoc = Array.isArray(p.jobLocation) ? p.jobLocation[0] : p.jobLocation;
-  return (
-    addressText(jobLoc?.address) ??
-    addressText(p.applicantLocationRequirements?.address) ??
-    p.applicantLocationRequirements?.name ??
-    null
-  );
+  const area = Array.isArray(p.applicantLocationRequirements)
+    ? p.applicantLocationRequirements[0]
+    : p.applicantLocationRequirements;
+  return addressText(jobLoc?.address) ?? addressText(area?.address) ?? area?.name ?? null;
 }
