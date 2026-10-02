@@ -2,6 +2,7 @@
 
 import { emptyToUndefined, profileUpdateSchema } from '@jp/core';
 import { revalidatePath } from 'next/cache';
+import { getUserId } from '@/lib/auth';
 import { createClient } from '@/lib/supabase/server';
 
 export type ProfileValues = { full_name: string; timezone: string; contacts: Record<string, string> };
@@ -36,10 +37,9 @@ export async function updateProfile(_prev: ProfileState, formData: FormData): Pr
     };
   }
 
-  const supabase = await createClient();
-  const { data } = await supabase.auth.getClaims();
-  const userId = data?.claims.sub;
+  const userId = await getUserId();
   if (!userId) return { status: 'error', values };
+  const supabase = await createClient();
 
   const { error } = await supabase
     .from('profiles')

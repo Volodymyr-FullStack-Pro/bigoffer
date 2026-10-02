@@ -1,16 +1,17 @@
 import { contactsSchema } from '@jp/core';
 import { getTranslations } from 'next-intl/server';
+import { requireUserId } from '@/lib/auth';
 import { createClient } from '@/lib/supabase/server';
 import { ProfileForm } from './profile-form';
 
 export default async function ProfilePage() {
   const t = await getTranslations('profile');
+  const userId = await requireUserId();
   const supabase = await createClient();
-  const { data: claims } = await supabase.auth.getClaims();
   const { data: profile, error } = await supabase
     .from('profiles')
     .select('full_name, timezone, contacts')
-    .eq('id', claims?.claims.sub ?? '')
+    .eq('id', userId)
     .single();
 
   if (error || !profile) {
