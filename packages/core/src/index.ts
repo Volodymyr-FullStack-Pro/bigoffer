@@ -8,3 +8,4 @@ export * from './jobs/normalize';
 export * from './jobs/detect';
 export * from './jobs/job';
 export * from './jobs/search';
+export * from './jobs/score';
