@@ -244,6 +244,17 @@ otp_expiry = 3600
 # admin_email = "admin@email.com"
 # sender_name = "Admin"
 
+# Token-hash links: the app's /auth/confirm verifies them server-side (no PKCE verifier cookie,
+# so links work on another device/browser). `RedirectTo` is `${SITE_URL}/auth/confirm?next=...`
+# (set by sendMagicLink and allow-listed above), hence the `&` continuation.
+[auth.email.template.magic_link]
+subject = "Your sign-in link"
+content_path = "./supabase/templates/magic_link.html"
+
+[auth.email.template.confirmation]
+subject = "Confirm your email"
+content_path = "./supabase/templates/confirmation.html"
+
 # Uncomment to customize email template
 # [auth.email.template.invite]
 # subject = "You have been invited"
