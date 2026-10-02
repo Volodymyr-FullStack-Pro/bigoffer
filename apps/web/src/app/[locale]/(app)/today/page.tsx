@@ -21,6 +21,7 @@ export default async function TodayPage() {
       'id, score, created_at, jobs!inner(title, location, remote_type, salary_min_usd, salary_max_usd, companies(name), job_postings(source_id, url))',
     )
     .in('state', ['new', 'seen'])
+    .eq('jobs.status', 'active')
     .gte('created_at', since)
     .order('score', { ascending: false })
     .order('created_at', { ascending: false })

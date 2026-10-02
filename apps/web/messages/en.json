@@ -89,7 +89,7 @@
     "intro": "Tell us what you are looking for — we'll collect matching jobs from DOU, Djinni, robota.ua, remote boards and more every hour.",
     "name": "Profile name",
     "keywords": "Role keywords",
-    "keywordsHint": "Comma-separated, up to 5. Example: full stack, react developer",
+    "keywordsHint": "Comma-separated, up to 5; the first 3 are used for searching. Example: full stack, react developer",
     "skills": "Your skills",
     "skillsHint": "Comma-separated. Used for scoring. Example: React, Node.js, PostgreSQL",
     "exclude": "Exclude jobs mentioning",

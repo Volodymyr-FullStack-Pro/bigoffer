@@ -22,3 +22,13 @@ test('lists a match with score and source link, and hides it', async ({ context,
   await card.getByTestId('match-hide').click();
   await expect(page.getByTestId('job-match').filter({ hasText: title })).toHaveCount(0);
 });
+
+test('does not list matches of expired jobs', async ({ context, page }) => {
+  const email = uniqueEmail('today-expired');
+  await loginAs(context, email);
+  const active = await seedMatch(email, { score: 70 });
+  const expired = await seedMatch(email, { score: 90, status: 'expired' });
+  await page.goto('/en/today');
+  await expect(page.getByTestId('job-match').filter({ hasText: active.title })).toBeVisible();
+  await expect(page.getByTestId('job-match').filter({ hasText: expired.title })).toHaveCount(0);
+});

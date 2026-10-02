@@ -17,7 +17,10 @@ async function userIdByEmail(email: string): Promise<string> {
   throw new Error(`user ${email} not found`);
 }
 
-export async function seedMatch(email: string, opts: { title?: string; score?: number } = {}) {
+export async function seedMatch(
+  email: string,
+  opts: { title?: string; score?: number; status?: 'active' | 'expired' } = {},
+) {
   const db = admin();
   const tag = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
   const title = opts.title ?? `Senior Full Stack Developer ${tag}`;
@@ -30,7 +33,7 @@ export async function seedMatch(email: string, opts: { title?: string; score?: n
   if (cErr) throw cErr;
   const { data: job, error: jErr } = await db
     .from('jobs')
-    .insert({ fingerprint: `e2e-${tag}`, title, company_id: company.id, remote_type: 'remote', salary_min_usd: 3000, salary_max_usd: 4500 })
+    .insert({ fingerprint: `e2e-${tag}`, title, company_id: company.id, remote_type: 'remote', salary_min_usd: 3000, salary_max_usd: 4500, status: opts.status ?? 'active' })
     .select('id')
     .single();
   if (jErr) throw jErr;

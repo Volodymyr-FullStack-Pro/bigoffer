@@ -19,6 +19,22 @@ test('creates a search profile and keeps it after reload', async ({ context, pag
   await expect(page.getByRole('status').first()).toContainText('Saved');
 });
 
+test('adding a second profile returns to the plain search URL', async ({ context, page }) => {
+  await loginAs(context, uniqueEmail('search-second'));
+  await page.goto('/en/search');
+  await page.getByLabel('Role keywords').fill('full stack');
+  await page.getByTestId('search-save').click();
+  await expect(page.getByTestId('search-add')).toBeVisible();
+  await page.getByTestId('search-add').click();
+  await expect(page).toHaveURL(/\/en\/search\?new=1$/);
+  await page.getByLabel('Role keywords').last().fill('react developer');
+  await page.getByTestId('search-save').last().click();
+  // a new profile redirects to /search, so a reload or a second click cannot create a duplicate
+  await expect(page).toHaveURL(/\/en\/search$/);
+  await expect(page.getByTestId('search-add')).toBeVisible();
+  await expect(page.getByLabel('Role keywords')).toHaveCount(2);
+});
+
 test('rejects a profile without keywords', async ({ context, page }) => {
   await loginAs(context, uniqueEmail('search-invalid'));
   await page.goto('/en/search');

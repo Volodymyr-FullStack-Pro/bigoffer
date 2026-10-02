@@ -2,6 +2,8 @@
 
 import { parseList, searchProfileInputSchema } from '@jp/core';
 import { revalidatePath } from 'next/cache';
+import { getLocale } from 'next-intl/server';
+import { redirect } from '@/i18n/navigation';
 import { getUserId } from '@/lib/auth';
 import { createClient } from '@/lib/supabase/server';
 import { requestProfileSync } from '@/lib/trigger';
@@ -50,6 +52,8 @@ export async function saveSearchProfile(_prev: SearchFormState, formData: FormDa
 
   await requestProfileSync(data.id);
   revalidatePath('/[locale]/search', 'page');
+  // A new profile leaves the ?new=1 form behind, so a resubmit or reload cannot create a duplicate.
+  if (!p.id) redirect({ href: '/search', locale: await getLocale() });
   return { status: 'saved' };
 }
 
