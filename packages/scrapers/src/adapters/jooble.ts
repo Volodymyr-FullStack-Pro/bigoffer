@@ -42,18 +42,21 @@ export const joobleAdapter: SourceAdapter = {
     } catch (err) {
       throw redact(err, key);
     }
-    return (data.jobs ?? []).map(
-      (j): RawJob => ({
+    return (data.jobs ?? []).map((j): RawJob => {
+      const company = j.company?.trim();
+      return {
         externalId: String(j.id),
         url: j.link,
         title: j.title,
-        company: j.company?.trim() || j.source || 'Jooble',
+        // The source site name is not an employer: many unrelated jobs share it.
+        company: company || j.source?.trim() || 'Jooble',
+        companyIsPlaceholder: !company,
         description: j.snippet ?? '',
         location: j.location || null,
         salaryRaw: j.salary || null,
         postedAt: j.updated ?? null,
         tags: j.type ? [j.type] : [],
-      }),
-    );
+      };
+    });
   },
 };

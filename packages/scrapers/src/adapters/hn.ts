@@ -7,12 +7,18 @@ type HnItem = { children: { id: number; text: string | null; created_at: string 
 const ROLE = /engineer|developer|designer|manager|scientist|analyst|lead|devops|sre|architect|marketer|sales|recruiter|product|qa|tester/i;
 const PLACE = /remote|onsite|on-site|hybrid/i;
 
-export function parseHnFirstLine(line: string): { company: string; title: string; location: string | null } {
+const TITLE_MAX = 120;
+const COMPANY_MAX = 80;
+
+/** company is null when the header has no usable company segment (the caller substitutes a placeholder). */
+export function parseHnFirstLine(line: string): { company: string | null; title: string; location: string | null } {
   const parts = line.split(/\s+[|—–]\s+|\s+-\s+/).map((p) => p.trim()).filter(Boolean);
-  const company = parts[0] ?? 'Hacker News';
+  const head = parts[0];
+  const company = head && head.length <= COMPANY_MAX ? head : null;
   const rest = parts.slice(1);
-  const title = rest.find((p) => ROLE.test(p)) ?? rest[0] ?? 'Multiple roles';
-  const location = rest.find((p) => p !== title && PLACE.test(p)) ?? null;
+  const short = rest.filter((p) => p.length <= TITLE_MAX);
+  const title = short.find((p) => ROLE.test(p)) ?? (rest[0] && rest[0].length <= TITLE_MAX ? rest[0] : 'Multiple roles');
+  const location = short.find((p) => p !== title && PLACE.test(p)) ?? null;
   return { company, title, location };
 }
 
@@ -34,7 +40,8 @@ export const hnAdapter: SourceAdapter = {
           externalId: String(c.id),
           url: `https://news.ycombinator.com/item?id=${c.id}`,
           title,
-          company,
+          company: company ?? 'Hacker News',
+          companyIsPlaceholder: company === null,
           description: text,
           location,
           postedAt: c.created_at,

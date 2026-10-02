@@ -28,18 +28,20 @@ export const robotauaAdapter: SourceAdapter = {
   async search(params, ctx) {
     const qs = new URLSearchParams({ keyWords: params.keyWords ?? '', count: '40', page: '0' });
     const data = await ctx.fetchJson<RabotaResponse>(`https://api.rabota.ua/vacancy/search?${qs}`);
-    return (data.documents ?? []).map(
-      (d): RawJob => ({
+    return (data.documents ?? []).map((d): RawJob => {
+      const company = d.companyName?.trim();
+      return {
         externalId: String(d.id),
         url: `https://robota.ua/company${d.notebookId}/vacancy${d.id}`,
         title: d.name,
-        company: d.companyName?.trim() || 'robota.ua',
+        company: company || 'robota.ua',
+        companyIsPlaceholder: !company,
         description: d.shortDescription ?? '',
         location: d.cityName || null,
         salaryRaw: salaryRaw(d),
         salaryPeriod: 'month',
         postedAt: d.date ?? null,
-      }),
-    );
+      };
+    });
   },
 };

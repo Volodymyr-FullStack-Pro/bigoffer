@@ -53,3 +53,18 @@ describe('fingerprint', () => {
     expect(a).not.toBe(b);
   });
 });
+
+describe('language-name canonicalization', () => {
+  it('keeps C++, C#, F#, C and .NET apart', () => {
+    expect(normalizeTitle('Senior C++ Developer')).toBe('senior cplusplus developer');
+    expect(normalizeTitle('Senior C# Developer')).toBe('senior csharp developer');
+    expect(normalizeTitle('F# engineer')).toBe('fsharp engineer');
+    expect(normalizeTitle('.NET / ASP.NET Developer')).toBe('dotnet asp dotnet developer');
+    expect(normalizeTitle('Senior C Developer')).toBe('senior c developer');
+  });
+  it('gives C++, C# and C titles distinct fingerprints', async () => {
+    const fp = (title: string) => fingerprint({ company: 'Acme', title, region: 'remote' });
+    const all = await Promise.all(['Senior C++ Developer', 'Senior C# Developer', 'Senior C Developer'].map(fp));
+    expect(new Set(all).size).toBe(3);
+  });
+});

@@ -34,6 +34,12 @@ export function detectSeniority(title: string): 'intern' | 'junior' | 'middle' |
 /** Approximate conversion rates to USD; refresh occasionally. */
 export const FX_TO_USD = { USD: 1, EUR: 1.08, UAH: 1 / 41.5 } as const;
 
+/** Currencies we have no rate for: better no salary than a wrong one. Checked before `$` (R$, C$, A$). */
+const UNSUPPORTED_CURRENCY =
+  /\b(mxn|pln|gbp|chf|rub|rur|cad|aud|nzd|inr|brl|jpy|cny|rmb|sek|nok|dkk|czk|huf|ron|bgn|try|ils|zar|sgd|hkd|krw|kzt|gel|ars|cop|clp|php|idr|myr|thb|vnd|aed|sar|egp|ngn)\b|£|₽|₹|¥|₩|₪|₺|zł|\b(r|c|ca|a|au|nz|hk|s)\$|руб|злот/i;
+
+const HOURLY = /\/\s*(hour|hr|h)\b|\bper\s+hour\b|\bhourly\b|\ban\s+hour\b|в\s+годину|за\s+годину|в\s+час\b|за\s+час\b|\/\s*год\b|\/\s*час\b/i;
+
 function detectCurrency(raw: string): keyof typeof FX_TO_USD {
   const t = raw.toLowerCase();
   if (/\$|\busd\b/.test(t)) return 'USD';
@@ -45,9 +51,14 @@ function detectCurrency(raw: string): keyof typeof FX_TO_USD {
 function numbers(raw: string): number[] {
   const found: { value: number; k: boolean }[] = [];
   for (const m of raw.matchAll(/(\d[\d\s,.]*\d|\d)\s*(k\b)?/gi)) {
-    const digits = m[1]!.replace(/[\s,]/g, '').replace(/\.(?=\d{3}\b)/g, '');
+    const k = Boolean(m[2]);
+    // "35,3k" / "35.3k": a 1–2 digit fraction before k is a decimal, not a thousands separator.
+    const decimal = k ? m[1]!.match(/^(\d+)[.,](\d{1,2})$/) : null;
+    const digits = decimal
+      ? `${decimal[1]}.${decimal[2]}`
+      : m[1]!.replace(/[\s,]/g, '').replace(/\.(?=\d{3}\b)/g, '');
     const value = Number.parseFloat(digits);
-    if (Number.isFinite(value)) found.push({ value, k: Boolean(m[2]) });
+    if (Number.isFinite(value)) found.push({ value, k });
   }
   const sharedK = found.length > 1 && found[found.length - 1]!.k;
   return found
@@ -59,6 +70,7 @@ export function parseSalary(
   raw: string,
   period?: 'month' | 'year',
 ): { minUsd: number | null; maxUsd: number | null } | null {
+  if (HOURLY.test(raw) || UNSUPPORTED_CURRENCY.test(raw)) return null;
   const values = numbers(raw);
   if (values.length === 0) return null;
   const rate = FX_TO_USD[detectCurrency(raw)];
@@ -68,6 +80,7 @@ export function parseSalary(
 
   let min: number | null = values[0]!;
   let max: number | null = values.length > 1 ? values[1]! : values[0]!;
+  if (min > max) [min, max] = [max, min];
   if (isUpTo) min = null;
   if (isFrom) max = null;
 

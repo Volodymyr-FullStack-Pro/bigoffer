@@ -4,13 +4,14 @@ import type { SourceAdapter } from '../types';
 
 const FEED = 'https://jobs.dou.ua/vacancies/feeds/';
 
-export function splitDouTitle(full: string): { title: string; company: string; location: string | null } {
+/** company is null when the feed title names none (the caller substitutes a placeholder). */
+export function splitDouTitle(full: string): { title: string; company: string | null; location: string | null } {
   const at = full.lastIndexOf(' в ');
-  if (at < 0) return { title: full.trim(), company: 'DOU', location: null };
+  if (at < 0) return { title: full.trim(), company: null, location: null };
   const title = full.slice(0, at).trim();
   const rest = full.slice(at + 3).trim();
   const comma = rest.indexOf(', ');
-  const company = (comma < 0 ? rest : rest.slice(0, comma)).replace(/^["«“]+|["»”]+$/g, '').trim();
+  const company = (comma < 0 ? rest : rest.slice(0, comma)).replace(/^["«“]+|["»”]+$/g, '').trim() || null;
   const location = comma < 0 ? null : rest.slice(comma + 2).trim() || null;
   return { title, company, location };
 }
@@ -32,7 +33,8 @@ export const douAdapter: SourceAdapter = {
           externalId: id,
           url: item.link.split('?')[0]!,
           title,
-          company,
+          company: company ?? 'DOU',
+          companyIsPlaceholder: company === null,
           description: item.description,
           location,
           postedAt: item.pubDate,

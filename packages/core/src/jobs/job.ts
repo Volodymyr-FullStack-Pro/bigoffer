@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { detectRemote, detectSeniority, parseSalary } from './detect';
-import { fingerprint, normalizeCompany, regionBucket } from './normalize';
+import { fingerprint, normalizeCompany, normalizeTitle, regionBucket } from './normalize';
 import { decodeEntities, htmlToText, normalizeWhitespace } from './text';
 
 export const SOURCE_IDS = [
@@ -16,11 +16,25 @@ export type Seniority = (typeof SENIORITIES)[number];
 
 const cleanText = z.string().transform((s) => normalizeWhitespace(decodeEntities(s))).pipe(z.string().min(1));
 
+const TITLE_MAX = 200;
+const TITLE_CUT = 140;
+
+/** Some sources put a whole paragraph in the title; keep it readable instead of rejecting the job. */
+export function capTitle(title: string): string {
+  if (title.length <= TITLE_MAX) return title;
+  const head = title.slice(0, TITLE_CUT + 1);
+  const space = head.lastIndexOf(' ');
+  const cut = (space > TITLE_CUT / 2 ? head.slice(0, space) : title.slice(0, TITLE_CUT)).replace(/[\s,;:|—–-]+$/, '');
+  return `${cut}…`;
+}
+
 export const rawJobSchema = z.object({
   externalId: z.string().min(1),
   url: z.url({ protocol: /^https?$/ }),
-  title: cleanText,
+  title: cleanText.transform(capTitle),
   company: cleanText,
+  /** The adapter had no real company and filled in a source name; never dedupe across such jobs. */
+  companyIsPlaceholder: z.boolean().optional(),
   description: z.string().default(''),
   location: z.string().nullable().default(null),
   salaryRaw: z.string().nullable().default(null),
@@ -47,8 +61,11 @@ export type NormalizedJob = {
   externalId: string;
   url: string;
   title: string;
+  /** normalizeTitle(title): the canonical form used for fuzzy dedupe. */
+  canonicalTitle: string;
   company: string;
   companyNormalized: string;
+  companyIsPlaceholder: boolean;
   descriptionText: string;
   location: string | null;
   remoteType: RemoteType;
@@ -77,8 +94,10 @@ export async function normalizeJob(raw: RawJob): Promise<NormalizedJob | null> {
     externalId: r.externalId,
     url: r.url,
     title: r.title,
+    canonicalTitle: normalizeTitle(r.title),
     company: r.company,
     companyNormalized,
+    companyIsPlaceholder: r.companyIsPlaceholder === true,
     descriptionText,
     location,
     remoteType,
@@ -91,7 +110,8 @@ export async function normalizeJob(raw: RawJob): Promise<NormalizedJob | null> {
     fingerprint: await fingerprint({
       company: r.company,
       title: r.title,
-      region: regionBucket(location, remoteType),
+      // A placeholder company says nothing about identity: key the job by its posting instead.
+      region: r.companyIsPlaceholder ? `anon:${r.externalId}` : regionBucket(location, remoteType),
     }),
   };
 }

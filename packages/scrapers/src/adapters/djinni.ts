@@ -8,11 +8,13 @@ const MAX_PAGES = 2;
 function toRawJob(p: JobPostingLd): RawJob | null {
   const id = typeof p.identifier === 'object' ? p.identifier?.value : p.identifier;
   if (!p.url || !p.title || id == null) return null;
+  const company = p.hiringOrganization?.name?.trim();
   return {
     externalId: String(id),
     url: p.url,
     title: p.title,
-    company: p.hiringOrganization?.name?.trim() || 'Djinni',
+    company: company || 'Djinni',
+    companyIsPlaceholder: !company,
     description: p.description ?? '',
     location: ldLocation(p),
     postedAt: p.datePosted ?? null,

@@ -38,6 +38,8 @@ export function htmlToText(html: string): string {
   const withBreaks = html
     .replace(/<\s*br\s*\/?>/gi, '\n')
     .replace(/<\s*li[^>]*>/gi, '\n• ')
+    // HN and some feeds open paragraphs without closing them: `First<p>Second`.
+    .replace(/<\s*p(\s[^>]*)?\/?>/gi, '\n')
     .replace(/<\/\s*(p|div|li|ul|ol|h[1-6]|tr)\s*>/gi, '\n')
     .replace(/<[^>]+>/g, '');
   return decodeEntities(withBreaks)

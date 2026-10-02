@@ -7,10 +7,17 @@ const COMPANY_SUFFIXES = new Set([
   'тов', 'ооо', 'фоп', 'пп', 'тзов',
 ]);
 
+/** Language names whose symbols would otherwise be stripped and collapse into "c" / "net". */
+function canonicalizeSymbols(s: string): string {
+  return s
+    .replace(/(?<![\p{L}\p{N}])c\+\+/gu, ' cplusplus ')
+    .replace(/(?<![\p{L}\p{N}])c#/gu, ' csharp ')
+    .replace(/(?<![\p{L}\p{N}])f#/gu, ' fsharp ')
+    .replace(/\.net(?![\p{L}\p{N}])/gu, ' dotnet ');
+}
+
 function tokens(s: string): string[] {
-  return decodeEntities(s)
-    .normalize('NFC')
-    .toLowerCase()
+  return canonicalizeSymbols(decodeEntities(s).normalize('NFC').toLowerCase())
     .replace(/[^\p{L}\p{N}]+/gu, ' ')
     .trim()
     .split(' ')

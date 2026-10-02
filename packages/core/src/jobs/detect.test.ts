@@ -78,4 +78,23 @@ describe('parseSalary', () => {
   it('does not mistake Europe for EUR', () => {
     expect(parseSalary('3000 USD, Europe')).toEqual({ minUsd: 3000, maxUsd: 3000 });
   });
+  it('reads a decimal comma or point before k', () => {
+    expect(parseSalary('$35,3k- $52k')).toEqual({ minUsd: 2942, maxUsd: 4333 });
+    expect(parseSalary('$35.3k - $52k')).toEqual({ minUsd: 2942, maxUsd: 4333 });
+  });
+  it.each(['$90 - $150 /hour', '$60 per hour', '$70/hr', 'hourly $50-60', '300 грн в годину', '500 руб в час'])(
+    'does not guess hourly rates: %s',
+    (raw) => {
+      expect(parseSalary(raw)).toBeNull();
+    },
+  );
+  it.each(['50000 - 80000 MXN', '21000 - 35000 PLN', '£50k', '100k CHF', '₽200000', '120000 CAD', 'R$ 8000', '₹1500000'])(
+    'returns null for unsupported currencies: %s',
+    (raw) => {
+      expect(parseSalary(raw)).toBeNull();
+    },
+  );
+  it('swaps a reversed range', () => {
+    expect(parseSalary('$4500 - $3000')).toEqual({ minUsd: 3000, maxUsd: 4500 });
+  });
 });
