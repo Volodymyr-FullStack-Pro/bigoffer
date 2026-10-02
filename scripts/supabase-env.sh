@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Writes apps/web/.env.local from the running local Supabase stack.
 set -euo pipefail
+cd "$(dirname "$0")/.."
 eval "$(supabase status -o env)"
 cat > apps/web/.env.local <<EOF
 NEXT_PUBLIC_SUPABASE_URL=${API_URL}
