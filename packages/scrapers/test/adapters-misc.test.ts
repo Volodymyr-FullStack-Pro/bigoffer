@@ -1,9 +1,13 @@
 import { readFileSync } from 'node:fs';
 import { normalizeJob, SOURCE_IDS } from '@jp/core';
 import { describe, expect, it } from 'vitest';
+import { SourceBlockedError, type AdapterContext } from '../src/types';
 import { ADAPTERS } from '../src/adapters';
 import { hnAdapter, parseHnFirstLine } from '../src/adapters/hn';
+import { himalayasAdapter } from '../src/adapters/himalayas';
 import { joobleAdapter } from '../src/adapters/jooble';
+import { remoteokAdapter } from '../src/adapters/remoteok';
+import { remotiveAdapter } from '../src/adapters/remotive';
 import { robotauaAdapter } from '../src/adapters/robotaua';
 import { fakeContext } from './fake-context';
 
@@ -68,5 +72,46 @@ describe('hnAdapter', () => {
 describe('ADAPTERS', () => {
   it('has an adapter for every source id', () => {
     expect(Object.keys(ADAPTERS).sort()).toEqual([...SOURCE_IDS].sort());
+  });
+});
+
+describe('joobleAdapter key redaction', () => {
+  const key = 'sekret-key';
+  const failing = (err: Error): AdapterContext => ({
+    env: { JOOBLE_API_KEY: key },
+    fetchText: async () => {
+      throw err;
+    },
+    fetchJson: async () => {
+      throw err;
+    },
+  });
+  const url = `https://jooble.org/api/${key}`;
+
+  it('redacts the key from blocked errors and keeps the type', async () => {
+    const err = await joobleAdapter.search({}, failing(new SourceBlockedError(429, url))).catch((e) => e);
+    expect(err).toBeInstanceOf(SourceBlockedError);
+    expect(err.status).toBe(429);
+    expect(err.message).not.toContain(key);
+    expect(err.message).toContain('***');
+  });
+  it.each([500, 404])('redacts the key from HTTP %i errors', async (status) => {
+    const err = await joobleAdapter.search({}, failing(new Error(`HTTP ${status} for ${url}`))).catch((e) => e);
+    expect(err).toBeInstanceOf(Error);
+    expect(err).not.toBeInstanceOf(SourceBlockedError);
+    expect(err.message).not.toContain(key);
+    expect(err.message).toContain('***');
+  });
+});
+
+describe('malformed responses', () => {
+  it('return no jobs', async () => {
+    const { ctx } = fakeContext({ '': {} }, { JOOBLE_API_KEY: 'k' });
+    expect(await joobleAdapter.search({}, ctx)).toEqual([]);
+    expect(await robotauaAdapter.search({}, ctx)).toEqual([]);
+    expect(await hnAdapter.search({}, ctx)).toEqual([]);
+    expect(await remotiveAdapter.search({}, ctx)).toEqual([]);
+    expect(await himalayasAdapter.search({}, ctx)).toEqual([]);
+    expect(await remoteokAdapter.search({}, fakeContext({ '': {} }).ctx)).toEqual([]);
   });
 });

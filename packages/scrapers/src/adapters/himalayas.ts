@@ -25,7 +25,7 @@ export const himalayasAdapter: SourceAdapter = {
   async search(params, ctx) {
     const qs = new URLSearchParams({ q: params.q ?? '', limit: '50' });
     const data = await ctx.fetchJson<HimalayasResponse>(`https://himalayas.app/jobs/api/search?${qs}`);
-    return data.jobs.map((j): RawJob => {
+    return (data.jobs ?? []).map((j): RawJob => {
       const hasSalary = (j.minSalary ?? 0) > 0;
       return {
         externalId: j.guid,

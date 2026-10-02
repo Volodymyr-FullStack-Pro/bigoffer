@@ -28,7 +28,7 @@ export const robotauaAdapter: SourceAdapter = {
   async search(params, ctx) {
     const qs = new URLSearchParams({ keyWords: params.keyWords ?? '', count: '40', page: '0' });
     const data = await ctx.fetchJson<RabotaResponse>(`https://api.rabota.ua/vacancy/search?${qs}`);
-    return data.documents.map(
+    return (data.documents ?? []).map(
       (d): RawJob => ({
         externalId: String(d.id),
         url: `https://robota.ua/company${d.notebookId}/vacancy${d.id}`,

@@ -22,10 +22,10 @@ export const hnAdapter: SourceAdapter = {
     const search = await ctx.fetchJson<HnSearch>(
       'https://hn.algolia.com/api/v1/search_by_date?tags=story,author_whoishiring&hitsPerPage=5',
     );
-    const thread = search.hits.find((h) => h.title.startsWith('Ask HN: Who is hiring?'));
+    const thread = (search.hits ?? []).find((h) => h.title.startsWith('Ask HN: Who is hiring?'));
     if (!thread) return [];
     const item = await ctx.fetchJson<HnItem>(`https://hn.algolia.com/api/v1/items/${thread.objectID}`);
-    return item.children.slice(0, 300).flatMap((c): RawJob[] => {
+    return (item.children ?? []).slice(0, 300).flatMap((c): RawJob[] => {
       if (!c.text) return [];
       const text = htmlToText(c.text);
       const { company, title, location } = parseHnFirstLine(text.split('\n')[0] ?? '');

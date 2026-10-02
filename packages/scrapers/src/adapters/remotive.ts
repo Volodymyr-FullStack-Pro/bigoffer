@@ -21,7 +21,7 @@ export const remotiveAdapter: SourceAdapter = {
   async search(params, ctx) {
     const qs = new URLSearchParams({ search: params.search ?? '', limit: '50' });
     const data = await ctx.fetchJson<RemotiveResponse>(`https://remotive.com/api/remote-jobs?${qs}`);
-    return data.jobs.map(
+    return (data.jobs ?? []).map(
       (j): RawJob => ({
         externalId: String(j.id),
         url: j.url,

@@ -19,6 +19,7 @@ export const remoteokAdapter: SourceAdapter = {
   async search(params, ctx) {
     const url = params.tag ? `https://remoteok.com/api?tag=${encodeURIComponent(params.tag)}` : 'https://remoteok.com/api';
     const data = await ctx.fetchJson<RemoteOkJob[]>(url);
+    if (!Array.isArray(data)) return [];
     return data.flatMap((j): RawJob[] => {
       if (j.id == null || !j.position || !j.company) return [];
       const hasSalary = (j.salary_min ?? 0) > 0;
