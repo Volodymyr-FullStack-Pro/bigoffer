@@ -33,7 +33,11 @@ export function toSearchProfile(row: ProfileRow): SearchProfile {
 }
 
 export async function getQuery(db: Db, id: string) {
-  const { data, error } = await db.from('search_queries').select('id, source_id, params').eq('id', id).maybeSingle();
+  const { data, error } = await db
+    .from('search_queries')
+    .select('id, source_id, params, next_run_at')
+    .eq('id', id)
+    .maybeSingle();
   if (error) throw error;
   return data;
 }
@@ -119,9 +123,11 @@ async function findJobId(db: Db, job: NormalizedJob, companyId: string): Promise
   const { data: exact, error } = await db.from('jobs').select('id').eq('fingerprint', job.fingerprint).maybeSingle();
   if (error) throw error;
   if (exact) return exact.id;
+  // A placeholder company (e.g. "Djinni") groups unrelated employers: only the exact fingerprint may match.
+  if (job.companyIsPlaceholder) return null;
   const { data: similar, error: rpcError } = await db.rpc('find_similar_job', {
     p_company_id: companyId,
-    p_title: job.title,
+    p_title: job.canonicalTitle,
   });
   if (rpcError) throw rpcError;
   return similar ?? null;
@@ -153,6 +159,7 @@ export async function saveJob(
         .insert({
           fingerprint: job.fingerprint,
           title: job.title,
+          title_normalized: job.canonicalTitle,
           company_id: companyId,
           description_text: job.descriptionText,
           location: job.location,
@@ -216,21 +223,32 @@ export async function getProfilesForQuery(db: Db, queryId: string): Promise<Sear
   return data.map((row) => toSearchProfile(row.search_profiles as ProfileRow));
 }
 
-export async function getDueQueryIds(db: Db, now: Date, limit = 300): Promise<{ id: string; sourceId: string }[]> {
+/**
+ * A query due within this window counts as due now: the hourly scheduler must not skip a query whose
+ * next_run_at falls a few minutes after its tick. runQuery uses the same window to drop duplicate runs.
+ */
+export const DUE_WINDOW_MS = 10 * 60 * 1000;
+
+export async function getDueQueryIds(
+  db: Db,
+  now: Date,
+  limit = 300,
+): Promise<{ id: string; sourceId: string; nextRunAt: string }[]> {
   const nowIso = now.toISOString();
+  const dueBy = new Date(now.getTime() + DUE_WINDOW_MS).toISOString();
   // Only queries on enabled, unpaused sources that at least one active profile still uses;
   // otherwise skipped queries would sit at the head of the next_run_at order and starve the rest.
   const { data, error } = await db
     .from('search_queries')
-    .select('id, source_id, sources!inner(id), search_profile_queries!inner(search_profiles!inner(id))')
-    .lte('next_run_at', nowIso)
+    .select('id, source_id, next_run_at, sources!inner(id), search_profile_queries!inner(search_profiles!inner(id))')
+    .lte('next_run_at', dueBy)
     .eq('sources.enabled', true)
     .or(`paused_until.is.null,paused_until.lte.${nowIso}`, { referencedTable: 'sources' })
     .eq('search_profile_queries.search_profiles.is_active', true)
     .order('next_run_at')
     .limit(limit);
   if (error) throw error;
-  return data.map((q) => ({ id: q.id, sourceId: q.source_id }));
+  return data.map((q) => ({ id: q.id, sourceId: q.source_id, nextRunAt: q.next_run_at }));
 }
 
 export async function getRecentJobs(db: Db, since: Date): Promise<{ jobId: string; job: ScorableJob }[]> {
@@ -267,12 +285,28 @@ export type MatchRow = {
   state: 'new' | 'hidden';
 };
 
+/** Upserts via public.upsert_job_matches, which never overwrites a row the user acted on (seen/saved/hidden). */
 export async function insertMatches(db: Db, rows: MatchRow[]): Promise<void> {
-  if (rows.length === 0) return;
   for (let i = 0; i < rows.length; i += 500) {
+    const { error } = await db.rpc('upsert_job_matches', { rows: rows.slice(i, i + 500) });
+    if (error) throw error;
+  }
+}
+
+/** Deletes a profile's untouched ('new') matches, optionally only for the given jobs. */
+export async function deleteNewMatches(db: Db, profileId: string, jobIds?: string[]): Promise<void> {
+  if (jobIds === undefined) {
+    const { error } = await db.from('job_matches').delete().eq('search_profile_id', profileId).eq('state', 'new');
+    if (error) throw error;
+    return;
+  }
+  for (let i = 0; i < jobIds.length; i += 200) {
     const { error } = await db
       .from('job_matches')
-      .upsert(rows.slice(i, i + 500), { onConflict: 'user_id,job_id', ignoreDuplicates: true });
+      .delete()
+      .eq('search_profile_id', profileId)
+      .eq('state', 'new')
+      .in('job_id', jobIds.slice(i, i + 200));
     if (error) throw error;
   }
 }

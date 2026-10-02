@@ -66,6 +66,12 @@ async function resetDou() {
   if (error) throw error;
 }
 
+// runQuery drops runs of a query that is not due (a duplicate enqueue); each test run is a fresh scheduled one.
+async function makeDue(queryId: string) {
+  const { error } = await db.from('search_queries').update({ next_run_at: now.toISOString() }).eq('id', queryId);
+  if (error) throw error;
+}
+
 // Restore DOU health even when an assertion fails, so a failed run can't leave the source paused.
 afterEach(resetDou);
 afterAll(resetDou);
@@ -87,13 +93,14 @@ describe('syncProfile', () => {
 
 describe('runQuery', () => {
   it('saves relevant jobs, dedupes on re-run and creates matches', async () => {
-    await db.from('search_queries').update({ next_run_at: now.toISOString() }).eq('id', douQueryId);
     const deps = { db, adapters: { dou: fakeAdapter(rawJobs) }, createContext: () => ctx, now: () => now };
 
+    await makeDue(douQueryId);
     const first = await runQuery(deps, douQueryId);
     expect(first).toMatchObject({ status: 'ok', found: 2, inserted: 2 });
     expect(first.matched).toBeGreaterThanOrEqual(1); // other local test users may share this query
 
+    await makeDue(douQueryId);
     const second = await runQuery(deps, douQueryId);
     expect(second).toMatchObject({ status: 'ok', found: 2, inserted: 0 });
 
@@ -125,12 +132,13 @@ describe('runQuery', () => {
 
   it('pauses the source when it blocks us', async () => {
     const deps = { db, adapters: { dou: fakeAdapter(new SourceBlockedError(429, 'https://x')) }, createContext: () => ctx, now: () => now };
+    await makeDue(douQueryId);
     const result = await runQuery(deps, douQueryId);
     expect(result.status).toBe('blocked');
     const { data: source } = await db.from('sources').select('paused_until').eq('id', 'dou').single();
     expect(new Date(source!.paused_until!).getTime()).toBeGreaterThan(now.getTime());
 
-    await db.from('search_queries').update({ next_run_at: now.toISOString() }).eq('id', douQueryId);
+    await makeDue(douQueryId);
     const skipped = await runQuery({ ...deps, adapters: { dou: fakeAdapter(rawJobs) } }, douQueryId);
     expect(skipped.status).toBe('skipped');
     const { data: q } = await db.from('search_queries').select('next_run_at').eq('id', douQueryId).single();
@@ -139,12 +147,16 @@ describe('runQuery', () => {
 
   it('raises an alert after three empty runs in a row', async () => {
     const deps = { db, adapters: { dou: fakeAdapter([]) }, createContext: () => ctx, now: () => now };
-    const results = [await runQuery(deps, douQueryId), await runQuery(deps, douQueryId), await runQuery(deps, douQueryId)];
+    const results = [];
+    for (let i = 0; i < 3; i++) {
+      await makeDue(douQueryId);
+      results.push(await runQuery(deps, douQueryId));
+    }
     expect(results.map((r) => r.alert !== null)).toEqual([false, false, true]);
   });
 
   it('skips an unconfigured adapter and moves the query forward', async () => {
-    await db.from('search_queries').update({ next_run_at: now.toISOString() }).eq('id', douQueryId);
+    await makeDue(douQueryId);
     const unconfigured: SourceAdapter = { ...fakeAdapter(rawJobs), isConfigured: () => false };
     const result = await runQuery({ db, adapters: { dou: unconfigured }, createContext: () => ctx, now: () => now }, douQueryId);
     expect(result.status).toBe('skipped');

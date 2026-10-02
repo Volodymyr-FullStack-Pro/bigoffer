@@ -8,6 +8,7 @@ import {
   getProfilesForQuery,
   getQuery,
   getSource,
+  DUE_WINDOW_MS,
   markQueryRun,
   saveJob,
   startRun,
@@ -37,6 +38,8 @@ export async function runQuery(deps: RunQueryDeps, queryId: string): Promise<Run
   const now = deps.now?.() ?? new Date();
   const query = await getQuery(db, queryId);
   if (!query) return SKIPPED;
+  // A duplicate enqueue of a query that already ran: its next_run_at has moved on. No bookkeeping.
+  if (new Date(query.next_run_at).getTime() > now.getTime() + DUE_WINDOW_MS) return SKIPPED;
   const source = await getSource(db, query.source_id);
   const adapter = deps.adapters[query.source_id];
 
