@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { isLocale, LOCALES } from './locales';
+import { DEFAULT_LOCALE, isLocale, LOCALES } from './locales';
 import { localized } from './localized';
+
+describe('DEFAULT_LOCALE', () => {
+  it('is English', () => {
+    expect(DEFAULT_LOCALE).toBe('en');
+  });
+});
 
 describe('isLocale', () => {
   it('accepts supported locales', () => {
