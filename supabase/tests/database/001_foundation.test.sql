@@ -1,6 +1,6 @@
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(14);
+select plan(24);
 
 insert into auth.users (id, email, raw_user_meta_data) values
   ('11111111-1111-1111-1111-111111111111', 'a@test.dev', '{"full_name":"Alice"}'),
@@ -18,6 +18,8 @@ select is((select count(*)::int from public.labels where user_id = '11111111-111
 select isnt((select inbound_email_token from public.profiles where id = '11111111-1111-1111-1111-111111111111'),
   (select inbound_email_token from public.profiles where id = '22222222-2222-2222-2222-222222222222'),
   'inbound tokens are unique');
+select matches((select inbound_email_token from public.profiles where id = '11111111-1111-1111-1111-111111111111'),
+  '^[0-9a-f]{32}$', 'inbound token is 128-bit hex');
 
 -- act as Alice
 set local role authenticated;
@@ -30,9 +32,9 @@ select ok((select count(*) from public.sources) > 0, 'reads global sources');
 select is_empty(
   $$ update public.profiles set full_name = 'hacked' where id = '22222222-2222-2222-2222-222222222222' returning id $$,
   'cannot update another profile');
-select lives_ok(
-  $$ update public.profiles set full_name = 'Alice B' where id = '11111111-1111-1111-1111-111111111111' $$,
-  'can update own name');
+update public.profiles set full_name = 'Alice B' where id = '11111111-1111-1111-1111-111111111111';
+select is((select full_name from public.profiles where id = '11111111-1111-1111-1111-111111111111'),
+  'Alice B', 'can update own name');
 select throws_ok(
   $$ update public.profiles set plan = 'pro' where id = '11111111-1111-1111-1111-111111111111' $$,
   '42501', null, 'cannot change plan');
@@ -43,6 +45,33 @@ select throws_ok(
 select throws_ok(
   $$ insert into public.sources (id, name, kind) values ('evil', 'Evil', 'api') $$,
   '42501', null, 'cannot write global tables');
+select throws_ok(
+  $$ truncate public.sources $$,
+  '42501', null, 'cannot truncate global tables');
+select throws_ok(
+  $$ update public.board_columns set user_id = '22222222-2222-2222-2222-222222222222'
+     where user_id = '11111111-1111-1111-1111-111111111111' and key = 'saved' $$,
+  '42501', null, 'cannot reassign own column to another user');
+select throws_ok(
+  $$ insert into public.profiles (id) values ('33333333-3333-3333-3333-333333333333') $$,
+  '42501', null, 'cannot insert profiles');
+select throws_ok(
+  $$ delete from public.profiles where id = '11111111-1111-1111-1111-111111111111' $$,
+  '42501', null, 'cannot delete own profile');
+select throws_ok(
+  $$ truncate public.board_columns $$,
+  '42501', null, 'cannot truncate own tables');
+
+-- act as anonymous visitor
+reset role;
+set local role anon;
+
+select throws_ok($$ select * from public.profiles $$, '42501', null, 'anon cannot read profiles');
+select throws_ok($$ select * from public.board_columns $$, '42501', null, 'anon cannot read columns');
+select throws_ok($$ select * from public.sources $$, '42501', null, 'anon cannot read global tables');
+select throws_ok(
+  $$ select public.handle_new_user() $$,
+  '42501', null, 'anon cannot execute handle_new_user');
 
 select * from finish();
 rollback;
