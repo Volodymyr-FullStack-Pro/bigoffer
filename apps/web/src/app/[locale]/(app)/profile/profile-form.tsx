@@ -1,0 +1,98 @@
+'use client';
+
+import type { Contacts } from '@jp/core';
+import { useTranslations } from 'next-intl';
+import { useActionState } from 'react';
+import { Button } from '@/components/ui/button';
+import { updateProfile, type ProfileState } from './actions';
+
+type Props = { fullName: string; timezone: string; contacts: Contacts };
+
+const CONTACT_FIELDS = [
+  { key: 'email', type: 'email' },
+  { key: 'phone', type: 'tel' },
+  { key: 'linkedin', type: 'url' },
+  { key: 'github', type: 'url' },
+  { key: 'portfolio', type: 'url' },
+  { key: 'telegram', type: 'text' },
+] as const;
+
+function Field({
+  name,
+  label,
+  defaultValue,
+  type = 'text',
+  invalid,
+  list,
+}: {
+  name: string;
+  label: string;
+  defaultValue?: string;
+  type?: string;
+  invalid: boolean;
+  list?: string;
+}) {
+  return (
+    <label className="flex flex-col gap-1">
+      <span className="font-mono text-xs uppercase">{label}</span>
+      <input
+        name={name}
+        type={type}
+        list={list}
+        defaultValue={defaultValue}
+        aria-invalid={invalid}
+        className={`brutal bg-card px-3 py-2 outline-none focus:ring-2 focus:ring-brand ${invalid ? 'border-danger' : ''}`}
+      />
+    </label>
+  );
+}
+
+export function ProfileForm({ fullName, timezone, contacts }: Props) {
+  const t = useTranslations('profile');
+  const [state, action, pending] = useActionState<ProfileState, FormData>(updateProfile, {
+    status: 'idle',
+  });
+  const invalid = new Set(state.fields ?? []);
+  const timeZones = Intl.supportedValuesOf('timeZone');
+
+  return (
+    <form action={action} noValidate className="flex max-w-2xl flex-col gap-6">
+      <div className="brutal grid gap-4 p-5 md:grid-cols-2">
+        <Field name="full_name" label={t('fullName')} defaultValue={fullName} invalid={invalid.has('full_name')} />
+        <Field name="timezone" label={t('timezone')} defaultValue={timezone} invalid={invalid.has('timezone')} list="timezones" />
+        <datalist id="timezones">
+          {timeZones.map((tz) => (
+            <option key={tz} value={tz} />
+          ))}
+        </datalist>
+      </div>
+
+      <fieldset className="brutal grid gap-4 p-5 md:grid-cols-2">
+        <legend className="px-1 font-display text-lg font-bold">{t('contacts')}</legend>
+        {CONTACT_FIELDS.map(({ key, type }) => (
+          <Field
+            key={key}
+            name={`contacts.${key}`}
+            type={type}
+            label={t(key)}
+            defaultValue={contacts[key]}
+            invalid={invalid.has(`contacts.${key}`)}
+          />
+        ))}
+      </fieldset>
+
+      <div className="flex items-center gap-4">
+        <Button type="submit" variant="brand" disabled={pending} data-testid="profile-save">
+          {t('save')}
+        </Button>
+        <p role="status" className="text-sm">
+          {state.status === 'saved' && <span className="text-success">{t('saved')}</span>}
+          {state.status === 'invalid' && (
+            <span className="text-danger">{t('invalid', { fields: [...invalid].join(', ') })}</span>
+          )}
+          {state.status === 'error' && <span className="text-danger">{t('error')}</span>}
+        </p>
+      </div>
+    </form>
+  );
+}
