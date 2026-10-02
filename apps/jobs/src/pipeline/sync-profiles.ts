@@ -55,7 +55,19 @@ export async function syncProfile(
   return { queryIds, matched };
 }
 
-export async function syncAllProfiles(db: Db, now: Date): Promise<number> {
+export async function syncAllProfiles(db: Db, _now: Date): Promise<number> {
+  const { data: inactive, error } = await db.from('search_profiles').select('id').eq('is_active', false);
+  if (error) throw error;
+  for (let i = 0; i < inactive.length; i += 200) {
+    const { error: unlinkError } = await db
+      .from('search_profile_queries')
+      .delete()
+      .in(
+        'search_profile_id',
+        inactive.slice(i, i + 200).map((p) => p.id),
+      );
+    if (unlinkError) throw unlinkError;
+  }
   const profiles = await getActiveProfiles(db);
   for (const profile of profiles) await linkQueries(db, profile);
   return profiles.length;

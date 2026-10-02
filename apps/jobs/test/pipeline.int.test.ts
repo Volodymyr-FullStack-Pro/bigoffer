@@ -1,12 +1,12 @@
 import type { RawJob } from '@jp/core';
 import type { AdapterContext, SourceAdapter } from '@jp/scrapers';
 import { SourceBlockedError } from '@jp/scrapers';
-import { beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { getDb } from '../src/db';
 import { expireJobs } from '../src/pipeline/expire';
-import { getProfile } from '../src/pipeline/repository';
+import { getDueQueryIds, getProfile } from '../src/pipeline/repository';
 import { runQuery } from '../src/pipeline/run-query';
-import { syncProfile } from '../src/pipeline/sync-profiles';
+import { syncAllProfiles, syncProfile } from '../src/pipeline/sync-profiles';
 
 const db = getDb();
 const now = new Date();
@@ -42,6 +42,7 @@ const ctx = {} as AdapterContext;
 let userId: string;
 let profileId: string;
 let douQueryId: string;
+let inactiveProfileId: string;
 
 beforeAll(async () => {
   const { data: user, error } = await db.auth.admin.createUser({ email: `pipe-${uniq}@e2e.test`, email_confirm: true });
@@ -54,8 +55,20 @@ beforeAll(async () => {
     .single();
   if (spError) throw spError;
   profileId = sp.id;
-  await db.from('sources').update({ paused_until: null, consecutive_empty_runs: 0, enabled: true }).eq('id', 'dou');
+  await resetDou();
 });
+
+async function resetDou() {
+  const { error } = await db
+    .from('sources')
+    .update({ paused_until: null, consecutive_empty_runs: 0, enabled: true })
+    .eq('id', 'dou');
+  if (error) throw error;
+}
+
+// Restore DOU health even when an assertion fails, so a failed run can't leave the source paused.
+afterEach(resetDou);
+afterAll(resetDou);
 
 describe('syncProfile', () => {
   it('creates and links per-source queries for a profile', async () => {
@@ -117,16 +130,73 @@ describe('runQuery', () => {
     const { data: source } = await db.from('sources').select('paused_until').eq('id', 'dou').single();
     expect(new Date(source!.paused_until!).getTime()).toBeGreaterThan(now.getTime());
 
+    await db.from('search_queries').update({ next_run_at: now.toISOString() }).eq('id', douQueryId);
     const skipped = await runQuery({ ...deps, adapters: { dou: fakeAdapter(rawJobs) } }, douQueryId);
     expect(skipped.status).toBe('skipped');
-    await db.from('sources').update({ paused_until: null }).eq('id', 'dou');
+    const { data: q } = await db.from('search_queries').select('next_run_at').eq('id', douQueryId).single();
+    expect(new Date(q!.next_run_at).getTime()).toBe(new Date(source!.paused_until!).getTime());
   });
 
   it('raises an alert after three empty runs in a row', async () => {
     const deps = { db, adapters: { dou: fakeAdapter([]) }, createContext: () => ctx, now: () => now };
     const results = [await runQuery(deps, douQueryId), await runQuery(deps, douQueryId), await runQuery(deps, douQueryId)];
     expect(results.map((r) => r.alert !== null)).toEqual([false, false, true]);
-    await db.from('sources').update({ consecutive_empty_runs: 0 }).eq('id', 'dou');
+  });
+
+  it('skips an unconfigured adapter and moves the query forward', async () => {
+    await db.from('search_queries').update({ next_run_at: now.toISOString() }).eq('id', douQueryId);
+    const unconfigured: SourceAdapter = { ...fakeAdapter(rawJobs), isConfigured: () => false };
+    const result = await runQuery({ db, adapters: { dou: unconfigured }, createContext: () => ctx, now: () => now }, douQueryId);
+    expect(result.status).toBe('skipped');
+    const { data: q } = await db.from('search_queries').select('next_run_at').eq('id', douQueryId).single();
+    expect(new Date(q!.next_run_at).getTime()).toBeGreaterThan(now.getTime());
+  });
+});
+
+describe('getDueQueryIds', () => {
+  it('returns due queries of active profiles only, on enabled unpaused sources', async () => {
+    const { data: inactive, error } = await db
+      .from('search_profiles')
+      .insert({ user_id: userId, name: 'Inactive', keywords: [`inactive-${uniq}`], is_active: false })
+      .select('id')
+      .single();
+    if (error) throw error;
+    inactiveProfileId = inactive.id;
+    const past = new Date(now.getTime() - 60_000).toISOString();
+    const { data: queries, error: qError } = await db
+      .from('search_queries')
+      .insert([
+        { source_id: 'remotive', query_key: `remotive:inactive-${uniq}`, params: {}, next_run_at: past },
+        { source_id: 'remotive', query_key: `remotive:active-${uniq}`, params: {}, next_run_at: past },
+      ])
+      .select('id, query_key');
+    if (qError) throw qError;
+    const inactiveQ = queries.find((q) => q.query_key.includes('inactive'))!.id;
+    const activeQ = queries.find((q) => !q.query_key.includes('inactive'))!.id;
+    const { error: linkError } = await db.from('search_profile_queries').insert([
+      { search_profile_id: inactive.id, search_query_id: inactiveQ },
+      { search_profile_id: profileId, search_query_id: activeQ },
+    ]);
+    if (linkError) throw linkError;
+
+    const due = (await getDueQueryIds(db, now, 100_000)).map((q) => q.id);
+    expect(due).toContain(activeQ);
+    expect(due).not.toContain(inactiveQ);
+
+    await db.from('sources').update({ paused_until: new Date(now.getTime() + 3600_000).toISOString() }).eq('id', 'remotive');
+    try {
+      expect((await getDueQueryIds(db, now, 100_000)).map((q) => q.id)).not.toContain(activeQ);
+    } finally {
+      await db.from('sources').update({ paused_until: null }).eq('id', 'remotive');
+    }
+  });
+});
+
+describe('syncAllProfiles', () => {
+  it('unlinks queries of inactive profiles', async () => {
+    await syncAllProfiles(db, now);
+    const { data } = await db.from('search_profile_queries').select('search_query_id').eq('search_profile_id', inactiveProfileId);
+    expect(data).toHaveLength(0);
   });
 });
 

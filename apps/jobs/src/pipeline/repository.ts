@@ -89,6 +89,12 @@ export async function updateSourceHealth(
   return { alert: empty === 3 ? `Source ${source.id} returned 0 jobs 3 runs in a row — markup changed?` : null };
 }
 
+/** Push a query's next run to a fixed time (e.g. when its source is paused). */
+export async function deferQuery(db: Db, queryId: string, until: string) {
+  const { error } = await db.from('search_queries').update({ next_run_at: until }).eq('id', queryId);
+  if (error) throw error;
+}
+
 export async function markQueryRun(db: Db, queryId: string, now: Date, intervalMinutes: number) {
   const next = new Date(now.getTime() + Math.max(intervalMinutes, 15) * 60 * 1000);
   const { error } = await db
@@ -99,11 +105,12 @@ export async function markQueryRun(db: Db, queryId: string, now: Date, intervalM
 }
 
 async function upsertCompany(db: Db, name: string, normalizedName: string): Promise<string> {
-  const { data, error } = await db
+  // ON CONFLICT DO NOTHING keeps the first-seen display name; then read the id back.
+  const { error: insertError } = await db
     .from('companies')
-    .upsert({ name, normalized_name: normalizedName }, { onConflict: 'normalized_name' })
-    .select('id')
-    .single();
+    .upsert({ name, normalized_name: normalizedName }, { onConflict: 'normalized_name', ignoreDuplicates: true });
+  if (insertError) throw insertError;
+  const { data, error } = await db.from('companies').select('id').eq('normalized_name', normalizedName).single();
   if (error) throw error;
   return data.id;
 }
@@ -210,10 +217,16 @@ export async function getProfilesForQuery(db: Db, queryId: string): Promise<Sear
 }
 
 export async function getDueQueryIds(db: Db, now: Date, limit = 300): Promise<{ id: string; sourceId: string }[]> {
+  const nowIso = now.toISOString();
+  // Only queries on enabled, unpaused sources that at least one active profile still uses;
+  // otherwise skipped queries would sit at the head of the next_run_at order and starve the rest.
   const { data, error } = await db
     .from('search_queries')
-    .select('id, source_id, search_profile_queries!inner(search_profile_id)')
-    .lte('next_run_at', now.toISOString())
+    .select('id, source_id, sources!inner(id), search_profile_queries!inner(search_profiles!inner(id))')
+    .lte('next_run_at', nowIso)
+    .eq('sources.enabled', true)
+    .or(`paused_until.is.null,paused_until.lte.${nowIso}`, { referencedTable: 'sources' })
+    .eq('search_profile_queries.search_profiles.is_active', true)
     .order('next_run_at')
     .limit(limit);
   if (error) throw error;
@@ -226,6 +239,7 @@ export async function getRecentJobs(db: Db, since: Date): Promise<{ jobId: strin
     .select('id, title, description_text, tags, remote_type, seniority, location, salary_min_usd, salary_max_usd, skills')
     .eq('status', 'active')
     .gte('first_seen_at', since.toISOString())
+    .order('first_seen_at', { ascending: false })
     .limit(3000);
   if (error) throw error;
   return data.map((j) => ({
