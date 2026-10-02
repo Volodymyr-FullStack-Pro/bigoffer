@@ -6,7 +6,7 @@ import { useActionState } from 'react';
 import { Button } from '@/components/ui/button';
 import { updateProfile, type ProfileState } from './actions';
 
-type Props = { fullName: string; timezone: string; contacts: Contacts };
+type Props = { fullName: string; timezone: string; contacts: Contacts; timeZones: string[] };
 
 const CONTACT_FIELDS = [
   { key: 'email', type: 'email' },
@@ -47,19 +47,20 @@ function Field({
   );
 }
 
-export function ProfileForm({ fullName, timezone, contacts }: Props) {
+export function ProfileForm({ fullName, timezone, contacts, timeZones }: Props) {
   const t = useTranslations('profile');
   const [state, action, pending] = useActionState<ProfileState, FormData>(updateProfile, {
     status: 'idle',
   });
   const invalid = new Set(state.fields ?? []);
-  const timeZones = Intl.supportedValuesOf('timeZone');
+  const v = state.values;
+  const formKey = v ? JSON.stringify(v) : 'initial';
 
   return (
-    <form action={action} noValidate className="flex max-w-2xl flex-col gap-6">
+    <form key={formKey} action={action} noValidate className="flex max-w-2xl flex-col gap-6">
       <div className="brutal grid gap-4 p-5 md:grid-cols-2">
-        <Field name="full_name" label={t('fullName')} defaultValue={fullName} invalid={invalid.has('full_name')} />
-        <Field name="timezone" label={t('timezone')} defaultValue={timezone} invalid={invalid.has('timezone')} list="timezones" />
+        <Field name="full_name" label={t('fullName')} defaultValue={v?.full_name ?? fullName} invalid={invalid.has('full_name')} />
+        <Field name="timezone" label={t('timezone')} defaultValue={v?.timezone ?? timezone} invalid={invalid.has('timezone')} list="timezones" />
         <datalist id="timezones">
           {timeZones.map((tz) => (
             <option key={tz} value={tz} />
@@ -75,7 +76,7 @@ export function ProfileForm({ fullName, timezone, contacts }: Props) {
             name={`contacts.${key}`}
             type={type}
             label={t(key)}
-            defaultValue={contacts[key]}
+            defaultValue={v ? v.contacts[key] : contacts[key]}
             invalid={invalid.has(`contacts.${key}`)}
           />
         ))}

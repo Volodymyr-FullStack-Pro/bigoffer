@@ -4,19 +4,27 @@ import { emptyToUndefined, profileUpdateSchema } from '@jp/core';
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 
-export type ProfileState = { status: 'idle' | 'saved' | 'invalid' | 'error'; fields?: string[] };
+export type ProfileValues = { full_name: string; timezone: string; contacts: Record<string, string> };
+export type ProfileState = {
+  status: 'idle' | 'saved' | 'invalid' | 'error';
+  fields?: string[];
+  values?: ProfileValues;
+};
 
 const CONTACT_KEYS = ['email', 'phone', 'linkedin', 'github', 'portfolio', 'telegram'] as const;
 
 export async function updateProfile(_prev: ProfileState, formData: FormData): Promise<ProfileState> {
-  const raw = {
+  const values: ProfileValues = {
     full_name: String(formData.get('full_name') ?? ''),
     timezone: String(formData.get('timezone') ?? ''),
-    contacts: emptyToUndefined(
-      Object.fromEntries(
-        CONTACT_KEYS.map((key) => [key, String(formData.get(`contacts.${key}`) ?? '')]),
-      ),
+    contacts: Object.fromEntries(
+      CONTACT_KEYS.map((key) => [key, String(formData.get(`contacts.${key}`) ?? '')]),
     ),
+  };
+  const raw = {
+    full_name: values.full_name,
+    timezone: values.timezone,
+    contacts: emptyToUndefined(values.contacts),
   };
 
   const parsed = profileUpdateSchema.safeParse(raw);
@@ -24,13 +32,14 @@ export async function updateProfile(_prev: ProfileState, formData: FormData): Pr
     return {
       status: 'invalid',
       fields: [...new Set(parsed.error.issues.map((issue) => issue.path.join('.')))],
+      values,
     };
   }
 
   const supabase = await createClient();
   const { data } = await supabase.auth.getClaims();
   const userId = data?.claims.sub;
-  if (!userId) return { status: 'error' };
+  if (!userId) return { status: 'error', values };
 
   const { error } = await supabase
     .from('profiles')
@@ -40,7 +49,7 @@ export async function updateProfile(_prev: ProfileState, formData: FormData): Pr
       contacts: parsed.data.contacts,
     })
     .eq('id', userId);
-  if (error) return { status: 'error' };
+  if (error) return { status: 'error', values };
 
   revalidatePath('/[locale]/profile', 'page');
   return { status: 'saved' };
