@@ -1,0 +1,45 @@
+import { describe, expect, it } from 'vitest';
+import { fingerprint, normalizeCompany, normalizeTitle, regionBucket } from './normalize';
+
+describe('normalizeCompany', () => {
+  it('drops legal suffixes, quotes and punctuation', () => {
+    expect(normalizeCompany('"ІНФОТЕХ" ТОВ')).toBe('інфотех');
+    expect(normalizeCompany('Acme, Inc.')).toBe('acme');
+    expect(normalizeCompany('Bjak ')).toBe('bjak');
+  });
+});
+
+describe('normalizeTitle', () => {
+  it('lowercases and strips punctuation', () => {
+    expect(normalizeTitle('Senior Front-End Developer (React + TS)!')).toBe('senior front end developer react ts');
+  });
+});
+
+describe('regionBucket', () => {
+  it('returns remote for remote jobs', () => {
+    expect(regionBucket('Kyiv', 'remote')).toBe('remote');
+  });
+  it('maps city spellings to one bucket', () => {
+    expect(regionBucket('Київ', 'office')).toBe('kyiv');
+    expect(regionBucket('Киев', 'hybrid')).toBe('kyiv');
+    expect(regionBucket('Lviv, Ukraine', 'office')).toBe('lviv');
+  });
+  it('falls back to normalized text or unknown', () => {
+    expect(regionBucket('Berlin', 'office')).toBe('berlin');
+    expect(regionBucket(null, 'unknown')).toBe('unknown');
+  });
+});
+
+describe('fingerprint', () => {
+  it('is stable across cosmetic differences', async () => {
+    const a = await fingerprint({ company: 'Acme, Inc.', title: 'Senior React Developer', region: 'remote' });
+    const b = await fingerprint({ company: 'ACME', title: 'senior react developer!', region: 'remote' });
+    expect(a).toBe(b);
+    expect(a).toMatch(/^[0-9a-f]{64}$/);
+  });
+  it('differs for different titles', async () => {
+    const a = await fingerprint({ company: 'Acme', title: 'React Developer', region: 'remote' });
+    const b = await fingerprint({ company: 'Acme', title: 'Vue Developer', region: 'remote' });
+    expect(a).not.toBe(b);
+  });
+});
