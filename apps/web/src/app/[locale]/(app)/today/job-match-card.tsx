@@ -37,7 +37,12 @@ export async function JobMatchCard({ match }: { match: JobMatchView }) {
         : match.salaryMaxUsd
           ? t('salaryTo', { max: match.salaryMaxUsd })
           : null;
-  const scoreTone = match.score >= 80 ? 'bg-brand text-brand-foreground' : match.score >= 60 ? 'bg-card' : 'bg-muted';
+  const scoreTone =
+    match.score >= 80
+      ? 'bg-brand text-brand-foreground'
+      : match.score >= 60
+        ? 'bg-card'
+        : 'bg-muted';
 
   return (
     <article data-testid="job-match" className="brutal flex flex-col gap-3 p-4">
@@ -46,7 +51,10 @@ export async function JobMatchCard({ match }: { match: JobMatchView }) {
           <h2 className="font-display text-lg font-bold leading-tight">{match.title}</h2>
           <p className="text-muted-foreground">{match.company}</p>
         </div>
-        <span data-testid="match-score" className={`shrink-0 rounded-sm border-2 border-border px-2 py-1 font-mono text-sm font-bold ${scoreTone}`}>
+        <span
+          data-testid="match-score"
+          className={`shrink-0 rounded-sm border-2 border-border px-2 py-1 font-mono text-sm font-bold ${scoreTone}`}
+        >
           {match.score}% {t('match')}
         </span>
       </div>
@@ -57,21 +65,27 @@ export async function JobMatchCard({ match }: { match: JobMatchView }) {
         <span>{format.relativeTime(new Date(match.seenAt))}</span>
       </p>
       <div className="flex flex-wrap items-center gap-2">
-        {match.postings.map((p) => (
-          <a
-            key={p.url}
-            href={p.url}
-            target="_blank"
-            rel="noopener"
-            className="brutal brutal-press px-3 py-1.5 text-sm font-semibold"
-          >
-            {t('open', { source: SOURCE_LABELS[p.sourceId] ?? p.sourceId })} ↗
-          </a>
-        ))}
+        {match.postings
+          .filter((p) => /^https?:\/\//i.test(p.url))
+          .map((p) => (
+            <a
+              key={p.url}
+              href={p.url}
+              target="_blank"
+              rel="noopener"
+              className="brutal brutal-press px-3 py-1.5 text-sm font-semibold"
+            >
+              {t('open', { source: SOURCE_LABELS[p.sourceId] ?? p.sourceId })} ↗
+            </a>
+          ))}
         <form action={setMatchState} className="ml-auto">
           <input type="hidden" name="matchId" value={match.id} />
           <input type="hidden" name="state" value="hidden" />
-          <button type="submit" data-testid="match-hide" className="px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground">
+          <button
+            type="submit"
+            data-testid="match-hide"
+            className="px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground"
+          >
             {t('hide')}
           </button>
         </form>

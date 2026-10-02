@@ -48,7 +48,7 @@
   },
   "today": {
     "title": "Today",
-    "subtitle": "{count} matching jobs from the last 3 days",
+    "subtitle": "{count, plural, one {# matching job from the last 3 days} other {# matching jobs from the last 3 days}}",
     "empty": "No matches yet. Set up what you're looking for — the first jobs arrive within an hour.",
     "setup": "Set up job search",
     "hide": "Hide",
@@ -58,9 +58,9 @@
     "remote_hybrid": "Hybrid",
     "remote_office": "Office",
     "remote_unknown": "Format not specified",
-    "salary": "${min}–{max}/mo",
-    "salaryFrom": "from ${min}/mo",
-    "salaryTo": "up to ${max}/mo"
+    "salary": "${min, number}–{max, number}/mo",
+    "salaryFrom": "from ${min, number}/mo",
+    "salaryTo": "up to ${max, number}/mo"
   },
   "comingSoon": {
     "badge": "Soon",
