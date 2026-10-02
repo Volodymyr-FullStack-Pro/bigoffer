@@ -1,6 +1,6 @@
 import { getTranslations } from 'next-intl/server';
 
-export async function ComingSoon({ page }: { page: 'today' | 'board' | 'analytics' | 'prep' }) {
+export async function ComingSoon({ page }: { page: 'board' | 'analytics' | 'prep' }) {
   const tPages = await getTranslations('pages');
   const t = await getTranslations('comingSoon');
 
