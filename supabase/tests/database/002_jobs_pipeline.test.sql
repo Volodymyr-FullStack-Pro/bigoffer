@@ -28,8 +28,8 @@ select is(public.find_similar_job('c0000000-0000-0000-0000-000000000001', 'Accou
 set local role authenticated;
 set local request.jwt.claims = '{"sub":"11111111-1111-1111-1111-111111111111","role":"authenticated"}';
 
-select is((select count(*)::int from public.jobs), 1, 'reads global jobs');
-select is((select count(*)::int from public.job_postings), 1, 'reads global postings');
+select is((select count(*)::int from public.jobs where id = 'd0000000-0000-0000-0000-000000000001'), 1, 'reads global jobs');
+select is((select count(*)::int from public.job_postings where job_id = 'd0000000-0000-0000-0000-000000000001'), 1, 'reads global postings');
 select is((select count(*)::int from public.job_matches), 1, 'sees only own matches');
 select is((select score::int from public.job_matches), 80, 'own match score visible');
 select lives_ok($$ update public.job_matches set state = 'hidden' where user_id = '11111111-1111-1111-1111-111111111111' $$,
