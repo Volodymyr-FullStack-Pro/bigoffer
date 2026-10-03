@@ -18,14 +18,15 @@ type JustJoinResponse = {
 };
 
 const REMOTE: Record<string, 'remote' | 'hybrid' | 'office'> = { remote: 'remote', hybrid: 'hybrid', office: 'office' };
-const UNIT: Record<string, 'month' | 'year'> = { Month: 'month', Year: 'year' };
 
 export const justjoinAdapter: SourceAdapter = {
   id: 'justjoin',
   async search(_params, ctx) {
     const data = await ctx.fetchJson<JustJoinResponse>('https://justjoin.it/api/candidate-api/offers?from=0&itemsCount=100');
     return (data.data ?? []).map((j): RawJob => {
-      const usd = j.employmentTypes?.find((e) => e.currency === 'USD' && e.from && e.unit && UNIT[e.unit]);
+      // `from`/`to` are JJIT's monthly equivalents for every unit (Month/Year/Day/Hour); the per-unit figures are
+      // in `fromPerUnit`/`toPerUnit`. So a "Year" offer's from/to (e.g. 5752–9795 USD) are already monthly.
+      const usd = j.employmentTypes?.find((e) => e.currency === 'USD' && e.from);
       const skills = (j.requiredSkills ?? []).map((s) => s.name);
       return {
         externalId: j.guid,
@@ -35,7 +36,7 @@ export const justjoinAdapter: SourceAdapter = {
         description: skills.length ? `Skills: ${skills.join(', ')}` : '',
         location: j.city || null,
         salaryRaw: usd ? `${Math.round(usd.from!)} - ${Math.round(usd.to ?? usd.from!)} USD` : null,
-        salaryPeriod: usd ? UNIT[usd.unit!] : undefined,
+        salaryPeriod: usd ? 'month' : undefined,
         postedAt: j.publishedAt ?? null,
         remoteHint: j.workplaceType ? REMOTE[j.workplaceType] : undefined,
         tags: [

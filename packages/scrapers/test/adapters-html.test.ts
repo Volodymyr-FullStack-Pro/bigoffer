@@ -52,6 +52,11 @@ describe('workuaAdapter', () => {
     expect(jobs).toHaveLength(3);
     expect(jobs[0]!.url).toMatch(/^https:\/\/www\.work\.ua\/jobs\/\d+\/$/);
     expect(jobs[0]!.company.length).toBeGreaterThan(0);
+    expect(jobs[0]!.postedAt).toBe(new Date(Date.UTC(2026, 9, 2)).toISOString()); // "вакансія від 2 жовтня 2026"
+    const paid = jobs.filter((j) => j.salaryRaw);
+    expect(paid.length).toBeGreaterThan(0);
+    for (const j of paid) expect(j.salaryPeriod).toBe('month');
+    for (const j of jobs.filter((j) => !j.salaryRaw)) expect(j.salaryPeriod).toBeUndefined();
     for (const raw of jobs) expect(await normalizeJob(raw)).not.toBeNull();
   });
 
