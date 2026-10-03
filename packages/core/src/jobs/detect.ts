@@ -84,11 +84,23 @@ export function parseSalary(
   if (isUpTo) min = null;
   if (isFrom) max = null;
 
-  const annual = period === 'year' || (period !== 'month' && Math.max(...values) * rate > 20000);
+  let annual = period === 'year' || (period !== 'month' && Math.max(...values) * rate > 20000);
   const toMonthlyUsd = (v: number | null): number | null => {
     if (v == null) return null;
     const usd = v * rate;
     return Math.round(annual ? usd / 12 : usd);
   };
-  return { minUsd: toMonthlyUsd(min), maxUsd: toMonthlyUsd(max) };
+  // Sanity guards against mislabelled periods and typos (sources are not always consistent).
+  // A "yearly" salary under $500/month was almost certainly monthly already.
+  if (annual && (toMonthlyUsd(max ?? min) ?? 0) < MIN_PLAUSIBLE_MONTHLY_USD) annual = false;
+  // A range wider than 4x is likely a typo in the max (an extra digit); keep the min.
+  if (min != null && max != null && min > 0 && max / min > MAX_RANGE_RATIO) max = null;
+  const minUsd = toMonthlyUsd(min);
+  const maxUsd = toMonthlyUsd(max);
+  if ((minUsd ?? 0) > MAX_PLAUSIBLE_MONTHLY_USD || (maxUsd ?? 0) > MAX_PLAUSIBLE_MONTHLY_USD) return null;
+  return { minUsd, maxUsd };
 }
+
+const MIN_PLAUSIBLE_MONTHLY_USD = 500;
+const MAX_PLAUSIBLE_MONTHLY_USD = 100_000;
+const MAX_RANGE_RATIO = 4;
