@@ -1,7 +1,9 @@
+import { createLlmClient, readAiEnv } from '@jp/ai';
 import { BROWSER_SOURCE_IDS, type SourceId } from '@jp/core';
 import { ADAPTERS, createHttpContext, createPlaywrightRenderer } from '@jp/scrapers';
 import { getDb } from './db';
 import { jobsEnv } from './env';
+import type { AiDeps } from './pipeline/enrich';
 import type { RunQueryDeps } from './pipeline/run-query';
 
 export function pipelineDeps(): RunQueryDeps {
@@ -19,5 +21,16 @@ export function pipelineDeps(): RunQueryDeps {
           ? () => createPlaywrightRenderer({ userAgent: env.SCRAPER_USER_AGENT })
           : undefined,
       ),
+  };
+}
+
+export function aiDeps(): AiDeps & { batchSize: number } {
+  const env = jobsEnv();
+  return {
+    db: getDb(),
+    llm: createLlmClient(readAiEnv()),
+    dailyLimit: env.AI_DAILY_LIMIT,
+    batchSize: env.AI_BATCH_SIZE,
+    minIntervalMs: env.AI_MIN_INTERVAL_MS,
   };
 }

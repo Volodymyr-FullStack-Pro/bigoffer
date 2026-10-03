@@ -9,6 +9,7 @@ import {
   getQuery,
   getSource,
   DUE_WINDOW_MS,
+  getScorableJobs,
   markQueryRun,
   saveJob,
   startRun,
@@ -63,14 +64,15 @@ export async function runQuery(deps: RunQueryDeps, queryId: string): Promise<Run
       const raw = await adapter.search(query.params as Record<string, string>, ctx);
       const normalized = (await Promise.all(raw.map(normalizeJob))).filter((j): j is NormalizedJob => j !== null);
 
-      const saved: { jobId: string; job: NormalizedJob }[] = [];
+      const savedIds: string[] = [];
       for (const job of normalized) {
         const result = await saveJob(db, source.id, job, now);
         if (result.isNew) inserted++;
-        saved.push({ jobId: result.jobId, job });
+        savedIds.push(result.jobId);
       }
 
-      matched = await matchJobs(db, await getProfilesForQuery(db, queryId), saved);
+      // Match on what is stored (AI skills, is_job, remote_regions), not on the raw source data.
+      matched = await matchJobs(db, await getProfilesForQuery(db, queryId), await getScorableJobs(db, savedIds));
       found = raw.length;
     } catch (err) {
       if (err instanceof SourceBlockedError) {

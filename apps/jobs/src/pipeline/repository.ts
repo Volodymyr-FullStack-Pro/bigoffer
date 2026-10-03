@@ -22,10 +22,11 @@ type ProfileRow = {
   salary_min_usd: number | null;
   sources: string[] | null;
   is_active?: boolean;
+  profiles?: { country: string | null } | null;
 };
 
 const PROFILE_COLUMNS =
-  'id, user_id, keywords, skills, exclude_keywords, seniority, locations, remote_type, salary_min_usd, sources, is_active';
+  'id, user_id, keywords, skills, exclude_keywords, seniority, locations, remote_type, salary_min_usd, sources, is_active, profiles(country)';
 
 export function toSearchProfile(row: ProfileRow): SearchProfile {
   return {
@@ -42,6 +43,7 @@ export function toSearchProfile(row: ProfileRow): SearchProfile {
       const valid = (row.sources ?? []).filter((s): s is SourceId => (SOURCE_IDS as readonly string[]).includes(s));
       return valid.length > 0 ? valid : null;
     })(),
+    candidateCountry: row.profiles?.country ?? null,
   };
 }
 
@@ -296,6 +298,66 @@ export async function getDueQueryIds(
   return data.map((q) => ({ id: q.id, sourceId: q.source_id, nextRunAt: q.next_run_at }));
 }
 
+const SCORABLE_COLUMNS =
+  'id, title, description_text, tags, remote_type, seniority, location, salary_min_usd, salary_max_usd, skills, is_job, remote_regions';
+
+type ScorableRow = {
+  id: string;
+  title: string;
+  description_text: string;
+  tags: string[];
+  remote_type: string;
+  seniority: string | null;
+  location: string | null;
+  salary_min_usd: number | null;
+  salary_max_usd: number | null;
+  skills: string[];
+  is_job: boolean | null;
+  remote_regions: string[];
+};
+
+function toScorableJob(j: ScorableRow): ScorableJob {
+  return {
+    title: j.title,
+    descriptionText: j.description_text,
+    tags: j.tags,
+    remoteType: (['remote', 'hybrid', 'office'] as const).find((r) => r === j.remote_type) ?? 'unknown',
+    seniority: (SENIORITIES as readonly string[]).includes(j.seniority ?? '') ? (j.seniority as Seniority) : null,
+    location: j.location,
+    salaryMinUsd: j.salary_min_usd,
+    salaryMaxUsd: j.salary_max_usd,
+    skills: j.skills,
+    isJob: j.is_job,
+    remoteRegions: j.remote_regions,
+  };
+}
+
+/** Jobs as stored (incl. backfills and AI enrichment) with the sources they were seen on. */
+export async function getScorableJobs(
+  db: Db,
+  jobIds: string[],
+): Promise<{ jobId: string; job: ScorableJob; sources: SourceId[] }[]> {
+  const out: { jobId: string; job: ScorableJob; sources: SourceId[] }[] = [];
+  const unique = [...new Set(jobIds)];
+  for (let i = 0; i < unique.length; i += 200) {
+    const { data, error } = await db
+      .from('jobs')
+      .select(`${SCORABLE_COLUMNS}, job_postings(source_id)`)
+      .in('id', unique.slice(i, i + 200));
+    if (error) throw error;
+    for (const j of data) {
+      out.push({
+        jobId: j.id,
+        job: toScorableJob(j),
+        sources: j.job_postings
+          .map((p) => p.source_id)
+          .filter((s): s is SourceId => (SOURCE_IDS as readonly string[]).includes(s)),
+      });
+    }
+  }
+  return out;
+}
+
 /** Active jobs first seen since `since` that have at least one posting on one of `sources`. */
 export async function getRecentJobs(
   db: Db,
@@ -307,29 +369,14 @@ export async function getRecentJobs(
   // matching postings as an array, so each job comes back once.
   const { data, error } = await db
     .from('jobs')
-    .select(
-      'id, title, description_text, tags, remote_type, seniority, location, salary_min_usd, salary_max_usd, skills, job_postings!inner(source_id)',
-    )
+    .select(`${SCORABLE_COLUMNS}, job_postings!inner(source_id)`)
     .eq('status', 'active')
     .gte('first_seen_at', since.toISOString())
     .in('job_postings.source_id', [...sources])
     .order('first_seen_at', { ascending: false })
     .limit(3000);
   if (error) throw error;
-  return data.map((j) => ({
-    jobId: j.id,
-    job: {
-      title: j.title,
-      descriptionText: j.description_text,
-      tags: j.tags,
-      remoteType: (['remote', 'hybrid', 'office'] as const).find((r) => r === j.remote_type) ?? 'unknown',
-      seniority: (SENIORITIES as readonly string[]).includes(j.seniority ?? '') ? (j.seniority as Seniority) : null,
-      location: j.location,
-      salaryMinUsd: j.salary_min_usd,
-      salaryMaxUsd: j.salary_max_usd,
-      skills: j.skills,
-    },
-  }));
+  return data.map((j) => ({ jobId: j.id, job: toScorableJob(j) }));
 }
 
 /** Job ids of a profile's untouched ('new') matches whose job has no posting on any of `sources`. */

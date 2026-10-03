@@ -8,3 +8,6 @@ export const SCRAPE_DEFAULT_QUEUE = queue({ name: 'scrape-default', concurrencyL
 export const SOURCE_QUEUES = Object.fromEntries(
   SOURCE_IDS.map((id) => [id, queue({ name: `scrape-${id}`, concurrencyLimit: 1 })]),
 ) as Record<SourceId, ReturnType<typeof queue>>;
+
+/** All free-tier AI work shares one lane: the per-minute quota is per key, not per task. */
+export const AI_PUBLIC_QUEUE = queue({ name: 'ai-public', concurrencyLimit: 1 });

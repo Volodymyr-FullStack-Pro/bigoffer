@@ -178,6 +178,9 @@ importers:
 
   apps/jobs:
     dependencies:
+      '@jp/ai':
+        specifier: workspace:*
+        version: link:../../packages/ai
       '@jp/core':
         specifier: workspace:*
         version: link:../../packages/core
