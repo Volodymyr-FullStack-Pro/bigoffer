@@ -1,5 +1,6 @@
 import { z } from 'zod';
-import { SENIORITIES, type SourceId } from './job';
+import { SENIORITIES, SOURCE_IDS, type SourceId } from './job';
+import { defaultSources } from './sources';
 
 export function parseList(text: string, max = 30): string[] {
   const seen = new Set<string>();
@@ -29,13 +30,15 @@ export const searchProfileInputSchema = z.object({
   locations: z.array(term).max(10),
   remoteType: z.enum(SEARCH_REMOTE_TYPES),
   salaryMinUsd: z.number().int().min(0).max(100_000).nullable(),
+  sources: z.array(z.enum(SOURCE_IDS)).min(1).max(30),
   isActive: z.boolean(),
 });
 
 export type SearchProfileInput = z.infer<typeof searchProfileInputSchema>;
-export type SearchProfile = Omit<SearchProfileInput, 'id' | 'name' | 'isActive'> & {
+export type SearchProfile = Omit<SearchProfileInput, 'id' | 'name' | 'isActive' | 'sources'> & {
   id: string;
   userId: string;
+  sources: SourceId[] | null;
 };
 
 export type SourceQuerySpec = { sourceId: SourceId; params: Record<string, string>; queryKey: string };
@@ -78,6 +81,9 @@ const SEARCH_SOURCES: [SourceId, string][] = [
   ['jooble', 'keywords'],
   ['remotive', 'search'],
   ['himalayas', 'q'],
+  ['workua', 'search'],
+  ['olx', 'search'],
+  ['jobicy', 'tag'],
 ];
 
 function queryKey(sourceId: SourceId, params: Record<string, string>): string {
@@ -93,15 +99,27 @@ function slug(s: string): string {
   return s.toLowerCase().replace(/\.js$/, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 }
 
-export function buildSourceQueries(profile: Pick<SearchProfile, 'keywords' | 'skills'>): SourceQuerySpec[] {
+export function buildSourceQueries(
+  profile: Pick<SearchProfile, 'keywords' | 'skills' | 'remoteType' | 'sources'>,
+): SourceQuerySpec[] {
+  const enabled = new Set<SourceId>(profile.sources ?? defaultSources(profile.remoteType));
+  const remote = profile.remoteType === 'remote';
   const keywords = profile.keywords.map((k) => k.trim().toLowerCase()).filter(Boolean).slice(0, 3);
   const specs: SourceQuerySpec[] = [];
   const add = (sourceId: SourceId, params: Record<string, string>) => {
-    specs.push({ sourceId, params, queryKey: queryKey(sourceId, params) });
+    if (enabled.has(sourceId)) specs.push({ sourceId, params, queryKey: queryKey(sourceId, params) });
   };
 
   for (const [sourceId, param] of SEARCH_SOURCES) {
-    for (const keyword of keywords) add(sourceId, { [param]: keyword });
+    for (const keyword of keywords) {
+      add(sourceId, sourceId === 'workua' && remote ? { [param]: keyword, remote: '1' } : { [param]: keyword });
+    }
+  }
+  for (const keyword of keywords) {
+    add(
+      'linkedin',
+      remote ? { keywords: keyword, location: 'Worldwide', remote: '1' } : { keywords: keyword, location: 'Ukraine' },
+    );
   }
 
   const djinni = [
@@ -119,6 +137,9 @@ export function buildSourceQueries(profile: Pick<SearchProfile, 'keywords' | 'sk
   add('remoteok', tag ? { tag } : {});
   add('wwr', {});
   add('hn', {});
+  add('arbeitnow', {});
+  add('workingnomads', {});
+  add('justjoin', {});
 
   const unique = new Map(specs.map((s) => [s.queryKey, s]));
   return [...unique.values()];

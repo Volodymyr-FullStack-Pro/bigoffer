@@ -10,7 +10,8 @@ import { remotiveAdapter } from './remotive';
 import { robotauaAdapter } from './robotaua';
 import { wwrAdapter } from './wwr';
 
-export const ADAPTERS: Record<SourceId, SourceAdapter> = {
+// Partial until the new adapters land (Plan 3 Tasks 2-5).
+export const ADAPTERS: Partial<Record<SourceId, SourceAdapter>> = {
   dou: douAdapter,
   djinni: djinniAdapter,
   robotaua: robotauaAdapter,

@@ -12,6 +12,7 @@ const profile: SearchProfile = {
   locations: [],
   remoteType: 'remote',
   salaryMinUsd: 3000,
+  sources: null,
 };
 
 const job: ScorableJob = {

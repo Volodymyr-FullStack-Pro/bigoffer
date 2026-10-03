@@ -21,6 +21,7 @@ describe('searchProfileInputSchema', () => {
       locations: [],
       remoteType: 'remote',
       salaryMinUsd: 3000,
+      sources: ['dou', 'djinni'],
       isActive: true,
     });
     expect(r.success).toBe(true);
@@ -28,14 +29,14 @@ describe('searchProfileInputSchema', () => {
   it('requires at least one keyword', () => {
     const r = searchProfileInputSchema.safeParse({
       name: 'x', keywords: [], skills: [], excludeKeywords: [], seniority: [], locations: [],
-      remoteType: 'any', salaryMinUsd: null, isActive: true,
+      remoteType: 'any', salaryMinUsd: null, sources: ['dou'], isActive: true,
     });
     expect(r.success).toBe(false);
   });
 });
 
 describe('buildSourceQueries', () => {
-  const specs = buildSourceQueries({ keywords: ['Full Stack', 'React Developer'], skills: ['React', 'Node.js'] });
+  const specs = buildSourceQueries({ keywords: ['Full Stack', 'React Developer'], skills: ['React', 'Node.js'], remoteType: 'any', sources: null });
   const bySource = (id: string) => specs.filter((s) => s.sourceId === id);
 
   it('creates one query per keyword for search sources', () => {
@@ -57,5 +58,41 @@ describe('buildSourceQueries', () => {
   it('builds deterministic unique query keys', () => {
     expect(bySource('dou')[0]!.queryKey).toBe('dou:{"search":"full stack"}');
     expect(new Set(specs.map((s) => s.queryKey)).size).toBe(specs.length);
+  });
+});
+
+describe('buildSourceQueries with source selection', () => {
+  const base = { keywords: ['full stack'], skills: ['React'], remoteType: 'remote' as const };
+
+  it('only builds queries for selected sources', () => {
+    const specs = buildSourceQueries({ ...base, sources: ['dou', 'workua'] });
+    expect([...new Set(specs.map((s) => s.sourceId))].sort()).toEqual(['dou', 'workua']);
+  });
+
+  it('falls back to defaults when sources is null', () => {
+    const ids = new Set(buildSourceQueries({ ...base, sources: null }).map((s) => s.sourceId));
+    expect(ids.has('linkedin')).toBe(false);
+    expect(ids.has('justjoin')).toBe(true);
+  });
+
+  it('builds params for new sources', () => {
+    const specs = buildSourceQueries({
+      ...base,
+      sources: ['workua', 'olx', 'linkedin', 'jobicy', 'arbeitnow', 'workingnomads', 'justjoin'],
+    });
+    const p = (id: string) => specs.filter((s) => s.sourceId === id).map((s) => s.params);
+    expect(p('workua')).toEqual([{ search: 'full stack', remote: '1' }]);
+    expect(p('olx')).toEqual([{ search: 'full stack' }]);
+    expect(p('linkedin')).toEqual([{ keywords: 'full stack', location: 'Worldwide', remote: '1' }]);
+    expect(p('jobicy')).toEqual([{ tag: 'full stack' }]);
+    expect(p('arbeitnow')).toEqual([{}]);
+    expect(p('workingnomads')).toEqual([{}]);
+    expect(p('justjoin')).toEqual([{}]);
+  });
+
+  it('targets Ukraine on LinkedIn and office Work.ua for office profiles', () => {
+    const specs = buildSourceQueries({ ...base, remoteType: 'office', sources: ['workua', 'linkedin'] });
+    expect(specs.find((s) => s.sourceId === 'workua')!.params).toEqual({ search: 'full stack' });
+    expect(specs.find((s) => s.sourceId === 'linkedin')!.params).toEqual({ keywords: 'full stack', location: 'Ukraine' });
   });
 });

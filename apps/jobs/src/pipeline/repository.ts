@@ -29,6 +29,7 @@ export function toSearchProfile(row: ProfileRow): SearchProfile {
     locations: row.locations,
     remoteType: (['any', 'remote', 'hybrid', 'office'] as const).find((r) => r === row.remote_type) ?? 'any',
     salaryMinUsd: row.salary_min_usd,
+    sources: null, // TODO(Task 6): read from DB column
   };
 }
 
