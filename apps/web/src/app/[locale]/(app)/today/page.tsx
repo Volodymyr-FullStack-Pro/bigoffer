@@ -1,7 +1,9 @@
-import { getTranslations } from 'next-intl/server';
+import { isLocale, type LocalizedText, localized, SENIORITIES, type Seniority } from '@jp/core';
+import { getLocale, getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
 import { requireUserId } from '@/lib/auth';
 import { createClient } from '@/lib/supabase/server';
+import { cardSkills, matchedSkillsOf } from './card-skills';
 import { JobMatchCard, type JobMatchView } from './job-match-card';
 
 const REMOTE = ['remote', 'hybrid', 'office'] as const;
@@ -18,7 +20,7 @@ export default async function TodayPage() {
   const { data } = await supabase
     .from('job_matches')
     .select(
-      'id, score, created_at, jobs!inner(title, location, remote_type, salary_min_usd, salary_max_usd, companies(name), job_postings(source_id, url))',
+      'id, score, created_at, breakdown, explanation, jobs!inner(title, location, remote_type, seniority, salary_min_usd, salary_max_usd, summary, skills, companies(name), job_postings(source_id, url))',
     )
     .in('state', ['new', 'seen'])
     .eq('jobs.status', 'active')
@@ -27,6 +29,8 @@ export default async function TodayPage() {
     .order('created_at', { ascending: false })
     .limit(100);
 
+  const rawLocale = await getLocale();
+  const locale = isLocale(rawLocale) ? rawLocale : 'en';
   const matches: JobMatchView[] = (data ?? []).map((m) => ({
     id: m.id,
     score: m.score,
@@ -37,6 +41,10 @@ export default async function TodayPage() {
     salaryMinUsd: m.jobs.salary_min_usd,
     salaryMaxUsd: m.jobs.salary_max_usd,
     seenAt: m.created_at,
+    summary: localized(m.jobs.summary as LocalizedText | null, locale) || null,
+    why: localized(m.explanation as LocalizedText | null, locale) || null,
+    seniority: (SENIORITIES as readonly string[]).includes(m.jobs.seniority ?? '') ? (m.jobs.seniority as Seniority) : null,
+    skills: cardSkills(m.jobs.skills, matchedSkillsOf(m.breakdown)),
     postings: m.jobs.job_postings.map((p) => ({ sourceId: p.source_id, url: p.url })),
   }));
 

@@ -60,7 +60,13 @@
     "remote_unknown": "Format not specified",
     "salary": "${min, number}–{max, number}/mo",
     "salaryFrom": "from ${min, number}/mo",
-    "salaryTo": "up to ${max, number}/mo"
+    "salaryTo": "up to ${max, number}/mo",
+    "why": "Why it fits",
+    "seniority_intern": "Intern",
+    "seniority_junior": "Junior",
+    "seniority_middle": "Middle",
+    "seniority_senior": "Senior",
+    "seniority_lead": "Lead"
   },
   "comingSoon": {
     "badge": "Soon",
@@ -82,7 +88,10 @@
     "save": "Save",
     "saved": "Saved",
     "invalid": "Check these fields: {fields}",
-    "error": "Couldn't save. Please try again."
+    "error": "Couldn't save. Please try again.",
+    "country": "Country of residence",
+    "countryNone": "Not set",
+    "countryHint": "Remote jobs that only hire in other countries are hidden."
   },
   "search": {
     "title": "Job search settings",

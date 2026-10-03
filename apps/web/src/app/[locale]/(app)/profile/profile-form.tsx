@@ -6,7 +6,14 @@ import { useActionState } from 'react';
 import { Button } from '@/components/ui/button';
 import { updateProfile, type ProfileState } from './actions';
 
-type Props = { fullName: string; timezone: string; contacts: Contacts; timeZones: string[] };
+type Props = {
+  fullName: string;
+  timezone: string;
+  contacts: Contacts;
+  country: string;
+  countries: { code: string; name: string }[];
+  timeZones: string[];
+};
 
 const CONTACT_FIELDS = [
   { key: 'email', type: 'email' },
@@ -47,7 +54,7 @@ function Field({
   );
 }
 
-export function ProfileForm({ fullName, timezone, contacts, timeZones }: Props) {
+export function ProfileForm({ fullName, timezone, contacts, country, countries, timeZones }: Props) {
   const t = useTranslations('profile');
   const [state, action, pending] = useActionState<ProfileState, FormData>(updateProfile, {
     status: 'idle',
@@ -66,6 +73,29 @@ export function ProfileForm({ fullName, timezone, contacts, timeZones }: Props) 
             <option key={tz} value={tz} />
           ))}
         </datalist>
+        <div className="flex flex-col gap-1 md:col-span-2">
+          <label htmlFor="profile-country" className="font-mono text-xs uppercase">
+            {t('country')}
+          </label>
+          <select
+            id="profile-country"
+            name="country"
+            defaultValue={v?.country ?? country}
+            aria-invalid={invalid.has('country')}
+            aria-describedby="profile-country-hint"
+            className={`brutal bg-card px-3 py-2 outline-none focus:ring-2 focus:ring-brand ${invalid.has('country') ? 'border-danger' : ''}`}
+          >
+            <option value="">{t('countryNone')}</option>
+            {countries.map((c) => (
+              <option key={c.code} value={c.code}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+          <p id="profile-country-hint" className="text-xs text-muted-foreground">
+            {t('countryHint')}
+          </p>
+        </div>
       </div>
 
       <fieldset className="brutal grid gap-4 p-5 md:grid-cols-2">

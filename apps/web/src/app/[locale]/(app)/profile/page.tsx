@@ -1,5 +1,5 @@
-import { contactsSchema } from '@jp/core';
-import { getTranslations } from 'next-intl/server';
+import { COUNTRY_CODES, contactsSchema } from '@jp/core';
+import { getLocale, getTranslations } from 'next-intl/server';
 import { requireUserId } from '@/lib/auth';
 import { createClient } from '@/lib/supabase/server';
 import { ProfileForm } from './profile-form';
@@ -10,7 +10,7 @@ export default async function ProfilePage() {
   const supabase = await createClient();
   const { data: profile, error } = await supabase
     .from('profiles')
-    .select('full_name, timezone, contacts')
+    .select('full_name, timezone, contacts, country')
     .eq('id', userId)
     .single();
 
@@ -25,12 +25,20 @@ export default async function ProfilePage() {
 
   const contacts = contactsSchema.safeParse(profile.contacts ?? {});
 
+  const locale = await getLocale();
+  const regionNames = new Intl.DisplayNames([locale], { type: 'region' });
+  const countries = COUNTRY_CODES.map((code) => ({ code, name: regionNames.of(code) ?? code })).sort((a, b) =>
+    a.name.localeCompare(b.name, locale),
+  );
+
   return (
     <section className="flex flex-col gap-6">
       <h1 className="text-3xl font-black md:text-4xl">{t('title')}</h1>
       <ProfileForm
         fullName={profile.full_name ?? ''}
         timezone={profile.timezone ?? 'Europe/Kyiv'}
+        country={profile.country ?? ''}
+        countries={countries}
         contacts={contacts.success ? contacts.data : {}}
         timeZones={Intl.supportedValuesOf('timeZone')}
       />

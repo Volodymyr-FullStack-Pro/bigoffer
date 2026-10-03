@@ -19,7 +19,16 @@ async function userIdByEmail(email: string): Promise<string> {
 
 export async function seedMatch(
   email: string,
-  opts: { title?: string; score?: number; status?: 'active' | 'expired' } = {},
+  opts: {
+    title?: string;
+    score?: number;
+    status?: 'active' | 'expired';
+    seniority?: 'intern' | 'junior' | 'middle' | 'senior' | 'lead';
+    skills?: string[];
+    summary?: Record<string, string>;
+    explanation?: Record<string, string>;
+    matchedSkills?: string[];
+  } = {},
 ) {
   const db = admin();
   const tag = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
@@ -33,7 +42,7 @@ export async function seedMatch(
   if (cErr) throw cErr;
   const { data: job, error: jErr } = await db
     .from('jobs')
-    .insert({ fingerprint: `e2e-${tag}`, title, company_id: company.id, remote_type: 'remote', salary_min_usd: 3000, salary_max_usd: 4500, status: opts.status ?? 'active' })
+    .insert({ fingerprint: `e2e-${tag}`, title, company_id: company.id, remote_type: 'remote', salary_min_usd: 3000, salary_max_usd: 4500, status: opts.status ?? 'active', seniority: opts.seniority ?? null, skills: opts.skills ?? [], summary: opts.summary ?? null })
     .select('id')
     .single();
   if (jErr) throw jErr;
@@ -41,7 +50,7 @@ export async function seedMatch(
   if (pErr) throw pErr;
   const { data: match, error: mErr } = await db
     .from('job_matches')
-    .insert({ user_id: userId, job_id: job.id, score: opts.score ?? 88 })
+    .insert({ user_id: userId, job_id: job.id, score: opts.score ?? 88, explanation: opts.explanation ?? null, breakdown: { matchedSkills: opts.matchedSkills ?? [] } })
     .select('id')
     .single();
   if (mErr) throw mErr;

@@ -23,3 +23,13 @@ test('shows invalid fields', async ({ page }) => {
   await page.getByTestId('profile-save').click();
   await expect(page.getByRole('status')).toContainText('contacts.github');
 });
+
+test('saves the country of residence', async ({ page }) => {
+  await page.goto('/en/profile');
+  await page.getByLabel('Full name').fill('Test User');
+  await page.getByLabel('Country of residence').selectOption('UA');
+  await page.getByTestId('profile-save').click();
+  await expect(page.getByRole('status')).toHaveText('Saved');
+  await page.reload();
+  await expect(page.getByLabel('Country of residence')).toHaveValue('UA');
+});
