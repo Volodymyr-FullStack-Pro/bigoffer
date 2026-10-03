@@ -3,6 +3,8 @@ import { load } from 'cheerio';
 import type { SourceAdapter } from '../types';
 
 const CARD = '[data-cy="l-card"]';
+/** Job ads live under /obyavlenie/rabota/; OLX pads job searches with goods/services from other categories. */
+const JOB_PATH = '/obyavlenie/rabota/';
 
 export function olxUrl(params: Record<string, string>): string {
   const slug = (params.search ?? '').trim().toLowerCase().replace(/\s+/g, '-');
@@ -24,11 +26,13 @@ export const olxAdapter: SourceAdapter = {
       const href = link.attr('href');
       const title = link.text().trim();
       if (!id || !href || !title) return;
+      const path = href.split('?')[0]!;
+      if (!new URL(path, 'https://www.olx.ua').pathname.includes(JOB_PATH)) return;
       const salary = card.find('p').filter((_, p) => /грн|\$|€/.test($(p).text())).first().text().trim();
       const text = card.text().replace(/\s+/g, ' ').trim();
       jobs.push({
         externalId: id,
-        url: new URL(href.split('?')[0]!, 'https://www.olx.ua').toString(),
+        url: new URL(path, 'https://www.olx.ua').toString(),
         title,
         company: 'OLX',
         companyIsPlaceholder: true,

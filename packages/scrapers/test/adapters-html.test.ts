@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { normalizeJob } from '@jp/core';
+import { load } from 'cheerio';
 import { describe, expect, it, vi } from 'vitest';
 import { linkedinAdapter, linkedinUrl } from '../src/adapters/linkedin';
 import { olxAdapter, olxUrl } from '../src/adapters/olx';
@@ -7,6 +8,7 @@ import { workuaAdapter, workuaUrl } from '../src/adapters/workua';
 import type { AdapterContext } from '../src/types';
 import { fakeContext } from './fake-context';
 
+const CARD = '[data-cy="l-card"]';
 const fixture = (name: string) => readFileSync(new URL(`../fixtures/${name}`, import.meta.url), 'utf8');
 
 function browserContext(html: string) {
@@ -68,5 +70,21 @@ describe('olxAdapter', () => {
     expect(jobs[0]!.url).toMatch(/^https:\/\/www\.olx\.ua\/uk\/obyavlenie\//);
     for (const raw of jobs) expect(`${raw.title} ${raw.description}`).not.toMatch(/[{}]|var\(--/);
     for (const raw of jobs) expect(await normalizeJob(raw)).not.toBeNull();
+  });
+
+  it('skips goods/services cards that OLX spills into job searches', async () => {
+    const $ = load(fixture('olx.html'));
+    const goods = $(CARD).first().clone();
+    goods.attr('id', '999000111');
+    goods
+      .find('[data-testid="card-title-link"]')
+      .attr('href', '/d/uk/obyavlenie/krosvki-nike-react-element-55-ID11mavD.html?search_reason=search%7Corganic');
+    $(CARD).last().after(goods);
+    expect($(CARD)).toHaveLength(4);
+    const { ctx } = browserContext($.html());
+    const jobs = await olxAdapter.search({ search: 'react' }, ctx);
+    expect(jobs).toHaveLength(3);
+    for (const raw of jobs) expect(raw.url).toContain('/obyavlenie/rabota/');
+    expect(jobs.map((j) => j.externalId)).not.toContain('999000111');
   });
 });
