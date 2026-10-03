@@ -9,7 +9,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@google/genai": "^2.27.0",
+    "@google/genai": "2.25.0",
     "@jp/core": "workspace:*",
     "zod": "^4.6.5"
   },

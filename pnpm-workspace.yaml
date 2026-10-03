@@ -9,5 +9,3 @@ allowBuilds:
   esbuild: true
   protobufjs: false
   unrs-resolver: true
-minimumReleaseAgeExclude:
-  - '@google/genai@2.27.0'
