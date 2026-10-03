@@ -309,3 +309,49 @@ describe('browser sources and source selection', () => {
     }
   });
 });
+
+describe('saveJob', () => {
+  it('backfills a thin job when a richer posting of the same job appears on another source', async () => {
+    const base = { title: `Platform Engineer ${uniq}`, company: `Thin ${uniq}`, postedAt: now.toISOString() };
+    const thin = await normalizeJob({ ...base, externalId: `li-${uniq}`, url: `https://linkedin.com/jobs/view/${uniq}`, description: '' });
+    const { jobId, isNew } = await saveJob(db, 'linkedin', thin!, now);
+    expect(isNew).toBe(true);
+
+    const rich = await normalizeJob({
+      ...base,
+      title: `platform engineer ${uniq}`,
+      externalId: `rich-${uniq}`,
+      url: `https://remotive.com/x/rich-${uniq}`,
+      description: 'Kubernetes, Terraform and AWS. Small platform team.',
+      salaryRaw: '$5000 - $6000',
+      salaryPeriod: 'month',
+    });
+    expect(rich!.fingerprint).toBe(thin!.fingerprint);
+    const second = await saveJob(db, 'remotive', rich!, now);
+    expect(second).toEqual({ jobId, isNew: false });
+
+    // Same job, different region -> different fingerprint, found by the fuzzy company+title match; fills location.
+    const located = await normalizeJob({ ...base, externalId: `loc-${uniq}`, url: `https://dou.ua/x/${uniq}`, description: '', location: 'Berlin' });
+    expect(located!.fingerprint).not.toBe(thin!.fingerprint);
+    expect(await saveJob(db, 'dou', located!, now)).toEqual({ jobId, isNew: false });
+
+    const { data: row } = await db
+      .from('jobs')
+      .select('title, description_text, salary_min_usd, salary_max_usd, salary_raw, location')
+      .eq('id', jobId)
+      .single();
+    expect(row).toEqual({
+      title: base.title, // first seen wins
+      description_text: rich!.descriptionText,
+      salary_min_usd: 5000,
+      salary_max_usd: 6000,
+      salary_raw: '$5000 - $6000',
+      location: 'Berlin',
+    });
+
+    // A later thinner posting never overwrites richer data.
+    await saveJob(db, 'linkedin', thin!, now);
+    const { data: again } = await db.from('jobs').select('description_text, salary_min_usd').eq('id', jobId).single();
+    expect(again).toEqual({ description_text: rich!.descriptionText, salary_min_usd: 5000 });
+  });
+});

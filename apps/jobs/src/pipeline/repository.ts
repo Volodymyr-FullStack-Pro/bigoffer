@@ -146,6 +146,35 @@ async function findJobId(db: Db, job: NormalizedJob, companyId: string): Promise
   return similar ?? null;
 }
 
+/**
+ * Fields a richer posting of an already-stored job can fill in (e.g. a LinkedIn card without a description,
+ * later seen on a board with the full text and a salary). Title and company stay as first seen.
+ */
+async function backfillPatch(db: Db, jobId: string, job: NormalizedJob) {
+  const { data, error } = await db
+    .from('jobs')
+    .select('description_text, salary_raw, salary_min_usd, salary_max_usd, location')
+    .eq('id', jobId)
+    .single();
+  if (error) throw error;
+  const patch: {
+    description_text?: string;
+    salary_raw?: string | null;
+    salary_min_usd?: number | null;
+    salary_max_usd?: number | null;
+    location?: string;
+  } = {};
+  if (job.descriptionText.length > (data.description_text ?? '').length) patch.description_text = job.descriptionText;
+  const hasSalary = data.salary_min_usd != null || data.salary_max_usd != null;
+  if (!hasSalary && (job.salaryMinUsd != null || job.salaryMaxUsd != null)) {
+    patch.salary_raw = job.salaryRaw;
+    patch.salary_min_usd = job.salaryMinUsd;
+    patch.salary_max_usd = job.salaryMaxUsd;
+  }
+  if (data.location == null && job.location) patch.location = job.location;
+  return patch;
+}
+
 export async function saveJob(
   db: Db,
   sourceId: string,
@@ -201,7 +230,10 @@ export async function saveJob(
   }
 
   if (!isNew) {
-    const { error } = await db.from('jobs').update({ last_seen_at: nowIso, status: 'active' }).eq('id', jobId);
+    const { error } = await db
+      .from('jobs')
+      .update({ last_seen_at: nowIso, status: 'active', ...(await backfillPatch(db, jobId, job)) })
+      .eq('id', jobId);
     if (error) throw error;
   }
   const { error: upsertError } = await db
