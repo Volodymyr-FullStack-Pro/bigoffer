@@ -1,6 +1,6 @@
 'use server';
 
-import { defaultSources, parseList, searchProfileInputSchema } from '@jp/core';
+import { parseList, searchProfileInputSchema } from '@jp/core';
 import { revalidatePath } from 'next/cache';
 import { getLocale } from 'next-intl/server';
 import { redirect } from '@/i18n/navigation';
@@ -12,7 +12,6 @@ export type SearchFormState = { status: 'idle' | 'saved' | 'invalid' | 'error'; 
 
 export async function saveSearchProfile(_prev: SearchFormState, formData: FormData): Promise<SearchFormState> {
   const salary = String(formData.get('salaryMinUsd') ?? '').trim();
-  const remoteType = String(formData.get('remoteType') ?? 'any');
   const parsed = searchProfileInputSchema.safeParse({
     id: String(formData.get('id') ?? '') || undefined,
     name: String(formData.get('name') ?? ''),
@@ -21,9 +20,8 @@ export async function saveSearchProfile(_prev: SearchFormState, formData: FormDa
     excludeKeywords: parseList(String(formData.get('excludeKeywords') ?? '')),
     seniority: formData.getAll('seniority').map(String),
     locations: parseList(String(formData.get('locations') ?? ''), 10),
-    remoteType,
-    // TODO(Task 7): replace with real form field
-    sources: defaultSources((['any', 'remote', 'hybrid', 'office'] as const).find((r) => r === remoteType) ?? 'any'),
+    remoteType: String(formData.get('remoteType') ?? 'any'),
+    sources: formData.getAll('sources').map(String),
     salaryMinUsd: salary === '' ? null : Number(salary),
     isActive: formData.get('isActive') === 'on',
   });
@@ -43,6 +41,7 @@ export async function saveSearchProfile(_prev: SearchFormState, formData: FormDa
     seniority: p.seniority,
     locations: p.locations,
     remote_type: p.remoteType,
+    sources: p.sources,
     salary_min_usd: p.salaryMinUsd,
     is_active: p.isActive,
   };

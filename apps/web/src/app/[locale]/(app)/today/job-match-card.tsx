@@ -1,17 +1,7 @@
+import { sourceInfo } from '@jp/core';
 import { getFormatter, getTranslations } from 'next-intl/server';
 import { setMatchState } from './actions';
 
-export const SOURCE_LABELS: Record<string, string> = {
-  dou: 'DOU',
-  djinni: 'Djinni',
-  robotaua: 'robota.ua',
-  jooble: 'Jooble',
-  remoteok: 'Remote OK',
-  remotive: 'Remotive',
-  himalayas: 'Himalayas',
-  wwr: 'We Work Remotely',
-  hn: "HN Who's Hiring",
-};
 
 export type JobMatchView = {
   id: string;
@@ -75,7 +65,7 @@ export async function JobMatchCard({ match }: { match: JobMatchView }) {
               rel="noopener"
               className="brutal brutal-press px-3 py-1.5 text-sm font-semibold"
             >
-              {t('open', { source: SOURCE_LABELS[p.sourceId] ?? p.sourceId })} ↗
+              {t('open', { source: sourceInfo(p.sourceId)?.name ?? p.sourceId })} ↗
             </a>
           ))}
         <form action={setMatchState} className="ml-auto">

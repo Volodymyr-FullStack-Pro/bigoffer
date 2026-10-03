@@ -1,3 +1,4 @@
+import { defaultSources } from '@jp/core';
 import { getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
 import { requireUserId } from '@/lib/auth';
@@ -12,6 +13,7 @@ const EMPTY: SearchProfileValues = {
   seniority: [],
   locations: [],
   remoteType: 'any',
+  sources: defaultSources('any'),
   salaryMinUsd: null,
   isActive: true,
 };
@@ -23,7 +25,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
   const supabase = await createClient();
   const { data } = await supabase
     .from('search_profiles')
-    .select('id, name, keywords, skills, exclude_keywords, seniority, locations, remote_type, salary_min_usd, is_active')
+    .select('id, name, keywords, skills, exclude_keywords, seniority, locations, remote_type, sources, salary_min_usd, is_active')
     .order('created_at');
 
   const profiles: SearchProfileValues[] = (data ?? []).map((p) => ({
@@ -35,6 +37,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
     seniority: p.seniority,
     locations: p.locations,
     remoteType: p.remote_type,
+    sources: p.sources ?? defaultSources('any'),
     salaryMinUsd: p.salary_min_usd,
     isActive: p.is_active,
   }));
