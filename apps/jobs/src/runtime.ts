@@ -1,4 +1,5 @@
-import { ADAPTERS, createHttpContext } from '@jp/scrapers';
+import { BROWSER_SOURCE_IDS, type SourceId } from '@jp/core';
+import { ADAPTERS, createHttpContext, createPlaywrightRenderer } from '@jp/scrapers';
 import { getDb } from './db';
 import { jobsEnv } from './env';
 import type { RunQueryDeps } from './pipeline/run-query';
@@ -10,6 +11,13 @@ export function pipelineDeps(): RunQueryDeps {
     db: getDb(),
     adapters: ADAPTERS,
     env: adapterEnv,
-    createContext: () => createHttpContext({ userAgent: env.SCRAPER_USER_AGENT }, adapterEnv),
+    createContext: (sourceId) =>
+      createHttpContext(
+        { userAgent: env.SCRAPER_USER_AGENT },
+        adapterEnv,
+        BROWSER_SOURCE_IDS.has(sourceId as SourceId)
+          ? () => createPlaywrightRenderer({ userAgent: env.SCRAPER_USER_AGENT })
+          : undefined,
+      ),
   };
 }

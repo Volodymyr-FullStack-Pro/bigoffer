@@ -53,48 +53,53 @@ export async function runQuery(deps: RunQueryDeps, queryId: string): Promise<Run
     return SKIPPED;
   }
 
-  const runId = await startRun(db, source.id, queryId, now);
-  let found: number;
-  let inserted = 0;
-  let matched: number;
+  const ctx = deps.createContext(source.id);
   try {
-    const raw = await adapter.search(query.params as Record<string, string>, deps.createContext(source.id));
-    const normalized = (await Promise.all(raw.map(normalizeJob))).filter((j): j is NormalizedJob => j !== null);
-
-    const saved: { jobId: string; job: NormalizedJob }[] = [];
-    for (const job of normalized) {
-      const result = await saveJob(db, source.id, job, now);
-      if (result.isNew) inserted++;
-      saved.push({ jobId: result.jobId, job });
-    }
-
-    matched = await matchJobs(db, await getProfilesForQuery(db, queryId), saved);
-    found = raw.length;
-  } catch (err) {
-    if (err instanceof SourceBlockedError) {
-      await finishRun(db, runId, { status: 'blocked', found: 0, inserted: 0, error: err.message });
-      const { alert } = await updateSourceHealth(db, source, 'blocked', now);
-      await markQueryRun(db, queryId, now, source.min_interval_minutes);
-      return { status: 'blocked', found: 0, inserted: 0, matched: 0, alert };
-    }
-    // Record the failure and push the query forward, but never mask the original error.
+    const runId = await startRun(db, source.id, queryId, now);
+    let found: number;
+    let inserted = 0;
+    let matched: number;
     try {
-      await finishRun(db, runId, {
-        status: 'error',
-        found: 0,
-        inserted,
-        error: err instanceof Error ? err.message : String(err),
-      });
-      await markQueryRun(db, queryId, now, source.min_interval_minutes);
-    } catch {
-      // ignored: the original error below is what matters
-    }
-    throw err;
-  }
+      const raw = await adapter.search(query.params as Record<string, string>, ctx);
+      const normalized = (await Promise.all(raw.map(normalizeJob))).filter((j): j is NormalizedJob => j !== null);
 
-  // Bookkeeping after a successful fetch lives outside the try so its failure can't turn an 'ok' run into 'error'.
-  await finishRun(db, runId, { status: 'ok', found, inserted });
-  const { alert } = await updateSourceHealth(db, source, found === 0 ? 'empty' : 'ok', now);
-  await markQueryRun(db, queryId, now, source.min_interval_minutes);
-  return { status: 'ok', found, inserted, matched, alert };
+      const saved: { jobId: string; job: NormalizedJob }[] = [];
+      for (const job of normalized) {
+        const result = await saveJob(db, source.id, job, now);
+        if (result.isNew) inserted++;
+        saved.push({ jobId: result.jobId, job });
+      }
+
+      matched = await matchJobs(db, await getProfilesForQuery(db, queryId), saved);
+      found = raw.length;
+    } catch (err) {
+      if (err instanceof SourceBlockedError) {
+        await finishRun(db, runId, { status: 'blocked', found: 0, inserted: 0, error: err.message });
+        const { alert } = await updateSourceHealth(db, source, 'blocked', now);
+        await markQueryRun(db, queryId, now, source.min_interval_minutes);
+        return { status: 'blocked', found: 0, inserted: 0, matched: 0, alert };
+      }
+      // Record the failure and push the query forward, but never mask the original error.
+      try {
+        await finishRun(db, runId, {
+          status: 'error',
+          found: 0,
+          inserted,
+          error: err instanceof Error ? err.message : String(err),
+        });
+        await markQueryRun(db, queryId, now, source.min_interval_minutes);
+      } catch {
+        // ignored: the original error below is what matters
+      }
+      throw err;
+    }
+
+    // Bookkeeping after a successful fetch lives outside the try so its failure can't turn an 'ok' run into 'error'.
+    await finishRun(db, runId, { status: 'ok', found, inserted });
+    const { alert } = await updateSourceHealth(db, source, found === 0 ? 'empty' : 'ok', now);
+    await markQueryRun(db, queryId, now, source.min_interval_minutes);
+    return { status: 'ok', found, inserted, matched, alert };
+  } finally {
+    await ctx.dispose?.().catch((e: unknown) => console.error('dispose failed', e));
+  }
 }

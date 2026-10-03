@@ -1,7 +1,7 @@
 import type { RawJob } from '@jp/core';
 import type { AdapterContext, SourceAdapter } from '@jp/scrapers';
 import { SourceBlockedError } from '@jp/scrapers';
-import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { getDb } from '../src/db';
 import { expireJobs } from '../src/pipeline/expire';
 import { getDueQueryIds, getProfile } from '../src/pipeline/repository';
@@ -219,5 +219,33 @@ describe('expireJobs', () => {
     expect(await expireJobs(db, now)).toBeGreaterThanOrEqual(1);
     const { data } = await db.from('jobs').select('status').eq('title', rawJobs[1]!.title).single();
     expect(data!.status).toBe('expired');
+  });
+});
+
+describe('browser sources and source selection', () => {
+  it('disposes the adapter context after a run, even on error', async () => {
+    const dispose = vi.fn(async () => {});
+    const failing: SourceAdapter = { id: 'dou', search: async () => { throw new Error('boom'); } };
+    const deps = { db, adapters: { dou: failing }, createContext: () => ({ ...ctx, dispose }), now: () => now };
+    await makeDue(douQueryId);
+    await expect(runQuery(deps, douQueryId)).rejects.toThrow('boom');
+    expect(dispose).toHaveBeenCalledTimes(1);
+  });
+
+  it('only links queries for the sources the profile selected', async () => {
+    const { data: sp, error } = await db
+      .from('search_profiles')
+      .insert({ user_id: userId, name: 'UA only', keywords: ['react'], sources: ['dou', 'workua'] })
+      .select('id')
+      .single();
+    if (error) throw error;
+    try {
+      const profile = await getProfile(db, sp.id);
+      const { queryIds } = await syncProfile(db, profile!, now);
+      const { data } = await db.from('search_queries').select('source_id').in('id', queryIds);
+      expect([...new Set(data!.map((q) => q.source_id))].sort()).toEqual(['dou', 'workua']);
+    } finally {
+      await db.from('search_profiles').delete().eq('id', sp.id);
+    }
   });
 });

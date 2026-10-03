@@ -1,4 +1,12 @@
-import { type NormalizedJob, type ScorableJob, type SearchProfile, SENIORITIES, type Seniority } from '@jp/core';
+import {
+  type NormalizedJob,
+  type ScorableJob,
+  type SearchProfile,
+  SENIORITIES,
+  SOURCE_IDS,
+  type Seniority,
+  type SourceId,
+} from '@jp/core';
 import type { Json } from '@jp/db';
 import type { Db } from '../db';
 
@@ -12,11 +20,12 @@ type ProfileRow = {
   locations: string[];
   remote_type: string;
   salary_min_usd: number | null;
+  sources: string[] | null;
   is_active?: boolean;
 };
 
 const PROFILE_COLUMNS =
-  'id, user_id, keywords, skills, exclude_keywords, seniority, locations, remote_type, salary_min_usd, is_active';
+  'id, user_id, keywords, skills, exclude_keywords, seniority, locations, remote_type, salary_min_usd, sources, is_active';
 
 export function toSearchProfile(row: ProfileRow): SearchProfile {
   return {
@@ -29,7 +38,10 @@ export function toSearchProfile(row: ProfileRow): SearchProfile {
     locations: row.locations,
     remoteType: (['any', 'remote', 'hybrid', 'office'] as const).find((r) => r === row.remote_type) ?? 'any',
     salaryMinUsd: row.salary_min_usd,
-    sources: null, // TODO(Task 6): read from DB column
+    sources: (() => {
+      const valid = (row.sources ?? []).filter((s): s is SourceId => (SOURCE_IDS as readonly string[]).includes(s));
+      return valid.length > 0 ? valid : null;
+    })(),
   };
 }
 
