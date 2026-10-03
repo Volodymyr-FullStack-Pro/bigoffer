@@ -1,7 +1,7 @@
-import { buildSourceQueries, type SearchProfile, scoreJob } from '@jp/core';
+import { buildSourceQueries, defaultSources, type SearchProfile, scoreJob } from '@jp/core';
 import type { Db } from '../db';
 import { matchJobs } from './match';
-import { deleteNewMatches, getActiveProfiles, getRecentJobs } from './repository';
+import { deleteNewMatches, getActiveProfiles, getNewMatchJobIdsOutsideSources, getRecentJobs } from './repository';
 
 const RECENT_DAYS = 7;
 
@@ -54,10 +54,13 @@ export async function syncProfile(
   }
   const queryIds = await linkQueries(db, profile);
   const since = new Date(now.getTime() - RECENT_DAYS * 24 * 3600 * 1000);
-  const recent = await getRecentJobs(db, since);
+  const sources = profile.sources ?? defaultSources(profile.remoteType);
+  const recent = await getRecentJobs(db, since, sources);
   const matched = await matchJobs(db, [profile], recent);
-  // After an edit, untouched matches of recent jobs that no longer fit this profile disappear.
+  // After an edit, untouched matches that no longer fit this profile disappear: recent jobs it no longer scores,
+  // and jobs seen only on boards the profile has turned off.
   const stale = recent.filter(({ job }) => scoreJob(profile, job) === null).map(({ jobId }) => jobId);
+  stale.push(...(await getNewMatchJobIdsOutsideSources(db, profile.id, sources)));
   await deleteNewMatches(db, profile.id, stale);
   return { queryIds, matched };
 }

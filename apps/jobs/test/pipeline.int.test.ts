@@ -1,10 +1,10 @@
-import type { RawJob } from '@jp/core';
+import { normalizeJob, type RawJob } from '@jp/core';
 import type { AdapterContext, SourceAdapter } from '@jp/scrapers';
 import { SourceBlockedError } from '@jp/scrapers';
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { getDb } from '../src/db';
 import { expireJobs } from '../src/pipeline/expire';
-import { getDueQueryIds, getProfile } from '../src/pipeline/repository';
+import { getDueQueryIds, getProfile, saveJob } from '../src/pipeline/repository';
 import { runQuery } from '../src/pipeline/run-query';
 import { syncAllProfiles, syncProfile } from '../src/pipeline/sync-profiles';
 
@@ -266,6 +266,46 @@ describe('browser sources and source selection', () => {
       for (const q of data!) expect(due).toContain(q.id);
     } finally {
       await db.from('search_profiles').delete().eq('id', sp.id);
+    }
+  });
+
+  it('matches only jobs posted on the profile\'s enabled sources and drops matches from boards turned off', async () => {
+    const token = `zq${uniq.replace(/\W/g, '')}`;
+    const { data: u, error: userError } = await db.auth.admin.createUser({ email: `src-${uniq}@e2e.test`, email_confirm: true });
+    if (userError) throw userError;
+    const save = async (sourceId: string, id: string) => {
+      const job = await normalizeJob({
+        externalId: `${id}-${uniq}`,
+        url: `https://example.com/${sourceId}/${id}-${uniq}`,
+        title: `${token} Engineer ${id}`,
+        company: `${id === 'dou-only' ? 'Gamma' : 'Delta'} ${uniq}`,
+        description: `${token} work`,
+        postedAt: now.toISOString(),
+      });
+      return (await saveJob(db, sourceId, job!, now)).jobId;
+    };
+    const douJob = await save('dou', 'dou-only');
+    const remotiveJob = await save('remotive', 'remotive-only');
+    const { data: sp, error } = await db
+      .from('search_profiles')
+      .insert({ user_id: u.user.id, name: 'Sources', keywords: [token], sources: ['dou'] })
+      .select('id')
+      .single();
+    if (error) throw error;
+    const matchedJobs = async () => {
+      const { data } = await db.from('job_matches').select('job_id, state').eq('search_profile_id', sp.id);
+      return data!.map((m) => m.job_id).sort();
+    };
+    try {
+      await syncProfile(db, (await getProfile(db, sp.id))!, now);
+      expect(await matchedJobs()).toEqual([douJob]);
+
+      await db.from('search_profiles').update({ sources: ['remotive'] }).eq('id', sp.id);
+      await syncProfile(db, (await getProfile(db, sp.id))!, now);
+      expect(await matchedJobs()).toEqual([remotiveJob]);
+    } finally {
+      await db.from('search_profiles').delete().eq('id', sp.id);
+      await db.auth.admin.deleteUser(u.user.id);
     }
   });
 });
