@@ -24,12 +24,15 @@ const trimLdHtml = (html) => {
 
 async function renderTrim(url, selector) {
   const browser = await chromium.launch({ headless: true });
-  const page = await browser.newPage({ userAgent: UA, locale: 'uk-UA' });
-  await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
-  await page.waitForSelector(selector, { timeout: 15000 });
-  const cards = await page.$$eval(selector, (els) => els.slice(0, 3).map((e) => e.outerHTML));
-  await browser.close();
-  return `<html><body>${cards.join('\n')}</body></html>`;
+  try {
+    const page = await browser.newPage({ userAgent: UA, locale: 'uk-UA' });
+    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
+    await page.waitForSelector(selector, { timeout: 15000 });
+    const cards = await page.$$eval(selector, (els) => els.slice(0, 3).map((e) => e.outerHTML));
+    return `<html><body>${cards.join('\n')}</body></html>`;
+  } finally {
+    await browser.close();
+  }
 }
 
 const tasks = {
@@ -77,7 +80,9 @@ const tasks = {
   'olx.html': async () => renderTrim('https://www.olx.ua/uk/rabota/q-react/', '[data-cy="l-card"]'),
 };
 
+const only = process.argv.slice(2);
 for (const [file, run] of Object.entries(tasks)) {
+  if (only.length && !only.includes(file)) continue;
   try {
     await writeFile(new URL(file, dir), await run());
     console.log('✓', file);

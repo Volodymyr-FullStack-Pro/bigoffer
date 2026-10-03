@@ -3,7 +3,13 @@ import { type PageRenderer, SourceBlockedError } from './types';
 export async function createPlaywrightRenderer(opts: { userAgent: string; locale?: string }): Promise<PageRenderer> {
   const { chromium } = await import('playwright');
   const browser = await chromium.launch({ headless: true });
-  const context = await browser.newContext({ userAgent: opts.userAgent, locale: opts.locale ?? 'uk-UA' });
+  let context;
+  try {
+    context = await browser.newContext({ userAgent: opts.userAgent, locale: opts.locale ?? 'uk-UA' });
+  } catch (err) {
+    await browser.close();
+    throw err;
+  }
   return {
     async render(url, { waitForSelector, timeoutMs = 30_000 } = {}) {
       const page = await context.newPage();

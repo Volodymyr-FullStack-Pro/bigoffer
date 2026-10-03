@@ -55,21 +55,34 @@ export function createHttpContext(
     }
   }
 
-  let renderer: PageRenderer | undefined;
+  let rendererP: Promise<PageRenderer> | undefined;
+  let lock: Promise<unknown> = Promise.resolve();
   const ctx: AdapterContext = {
     env,
     fetchText: async (url, init) => (await request(url, init)).text(),
     fetchJson: async <T>(url: string, init?: RequestInit) => (await (await request(url, init)).json()) as T,
     dispose: async () => {
-      if (renderer) await renderer.close();
-      renderer = undefined;
+      const p = rendererP;
+      rendererP = undefined;
+      if (!p) return;
+      let r: PageRenderer;
+      try {
+        r = await p;
+      } catch {
+        return;
+      }
+      await r.close();
     },
   };
   if (rendererFactory) {
-    ctx.renderPage = async (url, renderOpts) => {
-      await pace();
-      renderer ??= await rendererFactory();
-      return renderer.render(url, renderOpts);
+    ctx.renderPage = (url, renderOpts) => {
+      const run = lock.then(async () => {
+        await pace();
+        rendererP ??= rendererFactory();
+        return (await rendererP).render(url, renderOpts);
+      });
+      lock = run.catch(() => undefined);
+      return run;
     };
   }
   return ctx;
