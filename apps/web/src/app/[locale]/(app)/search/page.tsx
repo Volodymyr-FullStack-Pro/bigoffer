@@ -1,4 +1,4 @@
-import { defaultSources } from '@jp/core';
+import { defaultSources, SEARCH_REMOTE_TYPES } from '@jp/core';
 import { getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
 import { requireUserId } from '@/lib/auth';
@@ -37,7 +37,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
     seniority: p.seniority,
     locations: p.locations,
     remoteType: p.remote_type,
-    sources: p.sources ?? defaultSources('any'),
+    sources: p.sources ?? defaultSources(SEARCH_REMOTE_TYPES.find((r) => r === p.remote_type) ?? 'any'),
     salaryMinUsd: p.salary_min_usd,
     isActive: p.is_active,
   }));

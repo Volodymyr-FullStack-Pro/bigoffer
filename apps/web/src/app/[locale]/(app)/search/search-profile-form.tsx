@@ -4,7 +4,6 @@ import { SEARCH_REMOTE_TYPES, SENIORITIES, SOURCE_CATALOG, type SourceInfo } fro
 import { useTranslations } from 'next-intl';
 import { useActionState } from 'react';
 import { Button } from '@/components/ui/button';
-import { defaultSources } from '@jp/core';
 import { deleteSearchProfile, saveSearchProfile, type SearchFormState } from './actions';
 
 export type SearchProfileValues = {
@@ -16,7 +15,7 @@ export type SearchProfileValues = {
   seniority: string[];
   locations: string[];
   remoteType: string;
-  sources?: string[];
+  sources: string[];
   salaryMinUsd: number | null;
   isActive: boolean;
 };
@@ -40,12 +39,19 @@ function SourceCheckbox({ source, checked }: { source: SourceInfo; checked: bool
   return (
     <div className="flex flex-col">
       <label className="flex items-center gap-2">
-        <input type="checkbox" name="sources" value={source.id} defaultChecked={checked} data-testid={`source-${source.id}`} />
+        <input
+          type="checkbox"
+          name="sources"
+          value={source.id}
+          defaultChecked={checked}
+          data-testid={`source-${source.id}`}
+          aria-describedby={source.id === 'linkedin' ? 'source-linkedin-warning' : undefined}
+        />
         {source.name}
         {source.beta && <span className="brutal px-1 font-mono text-[10px] uppercase">{t('beta')}</span>}
         {source.requiresKey && <span className="text-xs text-muted-foreground">({t('needsKey')})</span>}
       </label>
-      {source.id === 'linkedin' && <span className="max-w-xs text-xs text-muted-foreground">{t('linkedinWarning')}</span>}
+      {source.id === 'linkedin' && <span id="source-linkedin-warning" className="max-w-xs text-xs text-muted-foreground">{t('linkedinWarning')}</span>}
     </div>
   );
 }
@@ -54,7 +60,7 @@ export function SearchProfileForm({ values }: { values: SearchProfileValues }) {
   const t = useTranslations('search');
   const [state, action, pending] = useActionState<SearchFormState, FormData>(saveSearchProfile, { status: 'idle' });
   const invalid = new Set(state.fields ?? []);
-  const selected = values.sources ?? defaultSources(values.remoteType as 'any');
+  const selected = values.sources;
 
   return (
     <div className="brutal flex flex-col gap-4 p-5">

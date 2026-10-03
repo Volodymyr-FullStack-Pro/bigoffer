@@ -2,7 +2,6 @@ import { sourceInfo } from '@jp/core';
 import { getFormatter, getTranslations } from 'next-intl/server';
 import { setMatchState } from './actions';
 
-
 export type JobMatchView = {
   id: string;
   score: number;
