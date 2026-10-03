@@ -4,6 +4,15 @@ export interface AdapterContext {
   fetchText(url: string, init?: RequestInit): Promise<string>;
   fetchJson<T = unknown>(url: string, init?: RequestInit): Promise<T>;
   env: Record<string, string | undefined>;
+  /** Present only when the pipeline can run a headless browser for this source. */
+  renderPage?(url: string, opts?: { waitForSelector?: string }): Promise<string>;
+  /** Releases resources (browser). Always called by the pipeline after a run. */
+  dispose?(): Promise<void>;
+}
+
+export interface PageRenderer {
+  render(url: string, opts?: { waitForSelector?: string; timeoutMs?: number }): Promise<string>;
+  close(): Promise<void>;
 }
 
 export interface SourceAdapter {

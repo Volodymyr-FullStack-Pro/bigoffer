@@ -1,4 +1,4 @@
-import { type AdapterContext, SourceBlockedError } from './types';
+import { type AdapterContext, type PageRenderer, SourceBlockedError } from './types';
 
 export const DEFAULT_USER_AGENT =
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130 Safari/537.36';
@@ -17,6 +17,7 @@ export type HttpOptions = {
 export function createHttpContext(
   opts: HttpOptions,
   env: Record<string, string | undefined> = {},
+  rendererFactory?: () => Promise<PageRenderer>,
 ): AdapterContext {
   const { userAgent, timeoutMs = 20_000, retries = 2, minDelayMs = 1_000, maxDelayMs = 4_000 } = opts;
   const doFetch = opts.fetchImpl ?? fetch;
@@ -24,8 +25,12 @@ export function createHttpContext(
   const random = opts.random ?? Math.random;
   let requests = 0;
 
-  async function request(url: string, init: RequestInit = {}): Promise<Response> {
+  async function pace(): Promise<void> {
     if (requests++ > 0) await sleep(minDelayMs + Math.round(random() * (maxDelayMs - minDelayMs)));
+  }
+
+  async function request(url: string, init: RequestInit = {}): Promise<Response> {
+    await pace();
     const headers = new Headers(init.headers);
     if (!headers.has('user-agent')) headers.set('user-agent', userAgent);
 
@@ -50,9 +55,22 @@ export function createHttpContext(
     }
   }
 
-  return {
+  let renderer: PageRenderer | undefined;
+  const ctx: AdapterContext = {
     env,
     fetchText: async (url, init) => (await request(url, init)).text(),
     fetchJson: async <T>(url: string, init?: RequestInit) => (await (await request(url, init)).json()) as T,
+    dispose: async () => {
+      if (renderer) await renderer.close();
+      renderer = undefined;
+    },
   };
+  if (rendererFactory) {
+    ctx.renderPage = async (url, renderOpts) => {
+      await pace();
+      renderer ??= await rendererFactory();
+      return renderer.render(url, renderOpts);
+    };
+  }
+  return ctx;
 }
