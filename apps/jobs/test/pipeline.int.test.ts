@@ -248,4 +248,24 @@ describe('browser sources and source selection', () => {
       await db.from('search_profiles').delete().eq('id', sp.id);
     }
   });
+
+  it('links queries whose key contains commas and quotes (multi-param params), so they become due', async () => {
+    const { data: sp, error } = await db
+      .from('search_profiles')
+      .insert({ user_id: userId, name: 'LI remote', keywords: [`react${uniq}`], remote_type: 'remote', sources: ['linkedin', 'workua'] })
+      .select('id')
+      .single();
+    if (error) throw error;
+    try {
+      const profile = await getProfile(db, sp.id);
+      const { queryIds } = await syncProfile(db, profile!, now);
+      expect(queryIds).toHaveLength(2); // linkedin + workua(remote) both have multi-param keys
+      const { data } = await db.from('search_queries').select('id').in('id', queryIds);
+      await db.from('search_queries').update({ next_run_at: now.toISOString() }).in('id', queryIds);
+      const due = (await getDueQueryIds(db, now, 5000)).map((q) => q.id);
+      for (const q of data!) expect(due).toContain(q.id);
+    } finally {
+      await db.from('search_profiles').delete().eq('id', sp.id);
+    }
+  });
 });

@@ -18,7 +18,9 @@ async function linkQueries(db: Db, profile: SearchProfile): Promise<string[]> {
   const { data, error } = await db
     .from('search_queries')
     .select('id')
-    .in('query_key', specs.map((s) => s.queryKey));
+    // PostgREST list values containing commas/quotes (multi-param JSON keys) must be double-quoted and escaped;
+    // supabase-js .in() quotes them without escaping inner quotes, so build the filter by hand.
+    .filter('query_key', 'in', `(${specs.map((s) => `"${s.queryKey.replace(/[\\"]/g, '\\$&')}"`).join(',')})`);
   if (error) throw error;
   const ids = data.map((q) => q.id);
 
