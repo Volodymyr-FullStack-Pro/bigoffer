@@ -32,7 +32,7 @@ export function detectSeniority(title: string): 'intern' | 'junior' | 'middle' |
 }
 
 /** Approximate conversion rates to USD; refresh occasionally. */
-export const FX_TO_USD = { USD: 1, EUR: 1.08, UAH: 1 / 41.5 } as const;
+export const FX_TO_USD = { USD: 1, EUR: 1.08, UAH: 1 / 41.5, PLN: 0.25, GBP: 1.27 } as const;
 
 /** Currencies we have no rate for: better no salary than a wrong one. Checked before `$` (R$, C$, A$). */
 const UNSUPPORTED_CURRENCY =
@@ -102,5 +102,5 @@ export function parseSalary(
 }
 
 const MIN_PLAUSIBLE_MONTHLY_USD = 500;
-const MAX_PLAUSIBLE_MONTHLY_USD = 100_000;
-const MAX_RANGE_RATIO = 4;
+export const MAX_PLAUSIBLE_MONTHLY_USD = 100_000;
+export const MAX_RANGE_RATIO = 4;

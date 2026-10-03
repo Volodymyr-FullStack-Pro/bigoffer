@@ -108,4 +108,37 @@ describe('scoreJob', () => {
     expect(scoreJob(mk({ keywords: ['zzz'], skills: ['C'] }), j('Dev', 'C++ developer'))).toBeNull();
     expect(scoreJob(mk({ keywords: ['zzz'], skills: ['C#'] }), j('Dev', 'C# / .NET'))).not.toBeNull();
   });
+
+  it('never matches a posting the AI flagged as not a job', () => {
+    expect(scoreJob(profile, { ...job, isJob: false })).toBeNull();
+    expect(scoreJob(profile, { ...job, isJob: null })).not.toBeNull();
+  });
+
+  it('uses AI skills that the text does not mention', () => {
+    const r = scoreJob(profile, { ...job, descriptionText: 'Great team.', skills: ['react', 'go'] })!;
+    expect(r.breakdown.matchedSkills).toEqual(['React', 'Go']);
+  });
+
+  it('hides a remote job that does not hire from the candidate country', () => {
+    const r = scoreJob({ ...profile, candidateCountry: 'UA' }, { ...job, remoteRegions: ['us', 'canada'] })!;
+    expect(r.hidden).toBe(true);
+    expect(r.breakdown.location).toBe(0);
+    expect(r.breakdown.excludedBy).toBe('region');
+    expect(r.breakdown.blockedRegions).toEqual(['us', 'canada']);
+  });
+
+  it('keeps a remote job open to the candidate region', () => {
+    const r = scoreJob({ ...profile, candidateCountry: 'UA' }, { ...job, remoteRegions: ['europe'] })!;
+    expect(r.hidden).toBe(false);
+    expect(r.breakdown.location).toBe(15);
+    expect(r.breakdown.blockedRegions).toBeNull();
+  });
+
+  it('prefers a keyword exclusion over a region block', () => {
+    const r = scoreJob(
+      { ...profile, candidateCountry: 'UA' },
+      { ...job, descriptionText: `${job.descriptionText} gambling`, remoteRegions: ['us'] },
+    )!;
+    expect(r.breakdown.excludedBy).toBe('gambling');
+  });
 });
