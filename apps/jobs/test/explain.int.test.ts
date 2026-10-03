@@ -1,3 +1,4 @@
+import { LlmError, LlmRateLimitError } from '@jp/ai';
 import { FakeLlmClient } from '@jp/ai/testing';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { getDb } from '../src/db';
@@ -114,5 +115,70 @@ describe('explainTopMatches', () => {
       status: 'unavailable',
       explained: 0,
     });
+  });
+});
+
+describe('explainTopMatches provider failures', () => {
+  let otherUser: string;
+  let matchId: string;
+
+  beforeAll(async () => {
+    const { data: user, error } = await db.auth.admin.createUser({ email: `explain-fail-${uniq}@e2e.test`, email_confirm: true });
+    if (error) throw error;
+    otherUser = user.user.id;
+    const { data: sp } = await db
+      .from('search_profiles')
+      .insert({ user_id: otherUser, name: 'FE', keywords: ['frontend'], skills: ['React'], remote_type: 'remote', sources: ['dou'] })
+      .select('id')
+      .single();
+    const { data: company } = await db
+      .from('companies')
+      .insert({ name: `ExplainFail ${uniq}`, normalized_name: `explainfail ${uniq}` })
+      .select('id')
+      .single();
+    const { data: job, error: jobError } = await db
+      .from('jobs')
+      .insert({
+        fingerprint: `explain-fail-${uniq}`,
+        title: `Frontend fail ${uniq}`,
+        company_id: company!.id,
+        remote_type: 'remote',
+        skills: ['React'],
+        summary: { en: 'About fail.' },
+        is_job: true,
+        enriched_at: new Date().toISOString(),
+      })
+      .select('id')
+      .single();
+    if (jobError) throw jobError;
+    const { data: match, error: matchError } = await db
+      .from('job_matches')
+      .insert({ user_id: otherUser, job_id: job.id, search_profile_id: sp!.id, score: 90, breakdown: { matchedSkills: ['React'] } })
+      .select('id')
+      .single();
+    if (matchError) throw matchError;
+    matchId = match.id;
+  });
+
+  const explainedAt = async () => {
+    const { data, error } = await db.from('job_matches').select('explained_at').eq('id', matchId).single();
+    if (error) throw error;
+    return data.explained_at;
+  };
+  const failing = (error: Error) =>
+    new FakeLlmClient(() => {
+      throw error;
+    });
+
+  it('stops on a configuration error (403) and leaves the match for the next run', async () => {
+    const result = await explainTopMatches(deps({ onlyUserIds: [otherUser], llm: failing(new LlmError('forbidden', 403)) }));
+    expect(result).toMatchObject({ status: 'provider_error', explained: 0 });
+    expect(await explainedAt()).toBeNull();
+  });
+
+  it('stops on a rate limit and reports the retry delay', async () => {
+    const result = await explainTopMatches(deps({ onlyUserIds: [otherUser], llm: failing(new LlmRateLimitError('quota', 1000)) }));
+    expect(result).toMatchObject({ status: 'rate_limited', retryAfterMs: 1000 });
+    expect(await explainedAt()).toBeNull();
   });
 });

@@ -1,4 +1,4 @@
-import { LlmRateLimitError } from '@jp/ai';
+import { LlmError, LlmRateLimitError } from '@jp/ai';
 import { FakeLlmClient, type FakeRequest } from '@jp/ai/testing';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { getDb } from '../src/db';
@@ -175,5 +175,19 @@ describe('enrichJobs', () => {
     expect(await enrichJobs(deps(llm, [id], { dailyLimit: used }))).toMatchObject({ status: 'daily_limit', enriched: 0 });
     expect(await enrichJobs(deps(new FakeLlmClient(() => aiOutput(), []), [id]))).toMatchObject({ status: 'unavailable' });
     expect(llm.calls).toHaveLength(0);
+  });
+
+  it.each([
+    ['an invalid API key (400)', new LlmError('API key not valid. Please pass a valid API key.', 400)],
+    ['a provider overload (503)', new LlmError('overloaded', 503)],
+  ])('stops without penalising the job on %s', async (_name, error) => {
+    const id = await seedJob(`prov${error.status}`);
+    const llm = new FakeLlmClient(() => {
+      throw error;
+    });
+    const result = await enrichJobs(deps(llm, [id]));
+    expect(result).toMatchObject({ status: 'provider_error', enriched: 0, failed: 0 });
+    const { data } = await db.from('jobs').select('enriched_at, enrich_attempts').eq('id', id).single();
+    expect(data).toMatchObject({ enriched_at: null, enrich_attempts: 0 });
   });
 });

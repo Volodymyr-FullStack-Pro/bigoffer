@@ -50,11 +50,18 @@ export function pacer(deps: AiDeps): () => Promise<void> {
   };
 }
 
-/** Provider trouble that is not the job's fault: stop the batch, keep the job's attempts. */
+/**
+ * Provider trouble that is not the job's fault: stop the batch, keep the job's attempts.
+ * Includes configuration errors (bad/revoked key, wrong model): they hit every request, so retrying per job
+ * would burn all attempts and mark everything as done.
+ */
 export function isTransient(err: LlmError): boolean {
   // Invalid output carries no status but is the job's (or prompt's) problem, so it counts as an attempt.
   if (err instanceof LlmInvalidOutputError) return false;
-  return err.status === null || err.status >= 500;
+  const { status } = err;
+  if (status === null || status >= 500) return true;
+  if (status === 401 || status === 403 || status === 404) return true;
+  return status === 400 && /api[_ ]?key/i.test(err.message);
 }
 
 export async function enrichJobs(deps: EnrichDeps): Promise<EnrichResult> {
