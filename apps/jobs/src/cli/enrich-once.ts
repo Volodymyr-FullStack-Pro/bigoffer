@@ -12,3 +12,7 @@ const batchSize = Number.isInteger(limitArg) && limitArg > 0 ? limitArg : deps.b
 
 const result = await enrichJobs({ ...deps, batchSize, timeBudgetMs: Number.POSITIVE_INFINITY });
 console.log(`enrichment: ${JSON.stringify(result)}`);
+
+const { explainTopMatches } = await import('../pipeline/explain');
+const explained = await explainTopMatches({ ...deps, timeBudgetMs: Number.POSITIVE_INFINITY });
+console.log(`explanations: ${JSON.stringify(explained)}`);

@@ -8,6 +8,7 @@ Monorepo (pnpm + Turborepo):
 - `packages/core` — normalisation, salary parsing, scoring
 - `packages/scrapers` — source adapters (HTTP/RSS/JSON and Playwright-rendered pages)
 - `packages/db` — Supabase types and client helpers
+- `packages/ai` — provider-agnostic LLM client (Gemini) and AI tasks: job enrichment, "why it fits"
 - `apps/jobs` — ingestion/matching pipeline (Trigger.dev tasks + a local `run-once` CLI)
 - `apps/web` — Next.js web app
 
@@ -31,6 +32,20 @@ pnpm --filter @jp/jobs run-once                         # sync profiles, run que
 pnpm --filter @jp/jobs run-once --force                 # run every query now
 pnpm --filter @jp/jobs run-once --force --source=olx    # only one source
 ```
+
+### AI enrichment (optional)
+
+Put a free Google AI Studio key into `apps/jobs/.env` as `GEMINI_API_KEY_PUBLIC` (job postings only — the free tier
+may be used for training, so no personal data ever goes through it). Without it the pipeline still works with
+keyword scoring.
+
+```bash
+pnpm --filter @jp/jobs ai:smoke                 # one live call per AI task, prints the result
+pnpm --filter @jp/jobs enrich-once --limit=10   # enrich matched jobs, rescore, then write "why it fits"
+```
+
+Limits: `AI_DAILY_LIMIT` requests per UTC day (default 900), `AI_MIN_INTERVAL_MS` between requests (default 4500).
+A 429 from the provider stops the batch; the next scheduled run continues.
 
 ### Web app
 

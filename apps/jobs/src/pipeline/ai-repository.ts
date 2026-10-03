@@ -1,5 +1,15 @@
-import type { JobEnrichment, LlmUsage, Sensitivity } from '@jp/ai';
-import { type RemoteType, SENIORITIES, type Seniority } from '@jp/core';
+import type { ExplainCriteria, ExplainJob, JobEnrichment, LlmUsage, Sensitivity } from '@jp/ai';
+import {
+  DEFAULT_LOCALE,
+  isLocale,
+  type Locale,
+  type LocalizedText,
+  localized,
+  type RemoteType,
+  SEARCH_REMOTE_TYPES,
+  SENIORITIES,
+  type Seniority,
+} from '@jp/core';
 import type { Json, TablesUpdate } from '@jp/db';
 import type { Db } from '../db';
 
@@ -108,5 +118,79 @@ export async function recordAiUsage(db: Db, now: Date, sensitivity: Sensitivity,
     p_input: usage.inputTokens,
     p_output: usage.outputTokens,
   });
+  if (error) throw error;
+}
+
+export async function getMatchesToExplain(
+  db: Db,
+  dayStart: Date,
+  perUser: number,
+  minScore: number,
+  onlyUserIds?: string[],
+): Promise<{ matchId: string; userId: string; locale: Locale }[]> {
+  const { data, error } = await db.rpc('matches_to_explain', {
+    p_day_start: dayStart.toISOString(),
+    p_per_user: perUser,
+    p_min_score: minScore,
+    ...(onlyUserIds ? { p_user_ids: onlyUserIds } : {}),
+  });
+  if (error) throw error;
+  return data.map((r) => ({ matchId: r.match_id, userId: r.user_id, locale: isLocale(r.locale) ? r.locale : DEFAULT_LOCALE }));
+}
+
+export type ExplainDetail = { matchId: string; profileId: string | null; criteria: ExplainCriteria | null; job: ExplainJob };
+
+const asStrings = (v: unknown): string[] => (Array.isArray(v) ? v.filter((s): s is string => typeof s === 'string') : []);
+
+export async function getExplainDetails(db: Db, matchIds: string[], locale: Locale): Promise<ExplainDetail[]> {
+  if (matchIds.length === 0) return [];
+  const { data, error } = await db
+    .from('job_matches')
+    .select(
+      'id, breakdown, search_profile_id, jobs!inner(title, summary, skills, seniority, remote_type, location, salary_min_usd, salary_max_usd, companies(name)), search_profiles(keywords, skills, seniority, remote_type, salary_min_usd)',
+    )
+    .in('id', matchIds);
+  if (error) throw error;
+  const order = new Map(matchIds.map((id, i) => [id, i]));
+  return data
+    .map((m): ExplainDetail => {
+      const sp = m.search_profiles;
+      const breakdown = (m.breakdown ?? {}) as { matchedSkills?: unknown };
+      return {
+        matchId: m.id,
+        profileId: m.search_profile_id,
+        criteria: sp
+          ? {
+              keywords: sp.keywords,
+              skills: sp.skills,
+              seniority: sp.seniority.filter((s): s is Seniority => (SENIORITIES as readonly string[]).includes(s)),
+              remoteType: SEARCH_REMOTE_TYPES.find((r) => r === sp.remote_type) ?? 'any',
+              salaryMinUsd: sp.salary_min_usd,
+            }
+          : null,
+        job: {
+          id: m.id,
+          title: m.jobs.title,
+          company: m.jobs.companies?.name ?? '',
+          summary: localized(m.jobs.summary as LocalizedText | null, locale) || null,
+          skills: m.jobs.skills,
+          matchedSkills: asStrings(breakdown.matchedSkills),
+          seniority: (SENIORITIES as readonly string[]).includes(m.jobs.seniority ?? '') ? (m.jobs.seniority as Seniority) : null,
+          remoteType: (['remote', 'hybrid', 'office'] as const).find((r) => r === m.jobs.remote_type) ?? 'unknown',
+          location: m.jobs.location,
+          salaryMinUsd: m.jobs.salary_min_usd,
+          salaryMaxUsd: m.jobs.salary_max_usd,
+        },
+      };
+    })
+    .sort((a, b) => order.get(a.matchId)! - order.get(b.matchId)!);
+}
+
+/** explained_at is set even without a text, so a match the model skipped is not retried every hour. */
+export async function saveExplanation(db: Db, matchId: string, locale: Locale, text: string | null, now: Date): Promise<void> {
+  const { error } = await db
+    .from('job_matches')
+    .update({ explanation: text ? { [locale]: text } : null, explained_at: now.toISOString() })
+    .eq('id', matchId);
   if (error) throw error;
 }

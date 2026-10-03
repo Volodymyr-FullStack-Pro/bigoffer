@@ -8,6 +8,7 @@
     "test:integration": "vitest run --config vitest.integration.config.ts",
     "run-once": "tsx src/cli/run-once.ts",
     "enrich-once": "tsx src/cli/enrich-once.ts",
+    "ai:smoke": "tsx src/cli/ai-smoke.ts",
     "dev": "trigger dev",
     "deploy": "trigger deploy"
   },
