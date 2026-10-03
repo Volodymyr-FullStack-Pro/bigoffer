@@ -7,15 +7,17 @@ import { himalayasAdapter } from './himalayas';
 import { hnAdapter } from './hn';
 import { jobicyAdapter } from './jobicy';
 import { joobleAdapter } from './jooble';
+import { linkedinAdapter } from './linkedin';
+import { olxAdapter } from './olx';
 import { justjoinAdapter } from './justjoin';
 import { remoteokAdapter } from './remoteok';
 import { remotiveAdapter } from './remotive';
 import { robotauaAdapter } from './robotaua';
 import { workingnomadsAdapter } from './workingnomads';
+import { workuaAdapter } from './workua';
 import { wwrAdapter } from './wwr';
 
-// Partial until the new adapters land (Plan 3 Tasks 2-5).
-export const ADAPTERS: Partial<Record<SourceId, SourceAdapter>> = {
+export const ADAPTERS: Record<SourceId, SourceAdapter> = {
   dou: douAdapter,
   djinni: djinniAdapter,
   robotaua: robotauaAdapter,
@@ -29,4 +31,7 @@ export const ADAPTERS: Partial<Record<SourceId, SourceAdapter>> = {
   jobicy: jobicyAdapter,
   workingnomads: workingnomadsAdapter,
   justjoin: justjoinAdapter,
+  linkedin: linkedinAdapter,
+  workua: workuaAdapter,
+  olx: olxAdapter,
 };
