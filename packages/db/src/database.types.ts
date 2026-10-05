@@ -36,6 +36,93 @@ export type Database = {
                   Relationships: [
                     
                   ]
+                },"application_events": {
+                  Row: {
+                    "application_id": string,"created_at": string,"id": string,"payload": NonNullable<Json>,"type": string,"user_id": string
+                  }
+                  Insert: {
+                    "application_id": string,"created_at"?: string,"id"?: string,"payload"?: NonNullable<Json>,"type": string,"user_id": string
+                  }
+                  Update: {
+                    "application_id"?: string,"created_at"?: string,"id"?: string,"payload"?: NonNullable<Json>,"type"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "application_events_application_id_fkey"
+      columns: ["application_id"]
+isOneToOne: false
+      referencedRelation: "applications"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "application_events_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"application_labels": {
+                  Row: {
+                    "application_id": string,"label_id": string
+                  }
+                  Insert: {
+                    "application_id": string,"label_id": string
+                  }
+                  Update: {
+                    "application_id"?: string,"label_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "application_labels_application_id_fkey"
+      columns: ["application_id"]
+isOneToOne: false
+      referencedRelation: "applications"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "application_labels_label_id_fkey"
+      columns: ["label_id"]
+isOneToOne: false
+      referencedRelation: "labels"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"applications": {
+                  Row: {
+                    "applied_at": string | null,"column_id": string,"company": string,"contact": NonNullable<Json>,"created_at": string,"first_response_at": string | null,"follow_up_count": number,"id": string,"job_id": string | null,"last_activity_at": string | null,"location": string | null,"next_action_at": string | null,"notes": string | null,"outcome": string,"rank": string,"rejection_by": string | null,"rejection_note": string | null,"rejection_reasons": (string)[],"rejection_stage": string | null,"salary": string | null,"source_id": string | null,"title": string,"updated_at": string,"url": string | null,"user_id": string
+                  }
+                  Insert: {
+                    "applied_at"?: string | null,"column_id": string,"company"?: string,"contact"?: NonNullable<Json>,"created_at"?: string,"first_response_at"?: string | null,"follow_up_count"?: number,"id"?: string,"job_id"?: string | null,"last_activity_at"?: string | null,"location"?: string | null,"next_action_at"?: string | null,"notes"?: string | null,"outcome"?: string,"rank": string,"rejection_by"?: string | null,"rejection_note"?: string | null,"rejection_reasons"?: (string)[],"rejection_stage"?: string | null,"salary"?: string | null,"source_id"?: string | null,"title": string,"updated_at"?: string,"url"?: string | null,"user_id": string
+                  }
+                  Update: {
+                    "applied_at"?: string | null,"column_id"?: string,"company"?: string,"contact"?: NonNullable<Json>,"created_at"?: string,"first_response_at"?: string | null,"follow_up_count"?: number,"id"?: string,"job_id"?: string | null,"last_activity_at"?: string | null,"location"?: string | null,"next_action_at"?: string | null,"notes"?: string | null,"outcome"?: string,"rank"?: string,"rejection_by"?: string | null,"rejection_note"?: string | null,"rejection_reasons"?: (string)[],"rejection_stage"?: string | null,"salary"?: string | null,"source_id"?: string | null,"title"?: string,"updated_at"?: string,"url"?: string | null,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "applications_column_id_fkey"
+      columns: ["column_id"]
+isOneToOne: false
+      referencedRelation: "board_columns"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "applications_job_id_fkey"
+      columns: ["job_id"]
+isOneToOne: false
+      referencedRelation: "jobs"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "applications_source_id_fkey"
+      columns: ["source_id"]
+isOneToOne: false
+      referencedRelation: "sources"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "applications_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"board_columns": {
                   Row: {
                     "id": string,"key": string,"kind": string,"position": number,"title": NonNullable<Json>,"user_id": string
@@ -331,8 +418,22 @@ isOneToOne: false
               "locale": string,"match_id": string,"user_id": string
             }[]
                            },
+"move_application":
+{ Args: { "p_column_id": string,"p_id": string,"p_rank": string }; Returns: undefined
+                           },
 "record_ai_usage":
 { Args: { "p_day": string,"p_input": number,"p_model": string,"p_output": number,"p_requests": number,"p_sensitivity": string }; Returns: undefined
+                           },
+"reject_application":
+{ Args: { "p_by": string,"p_column_id": string,"p_id": string,"p_note": string,"p_rank": string,"p_reasons": (string)[],"p_stage": string }; Returns: undefined
+                           },
+"restore_match":
+{ Args: { "p_application_id"?: string,"p_match_id": string }; Returns: undefined
+                           },
+"save_match_to_board":
+{ Args: { "p_column_key": string,"p_match_id": string,"p_rank": string }; Returns: {
+              "application_id": string,"created": boolean
+            }[]
                            },
 "text_array_max_len":
 { Args: { "arr": (string)[] }; Returns: number
