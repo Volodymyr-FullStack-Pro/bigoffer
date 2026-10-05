@@ -38,6 +38,12 @@ describe('parseJobPreview is linear on adversarial input', () => {
   const MB = 1_500_000;
   const cases: Record<string, string> = {
     meta: '<meta '.repeat(MB / 6),
+    'title tags': '<title>'.repeat(MB / 7),
+    'title tags closed': `${'<title>'.repeat(MB / 7)}</title>`,
+    'long meta tags': `<meta ${'a'.repeat(4000)}>`.repeat(MB / 4007),
+    'long script tags': `<script ${'a'.repeat(4000)}>`.repeat(MB / 4009),
+    'long script tags closed': `<script ${'a'.repeat(4000)}>x</script>`.repeat(MB / 4018),
+    'long attr names with equals': `<meta ${'a='.repeat(2000)}>`.repeat(MB / 4007),
     script: '<script '.repeat(MB / 8),
     title: '<title '.repeat(MB / 7),
     'script no close': `<script type="application/ld+json">${'{'.repeat(MB)}`,

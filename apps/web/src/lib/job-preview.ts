@@ -144,11 +144,36 @@ const decode = (s: string) =>
 const MAX_PARSE_CHARS = 512_000;
 const MAX_LD = 200_000;
 const OPEN_TAG = /<(meta|title|script)\b[^<>]{0,4096}>/iy;
-const ATTR = /([a-z][a-z0-9:_-]*)\s*=\s*(?:"([^"]*)"|'([^']*)')/gi;
+const NAME_CHAR = /[a-z0-9:_-]/i;
 
+/** Hand-written linear attribute scanner (quoted values only): every character is visited at most twice. */
 function attrs(tag: string): Record<string, string> {
   const out: Record<string, string> = {};
-  for (const m of tag.matchAll(ATTR)) out[m[1]!.toLowerCase()] ??= m[2] ?? m[3] ?? '';
+  const n = tag.length;
+  let i = 0;
+  while (i < n) {
+    if (!NAME_CHAR.test(tag[i]!)) {
+      i++;
+      continue;
+    }
+    const start = i;
+    while (i < n && NAME_CHAR.test(tag[i]!)) i++;
+    const name = tag.slice(start, i).toLowerCase();
+    let j = i;
+    while (j < n && /\s/.test(tag[j]!)) j++;
+    if (tag[j] !== '=') continue;
+    j++;
+    while (j < n && /\s/.test(tag[j]!)) j++;
+    const quote = tag[j];
+    if (quote !== '"' && quote !== "'") {
+      i = j;
+      continue;
+    }
+    const close = tag.indexOf(quote, j + 1);
+    if (close === -1) break;
+    out[name] ??= tag.slice(j + 1, close);
+    i = close + 1;
+  }
   return out;
 }
 
@@ -162,6 +187,7 @@ function scan(html: string): Scan {
   const out: Scan = { ld: [], ogTitle: null, ogSite: null, title: null };
   // JSON-LD may sit in <body>, so only the meta/title search is limited to <head> when it exists.
   const metaLimit = headEnd === -1 ? text.length : headEnd;
+  let titleDone = false;
   let i = text.indexOf('<');
   while (i !== -1) {
     OPEN_TAG.lastIndex = i;
@@ -177,9 +203,14 @@ function scan(html: string): Scan {
         const content = a.content ? decode(a.content) || null : null;
         if (key === 'og:title') out.ogTitle ??= content;
         else if (key === 'og:site_name') out.ogSite ??= content;
-      } else if (kind === 'title' && i < metaLimit) {
+      } else if (kind === 'title' && i < metaLimit && !titleDone) {
+        // Search for the closing tag once: either it is found (and we skip past it) or no later <title> can close either.
+        titleDone = true;
         const close = lower.indexOf('</title', end);
-        if (close !== -1 && close - end <= 2000) out.title ??= decode(text.slice(end, close)) || null;
+        if (close !== -1) {
+          next = close;
+          if (close - end <= 2000) out.title = decode(text.slice(end, close)) || null;
+        }
       } else if (kind === 'script') {
         const close = lower.indexOf('</script', end);
         if (close === -1) break;
