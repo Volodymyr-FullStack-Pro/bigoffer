@@ -15,6 +15,10 @@ export type GenerateJsonRequest<S extends z.ZodType> = {
   system: string;
   prompt: string;
   images?: LlmImage[];
+  /** Inline files sent with the prompt (e.g. a PDF CV). */
+  files?: LlmImage[];
+  /** Task label for logs and the fake provider. */
+  task?: string;
   maxOutputTokens?: number;
 };
 

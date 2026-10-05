@@ -17,6 +17,17 @@ describe('readAiEnv', () => {
     expect(client.model('public')).toBe('gemini-flash-lite-latest');
   });
 
+  it('allows the fake provider outside production only', () => {
+    expect(createLlmClient(readAiEnv({ AI_PROVIDER: 'fake' })).isAvailable('private')).toBe(true);
+    const prev = process.env.NODE_ENV;
+    try {
+      (process.env as Record<string, string>).NODE_ENV = 'production';
+      expect(() => readAiEnv({ AI_PROVIDER: 'fake' })).toThrow();
+    } finally {
+      (process.env as Record<string, string | undefined>).NODE_ENV = prev;
+    }
+  });
+
   it('rejects an unknown provider', () => {
     expect(() => readAiEnv({ AI_PROVIDER: 'openai' })).toThrow();
   });

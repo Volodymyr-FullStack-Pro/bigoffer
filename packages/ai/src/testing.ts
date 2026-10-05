@@ -33,3 +33,43 @@ export class FakeLlmClient implements LlmClient {
     return { data: parsed.data, usage, model: this.model(req.sensitivity) };
   }
 }
+
+/** Canned, schema-valid outputs per task for E2E runs (AI_PROVIDER=fake). Never used in production. */
+export function fakeResponder(req: FakeRequest): unknown {
+  switch (req.task) {
+    case 'parse_cv':
+      return {
+        full_name: 'Test User',
+        headline: 'Full Stack Developer',
+        seniority: 'senior',
+        years_experience: 6,
+        skills: ['React', 'Node.js', 'TypeScript', 'PostgreSQL'],
+        locations: ['Kyiv'],
+        languages: [{ language: 'English', level: 'B2' }],
+        remote_preference: 'remote',
+        summary: 'Full stack developer building web products.',
+        experience: [{ company: 'Acme', title: 'Senior Developer', start: '2021', end: null, highlights: ['Built the payments platform'] }],
+        contacts: { email: 'test.user@example.com', phone: null, linkedin: 'https://www.linkedin.com/in/test-user', github: null, portfolio: null, telegram: null },
+      };
+    case 'apply_kit':
+      return {
+        lang: 'en',
+        requirements: [
+          { text: 'React', status: 'met' },
+          { text: 'Kubernetes', status: 'missing' },
+        ],
+        red_flags: ['Unpaid trial period'],
+        cover_letter: 'Hello! I am a full stack developer with six years of React and Node.js. [fake]',
+        short_message: 'Hi! Senior full stack dev, React/Node, 6 years. Happy to talk. [fake]',
+        salary_hint: 'Ask for $4000–4500 per month. [fake]',
+      };
+    case 'form_answers': {
+      const count = [...req.prompt.matchAll(/^#(\d+) /gm)].length;
+      return { items: Array.from({ length: count }, (_, i) => ({ n: i + 1, answer: `Fake answer ${i + 1}` })) };
+    }
+    case 'recruiter_message':
+      return { subject: null, body: 'Hi! I saw your opening and would love to connect. [fake]' };
+    default:
+      throw new Error(`fakeResponder: unknown task ${req.task ?? '(none)'}`);
+  }
+}
