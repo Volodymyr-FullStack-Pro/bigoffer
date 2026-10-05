@@ -49,7 +49,7 @@ test('saves a chosen subset of job boards', async ({ context, page }) => {
   await page.goto('/en/search');
   await page.getByLabel('Role keywords').fill('react');
   await page.getByLabel('Work format').selectOption('remote');
-  for (const id of ['remoteok', 'remotive', 'himalayas', 'wwr', 'jobicy', 'workingnomads', 'hn', 'arbeitnow', 'justjoin', 'jooble', 'robotaua', 'olx']) {
+  for (const id of ['remoteok', 'remotive', 'himalayas', 'wwr', 'jobicy', 'workingnomads', 'hn', 'arbeitnow', 'justjoin', 'jooble', 'robotaua', 'olx', 'jobico']) {
     const box = page.getByTestId(`source-${id}`);
     if (await box.isChecked()) await box.uncheck();
   }

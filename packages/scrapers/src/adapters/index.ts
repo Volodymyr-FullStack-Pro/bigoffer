@@ -5,6 +5,7 @@ import { djinniAdapter } from './djinni';
 import { douAdapter } from './dou';
 import { himalayasAdapter } from './himalayas';
 import { hnAdapter } from './hn';
+import { jobicoAdapter } from './jobico';
 import { jobicyAdapter } from './jobicy';
 import { joobleAdapter } from './jooble';
 import { linkedinAdapter } from './linkedin';
@@ -34,4 +35,5 @@ export const ADAPTERS: Record<SourceId, SourceAdapter> = {
   linkedin: linkedinAdapter,
   workua: workuaAdapter,
   olx: olxAdapter,
+  jobico: jobicoAdapter,
 };
