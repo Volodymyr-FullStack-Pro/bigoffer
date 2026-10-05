@@ -244,6 +244,15 @@
     "label_referral": "Реферал",
     "label_via_recruiter": "Через рекрутера",
     "label_no_salary": "Без зарплаты",
-    "label_awaiting_interview": "Жду интервью"
+    "label_awaiting_interview": "Жду интервью",
+    "addCard": "Добавить карточку",
+    "addTitle": "Новая карточка",
+    "addUrl": "Ссылка на вакансию (необязательно)",
+    "addFetch": "Загрузить",
+    "addPreviewFailed": "Не удалось прочитать страницу — заполните поля вручную.",
+    "addJobTitle": "Должность",
+    "addCompany": "Компания",
+    "addLocation": "Локация",
+    "addSubmit": "Добавить на доску"
   }
 }

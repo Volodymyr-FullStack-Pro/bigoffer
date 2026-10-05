@@ -244,6 +244,15 @@
     "label_referral": "Реферал",
     "label_via_recruiter": "Через рекрутера",
     "label_no_salary": "Без зарплати",
-    "label_awaiting_interview": "Чекаю інтерв'ю"
+    "label_awaiting_interview": "Чекаю інтерв'ю",
+    "addCard": "Додати картку",
+    "addTitle": "Нова картка",
+    "addUrl": "Посилання на вакансію (необов'язково)",
+    "addFetch": "Завантажити",
+    "addPreviewFailed": "Не вдалося прочитати сторінку — заповніть поля вручну.",
+    "addJobTitle": "Посада",
+    "addCompany": "Компанія",
+    "addLocation": "Локація",
+    "addSubmit": "Додати на дошку"
   }
 }

@@ -244,6 +244,15 @@
     "label_referral": "Referral",
     "label_via_recruiter": "Via recruiter",
     "label_no_salary": "No salary",
-    "label_awaiting_interview": "Awaiting interview"
+    "label_awaiting_interview": "Awaiting interview",
+    "addCard": "Add card",
+    "addTitle": "New card",
+    "addUrl": "Job link (optional)",
+    "addFetch": "Fetch",
+    "addPreviewFailed": "Couldn't read that page — fill in the fields yourself.",
+    "addJobTitle": "Job title",
+    "addCompany": "Company",
+    "addLocation": "Location",
+    "addSubmit": "Add to board"
   }
 }

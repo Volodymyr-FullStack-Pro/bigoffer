@@ -123,3 +123,24 @@ test('keyboard: Enter opens the panel, Space drags to the next column', async ({
   await expect.poll(() => applicationColumnKey(id)).not.toBe('saved');
   await expect(page.getByTestId('card-panel')).toHaveCount(0);
 });
+
+test('adds a card manually', async ({ context, page }) => {
+  await loginAs(context, uniqueEmail('board-add'));
+  await page.goto('/en/board');
+  await visible(page, 'add-card').click();
+  await visible(page, 'add-title').fill('Fullstack Developer (manual)');
+  await visible(page, 'add-company').fill('Initech');
+  await visible(page, 'add-submit').click();
+  await expect(column(page, 'saved').getByText('Fullstack Developer (manual)')).toBeVisible();
+  await page.reload();
+  await expect(column(page, 'saved').getByText('Fullstack Developer (manual)')).toBeVisible();
+});
+
+test('a blocked preview URL falls back to manual entry', async ({ context, page }) => {
+  await loginAs(context, uniqueEmail('board-ssrf'));
+  await page.goto('/en/board');
+  await visible(page, 'add-card').click();
+  await visible(page, 'add-url').fill('http://127.0.0.1:54321/rest/v1/');
+  await visible(page, 'add-fetch').click();
+  await expect(visible(page, 'add-preview-failed')).toBeVisible();
+});

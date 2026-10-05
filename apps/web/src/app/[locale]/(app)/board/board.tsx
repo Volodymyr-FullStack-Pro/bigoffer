@@ -7,6 +7,7 @@ import { useTranslations } from 'next-intl';
 import { useMemo, useState } from 'react';
 import { Toast, useToast } from '@/components/ui/toast';
 import { deleteApplication, markPinged, moveApplication, rejectApplication } from './actions';
+import { AddCardDialog } from './add-card-dialog';
 import { BoardColumnView } from './board-column';
 import type { BoardCard, BoardCardView, BoardColumn, BoardLabel } from './board-types';
 import { CardPanel } from './card-panel';
@@ -34,6 +35,7 @@ export function Board({ columns, cards: initial, labels: initialLabels, rules, n
   const [activeId, setActiveId] = useState<string | null>(null);
   const [pendingReject, setPendingReject] = useState<PendingReject | null>(null);
   const [confetti, setConfetti] = useState(false);
+  const [adding, setAdding] = useState(false);
   const { toast, show, close } = useToast();
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
@@ -161,6 +163,9 @@ export function Board({ columns, cards: initial, labels: initialLabels, rules, n
 
   return (
     <div data-testid="board" className="flex flex-col gap-6">
+      <button type="button" data-testid="add-card" onClick={() => setAdding(true)} className="brutal brutal-press self-start bg-brand px-4 py-2 font-semibold text-brand-foreground">
+        + {t('addCard')}
+      </button>
       <TodayActions
         cards={views}
         onOpen={setOpenId}
@@ -223,6 +228,7 @@ export function Board({ columns, cards: initial, labels: initialLabels, rules, n
         />
       )}
       {pendingReject && <RejectDialog initialReasons={pendingReject.reasons} onConfirm={confirmReject} onCancel={() => setPendingReject(null)} />}
+      {adding && <AddCardDialog columns={columns} onCreated={(c) => setCards((list) => [...list, c])} onClose={() => setAdding(false)} />}
       {confetti && <Confetti onDone={() => setConfetti(false)} />}
       <Toast toast={toast} onClose={close} />
     </div>

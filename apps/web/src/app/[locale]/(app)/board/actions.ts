@@ -1,11 +1,12 @@
 'use server';
 
 import type { Json } from '@jp/db';
-import { type ApplicationPatch, applicationPatchSchema, type RejectionInput, rejectionInputSchema } from '@jp/core';
+import { type ApplicationPatch, applicationPatchSchema, rankAtTop, type RejectionInput, rejectionInputSchema } from '@jp/core';
 import { revalidatePath } from 'next/cache';
 import { getUserId } from '@/lib/auth';
+import { fetchJobPreview, type JobPreview } from '@/lib/job-preview';
 import { createClient } from '@/lib/supabase/server';
-import type { BoardLabel } from './board-types';
+import type { BoardCard, BoardLabel } from './board-types';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const RANK = /^[0-9A-Za-z]{1,64}$/;
@@ -126,4 +127,54 @@ export async function getApplicationEvents(id: string): Promise<{ type: string; 
     .order('created_at', { ascending: false })
     .limit(50);
   return (data ?? []).map((e) => ({ type: e.type, payload: e.payload, createdAt: e.created_at }));
+}
+
+export async function previewJob(url: string): Promise<JobPreview | null> {
+  if (!(await getUserId()) || url.length > 2000) return null;
+  return fetchJobPreview(url);
+}
+
+export async function createApplication(input: {
+  columnId: string;
+  title: string;
+  company: string;
+  url: string | null;
+  location: string | null;
+  salary: string | null;
+}): Promise<BoardCard | null> {
+  const supabase = await client();
+  const userId = await getUserId();
+  const title = input.title.trim().slice(0, 300);
+  const url = input.url?.trim() || null;
+  if (!supabase || !userId || !UUID.test(input.columnId) || !title || (url && !/^https?:\/\//i.test(url))) return null;
+  const { data: col } = await supabase.from('board_columns').select('key').eq('id', input.columnId).maybeSingle();
+  if (!col) return null;
+  const { data: first } = await supabase.from('applications').select('rank').eq('column_id', input.columnId).order('rank').limit(1).maybeSingle();
+  const appliedAt = col.key === 'applied' ? new Date().toISOString() : null;
+  const { data, error } = await supabase
+    .from('applications')
+    .insert({
+      user_id: userId,
+      column_id: input.columnId,
+      rank: rankAtTop(first?.rank ?? null),
+      title,
+      company: input.company.trim().slice(0, 200),
+      url,
+      location: input.location?.trim().slice(0, 200) || null,
+      salary: input.salary?.trim().slice(0, 120) || null,
+      applied_at: appliedAt,
+    })
+    .select('id, rank')
+    .single();
+  if (error || !data) {
+    if (error) console.error('createApplication failed', error.message);
+    return null;
+  }
+  await event(supabase, data.id, 'created', { from: 'manual' });
+  revalidatePath('/[locale]/board', 'page');
+  return {
+    id: data.id, columnId: input.columnId, rank: data.rank, title, company: input.company.trim(), url,
+    sourceId: null, salary: input.salary?.trim() || null, notes: null, contactName: null, contactUrl: null,
+    appliedAt, nextActionAt: null, firstResponseAt: null, lastActivityAt: null, followUpCount: 0, outcome: 'open', labelIds: [],
+  };
 }
