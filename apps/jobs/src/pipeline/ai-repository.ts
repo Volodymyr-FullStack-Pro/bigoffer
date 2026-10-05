@@ -144,13 +144,18 @@ const asStrings = (v: unknown): string[] => (Array.isArray(v) ? v.filter((s): s 
 
 export async function getExplainDetails(db: Db, matchIds: string[], locale: Locale): Promise<ExplainDetail[]> {
   if (matchIds.length === 0) return [];
-  const { data, error } = await db
-    .from('job_matches')
-    .select(
-      'id, breakdown, search_profile_id, jobs!inner(title, summary, skills, seniority, remote_type, location, salary_min_usd, salary_max_usd, companies(name)), search_profiles(keywords, skills, seniority, remote_type, salary_min_usd)',
-    )
-    .in('id', matchIds);
-  if (error) throw error;
+  const data = [];
+  // Chunked: a long id list does not fit into one PostgREST URL.
+  for (let i = 0; i < matchIds.length; i += 200) {
+    const { data: chunk, error } = await db
+      .from('job_matches')
+      .select(
+        'id, breakdown, search_profile_id, jobs!inner(title, summary, skills, seniority, remote_type, location, salary_min_usd, salary_max_usd, companies(name)), search_profiles(keywords, skills, seniority, remote_type, salary_min_usd)',
+      )
+      .in('id', matchIds.slice(i, i + 200));
+    if (error) throw error;
+    data.push(...chunk);
+  }
   const order = new Map(matchIds.map((id, i) => [id, i]));
   return data
     .map((m): ExplainDetail => {
