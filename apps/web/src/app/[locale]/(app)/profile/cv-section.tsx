@@ -43,7 +43,13 @@ export function CvSection({ cv, aiAvailable, cvLink }: { cv: { fileName: string;
                 <form action={createSearchProfileFromCv}>
                   <button type="submit" data-testid="cv-create-search" className="brutal brutal-press px-3 py-1.5 text-sm font-semibold">{t('createSearch')}</button>
                 </form>
-                <button type="button" data-testid="cv-fill-contacts" onClick={async () => setFilled(await fillContactsFromCv())} className="brutal brutal-press px-3 py-1.5 text-sm font-semibold">
+                <button type="button" data-testid="cv-fill-contacts" onClick={async () => {
+                    try {
+                      setFilled(await fillContactsFromCv());
+                    } catch {
+                      setFilled(false);
+                    }
+                  }} className="brutal brutal-press px-3 py-1.5 text-sm font-semibold">
                   {t('fillContacts')}
                 </button>
                 {filled !== null && <span role="status" className="self-center text-sm">{t(filled ? 'contactsFilled' : 'error')}</span>}

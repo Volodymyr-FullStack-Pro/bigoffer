@@ -29,7 +29,14 @@ export async function uploadCv(_prev: CvState, formData: FormData): Promise<CvSt
   if (uploadError) return { status: 'error' };
 
   const previous = await loadPrimaryCv(supabase);
-  if (previous) await supabase.from('resumes').update({ is_primary: false }).eq('id', previous.id);
+  if (previous) {
+    const { error: flipError } = await supabase.from('resumes').update({ is_primary: false }).eq('id', previous.id);
+    if (flipError) {
+      console.error('cv: could not demote previous CV', flipError.message);
+      await supabase.storage.from('resumes').remove([path]);
+      return { status: 'error' };
+    }
+  }
   const fileName = file.name.replace(/[^\p{L}\p{N} ._()-]/gu, '').slice(0, 200) || 'cv.pdf';
   const { data: row, error } = await supabase.from('resumes').insert({ user_id: userId, storage_path: path, file_name: fileName, is_primary: true }).select('id').single();
   if (error || !row) {
@@ -38,8 +45,11 @@ export async function uploadCv(_prev: CvState, formData: FormData): Promise<CvSt
     return { status: 'error' };
   }
   if (previous) {
-    await supabase.storage.from('resumes').remove([previous.path]);
-    await supabase.from('resumes').delete().eq('id', previous.id);
+    // Cleanup only after the new CV is safely stored; failures must not fail the upload.
+    const { error: removeError } = await supabase.storage.from('resumes').remove([previous.path]);
+    if (removeError) console.error('cv: could not remove previous file', removeError.message);
+    const { error: deleteError } = await supabase.from('resumes').delete().eq('id', previous.id);
+    if (deleteError) console.error('cv: could not delete previous row', deleteError.message);
   }
   revalidatePath('/[locale]/profile', 'page');
 
@@ -88,7 +98,7 @@ export async function fillContactsFromCv(): Promise<boolean> {
   for (const [k, v] of Object.entries(cv.parsed.contacts)) if (v && !next[k]) next[k] = v;
   const { error } = await supabase
     .from('profiles')
-    .update({ contacts: next, ...(profile?.full_name ? {} : { full_name: cv.parsed.fullName ?? '' }) })
+    .update({ contacts: next, ...(!profile?.full_name && cv.parsed.fullName?.trim() ? { full_name: cv.parsed.fullName.trim() } : {}) })
     .eq('id', userId);
   revalidatePath('/[locale]/profile', 'page');
   return !error;
