@@ -49,6 +49,8 @@ A 429 from the provider stops the batch; the next scheduled run continues.
 
 ### Web app
 
+`/today` — feed (desktop hotkeys J/K/S/H/A/O, mobile swipe), `/board` — application kanban (drag & drop, smart sort, today actions, add a card by link)
+
 ```bash
 pnpm --filter @jp/web dev
 ```
