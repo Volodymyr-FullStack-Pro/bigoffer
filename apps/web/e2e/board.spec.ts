@@ -140,7 +140,7 @@ test('a blocked preview URL falls back to manual entry', async ({ context, page 
   await loginAs(context, uniqueEmail('board-ssrf'));
   await page.goto('/en/board');
   await visible(page, 'add-card').click();
-  await visible(page, 'add-url').fill('http://127.0.0.1:54321/rest/v1/');
+  await visible(page, 'add-url').fill('http://127.0.0.1/');
   await visible(page, 'add-fetch').click();
   await expect(visible(page, 'add-preview-failed')).toBeVisible();
 });

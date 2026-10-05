@@ -33,3 +33,31 @@ describe('parseJobPreview', () => {
     expect(parseJobPreview('<title> Plain title </title>').title).toBe('Plain title');
   });
 });
+
+describe('parseJobPreview is linear on adversarial input', () => {
+  const MB = 1_500_000;
+  const cases: Record<string, string> = {
+    meta: '<meta '.repeat(MB / 6),
+    script: '<script '.repeat(MB / 8),
+    title: '<title '.repeat(MB / 7),
+    'script no close': `<script type="application/ld+json">${'{'.repeat(MB)}`,
+    'many name attrs': `<meta ${'name="og:title" '.repeat(MB / 16)}content="x">`,
+    'unterminated meta': `<meta property="og:title" ${'a'.repeat(MB)}`,
+  };
+  for (const [name, html] of Object.entries(cases)) {
+    it(`handles ${name} in under 200 ms`, () => {
+      const start = performance.now();
+      parseJobPreview(html);
+      const ms = performance.now() - start;
+      console.log(`redos ${name}: ${ms.toFixed(1)} ms`);
+      expect(ms).toBeLessThan(200);
+    });
+  }
+  it('caps returned strings', () => {
+    const p = parseJobPreview(`<meta property="og:title" content="${'a'.repeat(1000)}">`);
+    expect(p.title).toHaveLength(300);
+  });
+  it('reads meta tags with either attribute order', () => {
+    expect(parseJobPreview('<head><meta content="Acme" name="og:site_name"></head>').company).toBe('Acme');
+  });
+});

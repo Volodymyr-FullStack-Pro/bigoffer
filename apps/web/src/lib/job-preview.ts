@@ -65,7 +65,7 @@ export function isPublicIp(ip: string): boolean {
 type LookupResult = { address: string; family: number };
 
 /** DNS lookup that refuses to connect anywhere non-public: the check runs on the address actually used. */
-const guardedLookup: LookupFunction = (hostname, options, callback) => {
+export const guardedLookup: LookupFunction = (hostname, options, callback) => {
   dnsLookup(hostname, { ...options, all: true }, (err, addresses) => {
     if (err) return (callback as (e: Error) => void)(err);
     const list = addresses as unknown as LookupResult[];
@@ -77,25 +77,29 @@ const guardedLookup: LookupFunction = (hostname, options, callback) => {
   });
 };
 
-function get(url: URL, redirects: number, deadline: number): Promise<string | null> {
-  if (!/^https?:$/.test(url.protocol) || (url.port && !['80', '443'].includes(url.port)) || url.username || url.password) {
-    return Promise.resolve(null);
-  }
+/** Static target checks (protocol, port, credentials, IP literals); hostnames are checked in `guardedLookup`. */
+export function checkTarget(url: URL): boolean {
+  if (!/^https?:$/.test(url.protocol) || (url.port && !['80', '443'].includes(url.port)) || url.username || url.password) return false;
   // Node skips `lookup` for IP literals, so validate them here (brackets stripped for IPv6).
   const host = url.hostname.replace(/^\[|\]$/g, '');
-  if (isIP(host) && !isPublicIp(host)) return Promise.resolve(null);
+  return !isIP(host) || isPublicIp(host);
+}
+
+function get(url: URL, redirects: number, deadline: number): Promise<string | null> {
+  if (!checkTarget(url)) return Promise.resolve(null);
   const remaining = deadline - Date.now();
   if (remaining <= 0) return Promise.resolve(null);
   const lib = url.protocol === 'https:' ? https : http;
   return new Promise((resolve) => {
-    const timer = setTimeout(() => req.destroy(), remaining);
+    const timer: { id?: NodeJS.Timeout } = {};
     const finish = (value: string | Promise<string | null> | null) => {
-      clearTimeout(timer);
+      clearTimeout(timer.id);
       resolve(value);
     };
+    // agent: false → a fresh, unpooled socket per request that always goes through `lookup` (and ignores env proxies).
     const req = lib.get(
       url,
-      { lookup: guardedLookup, timeout: TIMEOUT_MS, headers: { 'user-agent': 'Mozilla/5.0 (compatible; BigOfferBot/1.0)', accept: 'text/html' } },
+      { agent: false, lookup: guardedLookup, timeout: TIMEOUT_MS, headers: { 'user-agent': 'Mozilla/5.0 (compatible; BigOfferBot/1.0)', accept: 'text/html' } },
       (res) => {
         const status = res.statusCode ?? 0;
         if (status >= 300 && status < 400 && res.headers.location) {
@@ -107,7 +111,7 @@ function get(url: URL, redirects: number, deadline: number): Promise<string | nu
           } catch {
             return finish(null);
           }
-          clearTimeout(timer);
+          clearTimeout(timer.id);
           return resolve(get(next, redirects + 1, deadline));
         }
         if (status !== 200) {
@@ -128,6 +132,7 @@ function get(url: URL, redirects: number, deadline: number): Promise<string | nu
         res.on('error', () => finish(null));
       },
     );
+    timer.id = setTimeout(() => req.destroy(), remaining);
     req.on('timeout', () => req.destroy());
     req.on('error', () => finish(null));
   });
@@ -136,11 +141,58 @@ function get(url: URL, redirects: number, deadline: number): Promise<string | nu
 const decode = (s: string) =>
   s.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").trim();
 
-function meta(html: string, prop: string): string | null {
-  const re = new RegExp(`<meta[^>]+(?:property|name)=["']${prop}["'][^>]*content=["']([^"']*)["']`, 'i');
-  const m = html.match(re);
-  return m?.[1] ? decode(m[1]) || null : null;
+const MAX_PARSE_CHARS = 512_000;
+const MAX_LD = 200_000;
+const OPEN_TAG = /<(meta|title|script)\b[^<>]{0,4096}>/iy;
+const ATTR = /([a-z][a-z0-9:_-]*)\s*=\s*(?:"([^"]*)"|'([^']*)')/gi;
+
+function attrs(tag: string): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const m of tag.matchAll(ATTR)) out[m[1]!.toLowerCase()] ??= m[2] ?? m[3] ?? '';
+  return out;
 }
+
+type Scan = { ld: string[]; ogTitle: string | null; ogSite: string | null; title: string | null };
+
+/** Linear single-pass scan: every regex is anchored (sticky) and bounded, bodies are found with indexOf. */
+function scan(html: string): Scan {
+  const text = html.slice(0, MAX_PARSE_CHARS);
+  const lower = text.toLowerCase();
+  const headEnd = lower.indexOf('</head');
+  const out: Scan = { ld: [], ogTitle: null, ogSite: null, title: null };
+  // JSON-LD may sit in <body>, so only the meta/title search is limited to <head> when it exists.
+  const metaLimit = headEnd === -1 ? text.length : headEnd;
+  let i = text.indexOf('<');
+  while (i !== -1) {
+    OPEN_TAG.lastIndex = i;
+    const m = OPEN_TAG.exec(text);
+    let next = i + 1;
+    if (m) {
+      const kind = m[1]!.toLowerCase();
+      const end = i + m[0].length;
+      next = end;
+      if (kind === 'meta' && i < metaLimit) {
+        const a = attrs(m[0]);
+        const key = (a.property ?? a.name ?? '').toLowerCase();
+        const content = a.content ? decode(a.content) || null : null;
+        if (key === 'og:title') out.ogTitle ??= content;
+        else if (key === 'og:site_name') out.ogSite ??= content;
+      } else if (kind === 'title' && i < metaLimit) {
+        const close = lower.indexOf('</title', end);
+        if (close !== -1 && close - end <= 2000) out.title ??= decode(text.slice(end, close)) || null;
+      } else if (kind === 'script') {
+        const close = lower.indexOf('</script', end);
+        if (close === -1) break;
+        next = close;
+        if (attrs(m[0]).type?.toLowerCase() === 'application/ld+json' && close - end <= MAX_LD) out.ld.push(text.slice(end, close));
+      }
+    }
+    i = text.indexOf('<', next);
+  }
+  return out;
+}
+
+const cap = (v: string | null, n: number) => (v ? v.slice(0, n) : null);
 
 type Ld = Record<string, unknown>;
 const str = (v: unknown): string | null => (typeof v === 'string' && v.trim() ? v.trim() : null);
@@ -156,10 +208,12 @@ function ldSalary(base: unknown): string | null {
 }
 
 export function parseJobPreview(html: string): JobPreview {
-  for (const m of html.matchAll(/<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)) {
+  const found = scan(html);
+  const done = (p: JobPreview): JobPreview => ({ title: cap(p.title, 300), company: cap(p.company, 200), location: cap(p.location, 200), salary: cap(p.salary, 120) });
+  for (const body of found.ld) {
     let data: unknown;
     try {
-      data = JSON.parse(m[1]!);
+      data = JSON.parse(body);
     } catch {
       continue;
     }
@@ -167,15 +221,14 @@ export function parseJobPreview(html: string): JobPreview {
     const job = nodes.find((n) => n && n['@type'] === 'JobPosting');
     if (!job) continue;
     const loc = (Array.isArray(job.jobLocation) ? job.jobLocation[0] : job.jobLocation) as { address?: { addressLocality?: unknown; addressCountry?: unknown } } | undefined;
-    return {
+    return done({
       title: str(job.title),
       company: str((job.hiringOrganization as Ld | undefined)?.name),
       location: str(loc?.address?.addressLocality) ?? str(loc?.address?.addressCountry),
       salary: ldSalary(job.baseSalary),
-    };
+    });
   }
-  const title = meta(html, 'og:title') ?? (html.match(/<title[^>]*>([^<]*)<\/title>/i)?.[1] ? decode(html.match(/<title[^>]*>([^<]*)<\/title>/i)![1]!) || null : null);
-  return { title, company: meta(html, 'og:site_name'), location: null, salary: null };
+  return done({ title: found.ogTitle ?? found.title, company: found.ogSite, location: null, salary: null });
 }
 
 export async function fetchJobPreview(raw: string): Promise<JobPreview | null> {

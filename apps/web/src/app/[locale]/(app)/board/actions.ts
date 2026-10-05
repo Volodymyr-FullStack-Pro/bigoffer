@@ -3,6 +3,7 @@
 import type { Json } from '@jp/db';
 import { type ApplicationPatch, applicationPatchSchema, rankAtTop, type RejectionInput, rejectionInputSchema } from '@jp/core';
 import { revalidatePath } from 'next/cache';
+import { z } from 'zod';
 import { getUserId } from '@/lib/auth';
 import { fetchJobPreview, type JobPreview } from '@/lib/job-preview';
 import { createClient } from '@/lib/supabase/server';
@@ -129,12 +130,23 @@ export async function getApplicationEvents(id: string): Promise<{ type: string; 
   return (data ?? []).map((e) => ({ type: e.type, payload: e.payload, createdAt: e.created_at }));
 }
 
+const previewUrlSchema = z.string().max(2000);
+const createInputSchema = z.object({
+  columnId: z.string().regex(UUID),
+  title: z.string().trim().min(1).max(300),
+  company: z.string().trim().max(200),
+  url: z.string().trim().max(2000).regex(/^https?:\/\//i).nullable(),
+  location: z.string().trim().max(200).nullable(),
+  salary: z.string().trim().max(120).nullable(),
+});
+
 export async function previewJob(url: string): Promise<JobPreview | null> {
-  if (!(await getUserId()) || url.length > 2000) return null;
-  return fetchJobPreview(url);
+  const parsed = previewUrlSchema.safeParse(url);
+  if (!parsed.success || !(await getUserId())) return null;
+  return fetchJobPreview(parsed.data);
 }
 
-export async function createApplication(input: {
+export async function createApplication(raw: {
   columnId: string;
   title: string;
   company: string;
@@ -144,11 +156,12 @@ export async function createApplication(input: {
 }): Promise<BoardCard | null> {
   const supabase = await client();
   const userId = await getUserId();
-  const title = input.title.trim().slice(0, 300);
-  const url = input.url?.trim() || null;
-  if (!supabase || !userId || !UUID.test(input.columnId) || !title || (url && !/^https?:\/\//i.test(url))) return null;
-  const { data: col } = await supabase.from('board_columns').select('key').eq('id', input.columnId).maybeSingle();
-  if (!col) return null;
+  const parsed = createInputSchema.safeParse({ ...raw, url: raw.url?.trim() || null });
+  if (!supabase || !userId || !parsed.success) return null;
+  const input = { ...parsed.data, location: parsed.data.location || null, salary: parsed.data.salary || null };
+  const { title, url } = input;
+  const { data: col } = await supabase.from('board_columns').select('key, kind').eq('id', input.columnId).maybeSingle();
+  if (!col || col.kind !== 'active') return null;
   const { data: first } = await supabase.from('applications').select('rank').eq('column_id', input.columnId).order('rank').limit(1).maybeSingle();
   const appliedAt = col.key === 'applied' ? new Date().toISOString() : null;
   const { data, error } = await supabase
@@ -158,10 +171,10 @@ export async function createApplication(input: {
       column_id: input.columnId,
       rank: rankAtTop(first?.rank ?? null),
       title,
-      company: input.company.trim().slice(0, 200),
+      company: input.company,
       url,
-      location: input.location?.trim().slice(0, 200) || null,
-      salary: input.salary?.trim().slice(0, 120) || null,
+      location: input.location,
+      salary: input.salary,
       applied_at: appliedAt,
     })
     .select('id, rank')
@@ -173,8 +186,8 @@ export async function createApplication(input: {
   await event(supabase, data.id, 'created', { from: 'manual' });
   revalidatePath('/[locale]/board', 'page');
   return {
-    id: data.id, columnId: input.columnId, rank: data.rank, title, company: input.company.trim(), url,
-    sourceId: null, salary: input.salary?.trim() || null, notes: null, contactName: null, contactUrl: null,
+    id: data.id, columnId: input.columnId, rank: data.rank, title, company: input.company, url,
+    sourceId: null, salary: input.salary, notes: null, contactName: null, contactUrl: null,
     appliedAt, nextActionAt: null, firstResponseAt: null, lastActivityAt: null, followUpCount: 0, outcome: 'open', labelIds: [],
   };
 }
