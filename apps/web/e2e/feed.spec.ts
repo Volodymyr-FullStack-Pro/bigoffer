@@ -57,3 +57,16 @@ test('filters by minimum score', async ({ context, page }) => {
   await expect(page.getByText(high.title).filter({ visible: true }).first()).toBeVisible();
   await expect(page.getByText(low.title).filter({ visible: true })).toHaveCount(0);
 });
+
+test('undoing a hide brings the match back, also after reload', async ({ context, page }) => {
+  const email = uniqueEmail('feed-undo-hide');
+  await loginAs(context, email);
+  const { title } = await seedMatch(email, { score: 83 });
+  await page.goto('/en/today');
+  await visible(page, 'match-hide').click();
+  await expect(visible(page, 'feed-empty')).toBeVisible();
+  await visible(page, 'toast-undo').click();
+  await expect(visible(page, 'job-match').filter({ hasText: title })).toBeVisible();
+  await page.reload();
+  await expect(visible(page, 'job-match').filter({ hasText: title })).toBeVisible();
+});

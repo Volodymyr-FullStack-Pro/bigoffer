@@ -59,9 +59,9 @@ export function Feed({ matches, profiles, sources }: { matches: FeedMatch[]; pro
         message: t(action === 'hide' ? 'hidden' : action === 'saved' ? 'saved' : 'appliedDone', { title: match.title }),
         undoLabel: t('undo'),
         onUndo: async () => {
+          if (!(await restoreMatch(match.id, applicationId))) return show({ message: t('error'), tone: 'error' });
           restoreLocal();
           setDone((d) => d.filter((x) => x.match.id !== match.id));
-          if (!(await restoreMatch(match.id, applicationId))) show({ message: t('error'), tone: 'error' });
         },
       });
     },
@@ -70,6 +70,7 @@ export function Feed({ matches, profiles, sources }: { matches: FeedMatch[]; pro
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      if (e.repeat) return;
       if (!isDesktop() || e.metaKey || e.ctrlKey || e.altKey) return;
       const el = e.target as HTMLElement | null;
       if (el && (el.isContentEditable || ['INPUT', 'SELECT', 'TEXTAREA'].includes(el.tagName))) return;
@@ -81,7 +82,10 @@ export function Feed({ matches, profiles, sources }: { matches: FeedMatch[]; pro
       else if (key === 's') void act(selected, 'saved');
       else if (key === 'h') void act(selected, 'hide');
       else if (key === 'a') void act(selected, 'applied');
-      else if (key === 'o' && selected.postings[0]) window.open(selected.postings[0].url, '_blank', 'noopener');
+      else if (key === 'o') {
+        const url = selected.postings.find((p) => /^https?:\/\//i.test(p.url))?.url;
+        if (url) window.open(url, '_blank', 'noopener');
+      }
       else return;
       e.preventDefault();
     };
@@ -120,10 +124,10 @@ export function Feed({ matches, profiles, sources }: { matches: FeedMatch[]; pro
       <div className="flex flex-wrap items-end justify-between gap-3">
         <p data-testid="feed-progress" className="font-mono text-sm font-bold">{t('progress', { done: processed, total })}</p>
         <div className="flex flex-wrap gap-2">
-          {profiles.length > 1 && select('filter-profile', t('filterProfile'), filters.profileId, (v) => setFilters({ ...filters, profileId: v }), [{ value: 'all', label: t('all') }, ...profiles.map((p) => ({ value: p.id, label: p.name }))])}
-          {select('filter-min-score', t('filterScore'), String(filters.minScore), (v) => setFilters({ ...filters, minScore: Number(v) }), [0, 50, 70, 90].map((n) => ({ value: String(n), label: n === 0 ? t('all') : `≥ ${n}%` })))}
-          {select('filter-remote', t('filterRemote'), filters.remote, (v) => setFilters({ ...filters, remote: v as FeedFilters['remote'] }), (['any', 'remote', 'hybrid', 'office'] as const).map((r) => ({ value: r, label: t(`remote_${r}`) })))}
-          {select('filter-source', t('filterSource'), filters.source, (v) => setFilters({ ...filters, source: v }), [{ value: 'all', label: t('all') }, ...sources.map((s) => ({ value: s.id, label: s.name }))])}
+          {profiles.length > 1 && select('filter-profile', t('filterProfile'), filters.profileId, (v) => setFilters((f) => ({ ...f, profileId: v })), [{ value: 'all', label: t('all') }, ...profiles.map((p) => ({ value: p.id, label: p.name }))])}
+          {select('filter-min-score', t('filterScore'), String(filters.minScore), (v) => setFilters((f) => ({ ...f, minScore: Number(v) })), [0, 50, 70, 90].map((n) => ({ value: String(n), label: n === 0 ? t('all') : `≥ ${n}%` })))}
+          {select('filter-remote', t('filterRemote'), filters.remote, (v) => setFilters((f) => ({ ...f, remote: v as FeedFilters['remote'] })), (['any', 'remote', 'hybrid', 'office'] as const).map((r) => ({ value: r, label: t(`remote_${r}`) })))}
+          {select('filter-source', t('filterSource'), filters.source, (v) => setFilters((f) => ({ ...f, source: v })), [{ value: 'all', label: t('all') }, ...sources.map((s) => ({ value: s.id, label: s.name }))])}
         </div>
       </div>
 
