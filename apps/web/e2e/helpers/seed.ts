@@ -1,3 +1,4 @@
+import { rankAtEnd } from '@jp/core';
 import { createClient } from '@supabase/supabase-js';
 
 const admin = () =>
@@ -74,4 +75,43 @@ export async function countApplications(email: string): Promise<number> {
   const { count, error } = await db.from('applications').select('id', { count: 'exact', head: true }).eq('user_id', userId);
   if (error) throw error;
   return count ?? 0;
+}
+
+export async function seedApplication(
+  email: string,
+  opts: { column?: string; title?: string; appliedDaysAgo?: number; nextActionInHours?: number } = {},
+) {
+  const db = admin();
+  const userId = await userIdByEmail(email);
+  const tag = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+  const title = opts.title ?? `Full Stack Engineer ${tag}`;
+  const { data: col, error: cErr } = await db.from('board_columns').select('id').eq('user_id', userId).eq('key', opts.column ?? 'applied').single();
+  if (cErr) throw cErr;
+  const day = 24 * 3600 * 1000;
+  const { data, error } = await db
+    .from('applications')
+    .insert({
+      user_id: userId,
+      column_id: col.id,
+      rank: rankAtEnd(null),
+      title,
+      company: `Acme ${tag}`,
+      url: `https://jobs.dou.ua/vacancies/${tag}/`,
+      applied_at: opts.appliedDaysAgo != null ? new Date(Date.now() - opts.appliedDaysAgo * day).toISOString() : null,
+      next_action_at: opts.nextActionInHours != null ? new Date(Date.now() + opts.nextActionInHours * 3600 * 1000).toISOString() : null,
+    })
+    .select('id')
+    .single();
+  if (error) throw error;
+  return { id: data.id, title };
+}
+
+export async function applicationColumnKey(id: string): Promise<string | null> {
+  const db = admin();
+  const { data: app, error } = await db.from('applications').select('column_id').eq('id', id).maybeSingle();
+  if (error) throw error;
+  if (!app) return null;
+  const { data: col, error: cErr } = await db.from('board_columns').select('key').eq('id', app.column_id).single();
+  if (cErr) throw cErr;
+  return col.key;
 }

@@ -18,6 +18,8 @@ test('saves a match to the board and can undo it', async ({ context, page }) => 
   await visible(page, 'match-save').click();
   await expect(visible(page, 'feed-empty')).toBeVisible();
   await expect.poll(() => countApplications(email)).toBe(1);
+  await page.goto('/en/board');
+  await expect(page.getByTestId('board-card').filter({ visible: true }).filter({ hasText: title })).toBeVisible();
 });
 
 test('hides a match and keeps it hidden after reload', async ({ context, page }) => {
