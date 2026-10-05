@@ -30,7 +30,8 @@ export function applicationUrgency(a: UrgencyInput, now: Date, rules: FollowUpRu
   // A ping (last_activity_at) restarts the follow-up timer.
   const since = a.lastActivityAt && a.lastActivityAt > a.appliedAt ? a.lastActivityAt : a.appliedAt;
   const days = businessDaysBetween(since, now);
-  const [first = 5, second = 10] = rules.followUpDays;
+  const [first = DEFAULT_FOLLOW_UP.followUpDays[0]!, rawSecond = DEFAULT_FOLLOW_UP.followUpDays[1]!] = rules.followUpDays;
+  const second = Math.max(first, rawSecond); // a misordered pair must not mark overdue before the first ping
   if (days >= second) return 'overdue';
   if (days >= first) return 'ping';
   return 'fresh';

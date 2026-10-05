@@ -73,4 +73,31 @@ describe('board helpers', () => {
       ['d', 'ghosting'],
     ]);
   });
+
+  it('treats exactly 48 hours as interview_soon and a past time as not', () => {
+    expect(applicationUrgency({ ...base, nextActionAt: new Date(now.getTime() + 48 * 3600 * 1000) }, now)).toBe('interview_soon');
+    expect(applicationUrgency({ ...base, nextActionAt: new Date(now.getTime() + 48 * 3600 * 1000 + 1) }, now)).toBe('none');
+    expect(applicationUrgency({ ...base, nextActionAt: new Date(now.getTime() - 1) }, now)).toBe('none');
+  });
+
+  it('flags ghosting at exactly ghostAfterDays', () => {
+    const rules = { followUpDays: [5, 10], ghostAfterDays: 21 };
+    expect(applicationUrgency({ ...base, appliedAt: new Date(now.getTime() - 21 * 86400000) }, now, rules)).toBe('ghosting');
+    expect(applicationUrgency({ ...base, appliedAt: new Date(now.getTime() - 21 * 86400000 + 1) }, now, rules)).not.toBe('ghosting');
+  });
+
+  it('ignores a last activity older than the application date', () => {
+    expect(
+      applicationUrgency({ ...base, appliedAt: at('2026-09-28T12:00:00Z'), lastActivityAt: at('2026-09-21T12:00:00Z') }, now),
+    ).toBe('ping');
+  });
+
+  it('copes with short or misordered follow-up rules', () => {
+    // 10 business days since applying
+    const applied = at('2026-09-21T12:00:00Z');
+    expect(applicationUrgency({ ...base, appliedAt: applied }, now, { followUpDays: [12], ghostAfterDays: 30 })).toBe('fresh');
+    expect(applicationUrgency({ ...base, appliedAt: applied }, now, { followUpDays: [12, 8], ghostAfterDays: 30 })).toBe('fresh');
+    expect(applicationUrgency({ ...base, appliedAt: at('2026-09-14T12:00:00Z') }, now, { followUpDays: [12], ghostAfterDays: 30 })).toBe('overdue');
+    expect(applicationUrgency({ ...base, appliedAt: applied }, now, { followUpDays: [], ghostAfterDays: 30 })).toBe('overdue');
+  });
 });
