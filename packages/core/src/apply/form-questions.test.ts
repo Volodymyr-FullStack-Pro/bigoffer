@@ -17,6 +17,7 @@ Rate your English (A1–C2):`;
     ]);
   });
   it('keeps a single question as is and caps at 20', () => {
+    expect(splitQuestions('1.')).toEqual([]);
     expect(splitQuestions('Do you have Kubernetes experience?')).toEqual(['Do you have Kubernetes experience?']);
     expect(splitQuestions(Array.from({ length: 30 }, (_, i) => `Q${i}?`).join('\n'))).toHaveLength(20);
   });
@@ -33,5 +34,18 @@ describe('matchBankKey', () => {
     expect(matchBankKey('Why are you looking for a new job?')).toBe('why_looking');
     expect(matchBankKey('Remote or office?')).toBe('work_format');
     expect(matchBankKey('Do you have Kubernetes experience?')).toBeNull();
+  });
+
+  it('prefers null over a guess', () => {
+    for (const q of [
+      'Do you have experience with remote teams?',
+      'Have you worked with English-speaking clients?',
+      'Experience with Microsoft Office / Office 365?',
+      'Hybrid cloud experience?',
+      'On-site support experience?',
+      'Experience with payment systems?',
+      'Why are you interested in our company?',
+      'English level and salary expectations?',
+    ]) expect(matchBankKey(q), q).toBeNull();
   });
 });

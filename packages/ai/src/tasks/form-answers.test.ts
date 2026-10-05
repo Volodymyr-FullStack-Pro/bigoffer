@@ -11,6 +11,8 @@ describe('answerForm', () => {
     const llm = new FakeLlmClient(fakeResponder, ['private']);
     expect(await answerForm(llm, { questions: ['Kubernetes?', 'Team size?'], job, cv, lang: 'en' })).toEqual(['Fake answer 1', 'Fake answer 2']);
     expect(llm.calls[0]).toMatchObject({ sensitivity: 'private', task: 'form_answers' });
+    expect(llm.calls[0]!.prompt).toMatch(/<job_posting>[\s\S]*<\/job_posting>/);
+    expect(llm.calls[0]!.system).toContain('untrusted data');
   });
   it('makes no call without questions and fills gaps with empty strings', async () => {
     const none = new FakeLlmClient(fakeResponder, ['private']);

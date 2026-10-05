@@ -21,5 +21,8 @@ describe('recruiterMessage', () => {
     await recruiterMessage(llm, { ...base, format: 'telegram', kind: 'follow_up', previous: ['First ping'] });
     expect(llm.calls[0]!.prompt).toContain('First ping');
     expect(llm.calls[0]!.system).toContain('follow-up');
+    expect(llm.calls[0]!.prompt).toMatch(/<job_posting>[\s\S]*<\/job_posting>/);
+    expect(llm.calls[0]!.system).toContain('untrusted data');
+    expect(llm.calls[0]!.system).toContain('never paste the whole CV');
   });
 });

@@ -14,6 +14,9 @@ describe('generateApplyKit', () => {
     expect(req).toMatchObject({ sensitivity: 'private', task: 'apply_kit' });
     expect(req.prompt).toContain('Senior Developer at Acme');
     expect(req.prompt).toContain('Hi! [why this job]');
+    expect(req.prompt).toMatch(/<job_posting>[\s\S]*<\/job_posting>/);
+    expect(req.system).toContain('untrusted data');
+    expect(req.system).toContain('never paste the whole CV');
     expect(req.prompt.length).toBeLessThan(12_000);
     expect(kit.requirements).toEqual([{ text: 'React', status: 'met' }, { text: 'Kubernetes', status: 'missing' }]);
     expect(kit.shortMessage.length).toBeLessThanOrEqual(500);
