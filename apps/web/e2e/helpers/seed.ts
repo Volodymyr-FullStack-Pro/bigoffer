@@ -67,3 +67,11 @@ export async function seedProfileWithNullSources(email: string, remoteType: 'hyb
     .insert({ user_id: userId, name: 'Legacy profile', keywords: ['react'], remote_type: remoteType, sources: null });
   if (error) throw error;
 }
+
+export async function countApplications(email: string): Promise<number> {
+  const db = admin();
+  const userId = await userIdByEmail(email);
+  const { count, error } = await db.from('applications').select('id', { count: 'exact', head: true }).eq('user_id', userId);
+  if (error) throw error;
+  return count ?? 0;
+}

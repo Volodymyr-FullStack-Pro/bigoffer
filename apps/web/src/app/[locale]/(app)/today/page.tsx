@@ -1,10 +1,10 @@
-import { isLocale, type LocalizedText, localized, SENIORITIES, type Seniority } from '@jp/core';
+import { isLocale, type LocalizedText, localized, SENIORITIES, type Seniority, sourceInfo } from '@jp/core';
 import { getLocale, getTranslations } from 'next-intl/server';
-import { Link } from '@/i18n/navigation';
 import { requireUserId } from '@/lib/auth';
 import { createClient } from '@/lib/supabase/server';
 import { cardSkills, matchedSkillsOf } from './card-skills';
-import { JobMatchCard, type JobMatchView } from './job-match-card';
+import { Feed } from './feed';
+import type { FeedMatch } from './feed-types';
 
 const REMOTE = ['remote', 'hybrid', 'office'] as const;
 
@@ -15,60 +15,63 @@ function windowStart(): string {
 export default async function TodayPage() {
   await requireUserId();
   const t = await getTranslations('today');
-  const supabase = await createClient();
-  const since = windowStart();
-  const { data } = await supabase
-    .from('job_matches')
-    .select(
-      'id, score, created_at, breakdown, explanation, jobs!inner(title, location, remote_type, seniority, salary_min_usd, salary_max_usd, summary, skills, companies(name), job_postings(source_id, url))',
-    )
-    .in('state', ['new', 'seen'])
-    .eq('jobs.status', 'active')
-    .not('jobs.is_job', 'is', false)
-    .gte('created_at', since)
-    .order('score', { ascending: false })
-    .order('created_at', { ascending: false })
-    .limit(100);
-
   const rawLocale = await getLocale();
   const locale = isLocale(rawLocale) ? rawLocale : 'en';
-  const matches: JobMatchView[] = (data ?? []).map((m) => ({
-    id: m.id,
-    score: m.score,
-    title: m.jobs.title,
-    company: m.jobs.companies?.name ?? '',
-    location: m.jobs.location,
-    remoteType: REMOTE.find((r) => r === m.jobs.remote_type) ?? 'unknown',
-    salaryMinUsd: m.jobs.salary_min_usd,
-    salaryMaxUsd: m.jobs.salary_max_usd,
-    seenAt: m.created_at,
-    summary: localized(m.jobs.summary as LocalizedText | null, locale) || null,
-    why: localized(m.explanation as LocalizedText | null, locale) || null,
-    seniority: (SENIORITIES as readonly string[]).includes(m.jobs.seniority ?? '') ? (m.jobs.seniority as Seniority) : null,
-    skills: cardSkills(m.jobs.skills, matchedSkillsOf(m.breakdown)),
-    postings: m.jobs.job_postings.map((p) => ({ sourceId: p.source_id, url: p.url })),
-  }));
+  const supabase = await createClient();
+  const since = windowStart();
+  const [{ data }, { data: profiles }] = await Promise.all([
+    supabase
+      .from('job_matches')
+      .select(
+        'id, score, created_at, breakdown, explanation, search_profile_id, jobs!inner(title, location, remote_type, seniority, salary_min_usd, salary_max_usd, summary, skills, description_text, is_job, companies(name), job_postings(source_id, url))',
+      )
+      .in('state', ['new', 'seen'])
+      .eq('jobs.status', 'active')
+      .not('jobs.is_job', 'is', false)
+      .gte('created_at', since)
+      .order('score', { ascending: false })
+      .order('created_at', { ascending: false })
+      .limit(200),
+    supabase.from('search_profiles').select('id, name, skills').order('created_at'),
+  ]);
+
+  const profileSkills = new Map((profiles ?? []).map((p) => [p.id, p.skills]));
+  const matches: FeedMatch[] = (data ?? []).map((m) => {
+    const matched = matchedSkillsOf(m.breakdown);
+    const wanted = m.search_profile_id ? (profileSkills.get(m.search_profile_id) ?? []) : [];
+    const b = m.breakdown as Partial<Record<'skills' | 'role' | 'seniority' | 'location' | 'salary', unknown>> | null;
+    const num = (v: unknown) => (typeof v === 'number' ? v : 0);
+    return {
+      id: m.id,
+      score: m.score,
+      title: m.jobs.title,
+      company: m.jobs.companies?.name ?? '',
+      location: m.jobs.location,
+      remoteType: REMOTE.find((r) => r === m.jobs.remote_type) ?? 'unknown',
+      seniority: (SENIORITIES as readonly string[]).includes(m.jobs.seniority ?? '') ? (m.jobs.seniority as Seniority) : null,
+      salaryMinUsd: m.jobs.salary_min_usd,
+      salaryMaxUsd: m.jobs.salary_max_usd,
+      summary: localized(m.jobs.summary as LocalizedText | null, locale) || null,
+      why: localized(m.explanation as LocalizedText | null, locale) || null,
+      description: m.jobs.description_text.slice(0, 8000),
+      skills: cardSkills(m.jobs.skills, matched, 8),
+      missingSkills: wanted.filter((s) => !matched.some((x) => x.toLowerCase() === s.toLowerCase())),
+      breakdown: b ? { skills: num(b.skills), role: num(b.role), seniority: num(b.seniority), location: num(b.location), salary: num(b.salary) } : null,
+      profileId: m.search_profile_id,
+      createdAt: m.created_at,
+      postings: m.jobs.job_postings.map((p) => ({ sourceId: p.source_id, url: p.url })),
+    };
+  });
+  const sourceIds = [...new Set(matches.flatMap((m) => m.postings.map((p) => p.sourceId)))];
 
   return (
     <section className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-3xl font-black md:text-4xl">{t('title')}</h1>
-        {matches.length > 0 && <p className="mt-2 text-muted-foreground">{t('subtitle', { count: matches.length })}</p>}
-      </div>
-      {matches.length === 0 ? (
-        <div data-testid="today-empty" className="brutal flex max-w-xl flex-col gap-4 p-6">
-          <p className="text-lg">{t('empty')}</p>
-          <Link href="/search" className="brutal brutal-press self-start bg-brand px-4 py-2 font-semibold text-brand-foreground">
-            {t('setup')}
-          </Link>
-        </div>
-      ) : (
-        <div className="grid gap-4 lg:grid-cols-2">
-          {matches.map((m) => (
-            <JobMatchCard key={m.id} match={m} />
-          ))}
-        </div>
-      )}
+      <h1 className="text-3xl font-black md:text-4xl">{t('title')}</h1>
+      <Feed
+        matches={matches}
+        profiles={(profiles ?? []).map((p) => ({ id: p.id, name: p.name }))}
+        sources={sourceIds.map((id) => ({ id, name: sourceInfo(id)?.name ?? id }))}
+      />
     </section>
   );
 }
