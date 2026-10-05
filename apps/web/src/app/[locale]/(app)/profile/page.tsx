@@ -1,7 +1,10 @@
 import { COUNTRY_CODES, contactsSchema } from '@jp/core';
 import { getLocale, getTranslations } from 'next-intl/server';
+import { privateAiAvailable } from '@/lib/ai';
 import { requireUserId } from '@/lib/auth';
+import { cvSignedUrl, loadPrimaryCv } from '@/lib/cv';
 import { createClient } from '@/lib/supabase/server';
+import { CvSection } from './cv-section';
 import { ProfileForm } from './profile-form';
 
 export default async function ProfilePage() {
@@ -23,6 +26,9 @@ export default async function ProfilePage() {
     );
   }
 
+  const cv = await loadPrimaryCv(supabase);
+  const cvLink = cv ? await cvSignedUrl(supabase, cv.path) : null;
+
   const contacts = contactsSchema.safeParse(profile.contacts ?? {});
 
   const locale = await getLocale();
@@ -42,6 +48,7 @@ export default async function ProfilePage() {
         contacts={contacts.success ? contacts.data : {}}
         timeZones={Intl.supportedValuesOf('timeZone')}
       />
+      <CvSection cv={cv ? { fileName: cv.fileName, parsed: cv.parsed, parseError: cv.parseError } : null} aiAvailable={privateAiAvailable()} cvLink={cvLink} />
     </section>
   );
 }

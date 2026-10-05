@@ -23,6 +23,8 @@ pnpm db:env                        # writes apps/web/.env.local and apps/jobs/.e
 pnpm --filter @jp/scrapers exec playwright install chromium   # browser for Work.ua / OLX
 ```
 
+Personal-data AI (CV, letters, recruiter messages) needs a **paid** Gemini key in `apps/web/.env.local` as `GEMINI_API_KEY_PRIVATE`; E2E uses `AI_PROVIDER=fake` (with `ALLOW_FAKE_AI=1`).
+
 Optional keys go into `apps/jobs/.env.local` (see `apps/jobs/.env.example`), e.g. `JOOBLE_API_KEY`.
 
 ### Running the pipeline once (no Trigger.dev needed)

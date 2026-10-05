@@ -23,5 +23,6 @@ export default defineConfig({
     url: `${baseURL}/en/login`,
     reuseExistingServer: !process.env.CI,
     timeout: 180_000,
+    env: { AI_PROVIDER: 'fake', ALLOW_FAKE_AI: '1' },
   },
 });

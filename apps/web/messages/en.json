@@ -255,5 +255,22 @@
     "addCompany": "Company",
     "addLocation": "Location",
     "addSubmit": "Add to board"
+  },
+  "cv": {
+    "title": "Your CV",
+    "upload": "Upload PDF",
+    "uploading": "Uploading…",
+    "parsed": "CV read: check the skills below.",
+    "storedNoAi": "CV saved. AI reading is unavailable (no private AI key).",
+    "storedParseFailed": "CV saved, but AI couldn't read it.",
+    "notPdf": "Choose a PDF file.",
+    "tooBig": "The file is larger than 5 MB.",
+    "error": "Something went wrong. Try again.",
+    "aiUnavailable": "AI for personal data is off: add a paid private Gemini key to enable CV reading, letters and messages.",
+    "open": "Open",
+    "years": "{count, plural, one {# year} other {# years}}",
+    "createSearch": "Create a job search from my CV",
+    "fillContacts": "Fill empty contacts from CV",
+    "contactsFilled": "Contacts updated."
   }
 }
