@@ -38,9 +38,9 @@ export async function saveMatch(matchId: string, target: 'saved' | 'applied'): P
 export async function hideMatch(matchId: string): Promise<boolean> {
   if (!UUID.test(matchId) || !(await getUserId())) return false;
   const supabase = await createClient();
-  const { error } = await supabase.from('job_matches').update({ state: 'hidden' }).eq('id', matchId);
+  const { data, error } = await supabase.from('job_matches').update({ state: 'hidden' }).eq('id', matchId).select('id');
   if (error) console.error('hideMatch failed', error.message);
-  return !error;
+  return !error && (data?.length ?? 0) > 0;
 }
 
 export async function restoreMatch(matchId: string, applicationId: string | null): Promise<boolean> {

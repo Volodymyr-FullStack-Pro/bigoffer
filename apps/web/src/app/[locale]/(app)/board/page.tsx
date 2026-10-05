@@ -1,5 +1,5 @@
-import { isLocale, type LocalizedText, localized } from '@jp/core';
-import { getLocale, getTranslations } from 'next-intl/server';
+import { DEFAULT_FOLLOW_UP, isLocale, type LocalizedText, localized } from '@jp/core';
+import { getLocale, getTimeZone, getTranslations } from 'next-intl/server';
 import { requireUserId } from '@/lib/auth';
 import { createClient } from '@/lib/supabase/server';
 import { Board } from './board';
@@ -60,8 +60,9 @@ export default async function BoardPage() {
         columns={boardColumns}
         cards={cards}
         labels={(labels ?? []) as BoardLabel[]}
-        rules={{ followUpDays: profile?.follow_up_days ?? [5, 10], ghostAfterDays: profile?.ghost_after_days ?? 21 }}
+        rules={{ followUpDays: profile?.follow_up_days ?? DEFAULT_FOLLOW_UP.followUpDays, ghostAfterDays: profile?.ghost_after_days ?? DEFAULT_FOLLOW_UP.ghostAfterDays }}
         now={new Date().toISOString()}
+        timeZone={await getTimeZone()}
       />
     </section>
   );

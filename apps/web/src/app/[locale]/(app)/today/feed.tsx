@@ -41,6 +41,7 @@ export function Feed({ matches, profiles, sources }: { matches: FeedMatch[]; pro
         setSelectedId(match.id);
       };
       let applicationId: string | null = null;
+      let existing = false;
       if (action === 'hide') {
         if (!(await hideMatch(match.id))) {
           restoreLocal();
@@ -53,10 +54,11 @@ export function Feed({ matches, profiles, sources }: { matches: FeedMatch[]; pro
           return show({ message: t('error'), tone: 'error' });
         }
         if (res.created) applicationId = res.applicationId;
+        else existing = true;
       }
       setDone((d) => [...d, { match, index, action }]);
       show({
-        message: t(action === 'hide' ? 'hidden' : action === 'saved' ? 'saved' : 'appliedDone', { title: match.title }),
+        message: t(action === 'hide' ? 'hidden' : existing ? 'alreadyOnBoard' : action === 'saved' ? 'saved' : 'appliedDone', { title: match.title }),
         undoLabel: t('undo'),
         onUndo: async () => {
           if (!(await restoreMatch(match.id, applicationId))) return show({ message: t('error'), tone: 'error' });

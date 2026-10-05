@@ -76,6 +76,7 @@
     "undo": "Undo",
     "saved": "Saved to the board: {title}",
     "appliedDone": "Marked as applied: {title}",
+    "alreadyOnBoard": "Already on your board: {title}",
     "hidden": "Hidden: {title}",
     "error": "Something went wrong. Try again.",
     "empty": "All caught up 🎉",

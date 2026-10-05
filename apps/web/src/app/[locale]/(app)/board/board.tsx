@@ -15,14 +15,15 @@ import { Confetti } from './confetti';
 import { RejectDialog } from './reject-dialog';
 import { TodayActions } from './today-actions';
 
-type PendingReject = { id: string; columnId: string; rank: string; reasons: RejectionReason[] };
+type PendingReject = { id: string; columnId: string; rank: string; reasons: RejectionReason[]; outcome: 'rejected' | 'ghosted' };
 
-export function Board({ columns, cards: initial, labels: initialLabels, rules, now: nowIso }: {
+export function Board({ columns, cards: initial, labels: initialLabels, rules, now: nowIso, timeZone }: {
   columns: BoardColumn[];
   cards: BoardCard[];
   labels: BoardLabel[];
   rules: FollowUpRules;
   now: string;
+  timeZone: string;
 }) {
   const t = useTranslations('board');
   const now = useMemo(() => new Date(nowIso), [nowIso]);
@@ -95,11 +96,11 @@ export function Board({ columns, cards: initial, labels: initialLabels, rules, n
     if (target.kind === 'won' && card.columnId !== columnId) setConfetti(true);
   };
 
-  const requestMove = (id: string, columnId: string, rank: string, reasons: RejectionReason[] = []) => {
+  const requestMove = (id: string, columnId: string, rank: string, reasons: RejectionReason[] = [], outcome: 'rejected' | 'ghosted' = 'rejected') => {
     const card = cards.find((c) => c.id === id);
     if (!card) return;
     const target = columnById.get(columnId);
-    if (target?.kind === 'lost' && card.columnId !== columnId) setPendingReject({ id, columnId, rank, reasons });
+    if (target?.kind === 'lost' && card.columnId !== columnId) setPendingReject({ id, columnId, rank, reasons, outcome });
     else void commitMove(id, columnId, rank);
   };
 
@@ -140,14 +141,16 @@ export function Board({ columns, cards: initial, labels: initialLabels, rules, n
   const confirmReject = async (input: RejectionInput) => {
     if (!pendingReject) return;
     const { id, columnId, rank } = pendingReject;
+    // Leaving the process yourself is a withdrawal; otherwise the pending outcome (rejected or ghosted).
+    const outcome = input.by === 'me' ? 'withdrawn' : pendingReject.outcome;
     setPendingReject(null);
     const card = cards.find((c) => c.id === id);
     if (!card) return;
     const previous = { columnId: card.columnId, rank: card.rank, outcome: card.outcome };
-    patchLocal(id, { columnId, rank, outcome: 'rejected' });
+    patchLocal(id, { columnId, rank, outcome });
     let ok = false;
     try {
-      ok = await rejectApplication(id, columnId, rank, input);
+      ok = await rejectApplication(id, columnId, rank, input, outcome);
     } catch {
       ok = false;
     }
@@ -179,7 +182,7 @@ export function Board({ columns, cards: initial, labels: initialLabels, rules, n
           if (ok) patchLocal(id, { lastActivityAt: new Date().toISOString(), followUpCount: (cards.find((c) => c.id === id)?.followUpCount ?? 0) + 1 });
           else show({ message: t('moveError'), tone: 'error' });
         }}
-        onGhosted={(id) => lost && requestMove(id, lost.id, endRank(lost.id, id), ['no_feedback'])}
+        onGhosted={(id) => lost && requestMove(id, lost.id, endRank(lost.id, id), ['no_feedback'], 'ghosted')}
       />
       {cards.length === 0 && <p data-testid="board-empty" className="text-muted-foreground">{t('empty')}</p>}
       <DndContext id="board-dnd" sensors={sensors} collisionDetection={closestCorners} onDragStart={({ active: a }) => setActiveId(String(a.id))} onDragCancel={() => setActiveId(null)} onDragEnd={onDragEnd}>
@@ -203,6 +206,7 @@ export function Board({ columns, cards: initial, labels: initialLabels, rules, n
       {open && (
         <CardPanel
           card={open}
+          timeZone={timeZone}
           columns={columns}
           labels={labels}
           labelName={labelName}

@@ -4,6 +4,18 @@ import { applicationColumnKey, seedApplication } from './helpers/seed';
 
 const visible = (page: Page, id: string) => page.getByTestId(id).filter({ visible: true });
 const card = (page: Page, title: string) => visible(page, 'board-card').filter({ hasText: title });
+// Moves a keyboard drag n columns right, waiting for dnd-kit to announce each step (key presses outrun its layout reads).
+async function dragRight(page: Page, steps: number) {
+  const live = page.locator('[aria-live]').filter({ hasText: /Draggable item/ });
+  // The drag is only live once dnd-kit has announced the pick-up (it starts over the card itself).
+  await expect(live.first()).toContainText('moved over');
+  await page.waitForTimeout(200); // dnd-kit attaches its key listeners a tick after the announcement
+  for (let i = 0; i < steps; i++) {
+    const before = (await live.first().textContent()) ?? '';
+    await page.keyboard.press('ArrowRight');
+    await expect.poll(async () => (await live.first().textContent()) ?? '').not.toBe(before);
+  }
+}
 const column = (page: Page, key: string) => page.locator(`[data-testid="board-column"][data-column-key="${key}"]`);
 
 test('shows the six default columns with counters', async ({ context, page }) => {
@@ -67,6 +79,8 @@ test('moving to Offer celebrates', async ({ context, page }) => {
   await card(page, title).click();
   await visible(page, 'panel-move').selectOption({ label: 'Offer' });
   await expect(column(page, 'offer').getByText(title)).toBeVisible();
+  const reduced = await page.evaluate(() => window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  if (!reduced) await expect(page.getByTestId('confetti')).toBeAttached();
 });
 
 test('edits notes and labels in the panel', async ({ context, page }) => {
@@ -143,4 +157,38 @@ test('a blocked preview URL falls back to manual entry', async ({ context, page 
   await visible(page, 'add-url').fill('http://127.0.0.1/');
   await visible(page, 'add-fetch').click();
   await expect(visible(page, 'add-preview-failed')).toBeVisible();
+});
+
+test('keyboard: dragging to Rejected focuses the reject dialog and Escape cancels', async ({ context, page, isMobile }) => {
+  test.skip(isMobile, 'keyboard is a desktop feature');
+  const email = uniqueEmail('board-keys-reject');
+  await loginAs(context, email);
+  const { id, title } = await seedApplication(email, { column: 'applied', appliedDaysAgo: 2 });
+  await page.goto('/en/board');
+  const target = card(page, title);
+  await target.focus();
+  await page.keyboard.press('Space');
+  // applied -> interview -> test_task -> offer -> rejected
+  await dragRight(page, 4);
+  await page.keyboard.press('Space');
+  await expect(visible(page, 'reject-dialog')).toBeVisible();
+  await expect(page.getByTestId('reject-stage')).toBeFocused();
+  await page.keyboard.press('Escape');
+  await expect(page.getByTestId('reject-dialog')).toHaveCount(0);
+  await expect(target).toBeFocused();
+  expect(await applicationColumnKey(id)).toBe('applied');
+
+  // Again, this time confirming with the keyboard only.
+  await page.keyboard.press('Space');
+  await dragRight(page, 4);
+  await page.keyboard.press('Space');
+  await expect(page.getByTestId('reject-stage')).toBeFocused();
+  await page.keyboard.press('Tab'); // by
+  await page.keyboard.press('Tab'); // first reason
+  await expect(page.locator('[data-testid="reject-reason"]').first()).toBeFocused();
+  await page.keyboard.press('Space');
+  await page.getByTestId('reject-confirm').focus();
+  await page.keyboard.press('Enter');
+  await expect(column(page, 'rejected').getByText(title)).toBeVisible();
+  await expect.poll(() => applicationColumnKey(id)).toBe('rejected');
 });

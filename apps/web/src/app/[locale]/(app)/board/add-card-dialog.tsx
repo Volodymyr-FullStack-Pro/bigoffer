@@ -2,17 +2,19 @@
 
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
+import { useModalDialog } from './use-modal-dialog';
 import { createApplication, previewJob } from './actions';
 import type { BoardCard, BoardColumn } from './board-types';
 
 export function AddCardDialog({ columns, onCreated, onClose }: { columns: BoardColumn[]; onCreated: (c: BoardCard) => void; onClose: () => void }) {
   const t = useTranslations('board');
+  const [dialogRef, onDialogCancel] = useModalDialog(onClose);
   const [url, setUrl] = useState('');
   const [title, setTitle] = useState('');
   const [company, setCompany] = useState('');
   const [location, setLocation] = useState('');
   const [salary, setSalary] = useState('');
-  const [columnId, setColumnId] = useState(columns.find((c) => c.key === 'saved')?.id ?? columns[0]?.id ?? '');
+  const [columnId, setColumnId] = useState((columns.find((c) => c.key === 'saved') ?? columns.find((c) => c.kind === 'active'))?.id ?? '');
   const [loading, setLoading] = useState(false);
   const [failed, setFailed] = useState(false);
   const [error, setError] = useState(false);
@@ -36,9 +38,9 @@ export function AddCardDialog({ columns, onCreated, onClose }: { columns: BoardC
   };
 
   return (
-    <div role="dialog" aria-modal="true" aria-labelledby="add-title-h" data-testid="add-card-dialog" className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+    <dialog ref={dialogRef} onCancel={onDialogCancel} aria-labelledby="add-title-h" data-testid="add-card-dialog" className="m-auto w-full max-w-lg bg-transparent p-4 text-foreground backdrop:bg-black/50">
       <form
-        className="brutal flex w-full max-w-lg flex-col gap-3 p-5"
+        className="brutal flex w-full flex-col gap-3 p-5"
         onSubmit={async (e) => {
           e.preventDefault();
           setError(false);
@@ -77,6 +79,6 @@ export function AddCardDialog({ columns, onCreated, onClose }: { columns: BoardC
           <button type="submit" data-testid="add-submit" disabled={!title.trim()} className="brutal brutal-press bg-brand px-4 py-2 font-semibold text-brand-foreground disabled:opacity-50">{t('addSubmit')}</button>
         </div>
       </form>
-    </div>
+    </dialog>
   );
 }

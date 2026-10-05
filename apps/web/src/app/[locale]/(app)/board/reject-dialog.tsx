@@ -3,6 +3,7 @@
 import { REJECTION_REASONS, REJECTION_STAGES, type RejectionInput, type RejectionReason, type RejectionStage } from '@jp/core';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
+import { useModalDialog } from './use-modal-dialog';
 
 export function RejectDialog({ initialReasons = [], onConfirm, onCancel }: {
   initialReasons?: RejectionReason[];
@@ -10,14 +11,15 @@ export function RejectDialog({ initialReasons = [], onConfirm, onCancel }: {
   onCancel: () => void;
 }) {
   const t = useTranslations('board');
+  const [dialogRef, onDialogCancel] = useModalDialog(onCancel);
   const [stage, setStage] = useState<RejectionStage>('application');
   const [by, setBy] = useState<'company' | 'me'>('company');
   const [reasons, setReasons] = useState<RejectionReason[]>(initialReasons);
   const [note, setNote] = useState('');
   return (
-    <div role="dialog" aria-modal="true" aria-labelledby="reject-title" data-testid="reject-dialog" className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+    <dialog ref={dialogRef} onCancel={onDialogCancel} aria-labelledby="reject-title" data-testid="reject-dialog" className="m-auto w-full max-w-lg bg-transparent p-4 text-foreground backdrop:bg-black/50">
       <form
-        className="brutal flex max-h-[90vh] w-full max-w-lg flex-col gap-4 overflow-y-auto p-5"
+        className="brutal flex max-h-[90vh] w-full flex-col gap-4 overflow-y-auto p-5"
         onSubmit={(e) => {
           e.preventDefault();
           if (reasons.length > 0) onConfirm({ stage, by, reasons, note });
@@ -65,6 +67,6 @@ export function RejectDialog({ initialReasons = [], onConfirm, onCancel }: {
           </button>
         </div>
       </form>
-    </div>
+    </dialog>
   );
 }

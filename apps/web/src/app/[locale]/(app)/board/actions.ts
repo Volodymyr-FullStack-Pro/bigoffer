@@ -10,16 +10,19 @@ import { createClient } from '@/lib/supabase/server';
 import type { BoardCard, BoardLabel } from './board-types';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const RANK = /^[0-9A-Za-z]{1,64}$/;
+const RANK = /^[0-9A-Za-z]{1,256}$/;
 
 async function client() {
   return (await getUserId()) ? createClient() : null;
 }
 
-function done(error: { message: string } | null, what: string): boolean {
+/** `rows` is the number of rows a write touched (RLS hides foreign/missing rows, so 0 means nothing happened). */
+function done(error: { message: string } | null, what: string, rows?: number): boolean {
   if (error) console.error(`${what} failed`, error.message);
+  const ok = !error && (rows === undefined || rows > 0);
+  if (!error && !ok) console.error(`${what} failed`, 'no matching row');
   revalidatePath('/[locale]/board', 'page');
-  return !error;
+  return ok;
 }
 
 async function event(supabase: Awaited<ReturnType<typeof createClient>>, applicationId: string, type: string, payload: { [key: string]: Json | undefined } = {}) {
@@ -34,10 +37,13 @@ export async function moveApplication(id: string, columnId: string, rank: string
   return done(error, 'moveApplication');
 }
 
-export async function rejectApplication(id: string, columnId: string, rank: string, input: RejectionInput): Promise<boolean> {
+const outcomeSchema = z.enum(['rejected', 'ghosted', 'withdrawn']);
+
+export async function rejectApplication(id: string, columnId: string, rank: string, input: RejectionInput, outcome: 'rejected' | 'ghosted' | 'withdrawn' = 'rejected'): Promise<boolean> {
   const supabase = await client();
   const parsed = rejectionInputSchema.safeParse(input);
-  if (!supabase || !parsed.success || !UUID.test(id) || !UUID.test(columnId) || !RANK.test(rank)) return false;
+  const parsedOutcome = outcomeSchema.safeParse(outcome);
+  if (!supabase || !parsed.success || !parsedOutcome.success || !UUID.test(id) || !UUID.test(columnId) || !RANK.test(rank)) return false;
   const { error } = await supabase.rpc('reject_application', {
     p_id: id,
     p_column_id: columnId,
@@ -46,6 +52,7 @@ export async function rejectApplication(id: string, columnId: string, rank: stri
     p_by: parsed.data.by,
     p_reasons: parsed.data.reasons,
     p_note: parsed.data.note,
+    p_outcome: parsedOutcome.data,
   });
   return done(error, 'rejectApplication');
 }
@@ -55,7 +62,9 @@ export async function updateApplication(id: string, patch: ApplicationPatch): Pr
   const parsed = applicationPatchSchema.safeParse(patch);
   if (!supabase || !parsed.success || !UUID.test(id)) return false;
   const p = parsed.data;
-  const { error } = await supabase
+  const { data: current } = await supabase.from('applications').select('notes').eq('id', id).maybeSingle();
+  if (!current) return false;
+  const { data, error } = await supabase
     .from('applications')
     .update({
       salary: p.salary || null,
@@ -63,19 +72,27 @@ export async function updateApplication(id: string, patch: ApplicationPatch): Pr
       next_action_at: p.nextActionAt,
       contact: { ...(p.contactName ? { name: p.contactName } : {}), ...(p.contactUrl ? { url: p.contactUrl } : {}) },
     })
-    .eq('id', id);
-  if (!error && p.notes) await event(supabase, id, 'note');
-  return done(error, 'updateApplication');
+    .eq('id', id)
+    .select('id');
+  const notesChanged = (p.notes || null) !== (current.notes || null);
+  if (!error && data?.length && notesChanged) await event(supabase, id, 'note');
+  return done(error, 'updateApplication', data?.length ?? 0);
 }
 
 export async function setApplicationLabel(id: string, labelId: string, on: boolean): Promise<boolean> {
   const supabase = await client();
   if (!supabase || !UUID.test(id) || !UUID.test(labelId)) return false;
-  const { error } = on
-    ? await supabase.from('application_labels').upsert({ application_id: id, label_id: labelId }, { ignoreDuplicates: true })
-    : await supabase.from('application_labels').delete().eq('application_id', id).eq('label_id', labelId);
-  if (!error) await event(supabase, id, 'label', { labelId, on });
-  return done(error, 'setApplicationLabel');
+  let error: { message: string } | null;
+  let rows: number | undefined;
+  if (on) {
+    ({ error } = await supabase.from('application_labels').upsert({ application_id: id, label_id: labelId }, { ignoreDuplicates: true }));
+  } else {
+    const res = await supabase.from('application_labels').delete().eq('application_id', id).eq('label_id', labelId).select('label_id');
+    error = res.error;
+    rows = res.data?.length ?? 0;
+  }
+  if (!error && (rows === undefined || rows > 0)) await event(supabase, id, 'label', { labelId, on });
+  return done(error, 'setApplicationLabel', rows);
 }
 
 export async function createLabel(name: string, color: string): Promise<BoardLabel | null> {
@@ -92,13 +109,7 @@ export async function createLabel(name: string, color: string): Promise<BoardLab
 export async function markPinged(id: string): Promise<boolean> {
   const supabase = await client();
   if (!supabase || !UUID.test(id)) return false;
-  const { data } = await supabase.from('applications').select('follow_up_count').eq('id', id).maybeSingle();
-  if (!data) return false;
-  const { error } = await supabase
-    .from('applications')
-    .update({ follow_up_count: data.follow_up_count + 1, last_activity_at: new Date().toISOString() })
-    .eq('id', id);
-  if (!error) await event(supabase, id, 'follow_up_sent', { count: data.follow_up_count + 1 });
+  const { error } = await supabase.rpc('ping_application', { p_id: id });
   return done(error, 'markPinged');
 }
 
@@ -106,16 +117,16 @@ export async function markResponse(id: string): Promise<boolean> {
   const supabase = await client();
   if (!supabase || !UUID.test(id)) return false;
   const now = new Date().toISOString();
-  const { error } = await supabase.from('applications').update({ first_response_at: now, last_activity_at: now }).eq('id', id);
-  if (!error) await event(supabase, id, 'response');
-  return done(error, 'markResponse');
+  const { data, error } = await supabase.from('applications').update({ first_response_at: now, last_activity_at: now }).eq('id', id).select('id');
+  if (!error && data?.length) await event(supabase, id, 'response');
+  return done(error, 'markResponse', data?.length ?? 0);
 }
 
 export async function deleteApplication(id: string): Promise<boolean> {
   const supabase = await client();
   if (!supabase || !UUID.test(id)) return false;
-  const { error } = await supabase.from('applications').delete().eq('id', id);
-  return done(error, 'deleteApplication');
+  const { data, error } = await supabase.from('applications').delete().eq('id', id).select('id');
+  return done(error, 'deleteApplication', data?.length ?? 0);
 }
 
 export async function getApplicationEvents(id: string): Promise<{ type: string; payload: unknown; createdAt: string }[]> {

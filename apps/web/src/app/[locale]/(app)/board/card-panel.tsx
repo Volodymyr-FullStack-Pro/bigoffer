@@ -2,13 +2,14 @@
 
 import { useFormatter, useNow, useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
+import { useModalDialog } from './use-modal-dialog';
+import { fromZonedInput, toZonedInput } from './zoned-input';
 import { createLabel, getApplicationEvents, markPinged, markResponse, setApplicationLabel, updateApplication } from './actions';
 import type { BoardCardView, BoardColumn, BoardLabel } from './board-types';
 
-const toLocalInput = (iso: string | null) => (iso ? new Date(new Date(iso).getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16) : '');
-
-export function CardPanel({ card, columns, labels, labelName, onClose, onMove, onDelete, onChanged, onLabelCreated }: {
+export function CardPanel({ card, timeZone, columns, labels, labelName, onClose, onMove, onDelete, onChanged, onLabelCreated }: {
   card: BoardCardView;
+  timeZone: string;
   columns: BoardColumn[];
   labels: BoardLabel[];
   labelName: (l: BoardLabel) => string;
@@ -19,12 +20,13 @@ export function CardPanel({ card, columns, labels, labelName, onClose, onMove, o
   onLabelCreated: (l: BoardLabel) => void;
 }) {
   const t = useTranslations('board');
+  const [dialogRef, onDialogCancel] = useModalDialog(onClose);
   const format = useFormatter();
   const now = useNow();
   const [events, setEvents] = useState<{ type: string; createdAt: string }[]>([]);
   const [salary, setSalary] = useState(card.salary ?? '');
   const [notes, setNotes] = useState(card.notes ?? '');
-  const [next, setNext] = useState(toLocalInput(card.nextActionAt));
+  const [next, setNext] = useState(toZonedInput(card.nextActionAt, timeZone));
   const [contactName, setContactName] = useState(card.contactName ?? '');
   const [contactUrl, setContactUrl] = useState(card.contactUrl ?? '');
   const [newLabel, setNewLabel] = useState('');
@@ -34,14 +36,6 @@ export function CardPanel({ card, columns, labels, labelName, onClose, onMove, o
   useEffect(() => {
     getApplicationEvents(card.id).then(setEvents).catch(() => setEvents([]));
   }, [card.id, card.columnId, card.labelIds.length, card.followUpCount]);
-
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !document.querySelector('[data-testid="reject-dialog"]')) onClose();
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [onClose]);
 
   const attempt = async (fn: () => Promise<boolean>): Promise<boolean> => {
     let ok = false;
@@ -58,7 +52,7 @@ export function CardPanel({ card, columns, labels, labelName, onClose, onMove, o
     const patch = {
       salary: salary.trim() || null,
       notes: notes.trim() || null,
-      nextActionAt: next ? new Date(next).toISOString() : null,
+      nextActionAt: next ? fromZonedInput(next, timeZone) : null,
       contactName: contactName.trim() || null,
       contactUrl: contactUrl.trim() || null,
     };
@@ -68,7 +62,8 @@ export function CardPanel({ card, columns, labels, labelName, onClose, onMove, o
 
   const field = 'brutal bg-card px-2 py-1 font-sans text-sm normal-case';
   return (
-    <aside role="dialog" aria-modal="true" aria-labelledby="panel-title" data-testid="card-panel" className="fixed inset-y-0 right-0 z-40 flex w-full max-w-md flex-col gap-4 overflow-y-auto border-l-2 border-border bg-background p-5 shadow-[-4px_0_0_var(--shadow-color)]">
+    <dialog ref={dialogRef} onCancel={onDialogCancel} aria-labelledby="panel-title" data-testid="card-panel" className="fixed inset-y-0 right-0 left-auto m-0 h-dvh max-h-none w-full max-w-md overflow-y-auto border-l-2 border-border bg-background p-0 text-foreground shadow-[-4px_0_0_var(--shadow-color)] backdrop:bg-black/30">
+      <div className="flex flex-col gap-4 p-5">
       <div className="flex items-start justify-between gap-3">
         <div>
           <h2 id="panel-title" className="font-display text-xl font-black leading-tight">{card.title}</h2>
@@ -134,6 +129,7 @@ export function CardPanel({ card, columns, labels, labelName, onClose, onMove, o
           ))}
         </ul>
       </section>
-    </aside>
+      </div>
+    </dialog>
   );
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { columnCounters, smartSort } from '@jp/core';
+import { columnCounters } from '@jp/core';
 import { useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { useTranslations } from 'next-intl';
@@ -19,7 +19,6 @@ export function BoardColumnView({ column, cards, sort, onToggleSort, labels, lab
 }) {
   const t = useTranslations('board');
   const { setNodeRef, isOver } = useDroppable({ id: `column:${column.id}` });
-  const ordered = sort === 'smart' ? smartSort(cards) : cards;
   const { total, needsAction } = columnCounters(cards);
   return (
     <section data-testid="board-column" data-column-key={column.key} aria-label={column.title} className="flex w-72 shrink-0 flex-col gap-3">
@@ -32,9 +31,9 @@ export function BoardColumnView({ column, cards, sort, onToggleSort, labels, lab
           {t(sort === 'smart' ? 'sortSmart' : 'sortManual')}
         </button>
       </header>
-      <SortableContext items={ordered.map((c) => c.id)} strategy={verticalListSortingStrategy}>
+      <SortableContext items={cards.map((c) => c.id)} strategy={verticalListSortingStrategy}>
         <div ref={setNodeRef} className={`flex min-h-24 flex-col gap-2 rounded-brutal border-2 border-dashed p-2 ${isOver ? 'border-brand bg-brand/10' : 'border-transparent'}`}>
-          {ordered.map((c) => (
+          {cards.map((c) => (
             <BoardCardItem key={c.id} card={c} labels={labels} labelName={labelName} now={now} onOpen={() => onOpen(c.id)} />
           ))}
         </div>
