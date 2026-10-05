@@ -421,11 +421,14 @@ isOneToOne: false
 "move_application":
 { Args: { "p_column_id": string,"p_id": string,"p_rank": string }; Returns: undefined
                            },
+"ping_application":
+{ Args: { "p_id": string }; Returns: undefined
+                           },
 "record_ai_usage":
 { Args: { "p_day": string,"p_input": number,"p_model": string,"p_output": number,"p_requests": number,"p_sensitivity": string }; Returns: undefined
                            },
 "reject_application":
-{ Args: { "p_by": string,"p_column_id": string,"p_id": string,"p_note": string,"p_rank": string,"p_reasons": (string)[],"p_stage": string }; Returns: undefined
+{ Args: { "p_by": string,"p_column_id": string,"p_id": string,"p_note": string,"p_outcome"?: string,"p_rank": string,"p_reasons": (string)[],"p_stage": string }; Returns: undefined
                            },
 "restore_match":
 { Args: { "p_application_id"?: string,"p_match_id": string }; Returns: undefined

@@ -1,6 +1,6 @@
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(23);
+select plan(28);
 
 insert into auth.users (id, email) values
   ('a5000000-0000-0000-0000-00000000000a', 'board-a@test.dev'),
@@ -66,6 +66,24 @@ select results_eq(
   $$ select outcome, rejection_stage, rejection_reasons from public.applications $$,
   $$ values ('open'::text, null::text, '{}'::text[]) $$,
   'moving back to an active column reopens the card');
+
+-- ghosted / invalid outcome / atomic ping
+select public.reject_application(
+  (select id from public.applications), (select id from public.board_columns where key = 'rejected'), 'a7',
+  'application', 'company', array['no_feedback'], '', 'ghosted');
+select results_eq(
+  $$ select outcome from public.applications $$, $$ values ('ghosted'::text) $$, 'ghosted outcome is stored');
+select is((select count(*)::int from public.application_events where type = 'outcome' and payload ->> 'outcome' = 'ghosted'), 1, 'event carries the outcome');
+select throws_ok(
+  $$ select public.reject_application((select id from public.applications), (select id from public.board_columns where key = 'rejected'), 'a8', 'application', 'company', array['no_feedback'], '', 'bogus') $$,
+  '22023', null, 'invalid outcome is refused');
+select public.move_application(
+  (select id from public.applications), (select id from public.board_columns where key = 'applied'), 'a8');
+select public.ping_application((select id from public.applications));
+select results_eq(
+  $$ select follow_up_count::int, last_activity_at is not null from public.applications $$,
+  $$ values (1, true) $$, 'ping increments the counter and restarts the timer');
+select is((select count(*)::int from public.application_events where type = 'follow_up_sent'), 1, 'ping is recorded');
 
 select public.restore_match('e5000000-0000-0000-0000-000000000001', (select id from public.applications));
 select is((select count(*)::int from public.applications), 0, 'restore deletes the created application');
