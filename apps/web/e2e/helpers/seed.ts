@@ -115,3 +115,9 @@ export async function applicationColumnKey(id: string): Promise<string | null> {
   if (cErr) throw cErr;
   return col.key;
 }
+
+export async function matchState(matchId: string): Promise<string | null> {
+  const { data, error } = await admin().from('job_matches').select('state').eq('id', matchId).maybeSingle();
+  if (error) throw error;
+  return data?.state ?? null;
+}

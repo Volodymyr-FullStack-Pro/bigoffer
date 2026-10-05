@@ -38,7 +38,10 @@ export function Board({ columns, cards: initial, labels: initialLabels, rules, n
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
     useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 6 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+    useSensor(KeyboardSensor, {
+      keyboardCodes: { start: ['Space'], cancel: ['Escape'], end: ['Space'] },
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
   );
 
   const columnById = useMemo(() => new Map(columns.map((c) => [c.id, c])), [columns]);
@@ -61,24 +64,30 @@ export function Board({ columns, cards: initial, labels: initialLabels, rules, n
       })),
     [cards, columnById, now, rules],
   );
-  const inColumn = (columnId: string) => views.filter((c) => c.columnId === columnId).sort((a, b) => (a.rank < b.rank ? -1 : 1));
+  const inColumn = (columnId: string) => views.filter((c) => c.columnId === columnId).sort((a, b) => (a.rank < b.rank ? -1 : a.rank > b.rank ? 1 : a.id < b.id ? -1 : 1));
   const shown = (columnId: string) => (sort[columnId] === 'smart' ? smartSort(inColumn(columnId)) : inColumn(columnId));
   const labelName = (l: BoardLabel) => (l.key ? t(`label_${l.key}` as never) : (l.name ?? ''));
 
   const patchLocal = (id: string, patch: Partial<BoardCard>) => setCards((list) => list.map((c) => (c.id === id ? { ...c, ...patch } : c)));
 
   const commitMove = async (id: string, columnId: string, rank: string) => {
-    const before = cards;
     const target = columnById.get(columnId)!;
     const card = cards.find((c) => c.id === id)!;
+    const previous = { columnId: card.columnId, rank: card.rank, outcome: card.outcome, appliedAt: card.appliedAt };
     patchLocal(id, {
       columnId,
       rank,
       outcome: target.kind === 'won' ? 'offer' : target.kind === 'active' ? 'open' : card.outcome,
       appliedAt: target.key === 'applied' && !card.appliedAt ? new Date().toISOString() : card.appliedAt,
     });
-    if (!(await moveApplication(id, columnId, rank))) {
-      setCards(before);
+    let ok = false;
+    try {
+      ok = await moveApplication(id, columnId, rank);
+    } catch {
+      ok = false;
+    }
+    if (!ok) {
+      patchLocal(id, previous);
       return show({ message: t('moveError'), tone: 'error' });
     }
     if (target.kind === 'won' && card.columnId !== columnId) setConfetti(true);
@@ -107,7 +116,8 @@ export function Board({ columns, cards: initial, labels: initialLabels, rules, n
     const overCard = cards.find((c) => c.id === overId);
     const columnId = overId.startsWith('column:') ? overId.slice('column:'.length) : overCard?.columnId;
     if (!columnId) return;
-    if (!overCard || sort[columnId] === 'smart') return requestMove(id, columnId, card.columnId === columnId ? card.rank : endRank(columnId, id));
+    if (card.columnId === columnId && (!overCard || sort[columnId] === 'smart')) return;
+    if (!overCard || sort[columnId] === 'smart') return requestMove(id, columnId, endRank(columnId, id));
     // Manual order: place the card where it was dropped among the column's ranked cards.
     const ids = inColumn(columnId).map((c) => c.id).filter((x) => x !== id);
     const overIndex = ids.indexOf(overId);
@@ -116,17 +126,31 @@ export function Board({ columns, cards: initial, labels: initialLabels, rules, n
     const at = order.indexOf(id);
     const rankOf = (cid: string | undefined) => (cid ? cards.find((c) => c.id === cid)!.rank : null);
     if (sameColumn && at === inColumn(columnId).findIndex((c) => c.id === id)) return;
-    requestMove(id, columnId, rankBetween(rankOf(order[at - 1]), rankOf(order[at + 1])));
+    let rank: string;
+    try {
+      rank = rankBetween(rankOf(order[at - 1]), rankOf(order[at + 1]));
+    } catch {
+      rank = endRank(columnId, id);
+    }
+    requestMove(id, columnId, rank);
   };
 
   const confirmReject = async (input: RejectionInput) => {
     if (!pendingReject) return;
     const { id, columnId, rank } = pendingReject;
     setPendingReject(null);
-    const before = cards;
+    const card = cards.find((c) => c.id === id);
+    if (!card) return;
+    const previous = { columnId: card.columnId, rank: card.rank, outcome: card.outcome };
     patchLocal(id, { columnId, rank, outcome: 'rejected' });
-    if (!(await rejectApplication(id, columnId, rank, input))) {
-      setCards(before);
+    let ok = false;
+    try {
+      ok = await rejectApplication(id, columnId, rank, input);
+    } catch {
+      ok = false;
+    }
+    if (!ok) {
+      patchLocal(id, previous);
       show({ message: t('moveError'), tone: 'error' });
     }
   };
@@ -141,7 +165,13 @@ export function Board({ columns, cards: initial, labels: initialLabels, rules, n
         cards={views}
         onOpen={setOpenId}
         onPinged={async (id) => {
-          if (await markPinged(id)) patchLocal(id, { lastActivityAt: new Date().toISOString(), followUpCount: (cards.find((c) => c.id === id)?.followUpCount ?? 0) + 1 });
+          let ok = false;
+          try {
+            ok = await markPinged(id);
+          } catch {
+            ok = false;
+          }
+          if (ok) patchLocal(id, { lastActivityAt: new Date().toISOString(), followUpCount: (cards.find((c) => c.id === id)?.followUpCount ?? 0) + 1 });
           else show({ message: t('moveError'), tone: 'error' });
         }}
         onGhosted={(id) => lost && requestMove(id, lost.id, endRank(lost.id, id), ['no_feedback'])}
@@ -174,11 +204,17 @@ export function Board({ columns, cards: initial, labels: initialLabels, rules, n
           onClose={() => setOpenId(null)}
           onMove={(columnId) => requestMove(open.id, columnId, endRank(columnId, open.id))}
           onDelete={async () => {
-            const before = cards;
+            const removed = cards.find((c) => c.id === open.id);
             setCards((list) => list.filter((c) => c.id !== open.id));
             setOpenId(null);
-            if (!(await deleteApplication(open.id))) {
-              setCards(before);
+            let ok = false;
+            try {
+              ok = await deleteApplication(open.id);
+            } catch {
+              ok = false;
+            }
+            if (!ok) {
+              if (removed) setCards((list) => (list.some((c) => c.id === removed.id) ? list : [...list, removed]));
               show({ message: t('moveError'), tone: 'error' });
             }
           }}

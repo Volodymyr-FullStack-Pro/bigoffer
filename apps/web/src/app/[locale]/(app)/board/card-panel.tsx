@@ -32,14 +32,27 @@ export function CardPanel({ card, columns, labels, labelName, onClose, onMove, o
   const [error, setError] = useState(false);
 
   useEffect(() => {
-    void getApplicationEvents(card.id).then(setEvents);
+    getApplicationEvents(card.id).then(setEvents).catch(() => setEvents([]));
   }, [card.id, card.columnId, card.labelIds.length, card.followUpCount]);
 
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && !document.querySelector('[data-testid="reject-dialog"]')) onClose();
+    };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
+
+  const attempt = async (fn: () => Promise<boolean>): Promise<boolean> => {
+    let ok = false;
+    try {
+      ok = await fn();
+    } catch {
+      ok = false;
+    }
+    setError(!ok);
+    return ok;
+  };
 
   const save = async () => {
     const patch = {
@@ -49,8 +62,7 @@ export function CardPanel({ card, columns, labels, labelName, onClose, onMove, o
       contactName: contactName.trim() || null,
       contactUrl: contactUrl.trim() || null,
     };
-    const ok = await updateApplication(card.id, patch);
-    setError(!ok);
+    const ok = await attempt(() => updateApplication(card.id, patch));
     if (ok) onChanged({ salary: patch.salary, notes: patch.notes, nextActionAt: patch.nextActionAt, contactName: patch.contactName, contactUrl: patch.contactUrl });
   };
 
@@ -72,8 +84,8 @@ export function CardPanel({ card, columns, labels, labelName, onClose, onMove, o
         </select>
       </label>
       <div className="flex flex-wrap gap-2">
-        <button type="button" data-testid="panel-pinged" onClick={async () => { if (await markPinged(card.id)) onChanged({ followUpCount: card.followUpCount + 1, lastActivityAt: new Date().toISOString() }); }} className="brutal brutal-press px-3 py-1 text-sm font-semibold">{t('actionPinged')}</button>
-        <button type="button" data-testid="panel-response" onClick={async () => { const now = new Date().toISOString(); if (await markResponse(card.id)) onChanged({ firstResponseAt: now, lastActivityAt: now }); }} className="brutal brutal-press px-3 py-1 text-sm font-semibold">{t('gotReply')}</button>
+        <button type="button" data-testid="panel-pinged" onClick={async () => { if (await attempt(() => markPinged(card.id))) onChanged({ followUpCount: card.followUpCount + 1, lastActivityAt: new Date().toISOString() }); }} className="brutal brutal-press px-3 py-1 text-sm font-semibold">{t('actionPinged')}</button>
+        <button type="button" data-testid="panel-response" onClick={async () => { const now = new Date().toISOString(); if (await attempt(() => markResponse(card.id))) onChanged({ firstResponseAt: now, lastActivityAt: now }); }} className="brutal brutal-press px-3 py-1 text-sm font-semibold">{t('gotReply')}</button>
       </div>
       <fieldset className="flex flex-col gap-2">
         <legend className="font-mono text-xs uppercase">{t('labels')}</legend>
@@ -88,7 +100,7 @@ export function CardPanel({ card, columns, labels, labelName, onClose, onMove, o
                 data-label-id={l.id}
                 aria-pressed={on}
                 onClick={async () => {
-                  if (await setApplicationLabel(card.id, l.id, !on)) onChanged({ labelIds: on ? card.labelIds.filter((x) => x !== l.id) : [...card.labelIds, l.id] });
+                  if (await attempt(() => setApplicationLabel(card.id, l.id, !on))) onChanged({ labelIds: on ? card.labelIds.filter((x) => x !== l.id) : [...card.labelIds, l.id] });
                 }}
                 className={`rounded-sm border-2 border-border px-2 py-0.5 font-mono text-xs uppercase ${on ? '' : 'opacity-50'}`}
                 style={{ background: on ? l.color : undefined }}
@@ -101,7 +113,7 @@ export function CardPanel({ card, columns, labels, labelName, onClose, onMove, o
         <div className="flex gap-2">
           <input value={newLabel} onChange={(e) => setNewLabel(e.target.value)} maxLength={40} placeholder={t('newLabel')} className={`${field} flex-1`} />
           <input type="color" value={newColor} onChange={(e) => setNewColor(e.target.value)} aria-label={t('labelColor')} className="h-9 w-10 border-2 border-border" />
-          <button type="button" onClick={async () => { const l = await createLabel(newLabel, newColor.toUpperCase()); if (l) { onLabelCreated(l); setNewLabel(''); } }} className="brutal brutal-press px-3 text-sm font-semibold">+</button>
+          <button type="button" onClick={async () => { let l: BoardLabel | null = null; try { l = await createLabel(newLabel, newColor.toUpperCase()); } catch { l = null; } setError(!l); if (l) { onLabelCreated(l); setNewLabel(''); } }} className="brutal brutal-press px-3 text-sm font-semibold">+</button>
         </div>
       </fieldset>
       <label className="flex flex-col gap-1 font-mono text-xs uppercase">{t('salary')}<input data-testid="panel-salary" value={salary} maxLength={120} onChange={(e) => setSalary(e.target.value)} className={field} /></label>

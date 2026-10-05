@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { loginAs, uniqueEmail } from './helpers/auth';
-import { countApplications, seedMatch } from './helpers/seed';
+import { countApplications, matchState, seedMatch } from './helpers/seed';
 
 const visible = (page: import('@playwright/test').Page, id: string) => page.getByTestId(id).filter({ visible: true });
 
@@ -25,10 +25,11 @@ test('saves a match to the board and can undo it', async ({ context, page }) => 
 test('hides a match and keeps it hidden after reload', async ({ context, page }) => {
   const email = uniqueEmail('feed-hide');
   await loginAs(context, email);
-  const { title } = await seedMatch(email, { score: 77 });
+  const { matchId, title } = await seedMatch(email, { score: 77 });
   await page.goto('/en/today');
   await visible(page, 'match-hide').click();
   await expect(visible(page, 'feed-empty')).toBeVisible();
+  await expect.poll(() => matchState(matchId)).toBe('hidden');
   await page.reload();
   await expect(page.getByText(title)).toHaveCount(0);
 });

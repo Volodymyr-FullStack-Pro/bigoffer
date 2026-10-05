@@ -100,3 +100,26 @@ test('drags a card to another column with the mouse', async ({ context, page, is
   await page.mouse.up();
   await expect(column(page, 'test_task').getByText(title)).toBeVisible();
 });
+
+test('keyboard: Enter opens the panel, Space drags to the next column', async ({ context, page, isMobile }) => {
+  test.skip(isMobile, 'keyboard is a desktop feature');
+  const email = uniqueEmail('board-keys');
+  await loginAs(context, email);
+  const { id, title } = await seedApplication(email, { column: 'saved' });
+  await page.goto('/en/board');
+  const target = card(page, title);
+  await target.focus();
+  await page.keyboard.press('Enter');
+  await expect(visible(page, 'card-panel')).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(page.getByTestId('card-panel')).toHaveCount(0);
+  await target.focus();
+  await page.keyboard.press('Space');
+  const live = page.locator('[aria-live]').filter({ hasText: /Draggable item/ });
+  await expect(live).toBeAttached();
+  await page.keyboard.press('ArrowRight');
+  await expect(live).toContainText('column:');
+  await page.keyboard.press('Space');
+  await expect.poll(() => applicationColumnKey(id)).not.toBe('saved');
+  await expect(page.getByTestId('card-panel')).toHaveCount(0);
+});

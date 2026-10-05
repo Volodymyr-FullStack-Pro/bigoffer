@@ -34,8 +34,13 @@ export function BoardCardItem({ card, labels, labelName, now, onOpen }: {
       {...listeners}
       onClick={onOpen}
       onKeyDown={(e) => {
+        // Enter only opens the panel; Space starts a keyboard drag (see the KeyboardSensor codes).
+        if (e.key === 'Enter' && e.target === e.currentTarget) {
+          e.preventDefault();
+          onOpen();
+          return;
+        }
         listeners?.onKeyDown?.(e);
-        if (e.key === 'Enter' && !e.defaultPrevented) onOpen();
       }}
     >
       <span className="font-display font-bold leading-tight">{card.title}</span>
