@@ -1,4 +1,4 @@
-import { EXPLAIN_BATCH, explainMatches, LlmError, LlmRateLimitError } from '@jp/ai';
+import { EXPLAIN_BATCH, explainMatches, LlmError, LlmInvalidOutputError, LlmRateLimitError } from '@jp/ai';
 import type { Locale } from '@jp/core';
 import {
   getAiRequestsToday,
@@ -8,13 +8,19 @@ import {
   saveExplanation,
   type ExplainDetail,
 } from './ai-repository';
-import { type AiDeps, type AiStatus, isTransient, pacer } from './enrich';
+import { type AiDeps, type AiError, type AiStatus, aiError, DEFAULT_TIME_BUDGET_MS, isTransient, pacer } from './enrich';
 
 export const EXPLAIN_PER_USER_DAILY = 20;
 export const EXPLAIN_MIN_SCORE = 50;
 
 export type ExplainDeps = AiDeps & { perUserLimit?: number; onlyUserIds?: string[] };
-export type ExplainResult = { status: AiStatus; explained: number; requests: number; retryAfterMs: number | null };
+export type ExplainResult = {
+  status: AiStatus;
+  explained: number;
+  requests: number;
+  retryAfterMs: number | null;
+  error: AiError;
+};
 
 type Batch = { locale: Locale; details: ExplainDetail[] };
 
@@ -38,7 +44,7 @@ function batches(picks: { matchId: string; userId: string; locale: Locale }[], d
 
 export async function explainTopMatches(deps: ExplainDeps): Promise<ExplainResult> {
   const { db, llm } = deps;
-  const result: ExplainResult = { status: 'ok', explained: 0, requests: 0, retryAfterMs: null };
+  const result: ExplainResult = { status: 'ok', explained: 0, requests: 0, retryAfterMs: null, error: null };
   if (!llm.isAvailable('public')) return { ...result, status: 'unavailable' };
 
   const now = deps.now?.() ?? new Date();
@@ -53,7 +59,7 @@ export async function explainTopMatches(deps: ExplainDeps): Promise<ExplainResul
     for (const d of await getExplainDetails(db, ids, locale)) details.set(d.matchId, d);
   }
 
-  const deadline = Date.now() + (deps.timeBudgetMs ?? 240_000);
+  const deadline = Date.now() + (deps.timeBudgetMs ?? DEFAULT_TIME_BUDGET_MS);
   const pace = pacer(deps);
   for (const batch of batches(picks, details)) {
     const criteria = batch.details[0]!.criteria;
@@ -82,13 +88,20 @@ export async function explainTopMatches(deps: ExplainDeps): Promise<ExplainResul
       if (err instanceof LlmRateLimitError) {
         result.status = 'rate_limited';
         result.retryAfterMs = err.retryAfterMs;
+        result.error = aiError(err);
         break;
       }
       if (err instanceof LlmError && isTransient(err)) {
         result.status = 'provider_error';
+        result.error = aiError(err);
         break;
       }
       if (!(err instanceof LlmError)) throw err;
+      if (err instanceof LlmInvalidOutputError) {
+        await recordAiUsage(db, now, 'public', llm.model('public'), err.usage);
+        budget -= err.usage.requests;
+        result.requests += err.usage.requests;
+      }
       // A deterministic failure (bad output, 4xx) would repeat every hour: mark the batch as done.
       for (const d of batch.details) await saveExplanation(db, d.matchId, batch.locale, null, now);
     }

@@ -33,6 +33,16 @@ test('does not list matches of expired jobs', async ({ context, page }) => {
   await expect(page.getByTestId('job-match').filter({ hasText: expired.title })).toHaveCount(0);
 });
 
+test('does not list matches of jobs the AI marked as not a job, even if already seen', async ({ context, page }) => {
+  const email = uniqueEmail('today-notjob');
+  await loginAs(context, email);
+  const real = await seedMatch(email, { score: 70 });
+  const notJob = await seedMatch(email, { score: 90, isJob: false, state: 'seen' });
+  await page.goto('/en/today');
+  await expect(page.getByTestId('job-match').filter({ hasText: real.title })).toBeVisible();
+  await expect(page.getByTestId('job-match').filter({ hasText: notJob.title })).toHaveCount(0);
+});
+
 test('shows the AI summary, why it fits and matched skills first', async ({ context, page }) => {
   const email = uniqueEmail('today-ai');
   await loginAs(context, email);

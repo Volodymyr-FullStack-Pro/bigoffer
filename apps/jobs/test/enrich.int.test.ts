@@ -1,6 +1,6 @@
 import { LlmError, LlmRateLimitError } from '@jp/ai';
 import { FakeLlmClient, type FakeRequest } from '@jp/ai/testing';
-import { beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { getDb } from '../src/db';
 import { getAiRequestsToday } from '../src/pipeline/ai-repository';
 import { enrichJobs, type EnrichDeps } from '../src/pipeline/enrich';
@@ -73,6 +73,7 @@ const deps = (llm: FakeLlmClient, onlyJobIds: string[], over: Partial<EnrichDeps
   batchSize: 10,
   minIntervalMs: 0,
   onlyJobIds,
+  onlyUserIds: [userId],
   ...over,
 });
 
@@ -96,6 +97,13 @@ beforeAll(async () => {
     .single();
   if (cError) throw cError;
   companyId = company.id;
+});
+
+afterAll(async () => {
+  // job_postings and job_matches cascade from jobs; profiles and search_profiles from the auth user.
+  await db.from('jobs').delete().like('fingerprint', `enrich-%-${uniq}`);
+  if (companyId) await db.from('companies').delete().eq('id', companyId);
+  if (userId) await db.auth.admin.deleteUser(userId).catch(() => undefined);
 });
 
 describe('enrichJobs', () => {
@@ -186,8 +194,20 @@ describe('enrichJobs', () => {
       throw error;
     });
     const result = await enrichJobs(deps(llm, [id]));
-    expect(result).toMatchObject({ status: 'provider_error', enriched: 0, failed: 0 });
+    expect(result).toMatchObject({ status: 'provider_error', enriched: 0, failed: 0, error: { status: error.status } });
     const { data } = await db.from('jobs').select('enriched_at, enrich_attempts').eq('id', id).single();
     expect(data).toMatchObject({ enriched_at: null, enrich_attempts: 0 });
+  });
+
+  it('stops after repeated client errors instead of burning the whole queue', async () => {
+    const ids = [await seedJob('cb1'), await seedJob('cb2'), await seedJob('cb3'), await seedJob('cb4')];
+    const llm = new FakeLlmClient(() => {
+      throw new LlmError('Invalid JSON payload', 400);
+    });
+    const result = await enrichJobs(deps(llm, ids));
+    expect(result).toMatchObject({ status: 'provider_error', enriched: 0, failed: 3, error: { status: 400, message: 'Invalid JSON payload' } });
+    expect(llm.calls).toHaveLength(3);
+    const { data } = await db.from('jobs').select('enrich_attempts').in('id', ids);
+    expect(data!.map((j) => j.enrich_attempts).sort()).toEqual([0, 1, 1, 1]);
   });
 });

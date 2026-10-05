@@ -1,8 +1,15 @@
 import { logger, schedules } from '@trigger.dev/sdk';
-import { enrichJobs } from '../pipeline/enrich';
+import { type AiStatus, enrichJobs } from '../pipeline/enrich';
 import { explainTopMatches } from '../pipeline/explain';
 import { aiDeps } from '../runtime';
 import { AI_PUBLIC_QUEUE } from './queues';
+
+/** Quota trouble is expected on the free tier; a provider error usually means broken configuration. */
+function log(message: string, result: { status: AiStatus } & Record<string, unknown>): void {
+  if (result.status === 'provider_error') logger.error(message, result);
+  else if (result.status === 'rate_limited' || result.status === 'daily_limit') logger.warn(message, result);
+  else logger.info(message, result);
+}
 
 export const enrichJobsTask = schedules.task({
   id: 'enrich-jobs',
@@ -15,7 +22,7 @@ export const enrichJobsTask = schedules.task({
   run: async () => {
     const result = await enrichJobs(aiDeps());
     if (result.status === 'unavailable') logger.warn('GEMINI_API_KEY_PUBLIC is not set; enrichment skipped');
-    else logger.info('enrichment', result);
+    else log('enrichment', result);
     return result;
   },
 });
@@ -29,7 +36,7 @@ export const explainMatchesTask = schedules.task({
   retry: { maxAttempts: 1 },
   run: async () => {
     const result = await explainTopMatches(aiDeps());
-    logger.info('explanations', result);
+    log('explanations', result);
     return result;
   },
 });

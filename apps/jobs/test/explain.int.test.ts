@@ -1,6 +1,6 @@
 import { LlmError, LlmRateLimitError } from '@jp/ai';
 import { FakeLlmClient } from '@jp/ai/testing';
-import { beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { getDb } from '../src/db';
 import { explainTopMatches, type ExplainDeps } from '../src/pipeline/explain';
 
@@ -8,6 +8,8 @@ const db = getDb();
 const uniq = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 let userId: string;
 const jobIds: Record<string, string> = {};
+const createdUsers: string[] = [];
+const createdCompanies: string[] = [];
 
 const llm = new FakeLlmClient((req) => {
   const numbers = [...req.prompt.matchAll(/^#(\d+) /gm)].map((m) => Number(m[1]));
@@ -37,6 +39,7 @@ beforeAll(async () => {
   const { data: user, error } = await db.auth.admin.createUser({ email: `explain-${uniq}@e2e.test`, email_confirm: true });
   if (error) throw error;
   userId = user.user.id;
+  createdUsers.push(userId);
   await db.from('profiles').update({ locale: 'uk' }).eq('id', userId);
   const { data: sp } = await db
     .from('search_profiles')
@@ -48,6 +51,7 @@ beforeAll(async () => {
     .insert({ name: `Explain ${uniq}`, normalized_name: `explain ${uniq}` })
     .select('id')
     .single();
+  createdCompanies.push(company!.id);
   const jobs: [string, number, boolean][] = [
     ['top', 90, true],
     ['second', 80, true],
@@ -81,6 +85,13 @@ beforeAll(async () => {
     });
     if (matchError) throw matchError;
   }
+});
+
+afterAll(async () => {
+  // job_matches cascade from jobs; profiles and search_profiles from the auth users.
+  await db.from('jobs').delete().like('fingerprint', `explain-%${uniq}`);
+  if (createdCompanies.length > 0) await db.from('companies').delete().in('id', createdCompanies);
+  for (const id of createdUsers) await db.auth.admin.deleteUser(id).catch(() => undefined);
 });
 
 describe('explainTopMatches', () => {
@@ -126,6 +137,7 @@ describe('explainTopMatches provider failures', () => {
     const { data: user, error } = await db.auth.admin.createUser({ email: `explain-fail-${uniq}@e2e.test`, email_confirm: true });
     if (error) throw error;
     otherUser = user.user.id;
+    createdUsers.push(otherUser);
     const { data: sp } = await db
       .from('search_profiles')
       .insert({ user_id: otherUser, name: 'FE', keywords: ['frontend'], skills: ['React'], remote_type: 'remote', sources: ['dou'] })
@@ -136,6 +148,7 @@ describe('explainTopMatches provider failures', () => {
       .insert({ name: `ExplainFail ${uniq}`, normalized_name: `explainfail ${uniq}` })
       .select('id')
       .single();
+    createdCompanies.push(company!.id);
     const { data: job, error: jobError } = await db
       .from('jobs')
       .insert({

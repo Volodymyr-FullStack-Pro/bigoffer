@@ -28,6 +28,8 @@ export async function seedMatch(
     summary?: Record<string, string>;
     explanation?: Record<string, string>;
     matchedSkills?: string[];
+    isJob?: boolean | null;
+    state?: 'new' | 'seen';
   } = {},
 ) {
   const db = admin();
@@ -42,7 +44,7 @@ export async function seedMatch(
   if (cErr) throw cErr;
   const { data: job, error: jErr } = await db
     .from('jobs')
-    .insert({ fingerprint: `e2e-${tag}`, title, company_id: company.id, remote_type: 'remote', salary_min_usd: 3000, salary_max_usd: 4500, status: opts.status ?? 'active', seniority: opts.seniority ?? null, skills: opts.skills ?? [], summary: opts.summary ?? null })
+    .insert({ fingerprint: `e2e-${tag}`, title, company_id: company.id, remote_type: 'remote', salary_min_usd: 3000, salary_max_usd: 4500, status: opts.status ?? 'active', seniority: opts.seniority ?? null, skills: opts.skills ?? [], summary: opts.summary ?? null, is_job: opts.isJob ?? null })
     .select('id')
     .single();
   if (jErr) throw jErr;
@@ -50,7 +52,7 @@ export async function seedMatch(
   if (pErr) throw pErr;
   const { data: match, error: mErr } = await db
     .from('job_matches')
-    .insert({ user_id: userId, job_id: job.id, score: opts.score ?? 88, explanation: opts.explanation ?? null, breakdown: { matchedSkills: opts.matchedSkills ?? [] } })
+    .insert({ user_id: userId, job_id: job.id, score: opts.score ?? 88, state: opts.state ?? 'new', explanation: opts.explanation ?? null, breakdown: { matchedSkills: opts.matchedSkills ?? [] } })
     .select('id')
     .single();
   if (mErr) throw mErr;

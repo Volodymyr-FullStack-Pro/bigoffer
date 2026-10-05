@@ -24,6 +24,7 @@ export default async function TodayPage() {
     )
     .in('state', ['new', 'seen'])
     .eq('jobs.status', 'active')
+    .not('jobs.is_job', 'is', false)
     .gte('created_at', since)
     .order('score', { ascending: false })
     .order('created_at', { ascending: false })

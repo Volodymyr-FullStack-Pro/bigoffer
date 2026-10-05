@@ -8,6 +8,7 @@ import {
   recordEnrichFailure,
   saveEnrichment,
 } from './ai-repository';
+import { getActiveProfiles } from './repository';
 import { rescoreJobs } from './rescore';
 
 export type AiDeps = {
@@ -17,7 +18,10 @@ export type AiDeps = {
   dailyLimit: number;
   /** Minimum time between request starts (free-tier RPM). */
   minIntervalMs?: number;
-  /** Stop starting new requests after this long (Trigger.dev maxDuration headroom). */
+  /**
+   * Stop starting new requests after this long. Default 120s leaves room for one slow request
+   * (incl. its retry) within the Trigger.dev maxDuration of 300s.
+   */
   timeBudgetMs?: number;
   now?: () => Date;
   sleep?: (ms: number) => Promise<void>;
@@ -25,7 +29,15 @@ export type AiDeps = {
 
 export type AiStatus = 'ok' | 'unavailable' | 'daily_limit' | 'rate_limited' | 'provider_error';
 
-export type EnrichDeps = AiDeps & { batchSize: number; onlyJobIds?: string[] };
+export type EnrichDeps = AiDeps & {
+  batchSize: number;
+  onlyJobIds?: string[];
+  /** Rescore enriched jobs only for these users (tests). */
+  onlyUserIds?: string[];
+};
+
+/** Why a batch stopped early (provider_error / rate_limited), for the task logs. */
+export type AiError = { status: number | null; message: string } | null;
 
 export type EnrichResult = {
   status: AiStatus;
@@ -34,7 +46,16 @@ export type EnrichResult = {
   failed: number;
   rescored: number;
   retryAfterMs: number | null;
+  error: AiError;
 };
+
+export const DEFAULT_TIME_BUDGET_MS = 120_000;
+/** Consecutive counted 4xx failures (not invalid output) after which the batch stops as a provider error. */
+export const MAX_CONSECUTIVE_CLIENT_ERRORS = 3;
+
+export function aiError(err: LlmError): NonNullable<AiError> {
+  return { status: err.status, message: err.message.slice(0, 300) };
+}
 
 const realSleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
@@ -66,7 +87,7 @@ export function isTransient(err: LlmError): boolean {
 
 export async function enrichJobs(deps: EnrichDeps): Promise<EnrichResult> {
   const { db, llm } = deps;
-  const result: EnrichResult = { status: 'ok', enriched: 0, notJobs: 0, failed: 0, rescored: 0, retryAfterMs: null };
+  const result: EnrichResult = { status: 'ok', enriched: 0, notJobs: 0, failed: 0, rescored: 0, retryAfterMs: null, error: null };
   if (!llm.isAvailable('public')) return { ...result, status: 'unavailable' };
 
   const now = deps.now?.() ?? new Date();
@@ -74,11 +95,11 @@ export async function enrichJobs(deps: EnrichDeps): Promise<EnrichResult> {
   if (budget <= 0) return { ...result, status: 'daily_limit' };
 
   const candidates = await getJobsToEnrich(db, budget, deps.onlyJobIds);
-  const started = Date.now();
-  const deadline = started + (deps.timeBudgetMs ?? 240_000);
+  if (candidates.length === 0) return result;
+  const profiles = await getActiveProfiles(db);
+  const deadline = Date.now() + (deps.timeBudgetMs ?? DEFAULT_TIME_BUDGET_MS);
   const pace = pacer(deps);
-  const done: string[] = [];
-  let unexpected: unknown;
+  let clientErrors = 0;
 
   for (const job of candidates) {
     if (Date.now() > deadline) break;
@@ -87,32 +108,40 @@ export async function enrichJobs(deps: EnrichDeps): Promise<EnrichResult> {
       const { enrichment, usage, model } = await enrichJob(llm, job);
       await recordAiUsage(db, now, 'public', model, usage);
       await saveEnrichment(db, job.id, enrichmentPatch(job, enrichment, now));
-      done.push(job.id);
+      clientErrors = 0;
       result.enriched += 1;
       if (!enrichment.isJob) result.notJobs += 1;
     } catch (err) {
       if (err instanceof LlmRateLimitError) {
         result.status = 'rate_limited';
         result.retryAfterMs = err.retryAfterMs;
+        result.error = aiError(err);
         break;
       }
       if (err instanceof LlmError && isTransient(err)) {
         result.status = 'provider_error';
+        result.error = aiError(err);
         break;
       }
-      if (err instanceof LlmError) {
-        if (err instanceof LlmInvalidOutputError) await recordAiUsage(db, now, 'public', llm.model('public'), err.usage);
-        await recordEnrichFailure(db, job, err.message);
-        result.failed += 1;
-        continue;
+      if (!(err instanceof LlmError)) throw err;
+      if (err instanceof LlmInvalidOutputError) {
+        await recordAiUsage(db, now, 'public', llm.model('public'), err.usage);
+        clientErrors = 0;
+      } else {
+        clientErrors += 1;
       }
-      unexpected = err;
-      break;
+      await recordEnrichFailure(db, job, err.message);
+      result.failed += 1;
+      // The same 4xx on every request is a configuration problem, not the jobs': don't burn the queue.
+      if (clientErrors >= MAX_CONSECUTIVE_CLIENT_ERRORS) {
+        result.status = 'provider_error';
+        result.error = aiError(err);
+        break;
+      }
+      continue;
     }
+    // Rescore right away: a run killed later must not leave enriched jobs that never get rescored.
+    result.rescored += await rescoreJobs(db, [job.id], { profiles, onlyUserIds: deps.onlyUserIds });
   }
-
-  // Rescore what was enriched even if the batch stopped early, so finished work reaches users now.
-  result.rescored = await rescoreJobs(db, done);
-  if (unexpected !== undefined) throw unexpected;
   return result;
 }

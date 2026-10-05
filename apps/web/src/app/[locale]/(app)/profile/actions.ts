@@ -4,6 +4,7 @@ import { emptyToUndefined, profileUpdateSchema } from '@jp/core';
 import { revalidatePath } from 'next/cache';
 import { getUserId } from '@/lib/auth';
 import { createClient } from '@/lib/supabase/server';
+import { requestProfileSync } from '@/lib/trigger';
 
 export type ProfileValues = { full_name: string; timezone: string; country: string; contacts: Record<string, string> };
 export type ProfileState = {
@@ -43,6 +44,7 @@ export async function updateProfile(_prev: ProfileState, formData: FormData): Pr
   if (!userId) return { status: 'error', values };
   const supabase = await createClient();
 
+  const { data: before } = await supabase.from('profiles').select('country').eq('id', userId).maybeSingle();
   const { error } = await supabase
     .from('profiles')
     .update({
@@ -53,6 +55,12 @@ export async function updateProfile(_prev: ProfileState, formData: FormData): Pr
     })
     .eq('id', userId);
   if (error) return { status: 'error', values };
+
+  // The country feeds match scoring: re-evaluate existing matches for the user's active searches.
+  if (before && before.country !== parsed.data.country) {
+    const { data: searches } = await supabase.from('search_profiles').select('id').eq('user_id', userId).eq('is_active', true);
+    for (const search of searches ?? []) await requestProfileSync(search.id);
+  }
 
   revalidatePath('/[locale]/profile', 'page');
   return { status: 'saved' };
