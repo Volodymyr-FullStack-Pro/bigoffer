@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { detectRemote, detectSeniority, parseSalary } from './detect';
 import { fingerprint, normalizeCompany, normalizeTitle, regionBucket } from './normalize';
+import { normalizeRemoteRegions } from './regions';
 import { decodeEntities, htmlToText, normalizeWhitespace } from './text';
 
 export const SOURCE_IDS = [
@@ -53,6 +54,8 @@ export const rawJobSchema = z.object({
       return Number.isNaN(d.getTime()) ? null : d;
     }),
   remoteHint: z.enum(REMOTE_TYPES).optional(),
+  /** Where a remote hire may live, as the board states it (region codes or ISO countries). */
+  remoteRegions: z.array(z.string()).optional(),
   tags: z.array(z.string()).default([]),
 });
 
@@ -76,6 +79,8 @@ export type NormalizedJob = {
   salaryMaxUsd: number | null;
   postedAt: Date | null;
   tags: string[];
+  /** Board-stated hiring regions; authoritative over AI guesses. Empty when unknown. */
+  remoteRegions: string[];
   fingerprint: string;
 };
 
@@ -108,6 +113,7 @@ export async function normalizeJob(raw: RawJob): Promise<NormalizedJob | null> {
     salaryMaxUsd: salary?.maxUsd ?? null,
     postedAt: r.postedAt,
     tags: r.tags,
+    remoteRegions: normalizeRemoteRegions(r.remoteRegions ?? []),
     fingerprint: await fingerprint({
       company: r.company,
       title: r.title,

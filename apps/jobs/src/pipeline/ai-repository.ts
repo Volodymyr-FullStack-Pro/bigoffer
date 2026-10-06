@@ -31,6 +31,8 @@ export type EnrichCandidate = {
   salaryMinUsd: number | null;
   salaryMaxUsd: number | null;
   enrichAttempts: number;
+  /** Hiring regions stated by the board; AI must not replace them. */
+  remoteRegions: string[];
 };
 
 export async function getJobsToEnrich(db: Db, limit: number, onlyJobIds?: string[]): Promise<EnrichCandidate[]> {
@@ -43,7 +45,7 @@ export async function getJobsToEnrich(db: Db, limit: number, onlyJobIds?: string
   const { data, error: jobsError } = await db
     .from('jobs')
     .select(
-      'id, title, description_text, location, salary_raw, tags, remote_type, seniority, salary_min_usd, salary_max_usd, enrich_attempts, companies(name)',
+      'id, title, description_text, location, salary_raw, tags, remote_type, seniority, salary_min_usd, salary_max_usd, enrich_attempts, remote_regions, companies(name)',
     )
     .in('id', ids);
   if (jobsError) throw jobsError;
@@ -65,6 +67,7 @@ export async function getJobsToEnrich(db: Db, limit: number, onlyJobIds?: string
         salaryMinUsd: j.salary_min_usd,
         salaryMaxUsd: j.salary_max_usd,
         enrichAttempts: j.enrich_attempts,
+        remoteRegions: j.remote_regions,
       },
     ];
   });
@@ -79,7 +82,7 @@ export function enrichmentPatch(job: EnrichCandidate, e: JobEnrichment, now: Dat
     skills: e.skills,
     lang: e.lang,
     summary: e.summary as Json,
-    remote_regions: e.remoteRegions,
+    remote_regions: job.remoteRegions.length > 0 ? job.remoteRegions : e.remoteRegions,
     is_job: e.isJob,
     seniority: job.seniority ?? e.seniority,
     remote_type: job.remoteType === 'unknown' ? e.remoteType : job.remoteType,

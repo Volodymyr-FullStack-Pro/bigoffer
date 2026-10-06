@@ -1,4 +1,4 @@
-import type { RawJob } from '@jp/core';
+import { type RawJob, regionsFromLocation } from '@jp/core';
 import type { SourceAdapter } from '../types';
 
 type HimalayasResponse = {
@@ -47,6 +47,7 @@ export const himalayasAdapter: SourceAdapter = {
         salaryPeriod: hasSalary ? period : undefined,
         postedAt: j.pubDate ?? null,
         remoteHint: 'remote',
+        remoteRegions: regionsFromLocation(j.locationRestrictions ?? []),
         tags: [...(j.categories ?? []), ...(j.seniority ?? [])],
       };
     });

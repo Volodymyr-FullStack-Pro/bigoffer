@@ -40,3 +40,18 @@ describe('himalayasAdapter', () => {
     expect(normalized[0]!.postedAt?.getUTCFullYear()).toBeGreaterThanOrEqual(2026);
   });
 });
+
+describe('board-stated hiring regions', () => {
+  it('carries remotive and himalayas location restrictions as regions', async () => {
+    const { remotiveAdapter } = await import('../src/adapters/remotive');
+    const { himalayasAdapter } = await import('../src/adapters/himalayas');
+    const { fakeContext } = await import('./fake-context');
+    const { readFileSync } = await import('node:fs');
+    const fx = (n: string) => readFileSync(new URL(`../fixtures/${n}`, import.meta.url), 'utf8');
+    const remotive = await remotiveAdapter.search({ search: 'react' }, fakeContext({ 'remotive.com': fx('remotive.json') }).ctx);
+    expect(remotive[1]!.remoteRegions).toEqual(['US']);
+    expect(remotive[2]!.remoteRegions).toEqual(['US', 'CA', 'AR', 'MX', 'PE']);
+    const himalayas = await himalayasAdapter.search({ q: 'react' }, fakeContext({ 'himalayas.app': fx('himalayas.json') }).ctx);
+    expect(himalayas[0]!.remoteRegions).toContain('UA');
+  });
+});

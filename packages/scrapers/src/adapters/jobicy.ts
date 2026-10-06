@@ -1,4 +1,4 @@
-import type { RawJob } from '@jp/core';
+import { type RawJob, regionsFromLocation } from '@jp/core';
 import type { SourceAdapter } from '../types';
 
 type JobicyResponse = {
@@ -43,6 +43,7 @@ export const jobicyAdapter: SourceAdapter = {
         salaryPeriod: hasSalary ? period : undefined,
         postedAt: j.pubDate ?? null,
         remoteHint: 'remote',
+        remoteRegions: regionsFromLocation(j.jobGeo ?? ''),
         tags: [...(j.jobIndustry ?? []), ...(j.jobType ?? []), ...(j.jobLevel ? [j.jobLevel] : [])],
       };
     });

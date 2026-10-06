@@ -165,6 +165,7 @@ async function backfillPatch(db: Db, jobId: string, job: NormalizedJob) {
     salary_min_usd?: number | null;
     salary_max_usd?: number | null;
     location?: string;
+    remote_regions?: string[];
   } = {};
   if (job.descriptionText.length > (data.description_text ?? '').length) patch.description_text = job.descriptionText;
   const hasSalary = data.salary_min_usd != null || data.salary_max_usd != null;
@@ -174,6 +175,8 @@ async function backfillPatch(db: Db, jobId: string, job: NormalizedJob) {
     patch.salary_max_usd = job.salaryMaxUsd;
   }
   if (data.location == null && job.location) patch.location = job.location;
+  // The board's own hiring regions are authoritative (they override an earlier AI guess).
+  if (job.remoteRegions.length > 0) patch.remote_regions = job.remoteRegions;
   return patch;
 }
 
@@ -213,6 +216,7 @@ export async function saveJob(
           salary_min_usd: job.salaryMinUsd,
           salary_max_usd: job.salaryMaxUsd,
           tags: job.tags,
+          remote_regions: job.remoteRegions,
           posted_at: job.postedAt?.toISOString() ?? null,
           first_seen_at: nowIso,
           last_seen_at: nowIso,
