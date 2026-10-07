@@ -3,6 +3,10 @@ import { SOURCE_IDS } from './job';
 import { BROWSER_SOURCE_IDS, defaultSources, SOURCE_CATALOG, sourceInfo } from './sources';
 
 describe('SOURCE_CATALOG', () => {
+  it('lists Jobico as a Ukrainian board polled by default', () => {
+    expect(sourceInfo('jobico')).toMatchObject({ name: 'Jobico', market: 'ua' });
+    expect(defaultSources('office')).toContain('jobico');
+  });
   it('has exactly one entry per source id', () => {
     expect(SOURCE_CATALOG.map((s) => s.id).sort()).toEqual([...SOURCE_IDS].sort());
   });

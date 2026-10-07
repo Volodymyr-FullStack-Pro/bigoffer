@@ -17,6 +17,7 @@ export const SOURCE_CATALOG: readonly SourceInfo[] = [
   { id: 'djinni', name: 'Djinni', market: 'ua', url: 'https://djinni.co' },
   { id: 'workua', name: 'Work.ua', market: 'ua', url: 'https://www.work.ua', browser: true },
   { id: 'robotaua', name: 'robota.ua', market: 'ua', url: 'https://robota.ua' },
+  { id: 'jobico', name: 'Jobico', market: 'ua', url: 'https://www.jobico.io' },
   { id: 'olx', name: 'OLX Робота', market: 'ua', url: 'https://www.olx.ua/uk/rabota/', browser: true },
   { id: 'jooble', name: 'Jooble', market: 'global', url: 'https://jooble.org', requiresKey: 'JOOBLE_API_KEY' },
   { id: 'linkedin', name: 'LinkedIn', market: 'global', url: 'https://www.linkedin.com/jobs', beta: true },
