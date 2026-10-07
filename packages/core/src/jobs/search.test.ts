@@ -40,7 +40,7 @@ describe('buildSourceQueries', () => {
   const bySource = (id: string) => specs.filter((s) => s.sourceId === id);
 
   it('creates one query per keyword for search sources', () => {
-    expect(bySource('dou').map((s) => s.params)).toEqual([{ search: 'full stack' }, { search: 'react developer' }]);
+    expect(bySource('dou').map((s) => s.params).filter((p) => p.search)).toEqual([{ search: 'full stack' }, { search: 'react developer' }]);
     expect(bySource('robotaua')).toHaveLength(2);
     expect(bySource('himalayas')[0]!.params).toEqual({ q: 'full stack' });
   });
@@ -95,5 +95,16 @@ describe('buildSourceQueries with source selection', () => {
     const specs = buildSourceQueries({ ...base, remoteType: 'office', sources: ['workua', 'linkedin'] });
     expect(specs.find((s) => s.sourceId === 'workua')!.params).toEqual({ search: 'full stack' });
     expect(specs.find((s) => s.sourceId === 'linkedin')!.params).toEqual({ keywords: 'full stack', location: 'Ukraine' });
+  });
+});
+
+describe('DOU categories', () => {
+  it('adds category feeds from keywords and skills', () => {
+    const specs = buildSourceQueries({ keywords: ['full stack'], skills: ['React', 'Node.js'], remoteType: 'remote', sources: ['dou'] });
+    expect(specs.filter((s) => s.params.category).map((s) => s.params.category)).toEqual(['Front End', 'Node.js', 'JavaScript']);
+  });
+  it('adds none for unrelated profiles', () => {
+    const specs = buildSourceQueries({ keywords: ['accountant'], skills: ['Excel'], remoteType: 'office', sources: ['dou'] });
+    expect(specs.some((s) => s.params.category)).toBe(false);
   });
 });
