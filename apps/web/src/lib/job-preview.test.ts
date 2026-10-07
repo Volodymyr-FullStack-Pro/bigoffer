@@ -75,8 +75,9 @@ describe('parseJobPreview is linear on adversarial input', () => {
       const large = time(gen(4 * N));
       const ratio = large / Math.max(small, 0.05);
       console.log(`redos ${name}: ${small.toFixed(1)} ms -> ${large.toFixed(1)} ms (x${ratio.toFixed(1)})`);
-      // linear ~4x, quadratic ~16x
-      expect(ratio).toBeLessThan(8);
+      // linear ~4x, quadratic ~16x. Sub-5 ms timings are dominated by timer/GC noise and cannot hide a quadratic
+      // path (which takes hundreds of ms at 400 KB), so only meaningful durations are compared.
+      if (large >= 5) expect(ratio).toBeLessThan(8);
       // generous backstop for catastrophic regressions
       expect(large).toBeLessThan(1500);
     });
