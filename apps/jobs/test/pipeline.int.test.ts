@@ -354,4 +354,13 @@ describe('saveJob', () => {
     const { data: again } = await db.from('jobs').select('description_text, salary_min_usd').eq('id', jobId).single();
     expect(again).toEqual({ description_text: rich!.descriptionText, salary_min_usd: 5000 });
   });
+
+  it('unions board-stated remote regions across postings of the same job', async () => {
+    const job = await normalizeJob({ title: `Region Engineer ${uniq}`, company: `Regions ${uniq}`, postedAt: now.toISOString(), externalId: `reg-${uniq}`, url: `https://remotive.com/x/reg-${uniq}`, description: 'Region test job.' });
+    const { jobId } = await saveJob(db, 'remotive', { ...job!, remoteRegions: ['US'] }, now);
+    await saveJob(db, 'remotive', { ...job!, remoteRegions: ['UA', 'PL'] }, now);
+    await saveJob(db, 'remotive', { ...job!, remoteRegions: ['US'] }, now);
+    const { data } = await db.from('jobs').select('remote_regions').eq('id', jobId).single();
+    expect([...(data?.remote_regions ?? [])].sort()).toEqual(['PL', 'UA', 'US']);
+  });
 });

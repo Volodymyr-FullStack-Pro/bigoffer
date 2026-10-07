@@ -155,7 +155,7 @@ async function findJobId(db: Db, job: NormalizedJob, companyId: string): Promise
 async function backfillPatch(db: Db, jobId: string, job: NormalizedJob) {
   const { data, error } = await db
     .from('jobs')
-    .select('description_text, salary_raw, salary_min_usd, salary_max_usd, location')
+    .select('description_text, salary_raw, salary_min_usd, salary_max_usd, location, remote_regions')
     .eq('id', jobId)
     .single();
   if (error) throw error;
@@ -175,8 +175,8 @@ async function backfillPatch(db: Db, jobId: string, job: NormalizedJob) {
     patch.salary_max_usd = job.salaryMaxUsd;
   }
   if (data.location == null && job.location) patch.location = job.location;
-  // The board's own hiring regions are authoritative (they override an earlier AI guess).
-  if (job.remoteRegions.length > 0) patch.remote_regions = job.remoteRegions;
+  // Board-stated regions are merged with the stored ones (the stored ones may come from another board).
+  if (job.remoteRegions.length > 0) patch.remote_regions = [...new Set([...(data.remote_regions ?? []), ...job.remoteRegions])];
   return patch;
 }
 
