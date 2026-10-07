@@ -52,21 +52,28 @@ describe('parseJobPreview is linear on adversarial input', () => {
     'many name attrs': (n) => `<meta ${rep('name="og:title" ', n)}content="x">`,
     'unterminated meta': (n) => `<meta property="og:title" ${'a'.repeat(n)}`,
   };
-  // Median of 3 runs after a warm-up, so one noisy run on a busy CI runner does not decide.
+  // Per-iteration time from a loop of ≥ 50 ms (single parses take ~1 ms, too noisy to compare), median of 3,
+  // after a warm-up, so timer noise on a busy CI runner does not decide.
+  const once = (html: string): number => {
+    let iterations = 0;
+    const start = performance.now();
+    let elapsed = 0;
+    do {
+      parseJobPreview(html);
+      iterations += 1;
+      elapsed = performance.now() - start;
+    } while (elapsed < 50);
+    return elapsed / iterations;
+  };
   const time = (html: string): number => {
     parseJobPreview(html);
-    const runs = [0, 1, 2].map(() => {
-      const start = performance.now();
-      parseJobPreview(html);
-      return performance.now() - start;
-    });
-    return runs.sort((x, y) => x - y)[1]!;
+    return [once(html), once(html), once(html)].sort((x, y) => x - y)[1]!;
   };
   for (const [name, gen] of Object.entries(cases)) {
     it(`scales linearly on ${name}`, () => {
       const small = time(gen(N));
       const large = time(gen(4 * N));
-      const ratio = large / Math.max(small, 1);
+      const ratio = large / Math.max(small, 0.05);
       console.log(`redos ${name}: ${small.toFixed(1)} ms -> ${large.toFixed(1)} ms (x${ratio.toFixed(1)})`);
       // linear ~4x, quadratic ~16x
       expect(ratio).toBeLessThan(8);
