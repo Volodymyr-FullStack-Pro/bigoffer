@@ -163,7 +163,27 @@ describe('djinni categories', () => {
     expect(specs.map((s) => s.params.primary_keyword)).toEqual(['Fullstack', 'JavaScript', 'React.js', 'Node.js']);
   });
   it('never emits an unknown category', () => {
-    const valid = new Set(['Fullstack', 'React.js', 'Node.js', 'JavaScript', 'Vue.js', 'Angular', 'Python', 'Java', 'PHP', 'C# / .NET', 'Golang', 'Ruby', 'iOS', 'Android', 'Flutter', 'DevOps', 'QA', 'Project Manager', 'Product Manager', 'Design', 'Marketing', 'Sales', 'HR']);
+    const valid = new Set(['Fullstack', 'React.js', 'Node.js', 'JavaScript', 'Vue.js', 'Angular', 'Python', 'Java', 'PHP', 'Golang', 'Ruby', 'iOS', 'Android', 'Flutter', 'DevOps', 'QA', 'Project Manager', 'Product Manager', 'Design', 'Marketing', 'Sales', 'HR']);
     for (const v of Object.values(DJINNI_PRIMARY_KEYWORDS)) expect(valid.has(v), v).toBe(true);
+  });
+});
+
+describe('djinni categories from multi-word keywords', () => {
+  const djinni = (keywords: string[], skills: string[] = []) =>
+    buildSourceQueries({ keywords, skills, remoteType: 'any', sources: ['djinni'] }).map((s) => s.params.primary_keyword);
+
+  it('maps headlines by contained known term', () => {
+    expect(djinni(['senior full stack developer'])).toEqual(['Fullstack']);
+    expect(djinni(['frontend react engineer'])).toEqual(['JavaScript', 'React.js']);
+  });
+
+  it('keeps keywords first, dedupes and caps at 4', () => {
+    expect(djinni(['senior react developer', 'react'], ['Vue', 'Angular', 'Node.js'])).toEqual(['React.js', 'Vue.js', 'Angular', 'Node.js']);
+  });
+
+  it('matches whole words only', () => {
+    expect(djinni(['context engineer'])).toEqual([undefined]);
+    expect(djinni(['nodejs-free helper'])).toEqual([undefined]);
+    expect(djinni(['gopher'])).toEqual([undefined]);
   });
 });

@@ -71,8 +71,6 @@ export const DJINNI_PRIMARY_KEYWORDS: Record<string, string> = {
   python: 'Python',
   java: 'Java',
   php: 'PHP',
-  'c#': 'C# / .NET',
-  '.net': 'C# / .NET',
   golang: 'Golang',
   go: 'Golang',
   ruby: 'Ruby',
@@ -89,6 +87,26 @@ export const DJINNI_PRIMARY_KEYWORDS: Record<string, string> = {
   hr: 'HR',
   recruiter: 'HR',
 };
+
+const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const DJINNI_TERMS_LONGEST_FIRST = Object.keys(DJINNI_PRIMARY_KEYWORDS)
+  .sort((a, b) => b.length - a.length)
+  .map((key) => ({ key, re: new RegExp(`(?<![\\p{L}\\p{N}.#+-])${escapeRegExp(key)}(?![\\p{L}\\p{N}#+-])`, 'u') }));
+
+/** Djinni categories for one keyword/skill: exact lookup, else every known term contained as whole words (longest first). */
+function djinniCategories(raw: string): string[] {
+  const t = raw.trim().toLowerCase();
+  const exact = DJINNI_PRIMARY_KEYWORDS[t];
+  if (exact) return [exact];
+  const found: string[] = [];
+  let rest = t;
+  for (const { key, re } of DJINNI_TERMS_LONGEST_FIRST) {
+    if (!re.test(rest)) continue;
+    found.push(DJINNI_PRIMARY_KEYWORDS[key]!);
+    rest = rest.replace(re, ' ');
+  }
+  return found;
+}
 
 const SEARCH_SOURCES: [SourceId, string][] = [
   ['dou', 'search'],
@@ -180,11 +198,7 @@ export function buildSourceQueries(
   for (const category of categories) add('dou', { category });
 
   const djinni = [
-    ...new Set(
-      [...profile.keywords, ...profile.skills]
-        .map((t) => DJINNI_PRIMARY_KEYWORDS[t.trim().toLowerCase()])
-        .filter((v): v is string => Boolean(v)),
-    ),
+    ...new Set([...profile.keywords, ...profile.skills].flatMap((t) => djinniCategories(t))),
   ].slice(0, MAX_DJINNI_CATEGORIES);
   if (djinni.length === 0) add('djinni', {});
   for (const primary of djinni) add('djinni', { primary_keyword: primary });

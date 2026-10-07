@@ -166,10 +166,7 @@ async function backfillPatch(db: Db, jobId: string, job: NormalizedJob) {
     salary_max_usd?: number | null;
     location?: string;
     remote_regions?: string[];
-    company_is_placeholder?: boolean;
   } = {};
-  // A posting with a real company merged into a flagged job: the job now has a real company.
-  if (!job.companyIsPlaceholder) patch.company_is_placeholder = false;
   if (job.descriptionText.length > (data.description_text ?? '').length) patch.description_text = job.descriptionText;
   const hasSalary = data.salary_min_usd != null || data.salary_max_usd != null;
   if (!hasSalary && (job.salaryMinUsd != null || job.salaryMaxUsd != null)) {

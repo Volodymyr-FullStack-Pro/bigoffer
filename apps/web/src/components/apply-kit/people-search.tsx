@@ -5,7 +5,7 @@ import { canSearchPeople, peopleSearchLinks } from '@/lib/people-search';
 
 export function PeopleSearch({ company, isPlaceholder }: { company: string | null | undefined; isPlaceholder: boolean }) {
   const t = useTranslations('people');
-  if (!canSearchPeople(company, isPlaceholder)) return null;
+  if (!company || !canSearchPeople(company, isPlaceholder)) return null;
   const links = peopleSearchLinks(company.trim());
   const link = 'rounded-sm border-2 border-border px-2 py-0.5 font-mono text-xs hover:bg-muted';
   return (
