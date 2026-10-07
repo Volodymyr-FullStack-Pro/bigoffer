@@ -8,7 +8,10 @@ export type BotApi = {
   clearButtons(chatId: number, messageId: number): Promise<BotResult>;
 };
 
-export function createBotApi(token: string | undefined, fetchImpl?: typeof fetch): BotApi {
+/** A Bot API call that hangs is aborted after this long and reported as a network failure. */
+const TIMEOUT_MS = 10_000;
+
+export function createBotApi(token: string | undefined, fetchImpl?: typeof fetch, timeoutMs = TIMEOUT_MS): BotApi {
   if (!token) {
     let logged = false;
     const noop = async (): Promise<BotResult> => {
@@ -28,11 +31,12 @@ export function createBotApi(token: string | undefined, fetchImpl?: typeof fetch
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify(body),
+        signal: AbortSignal.timeout(timeoutMs),
       });
       if (res.ok) return { ok: true };
       return { ok: false, blocked: res.status === 403, status: res.status };
     } catch {
-      // Never surface the error object: its message may contain the request URL (and the token).
+      // Network error or timeout. Never surface the error object: its message may contain the request URL (and the token).
       return { ok: false, blocked: false, status: 0 };
     }
   }

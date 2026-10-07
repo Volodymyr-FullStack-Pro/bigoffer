@@ -7,6 +7,7 @@ import {
   digestMessage,
   encodeCallback,
   escapeHtml,
+  isPrivateChat,
   overflowMessage,
   parseStart,
   telegramUpdateSchema,
@@ -38,7 +39,7 @@ describe('format', () => {
     const flat = replyMarkup.inline_keyboard.flat();
     expect(flat).toContainEqual({ text: 'Відкрити', url: `https://x.test/uk/today?match=${ID}` });
     expect(flat).toContainEqual({ text: 'Сховати', callback_data: `h:${ID}` });
-    expect(flat).toContainEqual({ text: 'Відгукнувся', callback_data: `a:${ID}` });
+    expect(flat).toContainEqual({ text: 'Подано', callback_data: `a:${ID}` });
   });
 
   it('truncates long why without cutting entities', () => {
@@ -58,10 +59,35 @@ describe('format', () => {
     expect(overflowMessage(1, 'en', 'https://x.test')).toContain('1 more new job in BigOffer');
     const d = digestMessage({ total: 12, top: [job], followUps: [{ company: 'A<B', title: 'T' }] }, 'uk', 'https://x.test');
     expect(d.text).toContain('Дайджест: 12 нових вакансій за добу');
-    expect(d.text).toContain('Пора нагадати про себе');
+    expect(d.text).toContain('Час нагадати про себе');
     expect(d.text).toContain('A&lt;B');
     expect(d.replyMarkup.inline_keyboard[0]?.[0]).toEqual({ text: 'Відкрити', url: 'https://x.test/uk/today' });
-    expect(digestMessage({ total: 0, top: [], followUps: [] }, 'ru', 'https://x.test').text).toContain('нет');
+    expect(digestMessage({ total: 0, top: [], followUps: [] }, 'ru', 'https://x.test').text).toContain('За сутки новых вакансий нет');
+    expect(digestMessage({ total: 0, top: [], followUps: [] }, 'en', 'https://x.test').text).toContain('in the last 24 hours');
+  });
+
+  it('localizes the remote label and neutral Applied button', () => {
+    expect(alertMessage(job, 'uk', 'https://x.test').text).toContain('Віддалено');
+    expect(alertMessage({ ...job, remote: 'hybrid' }, 'ru', 'https://x.test').text).toContain('Гибрид');
+    expect(alertMessage({ ...job, remote: 'office' }, 'en', 'https://x.test').text).toContain('Office');
+    const applied = (locale: 'en' | 'uk' | 'ru') =>
+      alertMessage(job, locale, 'https://x.test').replyMarkup.inline_keyboard.flat().find((b) => 'callback_data' in b && b.callback_data.startsWith('a:'))?.text;
+    expect([applied('en'), applied('uk'), applied('ru')]).toEqual(['Applied', 'Подано', 'Отклик отправлен']);
+  });
+
+  it('caps the digest at 4096 UTF-16 units, dropping trailing items and keeping both sections', () => {
+    const long = '"'.repeat(300);
+    const top = Array.from({ length: 10 }, (_, i) => ({ ...job, matchId: ID, title: `${i}${long}`, company: long, score: 90 - i }));
+    const followUps = Array.from({ length: 10 }, (_, i) => ({ company: `F${i}${long}`, title: long }));
+    const { text } = digestMessage({ total: 40, top, followUps }, 'en', 'https://x.test');
+    expect(text.length).toBeLessThanOrEqual(4096);
+    expect(text).toContain('Digest: 40 new jobs');
+    expect(text).toContain('<b>90%</b> 0');
+    expect(text).toContain('Time to follow up');
+    expect(text).toContain('F0');
+    expect(text).not.toContain('<b>81%</b>');
+    expect(text).not.toContain('F9');
+    expect(text).not.toMatch(/&[a-z]*$/m);
   });
 });
 
@@ -84,6 +110,14 @@ describe('update schema and /start', () => {
   it('accepts message and callback samples', () => {
     expect(telegramUpdateSchema.safeParse({ update_id: 1, message: { text: '/start', chat: { id: 5 }, from: { language_code: 'uk' } } }).success).toBe(true);
     expect(telegramUpdateSchema.safeParse({ update_id: 2, callback_query: { id: 'c', data: `h:${ID}`, message: { message_id: 9, chat: { id: 5 } } } }).success).toBe(true);
+  });
+  it('parses chat.type; only private chats count', () => {
+    const u = telegramUpdateSchema.parse({ update_id: 3, message: { text: '/stop', chat: { id: 5, type: 'group' } } });
+    expect(u.message?.chat.type).toBe('group');
+    expect(isPrivateChat(u.message?.chat)).toBe(false);
+    expect(isPrivateChat({ type: 'private' })).toBe(true);
+    expect(isPrivateChat({})).toBe(false);
+    expect(isPrivateChat(undefined)).toBe(false);
   });
   it('rejects without update_id', () => {
     expect(telegramUpdateSchema.safeParse({ message: { chat: { id: 5 } } }).success).toBe(false);
@@ -124,6 +158,24 @@ describe('bot api', () => {
     expect(JSON.parse(calls[1]?.[1].body as string)).toEqual({ callback_query_id: 'cb', text: 'ok' });
     expect(calls[2]?.[0]).toMatch(/editMessageReplyMarkup$/);
     expect(JSON.parse(calls[2]?.[1].body as string)).toEqual({ chat_id: 7, message_id: 3, reply_markup: { inline_keyboard: [] } });
+  });
+
+  it('aborts a hanging call after the timeout', async () => {
+    const hanging = ((_url: string, init: RequestInit) =>
+      new Promise((_resolve, reject) => {
+        init.signal?.addEventListener('abort', () => reject(init.signal?.reason));
+      })) as unknown as typeof fetch;
+    const api = createBotApi('TOK', hanging, 20);
+    expect(await api.sendMessage(1, 'x')).toEqual({ ok: false, blocked: false, status: 0 });
+  });
+
+  it('passes an abort signal on every call', async () => {
+    const fetchImpl = vi.fn(async () => new Response('{}', { status: 200 }));
+    const api = createBotApi('TOK', fetchImpl as unknown as typeof fetch);
+    await api.sendMessage(1, 'x');
+    await api.answerCallback('cb');
+    await api.clearButtons(1, 2);
+    for (const call of fetchImpl.mock.calls as unknown as [string, RequestInit][]) expect(call[1].signal).toBeInstanceOf(AbortSignal);
   });
 
   it('maps 403 to blocked and other failures without leaking the token', async () => {

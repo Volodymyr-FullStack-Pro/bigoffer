@@ -24,6 +24,7 @@ type Dict = {
   digestTitle: (n: number) => string;
   digestEmpty: string;
   followUps: string;
+  remote: Record<string, string>;
 };
 
 const DICT: Record<TgLocale, Dict> = {
@@ -33,26 +34,29 @@ const DICT: Record<TgLocale, Dict> = {
     applied: 'Applied',
     overflow: (n) => `${n} more new ${n === 1 ? 'job' : 'jobs'} in BigOffer`,
     digestTitle: (n) => `Digest: ${n} new ${n === 1 ? 'job' : 'jobs'} in the last 24 hours`,
-    digestEmpty: 'No new jobs today.',
+    digestEmpty: 'No new jobs in the last 24 hours.',
     followUps: 'Time to follow up',
+    remote: { remote: 'Remote', hybrid: 'Hybrid', office: 'Office' },
   },
   uk: {
     open: 'Відкрити',
     hide: 'Сховати',
-    applied: 'Відгукнувся',
+    applied: 'Подано',
     overflow: (n) => `ще ${n} ${ukPlural(n)} у BigOffer`,
     digestTitle: (n) => `Дайджест: ${n} ${ukPlural(n)} за добу`,
-    digestEmpty: 'Сьогодні нових вакансій немає.',
-    followUps: 'Пора нагадати про себе',
+    digestEmpty: 'За добу нових вакансій немає.',
+    followUps: 'Час нагадати про себе',
+    remote: { remote: 'Віддалено', hybrid: 'Гібрид', office: 'Офіс' },
   },
   ru: {
     open: 'Открыть',
     hide: 'Скрыть',
-    applied: 'Откликнулся',
+    applied: 'Отклик отправлен',
     overflow: (n) => `ещё ${n} ${ruPlural(n)} в BigOffer`,
     digestTitle: (n) => `Дайджест: ${n} ${ruPlural(n)} за сутки`,
-    digestEmpty: 'Сегодня новых вакансий нет.',
+    digestEmpty: 'За сутки новых вакансий нет.',
     followUps: 'Пора напомнить о себе',
+    remote: { remote: 'Удалённо', hybrid: 'Гибрид', office: 'Офис' },
   },
 };
 
@@ -101,10 +105,11 @@ export function decodeCallback(data: string): CallbackAction | null {
 
 const base = (siteUrl: string) => siteUrl.replace(/\/+$/, '');
 
-function alertLines(job: AlertJob): string[] {
+function alertLines(job: AlertJob, locale: TgLocale): string[] {
   const lines = [`🔥 <b>${Math.round(job.score)}%</b> · ${safe(job.title, 200)}`];
   if (job.company) lines.push(safe(job.company, 100));
-  const meta = [job.salary, job.location, job.remote]
+  const remote = job.remote ? (DICT[locale].remote[job.remote] ?? job.remote) : null;
+  const meta = [job.salary, job.location, remote]
     .filter((v): v is string => Boolean(v && v.trim()))
     .map((v) => safe(v, 80));
   if (meta.length > 0) lines.push(meta.join(' · '));
@@ -119,7 +124,7 @@ export function alertMessage(
 ): { text: string; replyMarkup: InlineKeyboard } {
   const t = DICT[locale];
   return {
-    text: alertLines(job).join('\n'),
+    text: alertLines(job, locale).join('\n'),
     replyMarkup: {
       inline_keyboard: [
         [{ text: t.open, url: `${base(siteUrl)}/${locale}/today?match=${encodeURIComponent(job.matchId)}` }],
@@ -136,27 +141,37 @@ export function overflowMessage(count: number, locale: TgLocale, siteUrl: string
   return `${DICT[locale].overflow(count)}\n${base(siteUrl)}/${locale}/today`;
 }
 
+/** Telegram's limit for a message text, in UTF-16 code units. */
+const MESSAGE_LIMIT = 4096;
+
 export function digestMessage(
   d: { total: number; top: AlertJob[]; followUps: { company: string; title: string }[] },
   locale: TgLocale,
   siteUrl: string,
 ): { text: string; replyMarkup: InlineKeyboard } {
   const t = DICT[locale];
-  const lines = [`<b>${escapeHtml(t.digestTitle(d.total))}</b>`];
-  if (d.top.length === 0) lines.push(t.digestEmpty);
-  else {
-    lines.push('');
-    for (const j of d.top.slice(0, 10)) {
-      const company = j.company ? ` — ${safe(j.company, 60)}` : '';
-      lines.push(`• <b>${Math.round(j.score)}%</b> ${safe(j.title, 100)}${company}`);
-    }
-  }
-  if (d.followUps.length > 0) {
-    lines.push('', `⏰ <b>${escapeHtml(t.followUps)}</b>`);
-    for (const f of d.followUps.slice(0, 10)) lines.push(`• ${safe(f.company, 60)} — ${safe(f.title, 100)}`);
+  const jobs = d.top.slice(0, 10).map((j) => {
+    const company = j.company ? ` — ${safe(j.company, 60)}` : '';
+    return `• <b>${Math.round(j.score)}%</b> ${safe(j.title, 100)}${company}`;
+  });
+  const followUps = d.followUps.slice(0, 10).map((f) => `• ${safe(f.company, 60)} — ${safe(f.title, 100)}`);
+  const build = () => {
+    const lines = [`<b>${escapeHtml(t.digestTitle(d.total))}</b>`];
+    if (jobs.length === 0) lines.push(t.digestEmpty);
+    else lines.push('', ...jobs);
+    if (followUps.length > 0) lines.push('', `⏰ <b>${escapeHtml(t.followUps)}</b>`, ...followUps);
+    return lines.join('\n');
+  };
+  // Over the limit: drop trailing items, from the longer list first, keeping at least one of each
+  // (a single clipped line of each always fits) so both sections and their headings survive.
+  let text = build();
+  while (text.length > MESSAGE_LIMIT && (jobs.length > 1 || followUps.length > 1)) {
+    if (jobs.length > followUps.length || followUps.length <= 1) jobs.pop();
+    else followUps.pop();
+    text = build();
   }
   return {
-    text: lines.join('\n'),
+    text,
     replyMarkup: { inline_keyboard: [[{ text: t.open, url: `${base(siteUrl)}/${locale}/today` }]] },
   };
 }
