@@ -64,8 +64,25 @@ describe('fresh filter and sorting', () => {
   });
 });
 
+describe('future posted_at', () => {
+  const now = new Date('2026-10-07T12:00:00.000Z');
+  const future = m('future', { postedAt: '2026-10-20T00:00:00.000Z' });
+  const recent = m('recent', { postedAt: '2026-10-07T11:59:00.000Z' });
+  it('counts as now for the filter and does not outrank a genuinely newer job in sort', () => {
+    const stale = m('stale', { postedAt: '2026-10-01T00:00:00.000Z' });
+    expect(filterMatches([future, stale], { ...DEFAULT_FILTERS, fresh: true }, now).map((x) => x.id)).toEqual(['future']);
+    expect(sortMatches([recent, future], 'newest', now).map((x) => x.id)).toEqual(['future', 'recent']);
+    expect(sortMatches([m('x', { postedAt: '2026-10-30T00:00:00.000Z' }), future], 'newest', now).map((x) => x.id)).toEqual(['x', 'future']);
+  });
+});
+
 describe('mergeMatches', () => {
-  it('keeps base order and appends only fresh matches not already present', () => {
+  it('appends only fresh matches not already present', () => {
     expect(mergeMatches([m('a'), m('b')], [m('b'), m('c')]).map((x) => x.id)).toEqual(['a', 'b', 'c']);
+  });
+  it('orders the union by score desc, then created_at desc', () => {
+    const base = [m('hi', { score: 90 }), m('mid-old', { score: 70, createdAt: '2026-10-05T08:00:00.000Z' })];
+    const fresh = [m('low', { score: 40 }), m('mid-new', { score: 70, createdAt: '2026-10-06T08:00:00.000Z' }), m('top', { score: 95 })];
+    expect(mergeMatches(base, fresh).map((x) => x.id)).toEqual(['top', 'hi', 'mid-new', 'mid-old', 'low']);
   });
 });

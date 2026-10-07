@@ -14,7 +14,8 @@ export const DEFAULT_FILTERS: FeedFilters = { profileId: 'all', minScore: 0, rem
 
 const DAY_MS = 24 * 3600 * 1000;
 
-const freshness = (m: FeedMatch) => Date.parse(m.postedAt ?? m.firstSeenAt);
+/** postedAt ?? firstSeenAt; a date in the future (bad source data) counts as now. */
+const freshness = (m: FeedMatch, now: Date) => Math.min(Date.parse(m.postedAt ?? m.firstSeenAt), now.getTime());
 
 export function filterMatches(items: FeedMatch[], f: FeedFilters, now: Date = new Date()): FeedMatch[] {
   const cutoff = now.getTime() - DAY_MS;
@@ -24,18 +25,20 @@ export function filterMatches(items: FeedMatch[], f: FeedFilters, now: Date = ne
       (f.remote === 'any' || m.remoteType === f.remote) &&
       (f.source === 'all' || m.postings.some((p) => p.sourceId === f.source)) &&
       (f.profileId === 'all' || m.profileId === f.profileId) &&
-      (!f.fresh || freshness(m) >= cutoff),
+      (!f.fresh || freshness(m, now) >= cutoff),
   );
 }
 
 /** 'best' keeps the server order (score, then recency); 'newest' puts the freshest job first. */
-export function sortMatches(items: FeedMatch[], sort: FeedFilters['sort']): FeedMatch[] {
+export function sortMatches(items: FeedMatch[], sort: FeedFilters['sort'], now: Date = new Date()): FeedMatch[] {
   if (sort === 'best') return items;
-  return [...items].sort((a, b) => freshness(b) - freshness(a));
+  return [...items].sort((a, b) => freshness(b, now) - freshness(a, now));
 }
 
-/** Base set (score order) first, then fresh matches that are not already in it. */
+/** Union of both sets, ordered like the 'best' feed: score desc, then created_at desc. */
 export function mergeMatches(base: FeedMatch[], fresh: FeedMatch[]): FeedMatch[] {
   const seen = new Set(base.map((m) => m.id));
-  return [...base, ...fresh.filter((m) => !seen.has(m.id))];
+  return [...base, ...fresh.filter((m) => !seen.has(m.id))].sort(
+    (a, b) => b.score - a.score || Date.parse(b.createdAt) - Date.parse(a.createdAt),
+  );
 }

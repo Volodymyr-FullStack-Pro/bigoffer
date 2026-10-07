@@ -7,6 +7,7 @@ import { scrapeIntervalMultiplier } from '../src/env';
 import { expireJobs } from '../src/pipeline/expire';
 import { getDueQueryIds, getProfile, saveJob } from '../src/pipeline/repository';
 import { runQuery } from '../src/pipeline/run-query';
+import { deferUnconfigured } from '../src/pipeline/schedule';
 import { syncAllProfiles, syncProfile } from '../src/pipeline/sync-profiles';
 
 const db = getDb();
@@ -219,6 +220,23 @@ describe('getDueQueryIds', () => {
     } finally {
       await db.from('sources').update({ paused_until: null }).eq('id', 'remotive');
     }
+  });
+});
+
+describe('deferUnconfigured', () => {
+  it('drops due queries of unconfigured adapters and moves them forward in bulk', async () => {
+    await makeDue(douQueryId);
+    const due = [{ id: douQueryId, sourceId: 'dou', nextRunAt: now.toISOString() }];
+    const unconfigured: SourceAdapter = { ...fakeAdapter([]), isConfigured: () => false };
+    const configured: SourceAdapter = { ...fakeAdapter([]), isConfigured: () => true };
+
+    expect(await deferUnconfigured(db, due, { dou: configured }, {}, now)).toEqual(due);
+
+    const { data: source } = await db.from('sources').select('min_interval_minutes').eq('id', 'dou').single();
+    const base = Math.max(source!.min_interval_minutes, 15) * 60 * 1000;
+    expect(await deferUnconfigured(db, due, { dou: unconfigured }, {}, now, 2)).toEqual([]);
+    const { data: q } = await db.from('search_queries').select('next_run_at').eq('id', douQueryId).single();
+    expect(new Date(q!.next_run_at).getTime()).toBe(now.getTime() + 2 * base);
   });
 });
 

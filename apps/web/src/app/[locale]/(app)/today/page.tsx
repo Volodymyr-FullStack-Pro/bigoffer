@@ -35,13 +35,20 @@ export default async function TodayPage() {
       .eq('jobs.status', 'active')
       .not('jobs.is_job', 'is', false)
       .gte('created_at', since);
-  const [{ data: bestRows }, { data: freshRows }, { data: profiles }, { data: me }] = await Promise.all([
+  const cutoff = since24h();
+  const [{ data: bestRows }, { data: freshRows, error: freshError }, { data: profiles }, { data: me }] = await Promise.all([
     baseQuery().order('score', { ascending: false }).order('created_at', { ascending: false }).limit(200),
     // Fresh jobs can score below the top 200, so fetch them separately for the "New in 24h" filter and "Newest" sort.
-    baseQuery().gte('jobs.first_seen_at', since24h()).order('jobs(first_seen_at)', { ascending: false }).limit(200),
+    // Same rule as the client filter: posted within 24h, or no posted_at and first seen within 24h.
+    baseQuery()
+      .or(`posted_at.gte.${cutoff},and(posted_at.is.null,first_seen_at.gte.${cutoff})`, { referencedTable: 'jobs' })
+      .order('jobs(first_seen_at)', { ascending: false })
+      .limit(200),
     supabase.from('search_profiles').select('id, name, skills').order('created_at'),
     supabase.from('profiles').select('onboarded_at').eq('id', userId).maybeSingle(),
   ]);
+
+  if (freshError) console.error('today: fresh matches query failed', { code: freshError.code, message: freshError.message });
 
   const profileSkills = new Map((profiles ?? []).map((p) => [p.id, p.skills]));
   const toMatch = (m: NonNullable<typeof bestRows>[number]): FeedMatch => {
