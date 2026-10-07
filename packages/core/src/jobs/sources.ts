@@ -22,6 +22,7 @@ export const SOURCE_CATALOG: readonly SourceInfo[] = [
   { id: 'jobico', name: 'Jobico', market: 'ua', url: 'https://www.jobico.io' },
   { id: 'olx', name: 'OLX Робота', market: 'ua', url: 'https://www.olx.ua/uk/rabota/', browser: true },
   { id: 'jooble', name: 'Jooble', market: 'global', url: 'https://jooble.org', requiresKey: 'JOOBLE_API_KEY' },
+  { id: 'adzuna', name: 'Adzuna', market: 'europe', url: 'https://www.adzuna.com', requiresKey: 'ADZUNA_APP_ID' },
   { id: 'linkedin', name: 'LinkedIn', market: 'global', url: 'https://www.linkedin.com/jobs', beta: true },
   { id: 'remoteok', name: 'Remote OK', market: 'remote', url: 'https://remoteok.com', applyPaywall: true },
   { id: 'remotive', name: 'Remotive', market: 'remote', url: 'https://remotive.com' },

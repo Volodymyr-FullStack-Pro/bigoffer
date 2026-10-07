@@ -6,6 +6,8 @@ import { deleteNewMatches, getActiveProfiles, getNewMatchJobIdsOutsideSources, g
 
 const RECENT_DAYS = 7;
 const CHUNK = 100;
+// query_key values are long JSON strings that URL-encode ~3x; 100 of them overflow the PostgREST URI limit.
+const KEY_CHUNK = 20;
 
 async function linkQueries(db: Db, profile: SearchProfile, boards: BoardRef[]): Promise<string[]> {
   const specs = [
@@ -21,13 +23,13 @@ async function linkQueries(db: Db, profile: SearchProfile, boards: BoardRef[]): 
   if (upsertError) throw upsertError;
 
   const ids: string[] = [];
-  for (let i = 0; i < specs.length; i += CHUNK) {
+  for (let i = 0; i < specs.length; i += KEY_CHUNK) {
     const { data, error } = await db
       .from('search_queries')
       .select('id')
       // PostgREST list values containing commas/quotes (multi-param JSON keys) must be double-quoted and escaped;
       // supabase-js .in() quotes them without escaping inner quotes, so build the filter by hand.
-      .filter('query_key', 'in', `(${specs.slice(i, i + CHUNK).map((s) => `"${s.queryKey.replace(/[\\"]/g, '\\$&')}"`).join(',')})`);
+      .filter('query_key', 'in', `(${specs.slice(i, i + KEY_CHUNK).map((s) => `"${s.queryKey.replace(/[\\"]/g, '\\$&')}"`).join(',')})`);
     if (error) throw error;
     ids.push(...data.map((q) => q.id));
   }

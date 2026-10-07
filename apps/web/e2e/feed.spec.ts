@@ -90,3 +90,20 @@ for (const [sourceId, paid] of [['remoteok', true], ['dou', false]] as const) {
     }
   });
 }
+
+test('fresh filter keeps only jobs from the last 24h and newest sort puts them first', async ({ context, page }) => {
+  const email = uniqueEmail('feed-fresh');
+  await loginAs(context, email);
+  const hour = 3600 * 1000;
+  const old = await seedMatch(email, { score: 95, postedAt: new Date(Date.now() - 72 * hour).toISOString() });
+  const fresh = await seedMatch(email, { score: 60, postedAt: new Date(Date.now() - 2 * hour).toISOString() });
+  await page.goto('/en/today');
+  const titles = page.getByText(/Senior Full Stack Developer/).filter({ visible: true });
+  await expect(titles.first()).toContainText(old.title);
+  await visible(page, 'sort-select').selectOption('newest');
+  await expect(titles.first()).toContainText(fresh.title);
+  await visible(page, 'sort-select').selectOption('best');
+  await visible(page, 'filter-fresh').check();
+  await expect(page.getByText(fresh.title).filter({ visible: true }).first()).toBeVisible();
+  await expect(page.getByText(old.title).filter({ visible: true })).toHaveCount(0);
+});

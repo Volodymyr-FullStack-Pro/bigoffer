@@ -98,4 +98,14 @@ describe('renderPage', () => {
     expect(ctx.renderPage).toBeUndefined();
     await expect(ctx.dispose!()).resolves.toBeUndefined();
   });
+
+  it('masks credentials in error messages', async () => {
+    const url = 'https://a.test/s?app_id=id1&app_key=SECRET&what=x';
+    const blocked = createHttpContext({ userAgent: 'UA', fetchImpl: fakeFetch(new Response('', { status: 429 })), sleep });
+    await expect(blocked.fetchText(url)).rejects.toThrow(/app_key=\*\*\*&what=x/);
+    const failed = createHttpContext({ userAgent: 'UA', fetchImpl: fakeFetch(new Response('', { status: 404 })), sleep });
+    const err = await failed.fetchText(url).catch((e: Error) => e);
+    expect((err as Error).message).not.toContain('SECRET');
+    expect((err as Error).message).toContain('app_key=***');
+  });
 });

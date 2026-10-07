@@ -18,7 +18,7 @@ export const enrichJobsTask = schedules.task({
   // A tick that waits behind a long run is dropped instead of piling up.
   ttl: '10m',
   maxDuration: 300,
-  retry: { maxAttempts: 1 },
+  retry: { maxAttempts: 1, outOfMemory: { machine: 'small-1x' } },
   run: async () => {
     const result = await enrichJobs(aiDeps());
     if (result.status === 'unavailable') logger.warn('GEMINI_API_KEY_PUBLIC is not set; enrichment skipped');
@@ -33,7 +33,7 @@ export const explainMatchesTask = schedules.task({
   queue: AI_PUBLIC_QUEUE,
   ttl: '30m',
   maxDuration: 300,
-  retry: { maxAttempts: 1 },
+  retry: { maxAttempts: 1, outOfMemory: { machine: 'small-1x' } },
   run: async () => {
     const result = await explainTopMatches(aiDeps());
     log('explanations', result);

@@ -1,11 +1,13 @@
-import { normalizeJob, type RawJob } from '@jp/core';
+import { normalizeJob, searchTerms, type RawJob } from '@jp/core';
 import type { AdapterContext, SourceAdapter } from '@jp/scrapers';
 import { SourceBlockedError } from '@jp/scrapers';
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { getDb } from '../src/db';
+import { scrapeIntervalMultiplier } from '../src/env';
 import { expireJobs } from '../src/pipeline/expire';
 import { getDueQueryIds, getProfile, saveJob } from '../src/pipeline/repository';
 import { runQuery } from '../src/pipeline/run-query';
+import { deferUnconfigured } from '../src/pipeline/schedule';
 import { syncAllProfiles, syncProfile } from '../src/pipeline/sync-profiles';
 
 const db = getDb();
@@ -88,7 +90,8 @@ describe('syncProfile', () => {
       .eq('source_id', 'dou');
     // DOU also gets category queries (Plan 6c); the keyword query is the one without a category.
     const keyword = data!.filter((q) => !('category' in (q.params as Record<string, unknown>)));
-    expect(keyword).toHaveLength(1);
+    // One keyword query per search term (keywords + job-title variants), Plan 6d.
+    expect(keyword).toHaveLength(searchTerms({ keywords: ['full stack'], skills: ['React', 'Node.js'] }).length);
     douQueryId = keyword[0]!.id;
   });
 });
@@ -157,6 +160,20 @@ describe('runQuery', () => {
     expect(results.map((r) => r.alert !== null)).toEqual([false, false, true]);
   });
 
+  it('scales the next run by the interval multiplier', async () => {
+    const { data: source } = await db.from('sources').select('min_interval_minutes').eq('id', 'dou').single();
+    const base = Math.max(source!.min_interval_minutes, 15) * 60 * 1000;
+    const nextRun = async (intervalMultiplier: number) => {
+      await makeDue(douQueryId);
+      const deps = { db, adapters: { dou: fakeAdapter(rawJobs) }, createContext: () => ctx, now: () => now, intervalMultiplier };
+      expect((await runQuery(deps, douQueryId)).status).toBe('ok');
+      const { data: q } = await db.from('search_queries').select('next_run_at').eq('id', douQueryId).single();
+      return new Date(q!.next_run_at).getTime();
+    };
+    expect(await nextRun(1)).toBe(now.getTime() + base);
+    expect(await nextRun(2)).toBe(now.getTime() + 2 * base);
+  });
+
   it('skips an unconfigured adapter and moves the query forward', async () => {
     await makeDue(douQueryId);
     const unconfigured: SourceAdapter = { ...fakeAdapter(rawJobs), isConfigured: () => false };
@@ -203,6 +220,23 @@ describe('getDueQueryIds', () => {
     } finally {
       await db.from('sources').update({ paused_until: null }).eq('id', 'remotive');
     }
+  });
+});
+
+describe('deferUnconfigured', () => {
+  it('drops due queries of unconfigured adapters and moves them forward in bulk', async () => {
+    await makeDue(douQueryId);
+    const due = [{ id: douQueryId, sourceId: 'dou', nextRunAt: now.toISOString() }];
+    const unconfigured: SourceAdapter = { ...fakeAdapter([]), isConfigured: () => false };
+    const configured: SourceAdapter = { ...fakeAdapter([]), isConfigured: () => true };
+
+    expect(await deferUnconfigured(db, due, { dou: configured }, {}, now)).toEqual(due);
+
+    const { data: source } = await db.from('sources').select('min_interval_minutes').eq('id', 'dou').single();
+    const base = Math.max(source!.min_interval_minutes, 15) * 60 * 1000;
+    expect(await deferUnconfigured(db, due, { dou: unconfigured }, {}, now, 2)).toEqual([]);
+    const { data: q } = await db.from('search_queries').select('next_run_at').eq('id', douQueryId).single();
+    expect(new Date(q!.next_run_at).getTime()).toBe(now.getTime() + 2 * base);
   });
 });
 
@@ -364,5 +398,23 @@ describe('saveJob', () => {
     await saveJob(db, 'remotive', { ...job!, remoteRegions: ['US'] }, now);
     const { data } = await db.from('jobs').select('remote_regions').eq('id', jobId).single();
     expect([...(data?.remote_regions ?? [])].sort()).toEqual(['PL', 'UA', 'US']);
+  });
+});
+
+describe('scrapeIntervalMultiplier', () => {
+  it.each([
+    [undefined, 1],
+    ['', 1],
+    ['2', 2],
+    ['1.5', 1.5],
+    ['0.5', 1],
+    ['0', 1],
+    ['-3', 1],
+    ['abc', 1],
+  ])('%j -> %d', (raw, expected) => {
+    expect(scrapeIntervalMultiplier({ SCRAPE_INTERVAL_MULTIPLIER: raw })).toBe(expected);
+  });
+  it('defaults to 1 for an empty env', () => {
+    expect(scrapeIntervalMultiplier({})).toBe(1);
   });
 });

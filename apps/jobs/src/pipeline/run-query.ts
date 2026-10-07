@@ -22,6 +22,8 @@ export type RunQueryDeps = {
   adapters: Record<string, SourceAdapter>;
   createContext: (sourceId: string) => AdapterContext;
   env?: Record<string, string | undefined>;
+  /** Scales every source's min interval (cost control); 1 when omitted. */
+  intervalMultiplier?: number;
   now?: () => Date;
 };
 
@@ -67,7 +69,7 @@ export async function runQuery(deps: RunQueryDeps, queryId: string): Promise<Run
     return SKIPPED;
   }
   if (!source.enabled || !adapter || adapter.isConfigured?.(deps.env ?? {}) === false) {
-    await markQueryRun(db, queryId, now, source.min_interval_minutes);
+    await markQueryRun(db, queryId, now, source.min_interval_minutes, deps.intervalMultiplier);
     return SKIPPED;
   }
 
@@ -98,7 +100,7 @@ export async function runQuery(deps: RunQueryDeps, queryId: string): Promise<Run
       if (err instanceof SourceBlockedError && board !== null && err.status === 403) {
         try {
           await finishRun(db, runId, { status: 'error', found: 0, inserted: 0, error: err.message });
-          await markQueryRun(db, queryId, now, source.min_interval_minutes);
+          await markQueryRun(db, queryId, now, source.min_interval_minutes, deps.intervalMultiplier);
         } catch {
           // ignored: the board failure below is what matters
         }
@@ -108,7 +110,7 @@ export async function runQuery(deps: RunQueryDeps, queryId: string): Promise<Run
       if (err instanceof SourceBlockedError) {
         await finishRun(db, runId, { status: 'blocked', found: 0, inserted: 0, error: err.message });
         const { alert } = await updateSourceHealth(db, source, 'blocked', now);
-        await markQueryRun(db, queryId, now, source.min_interval_minutes);
+        await markQueryRun(db, queryId, now, source.min_interval_minutes, deps.intervalMultiplier);
         return { status: 'blocked', found: 0, inserted: 0, matched: 0, alert };
       }
       // Record the failure and push the query forward, but never mask the original error.
@@ -119,7 +121,7 @@ export async function runQuery(deps: RunQueryDeps, queryId: string): Promise<Run
           inserted,
           error: err instanceof Error ? err.message : String(err),
         });
-        await markQueryRun(db, queryId, now, source.min_interval_minutes);
+        await markQueryRun(db, queryId, now, source.min_interval_minutes, deps.intervalMultiplier);
       } catch {
         // ignored: the original error below is what matters
       }
@@ -136,7 +138,7 @@ export async function runQuery(deps: RunQueryDeps, queryId: string): Promise<Run
       found === 0 && !BOARD_SOURCE_IDS.has(source.id as SourceId) ? 'empty' : 'ok',
       now,
     );
-    await markQueryRun(db, queryId, now, source.min_interval_minutes);
+    await markQueryRun(db, queryId, now, source.min_interval_minutes, deps.intervalMultiplier);
     await trackBoard(db, source.id, query.params, true);
     return { status: 'ok', found, inserted, matched, alert };
   } finally {
