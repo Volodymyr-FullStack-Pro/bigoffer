@@ -8,6 +8,7 @@ export * from './jobs/normalize';
 export * from './jobs/detect';
 export * from './jobs/job';
 export * from './jobs/search';
+export * from './jobs/boards';
 export * from './jobs/score';
 export * from './jobs/sources';
 export * from './jobs/dates';

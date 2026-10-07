@@ -35,6 +35,8 @@ export async function seedMatch(
     matchedSkills?: string[];
     isJob?: boolean | null;
     state?: 'new' | 'seen';
+    sourceId?: string;
+    url?: string;
   } = {},
 ) {
   const db = admin();
@@ -53,7 +55,7 @@ export async function seedMatch(
     .select('id')
     .single();
   if (jErr) throw jErr;
-  const { error: pErr } = await db.from('job_postings').insert({ job_id: job.id, source_id: 'dou', external_id: `e2e-${tag}`, url: `https://jobs.dou.ua/vacancies/${tag}/` });
+  const { error: pErr } = await db.from('job_postings').insert({ job_id: job.id, source_id: opts.sourceId ?? 'dou', external_id: `e2e-${tag}`, url: opts.url ?? `https://jobs.dou.ua/vacancies/${tag}/` });
   if (pErr) throw pErr;
   const { data: match, error: mErr } = await db
     .from('job_matches')

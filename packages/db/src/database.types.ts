@@ -470,6 +470,25 @@ isOneToOne: false
                   Relationships: [
                     
                   ]
+                },"source_boards": {
+                  Row: {
+                    "created_at": string,"enabled": boolean,"failures": number,"last_ok_at": string | null,"name": string | null,"origin": string,"slug": string,"source_id": string
+                  }
+                  Insert: {
+                    "created_at"?: string,"enabled"?: boolean,"failures"?: number,"last_ok_at"?: string | null,"name"?: string | null,"origin"?: string,"slug": string,"source_id": string
+                  }
+                  Update: {
+                    "created_at"?: string,"enabled"?: boolean,"failures"?: number,"last_ok_at"?: string | null,"name"?: string | null,"origin"?: string,"slug"?: string,"source_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "source_boards_source_id_fkey"
+      columns: ["source_id"]
+isOneToOne: false
+      referencedRelation: "sources"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"source_runs": {
                   Row: {
                     "error": string | null,"finished_at": string | null,"found": number,"id": string,"inserted": number,"query_id": string | null,"source_id": string,"started_at": string,"status": string

@@ -73,3 +73,20 @@ test('undoing a hide brings the match back, also after reload', async ({ context
   await page.reload();
   await expect(visible(page, 'job-match').filter({ hasText: title })).toBeVisible();
 });
+
+for (const [sourceId, paid] of [['remoteok', true], ['dou', false]] as const) {
+  test(`${paid ? 'flags' : 'does not flag'} a ${sourceId} posting as paid apply`, async ({ context, page, isMobile }) => {
+    const email = uniqueEmail(`feed-paid-${sourceId}`);
+    await loginAs(context, email);
+    await seedMatch(email, { score: 90, sourceId, url: `https://example.com/${sourceId}/e2e` });
+    await page.goto('/en/today');
+    if (isMobile) await page.getByRole('button', { name: 'Details' }).click();
+    await expect(visible(page, 'match-open')).toHaveCount(1);
+    await expect(visible(page, 'paid-apply')).toHaveCount(paid ? 1 : 0);
+    await expect(visible(page, 'paid-apply-hint')).toHaveCount(paid ? 1 : 0);
+    if (paid) {
+      await expect(visible(page, 'paid-apply')).toHaveText('paid apply');
+      await expect(visible(page, 'paid-apply-hint')).toContainText('asks for a subscription to apply');
+    }
+  });
+}

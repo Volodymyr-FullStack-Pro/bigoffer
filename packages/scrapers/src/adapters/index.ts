@@ -14,6 +14,11 @@ import { justjoinAdapter } from './justjoin';
 import { remoteokAdapter } from './remoteok';
 import { remotiveAdapter } from './remotive';
 import { robotauaAdapter } from './robotaua';
+import { ashbyAdapter } from './ashby';
+import { greenhouseAdapter } from './greenhouse';
+import { leverAdapter } from './lever';
+import { telegramAdapter } from './telegram';
+import { workableAdapter } from './workable';
 import { workingnomadsAdapter } from './workingnomads';
 import { workuaAdapter } from './workua';
 import { wwrAdapter } from './wwr';
@@ -36,4 +41,9 @@ export const ADAPTERS: Record<SourceId, SourceAdapter> = {
   workua: workuaAdapter,
   olx: olxAdapter,
   jobico: jobicoAdapter,
+  greenhouse: greenhouseAdapter,
+  lever: leverAdapter,
+  ashby: ashbyAdapter,
+  workable: workableAdapter,
+  telegram: telegramAdapter,
 };

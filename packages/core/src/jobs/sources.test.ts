@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { SOURCE_IDS } from './job';
-import { BROWSER_SOURCE_IDS, defaultSources, SOURCE_CATALOG, sourceInfo } from './sources';
+import { BOARD_SOURCE_IDS, BROWSER_SOURCE_IDS, defaultSources, SOURCE_CATALOG, sourceInfo } from './sources';
 
 describe('SOURCE_CATALOG', () => {
   it('lists Jobico as a Ukrainian board polled by default', () => {
@@ -35,5 +35,11 @@ describe('defaultSources', () => {
     expect(remote).toContain('justjoin');
     expect(remote).not.toContain('linkedin');
     expect(defaultSources('any')).toEqual(remote);
+  });
+  it('marks paywalled apply and lists board sources', () => {
+    expect(sourceInfo('remoteok')?.applyPaywall).toBe(true);
+    expect(sourceInfo('dou')?.applyPaywall).toBeUndefined();
+    expect([...BOARD_SOURCE_IDS].sort()).toEqual(['ashby', 'greenhouse', 'lever', 'telegram', 'workable']);
+    expect(defaultSources('remote')).toEqual(expect.arrayContaining(['greenhouse', 'ashby', 'telegram']));
   });
 });

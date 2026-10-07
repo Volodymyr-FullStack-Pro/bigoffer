@@ -10,6 +10,8 @@ export type SourceInfo = {
   beta?: true;
   requiresKey?: string;
   browser?: true;
+  /** The board's apply button needs a paid subscription; point users to the company site. */
+  applyPaywall?: true;
 };
 
 export const SOURCE_CATALOG: readonly SourceInfo[] = [
@@ -21,7 +23,7 @@ export const SOURCE_CATALOG: readonly SourceInfo[] = [
   { id: 'olx', name: 'OLX Робота', market: 'ua', url: 'https://www.olx.ua/uk/rabota/', browser: true },
   { id: 'jooble', name: 'Jooble', market: 'global', url: 'https://jooble.org', requiresKey: 'JOOBLE_API_KEY' },
   { id: 'linkedin', name: 'LinkedIn', market: 'global', url: 'https://www.linkedin.com/jobs', beta: true },
-  { id: 'remoteok', name: 'Remote OK', market: 'remote', url: 'https://remoteok.com' },
+  { id: 'remoteok', name: 'Remote OK', market: 'remote', url: 'https://remoteok.com', applyPaywall: true },
   { id: 'remotive', name: 'Remotive', market: 'remote', url: 'https://remotive.com' },
   { id: 'himalayas', name: 'Himalayas', market: 'remote', url: 'https://himalayas.app' },
   { id: 'wwr', name: 'We Work Remotely', market: 'remote', url: 'https://weworkremotely.com' },
@@ -30,6 +32,11 @@ export const SOURCE_CATALOG: readonly SourceInfo[] = [
   { id: 'hn', name: "HN Who's Hiring", market: 'remote', url: 'https://news.ycombinator.com' },
   { id: 'arbeitnow', name: 'Arbeitnow', market: 'europe', url: 'https://www.arbeitnow.com' },
   { id: 'justjoin', name: 'Just Join IT', market: 'europe', url: 'https://justjoin.it' },
+  { id: 'telegram', name: 'Telegram channels', market: 'ua', url: 'https://t.me' },
+  { id: 'greenhouse', name: 'Greenhouse boards', market: 'global', url: 'https://www.greenhouse.com' },
+  { id: 'lever', name: 'Lever boards', market: 'global', url: 'https://www.lever.co' },
+  { id: 'ashby', name: 'Ashby boards', market: 'global', url: 'https://www.ashbyhq.com' },
+  { id: 'workable', name: 'Workable boards', market: 'global', url: 'https://www.workable.com' },
 ];
 
 const BY_ID = new Map<string, SourceInfo>(SOURCE_CATALOG.map((s) => [s.id, s]));
@@ -47,3 +54,6 @@ export function defaultSources(remoteType: 'any' | 'remote' | 'hybrid' | 'office
     remoteType === 'office' || remoteType === 'hybrid' ? ['ua', 'global'] : ['ua', 'remote', 'europe', 'global'];
   return SOURCE_CATALOG.filter((s) => !s.beta && markets.includes(s.market)).map((s) => s.id);
 }
+
+/** Sources polled per board/channel from source_boards rather than per search keyword. */
+export const BOARD_SOURCE_IDS: ReadonlySet<SourceId> = new Set<SourceId>(['greenhouse', 'lever', 'ashby', 'workable', 'telegram']);

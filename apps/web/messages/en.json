@@ -53,6 +53,8 @@
     "setup": "Set up job search",
     "hide": "Hide",
     "open": "Open on {source}",
+    "paidApply": "paid apply",
+    "paidApplyHint": "This board asks for a subscription to apply — find the job on the company's own site instead.",
     "match": "match",
     "remote_remote": "Remote",
     "remote_hybrid": "Hybrid",

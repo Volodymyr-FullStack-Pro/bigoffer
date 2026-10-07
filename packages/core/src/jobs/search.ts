@@ -88,7 +88,7 @@ const SEARCH_SOURCES: [SourceId, string][] = [
   ['jobicy', 'tag'],
 ];
 
-function queryKey(sourceId: SourceId, params: Record<string, string>): string {
+export function queryKey(sourceId: SourceId, params: Record<string, string>): string {
   const sorted = Object.fromEntries(
     Object.keys(params)
       .sort()
@@ -123,6 +123,15 @@ export function buildSourceQueries(
       remote ? { keywords: keyword, location: 'Worldwide', remote: '1' } : { keywords: keyword, location: 'Ukraine' },
     );
   }
+
+  const terms = [...profile.keywords, ...profile.skills].map((t) => t.toLowerCase());
+  const has = (re: RegExp) => terms.some((t) => re.test(t));
+  const categories = [
+    has(/front|react|vue|angular|\bnext\b|full ?stack|javascript|typescript/) ? 'Front End' : null,
+    has(/node|nest|express|full ?stack|back ?end/) ? 'Node.js' : null,
+    has(/javascript|typescript|full ?stack/) ? 'JavaScript' : null,
+  ].filter((c): c is string => c !== null);
+  for (const category of categories) add('dou', { category });
 
   const djinni = [
     ...new Set(
