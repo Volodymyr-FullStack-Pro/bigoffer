@@ -1,6 +1,6 @@
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(25);
+select plan(34);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-0000000b1001', 'tg1@test.local'),
@@ -14,34 +14,37 @@ insert into public.job_matches (id, user_id, job_id, score) values
 set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-0000000b1001","role":"authenticated"}', true);
 
-select lives_ok($$ select public.create_telegram_link_token('hash-a') $$, 'user creates a token');
-select lives_ok($$ select public.create_telegram_link_token('hash-b') $$, 'user re-creates a token');
+select lives_ok($$ select public.create_telegram_link_token(repeat('a',64)) $$, 'user creates a token');
+select lives_ok($$ select public.create_telegram_link_token(repeat('b',64)) $$, 'user re-creates a token');
 select throws_ok($$ select * from public.telegram_link_tokens $$, '42501', null, 'users cannot read tokens');
 select throws_ok($$ update public.profiles set telegram_chat_id = 5 $$, '42501', null, 'users cannot set telegram_chat_id');
 select throws_ok($$ update public.profiles set digest_last_sent_on = current_date $$, '42501', null, 'users cannot set digest_last_sent_on');
 select throws_ok($$ update public.job_matches set notified_at = now() $$, '42501', null, 'users cannot set notified_at');
 select lives_ok($$ update public.profiles set telegram_min_score = 60, telegram_alerts = false $$, 'users can update alert settings');
+select is((select telegram_min_score from public.profiles where id = '00000000-0000-0000-0000-0000000b1001'), 60::smallint, 'min score read back');
+select is((select telegram_alerts from public.profiles where id = '00000000-0000-0000-0000-0000000b1001'), false, 'alerts flag read back');
 select throws_ok($$ update public.profiles set telegram_min_score = 101 $$, '23514', null, 'min score is bounded');
-select throws_ok($$ select public.link_telegram('hash-b', 1) $$, '42501', null, 'users cannot call link_telegram');
+select throws_ok($$ select public.create_telegram_link_token('not-a-hash') $$, '22023', null, 'malformed token hash is rejected');
+select throws_ok($$ select public.link_telegram(repeat('b',64), 1) $$, '42501', null, 'users cannot call link_telegram');
 select throws_ok($$ select public.bot_save_match('00000000-0000-0000-0000-0000000b1001', 'eb000000-0000-0000-0000-000000000001', 'applied', 'a0') $$, '42501', null, 'users cannot call bot_save_match');
 
 reset role;
 select is((select count(*)::int from public.telegram_link_tokens where user_id = '00000000-0000-0000-0000-0000000b1001'), 1, 'one token per user');
-select ok((select expires_at > now() from public.telegram_link_tokens where token_hash = 'hash-b'), 'token expires in the future');
+select ok((select expires_at > now() from public.telegram_link_tokens where token_hash = repeat('b',64)), 'token expires in the future');
 
 -- service_role linking
 set local role service_role;
-select is(public.link_telegram('hash-b', 777), '00000000-0000-0000-0000-0000000b1001'::uuid, 'valid token links and returns user');
-select is(public.link_telegram('hash-b', 777), null, 'token is single-use');
+select is(public.link_telegram(repeat('b',64), 777), '00000000-0000-0000-0000-0000000b1001'::uuid, 'valid token links and returns user');
+select is(public.link_telegram(repeat('b',64), 777), null, 'token is single-use');
 reset role;
 select is((select telegram_chat_id from public.profiles where id = '00000000-0000-0000-0000-0000000b1001'), 777::bigint, 'chat id stored');
 
 insert into public.telegram_link_tokens (token_hash, user_id, expires_at)
-  values ('hash-old', '00000000-0000-0000-0000-0000000b1002', now() - interval '1 minute'),
-         ('hash-u2', '00000000-0000-0000-0000-0000000b1002', now() + interval '5 minutes');
+  values (repeat('c',64), '00000000-0000-0000-0000-0000000b1002', now() - interval '1 minute'),
+         (repeat('d',64), '00000000-0000-0000-0000-0000000b1002', now() + interval '5 minutes');
 set local role service_role;
-select is(public.link_telegram('hash-old', 888), null, 'expired token is rejected');
-select is(public.link_telegram('hash-u2', 777), '00000000-0000-0000-0000-0000000b1002'::uuid, 'same chat for another user links');
+select is(public.link_telegram(repeat('c',64), 888), null, 'expired token is rejected');
+select is(public.link_telegram(repeat('d',64), 777), '00000000-0000-0000-0000-0000000b1002'::uuid, 'same chat for another user links');
 reset role;
 select is((select telegram_chat_id from public.profiles where id = '00000000-0000-0000-0000-0000000b1001'), null, 'chat id removed from the first user');
 
@@ -62,8 +65,22 @@ reset role;
 select is((select telegram_chat_id from public.profiles where id = '00000000-0000-0000-0000-0000000b1002'), null, 'unlink clears own chat id');
 
 set local role anon;
-select throws_ok($$ select public.create_telegram_link_token('x') $$, '42501', null, 'anon cannot create tokens');
+select throws_ok($$ select public.create_telegram_link_token(repeat('e',64)) $$, '42501', null, 'anon cannot create tokens');
+select throws_ok($$ select public.unlink_telegram() $$, '42501', null, 'anon cannot unlink');
+select throws_ok($$ select public.link_telegram(repeat('b',64), 1) $$, '42501', null, 'anon cannot link');
+select throws_ok($$ select public.bot_save_match('00000000-0000-0000-0000-0000000b1001', 'eb000000-0000-0000-0000-000000000001', 'applied', 'a0') $$, '42501', null, 'anon cannot bot_save_match');
 reset role;
+
+-- one chat, one account at the schema level
+select throws_ok($$ update public.profiles set telegram_chat_id = 999 where id in ('00000000-0000-0000-0000-0000000b1001', '00000000-0000-0000-0000-0000000b1002') $$, '23505', null, 'two profiles cannot share a chat id');
+
+-- claims are restored after bot_save_match
+select set_config('request.jwt.claims', 'orig-claims', true);
+select set_config('request.jwt.claim.sub', 'orig-sub', true);
+delete from public.applications where user_id = '00000000-0000-0000-0000-0000000b1001';
+select public.bot_save_match('00000000-0000-0000-0000-0000000b1001', 'eb000000-0000-0000-0000-000000000001', 'applied', 'a0');
+select is(current_setting('request.jwt.claims', true), 'orig-claims', 'claims restored');
+select is(current_setting('request.jwt.claim.sub', true), 'orig-sub', 'legacy sub restored');
 
 select * from finish();
 rollback;
