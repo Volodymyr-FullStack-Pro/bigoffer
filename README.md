@@ -35,6 +35,8 @@ pnpm --filter @jp/jobs run-once --force                 # run every query now
 pnpm --filter @jp/jobs run-once --force --source=olx    # only one source
 ```
 
+Company ATS boards (Greenhouse, Lever, Ashby, Workable) and Telegram channels are polled from the `source_boards` table (seeded, plus boards discovered from links in collected jobs; a board is disabled after 3 failed runs in a row). `pnpm --filter @jp/jobs run-once --discover` runs board discovery on demand.
+
 ### AI enrichment (optional)
 
 Put a free Google AI Studio key into `apps/jobs/.env` as `GEMINI_API_KEY_PUBLIC` (job postings only — the free tier
