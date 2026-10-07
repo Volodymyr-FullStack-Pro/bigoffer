@@ -42,6 +42,100 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"companies": {
+                  Row: {
+                    "created_at": string,"id": string,"logo_url": string | null,"name": string,"normalized_name": string,"website": string | null
+                  }
+                  Insert: {
+                    "created_at"?: string,"id"?: string,"logo_url"?: string | null,"name": string,"normalized_name": string,"website"?: string | null
+                  }
+                  Update: {
+                    "created_at"?: string,"id"?: string,"logo_url"?: string | null,"name"?: string,"normalized_name"?: string,"website"?: string | null
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"job_matches": {
+                  Row: {
+                    "breakdown": NonNullable<Json>,"created_at": string,"explanation": Json | null,"id": string,"job_id": string,"score": number,"search_profile_id": string | null,"state": string,"updated_at": string,"user_id": string
+                  }
+                  Insert: {
+                    "breakdown"?: NonNullable<Json>,"created_at"?: string,"explanation"?: Json | null,"id"?: string,"job_id": string,"score": number,"search_profile_id"?: string | null,"state"?: string,"updated_at"?: string,"user_id": string
+                  }
+                  Update: {
+                    "breakdown"?: NonNullable<Json>,"created_at"?: string,"explanation"?: Json | null,"id"?: string,"job_id"?: string,"score"?: number,"search_profile_id"?: string | null,"state"?: string,"updated_at"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "job_matches_job_id_fkey"
+      columns: ["job_id"]
+isOneToOne: false
+      referencedRelation: "jobs"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "job_matches_search_profile_id_fkey"
+      columns: ["search_profile_id"]
+isOneToOne: false
+      referencedRelation: "search_profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "job_matches_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"job_postings": {
+                  Row: {
+                    "external_id": string,"id": string,"job_id": string,"seen_at": string,"source_id": string,"url": string
+                  }
+                  Insert: {
+                    "external_id": string,"id"?: string,"job_id": string,"seen_at"?: string,"source_id": string,"url": string
+                  }
+                  Update: {
+                    "external_id"?: string,"id"?: string,"job_id"?: string,"seen_at"?: string,"source_id"?: string,"url"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "job_postings_job_id_fkey"
+      columns: ["job_id"]
+isOneToOne: false
+      referencedRelation: "jobs"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "job_postings_source_id_fkey"
+      columns: ["source_id"]
+isOneToOne: false
+      referencedRelation: "sources"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"jobs": {
+                  Row: {
+                    "company_id": string,"description_text": string,"enrich_error": string | null,"enriched_at": string | null,"fingerprint": string,"first_seen_at": string,"id": string,"lang": string | null,"last_seen_at": string,"location": string | null,"posted_at": string | null,"remote_type": string,"role_id": string | null,"salary_max_usd": number | null,"salary_min_usd": number | null,"salary_raw": string | null,"seniority": string | null,"skills": (string)[],"status": string,"summary": Json | null,"tags": (string)[],"title": string,"title_normalized": string | null
+                  }
+                  Insert: {
+                    "company_id": string,"description_text"?: string,"enrich_error"?: string | null,"enriched_at"?: string | null,"fingerprint": string,"first_seen_at"?: string,"id"?: string,"lang"?: string | null,"last_seen_at"?: string,"location"?: string | null,"posted_at"?: string | null,"remote_type"?: string,"role_id"?: string | null,"salary_max_usd"?: number | null,"salary_min_usd"?: number | null,"salary_raw"?: string | null,"seniority"?: string | null,"skills"?: (string)[],"status"?: string,"summary"?: Json | null,"tags"?: (string)[],"title": string,"title_normalized"?: string | null
+                  }
+                  Update: {
+                    "company_id"?: string,"description_text"?: string,"enrich_error"?: string | null,"enriched_at"?: string | null,"fingerprint"?: string,"first_seen_at"?: string,"id"?: string,"lang"?: string | null,"last_seen_at"?: string,"location"?: string | null,"posted_at"?: string | null,"remote_type"?: string,"role_id"?: string | null,"salary_max_usd"?: number | null,"salary_min_usd"?: number | null,"salary_raw"?: string | null,"seniority"?: string | null,"skills"?: (string)[],"status"?: string,"summary"?: Json | null,"tags"?: (string)[],"title"?: string,"title_normalized"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "jobs_company_id_fkey"
+      columns: ["company_id"]
+isOneToOne: false
+      referencedRelation: "companies"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "jobs_role_id_fkey"
+      columns: ["role_id"]
+isOneToOne: false
+      referencedRelation: "roles"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"labels": {
                   Row: {
                     "color": string,"id": string,"key": string | null,"name": string | null,"user_id": string
@@ -87,6 +181,75 @@ isOneToOne: false
                   Relationships: [
                     
                   ]
+                },"search_profile_queries": {
+                  Row: {
+                    "search_profile_id": string,"search_query_id": string
+                  }
+                  Insert: {
+                    "search_profile_id": string,"search_query_id": string
+                  }
+                  Update: {
+                    "search_profile_id"?: string,"search_query_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "search_profile_queries_search_profile_id_fkey"
+      columns: ["search_profile_id"]
+isOneToOne: false
+      referencedRelation: "search_profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "search_profile_queries_search_query_id_fkey"
+      columns: ["search_query_id"]
+isOneToOne: false
+      referencedRelation: "search_queries"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"search_profiles": {
+                  Row: {
+                    "created_at": string,"exclude_keywords": (string)[],"id": string,"is_active": boolean,"keywords": (string)[],"locations": (string)[],"name": string,"remote_type": string,"role_id": string | null,"salary_min_usd": number | null,"seniority": (string)[],"skills": (string)[],"updated_at": string,"user_id": string
+                  }
+                  Insert: {
+                    "created_at"?: string,"exclude_keywords"?: (string)[],"id"?: string,"is_active"?: boolean,"keywords"?: (string)[],"locations"?: (string)[],"name": string,"remote_type"?: string,"role_id"?: string | null,"salary_min_usd"?: number | null,"seniority"?: (string)[],"skills"?: (string)[],"updated_at"?: string,"user_id": string
+                  }
+                  Update: {
+                    "created_at"?: string,"exclude_keywords"?: (string)[],"id"?: string,"is_active"?: boolean,"keywords"?: (string)[],"locations"?: (string)[],"name"?: string,"remote_type"?: string,"role_id"?: string | null,"salary_min_usd"?: number | null,"seniority"?: (string)[],"skills"?: (string)[],"updated_at"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "search_profiles_role_id_fkey"
+      columns: ["role_id"]
+isOneToOne: false
+      referencedRelation: "roles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "search_profiles_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"search_queries": {
+                  Row: {
+                    "id": string,"last_run_at": string | null,"next_run_at": string,"params": NonNullable<Json>,"query_key": string,"source_id": string
+                  }
+                  Insert: {
+                    "id"?: string,"last_run_at"?: string | null,"next_run_at"?: string,"params"?: NonNullable<Json>,"query_key": string,"source_id": string
+                  }
+                  Update: {
+                    "id"?: string,"last_run_at"?: string | null,"next_run_at"?: string,"params"?: NonNullable<Json>,"query_key"?: string,"source_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "search_queries_source_id_fkey"
+      columns: ["source_id"]
+isOneToOne: false
+      referencedRelation: "sources"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"skills": {
                   Row: {
                     "aliases": (string)[],"id": string,"name": NonNullable<Json>,"slug": string
@@ -100,15 +263,40 @@ isOneToOne: false
                   Relationships: [
                     
                   ]
-                },"sources": {
+                },"source_runs": {
                   Row: {
-                    "enabled": boolean,"id": string,"kind": string,"min_interval_minutes": number,"name": string,"paused_until": string | null
+                    "error": string | null,"finished_at": string | null,"found": number,"id": string,"inserted": number,"query_id": string | null,"source_id": string,"started_at": string,"status": string
                   }
                   Insert: {
-                    "enabled"?: boolean,"id": string,"kind": string,"min_interval_minutes"?: number,"name": string,"paused_until"?: string | null
+                    "error"?: string | null,"finished_at"?: string | null,"found"?: number,"id"?: string,"inserted"?: number,"query_id"?: string | null,"source_id": string,"started_at"?: string,"status"?: string
                   }
                   Update: {
-                    "enabled"?: boolean,"id"?: string,"kind"?: string,"min_interval_minutes"?: number,"name"?: string,"paused_until"?: string | null
+                    "error"?: string | null,"finished_at"?: string | null,"found"?: number,"id"?: string,"inserted"?: number,"query_id"?: string | null,"source_id"?: string,"started_at"?: string,"status"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "source_runs_query_id_fkey"
+      columns: ["query_id"]
+isOneToOne: false
+      referencedRelation: "search_queries"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "source_runs_source_id_fkey"
+      columns: ["source_id"]
+isOneToOne: false
+      referencedRelation: "sources"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"sources": {
+                  Row: {
+                    "consecutive_empty_runs": number,"enabled": boolean,"id": string,"kind": string,"min_interval_minutes": number,"name": string,"paused_until": string | null
+                  }
+                  Insert: {
+                    "consecutive_empty_runs"?: number,"enabled"?: boolean,"id": string,"kind": string,"min_interval_minutes"?: number,"name": string,"paused_until"?: string | null
+                  }
+                  Update: {
+                    "consecutive_empty_runs"?: number,"enabled"?: boolean,"id"?: string,"kind"?: string,"min_interval_minutes"?: number,"name"?: string,"paused_until"?: string | null
                   }
                   Relationships: [
                     
@@ -119,7 +307,15 @@ isOneToOne: false
             [_ in never]: never
           }
           Functions: {
-            [_ in never]: never
+            "find_similar_job":
+{ Args: { "p_company_id": string,"p_title": string }; Returns: string
+                           },
+"text_array_max_len":
+{ Args: { "arr": (string)[] }; Returns: number
+                           },
+"upsert_job_matches":
+{ Args: { "rows": Json }; Returns: undefined
+                           }
           }
           Enums: {
             [_ in never]: never

@@ -1,8 +1,12 @@
 {
-  "app": { "name": "BigOffer", "tagline": "Fresh jobs. Fast applications. Zero chaos." },
+  "app": {
+    "name": "BigOffer",
+    "tagline": "Fresh jobs. Fast applications. Zero chaos."
+  },
   "nav": {
     "today": "Today",
     "board": "Board",
+    "search": "Search",
     "analytics": "Analytics",
     "prep": "Prep",
     "profile": "Profile",
@@ -20,17 +24,46 @@
     "or": "or",
     "google": "Continue with Google"
   },
-  "theme": { "light": "Light theme", "dark": "Dark theme", "system": "System theme" },
-  "locale": { "label": "Language" },
+  "theme": {
+    "light": "Light theme",
+    "dark": "Dark theme",
+    "system": "System theme"
+  },
+  "locale": {
+    "label": "Language"
+  },
   "pages": {
-    "today": { "title": "Today" },
-    "board": { "title": "Application board" },
-    "analytics": { "title": "Analytics" },
-    "prep": { "title": "Interview prep" }
+    "today": {
+      "title": "Today"
+    },
+    "board": {
+      "title": "Application board"
+    },
+    "analytics": {
+      "title": "Analytics"
+    },
+    "prep": {
+      "title": "Interview prep"
+    }
+  },
+  "today": {
+    "title": "Today",
+    "subtitle": "{count, plural, one {# matching job from the last 3 days} other {# matching jobs from the last 3 days}}",
+    "empty": "No matches yet. Set up what you're looking for — the first jobs arrive within an hour.",
+    "setup": "Set up job search",
+    "hide": "Hide",
+    "open": "Open on {source}",
+    "match": "match",
+    "remote_remote": "Remote",
+    "remote_hybrid": "Hybrid",
+    "remote_office": "Office",
+    "remote_unknown": "Format not specified",
+    "salary": "${min, number}–{max, number}/mo",
+    "salaryFrom": "from ${min, number}/mo",
+    "salaryTo": "up to ${max, number}/mo"
   },
   "comingSoon": {
     "badge": "Soon",
-    "today": "Every morning, fresh jobs matched to your profile will show up here.",
     "board": "A drag-and-drop kanban board of your applications will live here.",
     "analytics": "Your application funnel, rejection reasons and what to improve will live here.",
     "prep": "Top questions for your role, flashcards and live coding will live here."
@@ -50,5 +83,37 @@
     "saved": "Saved",
     "invalid": "Check these fields: {fields}",
     "error": "Couldn't save. Please try again."
+  },
+  "search": {
+    "title": "Job search settings",
+    "intro": "Tell us what you are looking for — we'll collect matching jobs from DOU, Djinni, robota.ua, remote boards and more every hour.",
+    "name": "Profile name",
+    "keywords": "Role keywords",
+    "keywordsHint": "Comma-separated, up to 5; the first 3 are used for searching. Example: full stack, react developer",
+    "skills": "Your skills",
+    "skillsHint": "Comma-separated. Used for scoring. Example: React, Node.js, PostgreSQL",
+    "exclude": "Exclude jobs mentioning",
+    "excludeHint": "Comma-separated stop words. Example: 1C, gambling",
+    "seniority": "Seniority",
+    "remoteType": "Work format",
+    "remote_any": "Any",
+    "remote_remote": "Remote only",
+    "remote_hybrid": "Hybrid",
+    "remote_office": "Office",
+    "locations": "Cities (for office/hybrid)",
+    "salaryMin": "Minimum salary, USD / month",
+    "active": "Active",
+    "save": "Save",
+    "saved": "Saved — fresh jobs will appear on Today within an hour",
+    "invalid": "Check these fields: {fields}",
+    "error": "Couldn't save. Please try again.",
+    "delete": "Delete",
+    "add": "Add another search profile",
+    "newProfile": "New search",
+    "level_intern": "Intern",
+    "level_junior": "Junior",
+    "level_middle": "Middle",
+    "level_senior": "Senior",
+    "level_lead": "Lead"
   }
 }
