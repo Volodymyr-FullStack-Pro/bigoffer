@@ -18,7 +18,7 @@ function revalidate() {
 }
 
 function slug(question: string): string {
-  const base = question.toLowerCase().normalize('NFKD').replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '').slice(0, 32);
+  const base = question.toLowerCase().normalize('NFKD').replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '').slice(0, 31);
   return `${base || 'q'}_${crypto.randomUUID().slice(0, 8)}`;
 }
 
@@ -31,6 +31,7 @@ export async function saveBankAnswer(input: { key: string | null; question: stri
   const answer = parsed.data.answer.trim().slice(0, 2000);
   if (!question) return { ok: false };
   const key = parsed.data.key ?? slug(question);
+  if (!KEY.test(key)) return { ok: false };
   const supabase = await createClient();
   const { data: existing } = await supabase.from('answer_bank').select('answer').eq('key', key).maybeSingle();
   const merged = { ...((existing?.answer ?? {}) as Record<string, string>), [locale]: answer };
