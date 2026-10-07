@@ -9,6 +9,8 @@ export default defineConfig({
   project: process.env.TRIGGER_PROJECT_REF ?? 'proj_set_TRIGGER_PROJECT_REF',
   dirs: ['./src/trigger'],
   maxDuration: 300,
+  // Cheapest preset for everything; browser sources override to small-2x per run (schedule-queries.ts).
+  machine: 'micro',
   build: { extensions: [playwright({ browsers: ['chromium'], version: '1.63.0' })] },
   retries: {
     enabledInDev: false,

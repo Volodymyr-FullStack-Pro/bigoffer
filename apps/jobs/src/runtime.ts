@@ -8,11 +8,16 @@ import type { RunQueryDeps } from './pipeline/run-query';
 
 export function pipelineDeps(): RunQueryDeps {
   const env = jobsEnv();
-  const adapterEnv = { JOOBLE_API_KEY: env.JOOBLE_API_KEY };
+  const adapterEnv = {
+    JOOBLE_API_KEY: env.JOOBLE_API_KEY,
+    ADZUNA_APP_ID: env.ADZUNA_APP_ID,
+    ADZUNA_APP_KEY: env.ADZUNA_APP_KEY,
+  };
   return {
     db: getDb(),
     adapters: ADAPTERS,
     env: adapterEnv,
+    intervalMultiplier: env.SCRAPE_INTERVAL_MULTIPLIER,
     createContext: (sourceId) =>
       createHttpContext(
         { userAgent: env.SCRAPER_USER_AGENT },
