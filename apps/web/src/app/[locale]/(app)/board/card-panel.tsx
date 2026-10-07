@@ -1,13 +1,16 @@
 'use client';
 
-import { useFormatter, useNow, useTranslations } from 'next-intl';
+import { isLocale, type Locale } from '@jp/core';
+import { useFormatter, useLocale, useNow, useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
+import { ApplyKitPanel } from '@/components/apply-kit/apply-kit-panel';
+import { RecruiterMessage } from './recruiter-message';
 import { useModalDialog } from './use-modal-dialog';
 import { fromZonedInput, toZonedInput } from './zoned-input';
 import { createLabel, getApplicationEvents, markPinged, markResponse, setApplicationLabel, updateApplication } from './actions';
 import type { BoardCardView, BoardColumn, BoardLabel } from './board-types';
 
-export function CardPanel({ card, timeZone, columns, labels, labelName, onClose, onMove, onDelete, onChanged, onLabelCreated }: {
+export function CardPanel({ card, timeZone, columns, labels, labelName, onClose, onMove, onDelete, onChanged, onLabelCreated, onApplied }: {
   card: BoardCardView;
   timeZone: string;
   columns: BoardColumn[];
@@ -18,8 +21,13 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, onClose,
   onDelete: () => void;
   onChanged: (patch: Partial<BoardCardView>) => void;
   onLabelCreated: (l: BoardLabel) => void;
+  onApplied: (r: { columnId: string; rank: string }) => void;
 }) {
   const t = useTranslations('board');
+  const tk = useTranslations('kit');
+  const rawLocale = useLocale();
+  const locale: Locale = isLocale(rawLocale) ? rawLocale : 'en';
+  const [kitOpen, setKitOpen] = useState(false);
   const [dialogRef, onDialogCancel] = useModalDialog(onClose);
   const format = useFormatter();
   const now = useNow();
@@ -35,7 +43,7 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, onClose,
 
   useEffect(() => {
     getApplicationEvents(card.id).then(setEvents).catch(() => setEvents([]));
-  }, [card.id, card.columnId, card.labelIds.length, card.followUpCount]);
+  }, [card.id, card.columnId, card.labelIds.length, card.followUpCount, card.lastActivityAt]);
 
   const attempt = async (fn: () => Promise<boolean>): Promise<boolean> => {
     let ok = false;
@@ -72,6 +80,15 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, onClose,
         <button type="button" onClick={onClose} aria-label={t('close')} className="font-mono text-lg">✕</button>
       </div>
       {card.url && <a href={card.url} target="_blank" rel="noopener" className="font-mono text-sm underline">{t('openOriginal')} ↗</a>}
+      {card.jobId && (
+        <div className="flex flex-col gap-3">
+          <button type="button" data-testid="apply-kit-open" aria-expanded={kitOpen} onClick={() => setKitOpen((v) => !v)} className="brutal brutal-press self-start px-4 py-2 font-semibold">
+            {tk('open')}
+          </button>
+          {kitOpen && <ApplyKitPanel jobId={card.jobId} locale={locale} onApplied={onApplied} />}
+        </div>
+      )}
+      <RecruiterMessage applicationId={card.id} defaultLang={locale} onSent={() => onChanged({ lastActivityAt: new Date().toISOString() })} />
       <label className="flex flex-col gap-1 font-mono text-xs uppercase">
         {t('moveTo')}
         <select data-testid="panel-move" value={card.columnId} onChange={(e) => onMove(e.target.value)} className={field}>

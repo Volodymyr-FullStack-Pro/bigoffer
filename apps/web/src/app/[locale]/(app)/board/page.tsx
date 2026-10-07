@@ -16,7 +16,7 @@ export default async function BoardPage() {
     supabase
       .from('applications')
       .select(
-        'id, column_id, rank, title, company, url, source_id, salary, notes, contact, applied_at, next_action_at, first_response_at, last_activity_at, follow_up_count, outcome, application_labels(label_id)',
+        'id, job_id, column_id, rank, title, company, url, source_id, salary, notes, contact, applied_at, next_action_at, first_response_at, last_activity_at, follow_up_count, outcome, application_labels(label_id)',
       )
       .order('rank'),
     supabase.from('labels').select('id, key, name, color').order('key', { nullsFirst: false }),
@@ -33,6 +33,7 @@ export default async function BoardPage() {
     const contact = (a.contact ?? {}) as { name?: unknown; url?: unknown };
     return {
       id: a.id,
+      jobId: a.job_id,
       columnId: a.column_id,
       rank: a.rank,
       title: a.title,

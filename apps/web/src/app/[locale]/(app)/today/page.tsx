@@ -1,5 +1,6 @@
 import { isLocale, type LocalizedText, localized, SENIORITIES, type Seniority, sourceInfo } from '@jp/core';
 import { getLocale, getTranslations } from 'next-intl/server';
+import { Link } from '@/i18n/navigation';
 import { requireUserId } from '@/lib/auth';
 import { createClient } from '@/lib/supabase/server';
 import { cardSkills, matchedSkillsOf } from './card-skills';
@@ -13,17 +14,17 @@ function windowStart(): string {
 }
 
 export default async function TodayPage() {
-  await requireUserId();
+  const userId = await requireUserId();
   const t = await getTranslations('today');
   const rawLocale = await getLocale();
   const locale = isLocale(rawLocale) ? rawLocale : 'en';
   const supabase = await createClient();
   const since = windowStart();
-  const [{ data }, { data: profiles }] = await Promise.all([
+  const [{ data }, { data: profiles }, { data: me }] = await Promise.all([
     supabase
       .from('job_matches')
       .select(
-        'id, score, created_at, breakdown, explanation, search_profile_id, jobs!inner(title, location, remote_type, seniority, salary_min_usd, salary_max_usd, summary, skills, description_text, is_job, companies(name), job_postings(source_id, url))',
+        'id, job_id, score, created_at, breakdown, explanation, search_profile_id, jobs!inner(title, location, remote_type, seniority, salary_min_usd, salary_max_usd, summary, skills, description_text, is_job, companies(name), job_postings(source_id, url))',
       )
       .in('state', ['new', 'seen'])
       .eq('jobs.status', 'active')
@@ -33,6 +34,7 @@ export default async function TodayPage() {
       .order('created_at', { ascending: false })
       .limit(200),
     supabase.from('search_profiles').select('id, name, skills').order('created_at'),
+    supabase.from('profiles').select('onboarded_at').eq('id', userId).maybeSingle(),
   ]);
 
   const profileSkills = new Map((profiles ?? []).map((p) => [p.id, p.skills]));
@@ -43,6 +45,7 @@ export default async function TodayPage() {
     const num = (v: unknown) => (typeof v === 'number' ? v : 0);
     return {
       id: m.id,
+      jobId: m.job_id,
       score: m.score,
       title: m.jobs.title,
       company: m.jobs.companies?.name ?? '',
@@ -67,6 +70,11 @@ export default async function TodayPage() {
   return (
     <section className="flex flex-col gap-6">
       <h1 className="text-3xl font-black md:text-4xl">{t('title')}</h1>
+      {me && !me.onboarded_at && (
+        <Link href="/onboarding" data-testid="onboarding-banner" className="brutal brutal-press flex items-center justify-between gap-3 bg-ai p-4 font-semibold text-white">
+          {t('onboardingBanner')} →
+        </Link>
+      )}
       <Feed
         matches={matches}
         profiles={(profiles ?? []).map((p) => ({ id: p.id, name: p.name }))}

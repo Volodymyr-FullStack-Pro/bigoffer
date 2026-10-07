@@ -1,3 +1,7 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { normalizeCv } from '@jp/ai';
+import { fakeResponder } from '@jp/ai/testing';
 import { rankAtEnd } from '@jp/core';
 import { createClient } from '@supabase/supabase-js';
 
@@ -57,7 +61,7 @@ export async function seedMatch(
     .select('id')
     .single();
   if (mErr) throw mErr;
-  return { matchId: match.id, title };
+  return { matchId: match.id, jobId: job.id, title };
 }
 
 export async function seedProfileWithNullSources(email: string, remoteType: 'hybrid' | 'office') {
@@ -120,4 +124,39 @@ export async function matchState(matchId: string): Promise<string | null> {
   const { data, error } = await admin().from('job_matches').select('state').eq('id', matchId).maybeSingle();
   if (error) throw error;
   return data?.state ?? null;
+}
+
+export async function seedCv(email: string) {
+  const db = admin();
+  const userId = await userIdByEmail(email);
+  const path = `${userId}/${crypto.randomUUID()}.pdf`;
+  const { error: uErr } = await db.storage.from('resumes').upload(path, readFileSync(join(__dirname, '..', 'fixtures', 'cv.pdf')), { contentType: 'application/pdf' });
+  if (uErr) throw uErr;
+  const parsed = normalizeCv(fakeResponder({ task: 'parse_cv' } as never) as never);
+  const { error } = await db.from('resumes').insert({ user_id: userId, storage_path: path, file_name: 'cv.pdf', parsed, is_primary: true });
+  if (error) throw error;
+}
+
+export async function seedBankAnswer(email: string, key: string, answerEn: string) {
+  const db = admin();
+  const userId = await userIdByEmail(email);
+  const { error } = await db.from('answer_bank').upsert({ user_id: userId, key, question: key, answer: { en: answerEn } }, { onConflict: 'user_id,key' });
+  if (error) throw error;
+}
+
+export async function seedCardFromJob(email: string, jobId: string, title: string, column = 'saved') {
+  const db = admin();
+  const userId = await userIdByEmail(email);
+  const { data: col, error: cErr } = await db.from('board_columns').select('id').eq('user_id', userId).eq('key', column).single();
+  if (cErr) throw cErr;
+  const { error } = await db.from('applications').insert({ user_id: userId, job_id: jobId, column_id: col.id, rank: rankAtEnd(null), title, company: 'Acme' });
+  if (error) throw error;
+}
+
+export async function applicationLetter(email: string, jobId: string) {
+  const db = admin();
+  const userId = await userIdByEmail(email);
+  const { data, error } = await db.from('applications').select('letter_kind, letter_used, column_id').eq('user_id', userId).eq('job_id', jobId).maybeSingle();
+  if (error) throw error;
+  return data ? { kind: data.letter_kind, used: data.letter_used } : null;
 }

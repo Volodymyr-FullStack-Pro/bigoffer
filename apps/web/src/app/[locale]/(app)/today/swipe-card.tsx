@@ -10,7 +10,7 @@ import { MatchActions, MatchDetail, type MatchAction } from './match-detail';
 const THRESHOLD = 120;
 
 /** Top card of the mobile deck: drag right → save, left → hide. Every swipe has a button twin. */
-export function SwipeCard({ match, onAction }: { match: FeedMatch; onAction: (a: MatchAction) => void }) {
+export function SwipeCard({ match, onAction, onApplied }: { match: FeedMatch; onAction: (a: MatchAction) => void; onApplied?: () => void }) {
   const t = useTranslations('today');
   const tf = useTranslations('feed');
   const reduce = useReducedMotion();
@@ -49,7 +49,7 @@ export function SwipeCard({ match, onAction }: { match: FeedMatch; onAction: (a:
           {open ? tf('lessDetails') : tf('moreDetails')}
         </button>
       </motion.article>
-      {open && <MatchDetail match={match} />}
+      {open && <MatchDetail match={match} onApplied={onApplied} />}
       <MatchActions onAction={onAction} compact />
     </div>
   );

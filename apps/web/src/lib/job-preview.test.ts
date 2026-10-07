@@ -34,29 +34,53 @@ describe('parseJobPreview', () => {
   });
 });
 
-describe('parseJobPreview is linear on adversarial input', () => {
-  const MB = 1_500_000;
-  const cases: Record<string, string> = {
-    meta: '<meta '.repeat(MB / 6),
-    'title tags': '<title>'.repeat(MB / 7),
-    'title tags closed': `${'<title>'.repeat(MB / 7)}</title>`,
-    'long meta tags': `<meta ${'a'.repeat(4000)}>`.repeat(MB / 4007),
-    'long script tags': `<script ${'a'.repeat(4000)}>`.repeat(MB / 4009),
-    'long script tags closed': `<script ${'a'.repeat(4000)}>x</script>`.repeat(MB / 4018),
-    'long attr names with equals': `<meta ${'a='.repeat(2000)}>`.repeat(MB / 4007),
-    script: '<script '.repeat(MB / 8),
-    title: '<title '.repeat(MB / 7),
-    'script no close': `<script type="application/ld+json">${'{'.repeat(MB)}`,
-    'many name attrs': `<meta ${'name="og:title" '.repeat(MB / 16)}content="x">`,
-    'unterminated meta': `<meta property="og:title" ${'a'.repeat(MB)}`,
+// Timing-based: run in isolation (PERF=1, a dedicated CI step), not alongside other packages' suites competing for CPU.
+describe.skipIf(!process.env.PERF)('parseJobPreview is linear on adversarial input', () => {
+  // parseJobPreview caps input at 512_000 chars, so stay below it: N and 4N are real sizes.
+  const N = 100_000;
+  const rep = (unit: string, size: number) => unit.repeat(Math.max(1, Math.floor(size / unit.length)));
+  const cases: Record<string, (size: number) => string> = {
+    meta: (n) => rep('<meta ', n),
+    'title tags': (n) => rep('<title>', n),
+    'title tags closed': (n) => `${rep('<title>', n)}</title>`,
+    'long meta tags': (n) => rep(`<meta ${'a'.repeat(4000)}>`, n),
+    'long script tags': (n) => rep(`<script ${'a'.repeat(4000)}>`, n),
+    'long script tags closed': (n) => rep(`<script ${'a'.repeat(4000)}>x</script>`, n),
+    'long attr names with equals': (n) => rep(`<meta ${'a='.repeat(2000)}>`, n),
+    script: (n) => rep('<script ', n),
+    title: (n) => rep('<title ', n),
+    'script no close': (n) => `<script type="application/ld+json">${'{'.repeat(n)}`,
+    'many name attrs': (n) => `<meta ${rep('name="og:title" ', n)}content="x">`,
+    'unterminated meta': (n) => `<meta property="og:title" ${'a'.repeat(n)}`,
   };
-  for (const [name, html] of Object.entries(cases)) {
-    it(`handles ${name} in under 200 ms`, () => {
-      const start = performance.now();
+  // Per-iteration time from a loop of ≥ 50 ms (single parses take ~1 ms, too noisy to compare), median of 3,
+  // after a warm-up, so timer noise on a busy CI runner does not decide.
+  const once = (html: string): number => {
+    let iterations = 0;
+    const start = performance.now();
+    let elapsed = 0;
+    do {
       parseJobPreview(html);
-      const ms = performance.now() - start;
-      console.log(`redos ${name}: ${ms.toFixed(1)} ms`);
-      expect(ms).toBeLessThan(200);
+      iterations += 1;
+      elapsed = performance.now() - start;
+    } while (elapsed < 50);
+    return elapsed / iterations;
+  };
+  const time = (html: string): number => {
+    parseJobPreview(html);
+    return [once(html), once(html), once(html)].sort((x, y) => x - y)[1]!;
+  };
+  for (const [name, gen] of Object.entries(cases)) {
+    it(`scales linearly on ${name}`, () => {
+      const small = time(gen(N));
+      const large = time(gen(4 * N));
+      const ratio = large / Math.max(small, 0.05);
+      console.log(`redos ${name}: ${small.toFixed(1)} ms -> ${large.toFixed(1)} ms (x${ratio.toFixed(1)})`);
+      // linear ~4x, quadratic ~16x. Sub-5 ms timings are dominated by timer/GC noise and cannot hide a quadratic
+      // path (which takes hundreds of ms at 400 KB), so only meaningful durations are compared.
+      if (large >= 5) expect(ratio).toBeLessThan(8);
+      // generous backstop for catastrophic regressions
+      expect(large).toBeLessThan(1500);
     });
   }
   it('caps returned strings', () => {

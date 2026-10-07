@@ -4,6 +4,7 @@ import type { FeedMatch } from './feed-types';
 
 const m = (id: string, over: Partial<FeedMatch> = {}): FeedMatch => ({
   id,
+  jobId: `j-${id}`,
   score: 80,
   title: id,
   company: 'Acme',

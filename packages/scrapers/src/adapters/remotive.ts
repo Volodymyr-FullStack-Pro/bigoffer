@@ -1,4 +1,4 @@
-import type { RawJob } from '@jp/core';
+import { type RawJob, regionsFromLocation } from '@jp/core';
 import type { SourceAdapter } from '../types';
 
 type RemotiveResponse = {
@@ -32,6 +32,7 @@ export const remotiveAdapter: SourceAdapter = {
         salaryRaw: j.salary || null,
         postedAt: j.publication_date ?? null,
         remoteHint: 'remote',
+        remoteRegions: regionsFromLocation(j.candidate_required_location ?? ''),
         tags: [...(j.tags ?? []), ...(j.job_type ? [j.job_type] : [])],
       }),
     );

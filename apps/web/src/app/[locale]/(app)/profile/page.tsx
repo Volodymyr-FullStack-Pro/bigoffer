@@ -1,7 +1,12 @@
-import { COUNTRY_CODES, contactsSchema } from '@jp/core';
+import { COUNTRY_CODES, contactsSchema, isLocale } from '@jp/core';
 import { getLocale, getTranslations } from 'next-intl/server';
+import { privateAiAvailable } from '@/lib/ai';
 import { requireUserId } from '@/lib/auth';
 import { createClient } from '@/lib/supabase/server';
+import { AnswerBank } from './answer-bank';
+import { CvSection } from './cv-section';
+import { loadProfileExtras } from './extras-data';
+import { LetterTemplate } from './letter-template';
 import { ProfileForm } from './profile-form';
 
 export default async function ProfilePage() {
@@ -25,7 +30,9 @@ export default async function ProfilePage() {
 
   const contacts = contactsSchema.safeParse(profile.contacts ?? {});
 
-  const locale = await getLocale();
+  const rawLocale = await getLocale();
+  const locale = isLocale(rawLocale) ? rawLocale : 'en';
+  const { cv, cvLink, answers, template } = await loadProfileExtras(supabase, userId, locale);
   const regionNames = new Intl.DisplayNames([locale], { type: 'region' });
   const countries = COUNTRY_CODES.map((code) => ({ code, name: regionNames.of(code) ?? code })).sort((a, b) =>
     a.name.localeCompare(b.name, locale),
@@ -42,6 +49,9 @@ export default async function ProfilePage() {
         contacts={contacts.success ? contacts.data : {}}
         timeZones={Intl.supportedValuesOf('timeZone')}
       />
+      <CvSection cv={cv ? { fileName: cv.fileName, parsed: cv.parsed, parseError: cv.parseError } : null} aiAvailable={privateAiAvailable()} cvLink={cvLink} />
+      <LetterTemplate body={template} locale={locale} />
+      <AnswerBank answers={answers} locale={locale} />
     </section>
   );
 }

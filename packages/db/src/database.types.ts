@@ -36,6 +36,25 @@ export type Database = {
                   Relationships: [
                     
                   ]
+                },"answer_bank": {
+                  Row: {
+                    "answer": NonNullable<Json>,"id": string,"key": string,"question": string,"updated_at": string,"user_id": string
+                  }
+                  Insert: {
+                    "answer"?: NonNullable<Json>,"id"?: string,"key": string,"question": string,"updated_at"?: string,"user_id": string
+                  }
+                  Update: {
+                    "answer"?: NonNullable<Json>,"id"?: string,"key"?: string,"question"?: string,"updated_at"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "answer_bank_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"application_events": {
                   Row: {
                     "application_id": string,"created_at": string,"id": string,"payload": NonNullable<Json>,"type": string,"user_id": string
@@ -86,15 +105,40 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
-                },"applications": {
+                },"application_messages": {
                   Row: {
-                    "applied_at": string | null,"column_id": string,"company": string,"contact": NonNullable<Json>,"created_at": string,"first_response_at": string | null,"follow_up_count": number,"id": string,"job_id": string | null,"last_activity_at": string | null,"location": string | null,"next_action_at": string | null,"notes": string | null,"outcome": string,"rank": string,"rejection_by": string | null,"rejection_note": string | null,"rejection_reasons": (string)[],"rejection_stage": string | null,"salary": string | null,"source_id": string | null,"title": string,"updated_at": string,"url": string | null,"user_id": string
+                    "ai_classification": string | null,"ai_extracted": Json | null,"application_id": string,"author": string | null,"body": string,"channel": string,"direction": string,"id": string,"sent_at": string,"user_id": string
                   }
                   Insert: {
-                    "applied_at"?: string | null,"column_id": string,"company"?: string,"contact"?: NonNullable<Json>,"created_at"?: string,"first_response_at"?: string | null,"follow_up_count"?: number,"id"?: string,"job_id"?: string | null,"last_activity_at"?: string | null,"location"?: string | null,"next_action_at"?: string | null,"notes"?: string | null,"outcome"?: string,"rank": string,"rejection_by"?: string | null,"rejection_note"?: string | null,"rejection_reasons"?: (string)[],"rejection_stage"?: string | null,"salary"?: string | null,"source_id"?: string | null,"title": string,"updated_at"?: string,"url"?: string | null,"user_id": string
+                    "ai_classification"?: string | null,"ai_extracted"?: Json | null,"application_id": string,"author"?: string | null,"body": string,"channel": string,"direction": string,"id"?: string,"sent_at"?: string,"user_id": string
                   }
                   Update: {
-                    "applied_at"?: string | null,"column_id"?: string,"company"?: string,"contact"?: NonNullable<Json>,"created_at"?: string,"first_response_at"?: string | null,"follow_up_count"?: number,"id"?: string,"job_id"?: string | null,"last_activity_at"?: string | null,"location"?: string | null,"next_action_at"?: string | null,"notes"?: string | null,"outcome"?: string,"rank"?: string,"rejection_by"?: string | null,"rejection_note"?: string | null,"rejection_reasons"?: (string)[],"rejection_stage"?: string | null,"salary"?: string | null,"source_id"?: string | null,"title"?: string,"updated_at"?: string,"url"?: string | null,"user_id"?: string
+                    "ai_classification"?: string | null,"ai_extracted"?: Json | null,"application_id"?: string,"author"?: string | null,"body"?: string,"channel"?: string,"direction"?: string,"id"?: string,"sent_at"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "application_messages_application_id_fkey"
+      columns: ["application_id"]
+isOneToOne: false
+      referencedRelation: "applications"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "application_messages_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"applications": {
+                  Row: {
+                    "applied_at": string | null,"column_id": string,"company": string,"contact": NonNullable<Json>,"created_at": string,"first_response_at": string | null,"follow_up_count": number,"id": string,"job_id": string | null,"last_activity_at": string | null,"letter_kind": string | null,"letter_used": string | null,"location": string | null,"next_action_at": string | null,"notes": string | null,"outcome": string,"rank": string,"rejection_by": string | null,"rejection_note": string | null,"rejection_reasons": (string)[],"rejection_stage": string | null,"salary": string | null,"source_id": string | null,"title": string,"updated_at": string,"url": string | null,"user_id": string
+                  }
+                  Insert: {
+                    "applied_at"?: string | null,"column_id": string,"company"?: string,"contact"?: NonNullable<Json>,"created_at"?: string,"first_response_at"?: string | null,"follow_up_count"?: number,"id"?: string,"job_id"?: string | null,"last_activity_at"?: string | null,"letter_kind"?: string | null,"letter_used"?: string | null,"location"?: string | null,"next_action_at"?: string | null,"notes"?: string | null,"outcome"?: string,"rank": string,"rejection_by"?: string | null,"rejection_note"?: string | null,"rejection_reasons"?: (string)[],"rejection_stage"?: string | null,"salary"?: string | null,"source_id"?: string | null,"title": string,"updated_at"?: string,"url"?: string | null,"user_id": string
+                  }
+                  Update: {
+                    "applied_at"?: string | null,"column_id"?: string,"company"?: string,"contact"?: NonNullable<Json>,"created_at"?: string,"first_response_at"?: string | null,"follow_up_count"?: number,"id"?: string,"job_id"?: string | null,"last_activity_at"?: string | null,"letter_kind"?: string | null,"letter_used"?: string | null,"location"?: string | null,"next_action_at"?: string | null,"notes"?: string | null,"outcome"?: string,"rank"?: string,"rejection_by"?: string | null,"rejection_note"?: string | null,"rejection_reasons"?: (string)[],"rejection_stage"?: string | null,"salary"?: string | null,"source_id"?: string | null,"title"?: string,"updated_at"?: string,"url"?: string | null,"user_id"?: string
                   }
                   Relationships: [
                     {
@@ -117,6 +161,31 @@ isOneToOne: false
       referencedColumns: ["id"]
     },{
       foreignKeyName: "applications_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"apply_kits": {
+                  Row: {
+                    "cover_letter": string,"form_answers": NonNullable<Json>,"generated_at": string,"id": string,"job_id": string,"lang": string,"red_flags": (string)[],"requirements": NonNullable<Json>,"salary_hint": string | null,"short_message": string,"updated_at": string,"user_id": string
+                  }
+                  Insert: {
+                    "cover_letter": string,"form_answers"?: NonNullable<Json>,"generated_at"?: string,"id"?: string,"job_id": string,"lang": string,"red_flags"?: (string)[],"requirements"?: NonNullable<Json>,"salary_hint"?: string | null,"short_message": string,"updated_at"?: string,"user_id": string
+                  }
+                  Update: {
+                    "cover_letter"?: string,"form_answers"?: NonNullable<Json>,"generated_at"?: string,"id"?: string,"job_id"?: string,"lang"?: string,"red_flags"?: (string)[],"requirements"?: NonNullable<Json>,"salary_hint"?: string | null,"short_message"?: string,"updated_at"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "apply_kits_job_id_fkey"
+      columns: ["job_id"]
+isOneToOne: false
+      referencedRelation: "jobs"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "apply_kits_user_id_fkey"
       columns: ["user_id"]
 isOneToOne: false
       referencedRelation: "profiles"
@@ -255,6 +324,25 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"letter_templates": {
+                  Row: {
+                    "body": string,"id": string,"locale": string,"updated_at": string,"user_id": string
+                  }
+                  Insert: {
+                    "body": string,"id"?: string,"locale": string,"updated_at"?: string,"user_id": string
+                  }
+                  Update: {
+                    "body"?: string,"id"?: string,"locale"?: string,"updated_at"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "letter_templates_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"profiles": {
                   Row: {
                     "contacts": NonNullable<Json>,"country": string | null,"created_at": string,"digest_hour": number,"follow_up_days": (number)[],"full_name": string,"ghost_after_days": number,"id": string,"inbound_email_token": string,"locale": string,"onboarded_at": string | null,"plan": string,"telegram_chat_id": number | null,"timezone": string,"updated_at": string
@@ -267,6 +355,25 @@ isOneToOne: false
                   }
                   Relationships: [
                     
+                  ]
+                },"resumes": {
+                  Row: {
+                    "created_at": string,"file_name": string,"id": string,"is_primary": boolean,"parse_error": string | null,"parsed": Json | null,"storage_path": string,"user_id": string
+                  }
+                  Insert: {
+                    "created_at"?: string,"file_name": string,"id"?: string,"is_primary"?: boolean,"parse_error"?: string | null,"parsed"?: Json | null,"storage_path": string,"user_id": string
+                  }
+                  Update: {
+                    "created_at"?: string,"file_name"?: string,"id"?: string,"is_primary"?: boolean,"parse_error"?: string | null,"parsed"?: Json | null,"storage_path"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "resumes_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
                   ]
                 },"roles": {
                   Row: {

@@ -70,6 +70,18 @@ export function Feed({ matches, profiles, sources }: { matches: FeedMatch[]; pro
     [items, visible, show, t],
   );
 
+  // The kit's "Did you apply? Yes" already moved the card on the server: just take the match out of the feed.
+  const appliedFromKit = useCallback(
+    (match: FeedMatch) => {
+      const next = visible[visible.findIndex((m) => m.id === match.id) + 1] ?? null;
+      setItems((list) => list.filter((m) => m.id !== match.id));
+      setSelectedId(next?.id ?? null);
+      setDone((d) => [...d, { match, index: 0, action: 'applied' }]);
+      show({ message: t('appliedDone', { title: match.title }) });
+    },
+    [visible, show, t],
+  );
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.repeat) return;
@@ -149,12 +161,12 @@ export function Feed({ matches, profiles, sources }: { matches: FeedMatch[]; pro
             </nav>
             {selected && (
               <div className="brutal p-5">
-                <MatchDetail match={selected} onAction={(a) => void act(selected, a)} />
+                <MatchDetail match={selected} onAction={(a) => void act(selected, a)} onApplied={() => appliedFromKit(selected)} />
               </div>
             )}
           </div>
           <div className="md:hidden">
-            {visible[0] && <SwipeCard key={visible[0].id} match={visible[0]} onAction={(a) => void act(visible[0]!, a)} />}
+            {visible[0] && <SwipeCard key={visible[0].id} match={visible[0]} onAction={(a) => void act(visible[0]!, a)} onApplied={() => appliedFromKit(visible[0]!)} />}
           </div>
         </>
       )}

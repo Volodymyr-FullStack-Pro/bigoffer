@@ -229,6 +229,7 @@ export function Board({ columns, cards: initial, labels: initialLabels, rules, n
           }}
           onChanged={(patch) => patchLocal(open.id, patch)}
           onLabelCreated={(l) => setLabels((list) => [...list, l])}
+          onApplied={(r) => patchLocal(open.id, { columnId: r.columnId, rank: r.rank, appliedAt: open.appliedAt ?? new Date().toISOString() })}
         />
       )}
       {pendingReject && <RejectDialog initialReasons={pendingReject.reasons} onConfirm={confirmReject} onCancel={() => setPendingReject(null)} />}

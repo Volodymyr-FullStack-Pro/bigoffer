@@ -197,7 +197,7 @@ export async function createApplication(raw: {
   await event(supabase, data.id, 'created', { from: 'manual' });
   revalidatePath('/[locale]/board', 'page');
   return {
-    id: data.id, columnId: input.columnId, rank: data.rank, title, company: input.company, url,
+    id: data.id, jobId: null, columnId: input.columnId, rank: data.rank, title, company: input.company, url,
     sourceId: null, salary: input.salary, notes: null, contactName: null, contactUrl: null,
     appliedAt, nextActionAt: null, firstResponseAt: null, lastActivityAt: null, followUpCount: 0, outcome: 'open', labelIds: [],
   };

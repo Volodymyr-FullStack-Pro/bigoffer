@@ -74,7 +74,7 @@ export function createGeminiClient(opts: GeminiOptions): LlmClient {
       }
       const model = modelFor(req.sensitivity);
       const parts: Part[] = [
-        ...(req.images ?? []).map((i) => ({ inlineData: { mimeType: i.mimeType, data: i.dataBase64 } })),
+        ...[...(req.files ?? []), ...(req.images ?? [])].map((i) => ({ inlineData: { mimeType: i.mimeType, data: i.dataBase64 } })),
         { text: req.prompt },
       ];
       const params: GenerateContentParameters = {

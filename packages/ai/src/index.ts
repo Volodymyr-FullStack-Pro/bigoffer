@@ -5,3 +5,7 @@ export * from './gemini';
 export * from './env';
 export * from './tasks/enrich-job';
 export * from './tasks/explain-matches';
+export * from './tasks/parse-cv';
+export * from './tasks/apply-kit';
+export * from './tasks/form-answers';
+export * from './tasks/recruiter-message';

@@ -17,11 +17,12 @@ export default defineConfig({
     { name: 'mobile', use: { ...devices['Pixel 7'] } },
   ],
   webServer: {
-    command: process.env.CI
-      ? `pnpm build && pnpm start --port ${port}`
-      : `pnpm dev --port ${port}`,
+    // Dev server in CI too: the fake-AI guard in @jp/ai refuses to run in a production build.
+    // The production build is verified separately in the CI checks job.
+    command: `pnpm dev --port ${port}`,
     url: `${baseURL}/en/login`,
     reuseExistingServer: !process.env.CI,
     timeout: 180_000,
+    env: { AI_PROVIDER: 'fake', ALLOW_FAKE_AI: '1' },
   },
 });

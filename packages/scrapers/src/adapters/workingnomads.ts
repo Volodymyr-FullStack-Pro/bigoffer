@@ -1,4 +1,4 @@
-import type { RawJob } from '@jp/core';
+import { type RawJob, regionsFromLocation } from '@jp/core';
 import type { SourceAdapter } from '../types';
 
 type WorkingNomadsJob = {
@@ -32,6 +32,7 @@ export const workingnomadsAdapter: SourceAdapter = {
           location: j.location || null,
           postedAt: j.pub_date ?? null,
           remoteHint: 'remote',
+        remoteRegions: regionsFromLocation(j.location ?? ''),
           tags: [...(j.category_name ? [j.category_name] : []), ...(j.tags ? j.tags.split(',').map((t) => t.trim()).filter(Boolean) : [])],
         },
       ];
