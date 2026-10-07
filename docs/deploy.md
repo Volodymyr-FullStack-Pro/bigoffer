@@ -15,10 +15,10 @@
 
 - **Vercel Hobby** — лише для некомерційного використання.
 - **Supabase Free** — 2 проєкти, 500 МБ бази, 1 ГБ сховища; проєкт засинає після 7 днів без активності.
-- **Trigger.dev Free** — $5 кредиту на місяць, 20 одночасних запусків, 10 розкладів (у нас 4), логи зберігаються 1 день.
+- **Trigger.dev Free** — $5 кредиту на місяць, 20 одночасних запусків, 10 розкладів (у нас 6), логи зберігаються 1 день.
 - **Resend Free** — 3 000 листів на місяць, 100 на день; щоб слати на довільні адреси, потрібен верифікований домен.
 
-Розклади Trigger.dev (4): `schedule-queries` щогодини о :05, `enrich-jobs` кожні 15 хвилин, `explain-matches` щогодини о :40, `expire-jobs` (разом із пошуком нових дошок компаній) щодня о 03:00 UTC.
+Розклади Trigger.dev (6): `schedule-queries` щогодини о :05, `enrich-jobs` кожні 15 хвилин, `explain-matches` щогодини о :40, `expire-jobs` (разом із пошуком нових дошок компаній) щодня о 03:00 UTC, `telegram-alerts` кожні 15 хвилин, `telegram-digest` щогодини о :05.
 
 ## 2. Supabase Cloud
 
@@ -41,7 +41,7 @@
 ## 4. Trigger.dev Cloud
 
 - [ ] Створіть проєкт, візьміть **project ref** (`proj_…`) і **Personal Access Token** (Account → Personal Access Tokens).
-- [ ] Project → Environment Variables (середовище **Production**), додайте: `SUPABASE_URL`, `SUPABASE_SECRET_KEY`, `GEMINI_API_KEY_PUBLIC`, `JOOBLE_API_KEY` (якщо є), `ADZUNA_APP_ID` і `ADZUNA_APP_KEY` (якщо є), `SCRAPE_INTERVAL_MULTIPLIER` (необов'язково, за замовчуванням 1), `AI_DAILY_LIMIT` (необов'язково, за замовчуванням 900).
+- [ ] Project → Environment Variables (середовище **Production**), додайте: `SUPABASE_URL`, `SUPABASE_SECRET_KEY`, `TELEGRAM_BOT_TOKEN`, `SITE_URL`, `GEMINI_API_KEY_PUBLIC`, `JOOBLE_API_KEY` (якщо є), `ADZUNA_APP_ID` і `ADZUNA_APP_KEY` (якщо є), `SCRAPE_INTERVAL_MULTIPLIER` (необов'язково, за замовчуванням 1), `AI_DAILY_LIMIT` (необов'язково, за замовчуванням 900).
 - [ ] Візьміть **`TRIGGER_SECRET_KEY`** для Production (Project → API Keys) — він піде у Vercel.
 
 ### Jooble
@@ -78,7 +78,7 @@ Repository → Settings → Secrets and variables → Actions.
 
 - [ ] Add New → Project → Import Git Repository. **Root Directory** = `apps/web`, **Framework** = Next.js, **Production Branch** = `main`.
 - [ ] Settings → Functions → **Function Region** = `fra1` (Frankfurt), поруч із Supabase `eu-central-1`. Settings → General → **Node.js Version** = `24.x`.
-- [ ] Environment Variables: додайте їх лише для середовища **Production**. Ніколи не копіюйте прод-змінні у Preview. Прев'ю-деплої без змінних падатимуть, тому вимкніть їх (Settings → Git → Ignored Build Step або вимкніть Preview deployments) або ігноруйте. Змінні (Production): `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SITE_URL` (= адреса Vercel), `NEXT_PUBLIC_AUTH_GOOGLE_ENABLED=true`, `GEMINI_API_KEY_PRIVATE` (платний), `PRIVATE_AI_DAILY_LIMIT=100`, `TRIGGER_SECRET_KEY`.
+- [ ] Environment Variables: додайте їх лише для середовища **Production**. Ніколи не копіюйте прод-змінні у Preview. Прев'ю-деплої без змінних падатимуть, тому вимкніть їх (Settings → Git → Ignored Build Step або вимкніть Preview deployments) або ігноруйте. Змінні (Production): `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SITE_URL` (= адреса Vercel), `NEXT_PUBLIC_AUTH_GOOGLE_ENABLED=true`, `GEMINI_API_KEY_PRIVATE` (платний), `PRIVATE_AI_DAILY_LIMIT=100`, `TRIGGER_SECRET_KEY`, `SUPABASE_SECRET_KEY` (service role; потрібен вебу лише для вебхука Telegram `/api/telegram/webhook`), а також змінні Telegram-бота з розділу 8.
 - [ ] Після першого деплою, якщо адреса Vercel відрізняється від тієї, що ви вказали, оновіть `SITE_URL` у Vercel та Site URL і Redirect URLs у Supabase.
 
 ## 7. Перший запуск
@@ -86,18 +86,44 @@ Repository → Settings → Secrets and variables → Actions.
 - [ ] Злийте `develop` у `main` (це робите тільки ви).
 - [ ] У GitHub → Actions перевірте, що workflow **deploy** зелений (job `migrate`, потім `trigger`).
 - [ ] У Vercel перевірте, що деплой пройшов.
-- [ ] У Trigger.dev з'явилися задачі та 4 розклади.
+- [ ] У Trigger.dev з'явилися задачі та 6 розкладів.
 - [ ] Зареєструйтеся через Google, пройдіть онбординг із завантаженням CV.
 - [ ] Приблизно через годину перевірте стрічку «Сьогодні»: мають з'явитися вакансії.
 
-## 8. Пізніше: домен і Resend
+## 8. Telegram-бот
+
+- [ ] У Telegram відкрийте **@BotFather** → `/newbot` → вкажіть ім'я та username (має закінчуватися на `_bot`) → збережіть **токен**.
+- [ ] Згенеруйте секрет вебхука: `openssl rand -hex 32` (це `TELEGRAM_WEBHOOK_SECRET`).
+- [ ] Vercel (Production): `TELEGRAM_BOT_TOKEN`, `TELEGRAM_WEBHOOK_SECRET`, `NEXT_PUBLIC_TELEGRAM_BOT_USERNAME` (username без `@`), `SUPABASE_SECRET_KEY` (тепер потрібен вебу, але лише для вебхука). Після додавання зробіть Redeploy.
+- [ ] Trigger.dev (Production): `TELEGRAM_BOT_TOKEN`, `SITE_URL` (посилання «Відкрити» у сповіщеннях). Потім задеплойте задачі.
+- [ ] Одноразово зареєструйте вебхук:
+
+```
+curl -X POST "https://api.telegram.org/bot<TOKEN>/setWebhook" \
+  -d "url=https://<домен>/api/telegram/webhook" \
+  -d "secret_token=<TELEGRAM_WEBHOOK_SECRET>" \
+  -d 'allowed_updates=["message","callback_query"]'
+```
+
+- [ ] Перевірте: `curl "https://api.telegram.org/bot<TOKEN>/getWebhookInfo"` — `url` правильний, `last_error_message` порожній. Якщо змінюєте домен, зареєструйте вебхук заново.
+- [ ] У BigOffer: Профіль → «Підключити Telegram» → у боті натисніть **Start**. Посилання дійсне 15 хвилин.
+
+Як працює бот:
+
+- `/stop` вимикає сповіщення; підключити знову можна з профілю.
+- Кнопки під вакансією: **Відкрити**, **Сховати**, **Подав(ла)ся**.
+- Сповіщення надсилаються про збіги не нижче порога користувача (за замовчуванням 75), не більше 5 за запуск, решта — рядком про залишок.
+- Дайджест приходить у `digest_hour` за часовим поясом профілю; якщо година пропущена, цього ж дня він надсилається пізніше.
+- Якщо користувач заблокував бота, зв'язок з акаунтом видаляється.
+
+## 9. Пізніше: домен і Resend
 
 - [ ] Купіть домен, додайте його у Vercel (Settings → Domains).
 - [ ] Оновіть `SITE_URL` у Vercel і Site URL та Redirect URLs у Supabase. Робіть це разом: сайт треба завжди відкривати саме на хості з `SITE_URL` (`redirectTo` бере поточний origin, а callback перенаправляє на `SITE_URL`), інакше вхід закінчиться на іншому хості.
 - [ ] Resend: додайте домен, пропишіть DNS-записи, створіть API key.
 - [ ] Supabase → Authentication → SMTP: host `smtp.resend.com`, port `465`, user `resend`, password = API key, sender `no-reply@<домен>`.
 
-## 9. Таблиця змінних
+## 10. Таблиця змінних
 
 | Змінна | Де | Звідки взяти | Обов'язкова? |
 | --- | --- | --- | --- |
@@ -109,6 +135,11 @@ Repository → Settings → Secrets and variables → Actions.
 | `GEMINI_API_KEY_PRIVATE` | Vercel | Google Cloud, платний ключ | ні (без нього AI для CV і листів недоступний) |
 | `AI_MODEL_PRIVATE` | Vercel | назва моделі, за замовчуванням `gemini-flash-latest` | ні |
 | `PRIVATE_AI_DAILY_LIMIT` | Vercel | число, за замовчуванням 100 | ні |
+| `SUPABASE_SECRET_KEY` | Vercel | Supabase → secret key (service role; лише для вебхука Telegram) | так, для Telegram |
+| `TELEGRAM_BOT_TOKEN` | Vercel, Trigger.dev | @BotFather → `/newbot` | ні (без нього Telegram вимкнений) |
+| `TELEGRAM_WEBHOOK_SECRET` | Vercel | `openssl rand -hex 32` | так, для Telegram |
+| `NEXT_PUBLIC_TELEGRAM_BOT_USERNAME` | Vercel | username бота без `@` | так, для Telegram |
+| `SITE_URL` | Trigger.dev | адреса сайту (для посилань у сповіщеннях) | так, для Telegram |
 | `SUPABASE_URL` | Trigger.dev | Supabase → Project URL | так |
 | `SUPABASE_SECRET_KEY` | Trigger.dev | Supabase → secret key | так |
 | `GEMINI_API_KEY_PUBLIC` | Trigger.dev | AI Studio, безкоштовний ключ | так (для AI-збагачення) |
@@ -123,7 +154,7 @@ Repository → Settings → Secrets and variables → Actions.
 | `TRIGGER_ACCESS_TOKEN` | GitHub (secret) | Trigger.dev Personal Access Token | так |
 | `TRIGGER_PROJECT_REF` | GitHub (variable) | Trigger.dev project ref `proj_…` | так |
 
-## 10. Що робити, якщо…
+## 11. Що робити, якщо…
 
 - **Workflow впав на «Missing GitHub secret …»** — додайте вказаний secret або variable (крок 5) і перезапустіть workflow (Actions → deploy → Run workflow).
 - **Вхід редіректить на localhost** — у Supabase → Authentication → URL Configuration виправте Site URL та Redirect URLs на адресу Vercel; перевірте `SITE_URL` у Vercel.
