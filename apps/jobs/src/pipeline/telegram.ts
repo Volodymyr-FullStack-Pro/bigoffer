@@ -1,4 +1,4 @@
-import { alertMessage, digestMessage, overflowMessage, toTgLocale, type AlertJob, type BotApi } from '@jp/core';
+import { alertMessage, digestMessage, overflowMessage, toTgLocale, type AlertJob, type BotApi, type BotResult } from '@jp/core';
 import type { Db } from '../db';
 
 /** `onlyUserIds` restricts the run to those users (tests; never set in production). */
@@ -9,6 +9,8 @@ const MAX_ALERTS = 5;
 const FETCH_LIMIT = 50;
 const DIGEST_TOP = 10;
 const DAY_MS = 24 * 3600_000;
+/** An alert waits for AI enrichment (summary, is_job) this long at most, so alerts still flow when AI is off or behind. */
+const ENRICH_WAIT_MS = 45 * 60_000;
 
 type Profile = {
   id: string;
@@ -25,11 +27,13 @@ type JobRow = {
   location: string | null;
   remote_type: string;
   salary_raw: string | null;
+  enriched_at: string | null;
   companies: { name: string } | null;
 };
-type MatchRow = { id: string; score: number; explanation: unknown; jobs: JobRow | null };
+type MatchRow = { id: string; score: number; explanation: unknown; created_at: string; jobs: JobRow | null };
 
-const MATCH_SELECT = 'id, score, explanation, jobs!inner(title, location, remote_type, salary_raw, is_job, companies(name))';
+const MATCH_SELECT =
+  'id, score, explanation, created_at, jobs!inner(title, location, remote_type, salary_raw, is_job, enriched_at, companies(name))';
 
 const PROFILE_SELECT = 'id, locale, timezone, digest_hour, digest_last_sent_on, telegram_chat_id, telegram_min_score';
 
@@ -58,16 +62,32 @@ function toAlertJob(m: MatchRow, locale: string): AlertJob {
   };
 }
 
-/** New, not-yet-notified matches of the last 24 hours with a real job posting, best first. */
+/**
+ * New matches of the last 24 hours for active, real job postings that are themselves fresh — posted within 24 hours,
+ * or (no posted_at) first seen within 24 hours, the same rule as Today's "New in 24h" — best first.
+ */
 function freshMatches(db: Db, userId: string, now: Date) {
+  const since = new Date(now.getTime() - DAY_MS).toISOString();
   return db
     .from('job_matches')
     .select(MATCH_SELECT, { count: 'exact' })
     .eq('user_id', userId)
     .eq('state', 'new')
-    .gte('created_at', new Date(now.getTime() - DAY_MS).toISOString())
-    .or('is_job.is.null,is_job.eq.true', { referencedTable: 'jobs' })
+    .gte('created_at', since)
+    .eq('jobs.status', 'active')
+    .not('jobs.is_job', 'is', false)
+    .or(`posted_at.gte.${since},and(posted_at.is.null,first_seen_at.gte.${since})`, { referencedTable: 'jobs' })
     .order('score', { ascending: false });
+}
+
+/** Alert once the job is enriched (summary, is_job known), or after ENRICH_WAIT_MS regardless. */
+function readyToAlert(m: MatchRow, now: Date): boolean {
+  return m.jobs?.enriched_at != null || Date.parse(m.created_at) <= now.getTime() - ENRICH_WAIT_MS;
+}
+
+/** A 4xx other than 403 (blocked) and 429 (rate limit) is about this message itself: retrying cannot help. */
+function rejectedForGood(res: BotResult): boolean {
+  return !res.ok && !res.blocked && res.status >= 400 && res.status < 500 && res.status !== 429;
 }
 
 async function dropChat(db: Db, userId: string): Promise<void> {
@@ -107,7 +127,7 @@ async function alertUser(db: Db, deps: TelegramDeps, p: Profile, result: Telegra
     .gte('score', p.telegram_min_score)
     .limit(FETCH_LIMIT);
   if (error) throw error;
-  const matches = (data ?? []) as unknown as MatchRow[];
+  const matches = ((data ?? []) as unknown as MatchRow[]).filter((m) => readyToAlert(m, deps.now));
   if (matches.length === 0) return;
   result.users++;
   const locale = toTgLocale(p.locale);
@@ -121,6 +141,11 @@ async function alertUser(db: Db, deps: TelegramDeps, p: Profile, result: Telegra
     if (res.ok) {
       done.push(m.id);
       result.sent++;
+    } else if (rejectedForGood(res)) {
+      // Mark it anyway so one bad message does not block this user's queue; move on to the next.
+      done.push(m.id);
+      result.failed++;
+      logFailure('an alert', `Bot API ${res.status}`);
     } else {
       if (res.blocked) {
         result.blocked++;
@@ -132,9 +157,10 @@ async function alertUser(db: Db, deps: TelegramDeps, p: Profile, result: Telegra
   }
   if (!stop && rest.length > 0) {
     const res = await deps.bot.sendMessage(p.telegram_chat_id, overflowMessage(rest.length, locale, deps.siteUrl));
-    if (res.ok) {
+    if (res.ok || rejectedForGood(res)) {
       done.push(...rest.map((m) => m.id));
-      result.sent++;
+      if (res.ok) result.sent++;
+      else result.failed++;
     } else if (res.blocked) {
       result.blocked++;
       await dropChat(db, p.id);

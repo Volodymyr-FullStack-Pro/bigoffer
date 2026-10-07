@@ -14,10 +14,12 @@ class FakeBot implements BotApi {
   constructor(
     private result: BotResult = { ok: true },
     private failChat?: number,
+    private failText?: string,
   ) {}
   async sendMessage(chatId: number, text: string): Promise<BotResult> {
     this.sent.push({ chatId, text });
     if (this.failChat !== undefined && chatId !== this.failChat) return { ok: true };
+    if (this.failText !== undefined && !text.includes(this.failText)) return { ok: true };
     return this.result;
   }
   async answerCallback(): Promise<BotResult> {
@@ -40,8 +42,21 @@ async function makeUser(tag: string, profile: Record<string, unknown> = {}) {
 }
 
 let jobSeq = 0;
-async function addMatch(userId: string, score: number, over: { isJob?: boolean | null; createdAt?: string; state?: string } = {}) {
+type MatchOptions = {
+  isJob?: boolean | null;
+  createdAt?: string;
+  state?: string;
+  /** Job freshness; defaults to the match's created_at (or now). */
+  firstSeenAt?: string;
+  postedAt?: string | null;
+  status?: 'active' | 'expired';
+  /** Enriched jobs alert at once; defaults to true. */
+  enriched?: boolean;
+};
+
+async function addMatch(userId: string, score: number, over: MatchOptions = {}) {
   const n = jobSeq++;
+  const firstSeen = over.firstSeenAt ?? over.createdAt ?? new Date().toISOString();
   const { data: job, error } = await db
     .from('jobs')
     .insert({
@@ -50,6 +65,10 @@ async function addMatch(userId: string, score: number, over: { isJob?: boolean |
       company_id: companyId,
       remote_type: 'remote',
       is_job: over.isJob === undefined ? true : over.isJob,
+      first_seen_at: firstSeen,
+      posted_at: over.postedAt ?? null,
+      status: over.status ?? 'active',
+      enriched_at: over.enriched === false ? null : firstSeen,
     })
     .select('id')
     .single();
@@ -138,6 +157,52 @@ describe('sendAlerts', () => {
     expect((await notified([notJob, unknown])).get(unknown)).toBe(true);
   });
 
+  it('skips matches for stale or expired jobs, even when the match row is new', async () => {
+    const u = await makeUser('stale');
+    const daysAgo = (d: number) => new Date(Date.now() - d * 86_400_000).toISOString();
+    const oldSeen = await addMatch(u.id, 99, { firstSeenAt: daysAgo(3) });
+    const oldPosted = await addMatch(u.id, 98, { postedAt: daysAgo(3) });
+    const expired = await addMatch(u.id, 97, { status: 'expired' });
+    const freshPost = await addMatch(u.id, 96, { firstSeenAt: daysAgo(3), postedAt: new Date(Date.now() - 3600_000).toISOString() });
+    const bot = new FakeBot();
+    expect(await run(sendAlerts, bot, u.id)).toEqual({ users: 1, sent: 1, blocked: 0, failed: 0 });
+    expect(bot.sent[0]!.text).toContain('96%');
+    expect(await notified([oldSeen, oldPosted, expired, freshPost])).toEqual(
+      new Map([[oldSeen, false], [oldPosted, false], [expired, false], [freshPost, true]]),
+    );
+  });
+
+  it('waits up to 45 minutes for enrichment before alerting', async () => {
+    const u = await makeUser('enrich');
+    const minutesAgo = (m: number) => new Date(Date.now() - m * 60_000).toISOString();
+    const waiting = await addMatch(u.id, 90, { enriched: false, createdAt: minutesAgo(5) });
+    const overdue = await addMatch(u.id, 85, { enriched: false, createdAt: minutesAgo(50) });
+    const enriched = await addMatch(u.id, 80, { createdAt: minutesAgo(5) });
+    const bot = new FakeBot();
+    expect(await run(sendAlerts, bot, u.id)).toEqual({ users: 1, sent: 2, blocked: 0, failed: 0 });
+    expect(bot.sent.map((m) => m.text.slice(0, 12))).toEqual([expect.stringContaining('85%'), expect.stringContaining('80%')]);
+    expect(await notified([waiting, overdue, enriched])).toEqual(new Map([[waiting, false], [overdue, true], [enriched, true]]));
+  });
+
+  it('a message Telegram rejects for good (400) is marked and the rest still go out', async () => {
+    const u = await makeUser('bad400');
+    const [a, b, c] = [await addMatch(u.id, 90), await addMatch(u.id, 85), await addMatch(u.id, 80)] as [string, string, string];
+    const bot = new FakeBot({ ok: false, blocked: false, status: 400 }, undefined, '85%');
+    expect(await run(sendAlerts, bot, u.id)).toEqual({ users: 1, sent: 2, blocked: 0, failed: 1 });
+    expect(bot.sent).toHaveLength(3);
+    expect([...(await notified([a, b, c])).values()].every(Boolean)).toBe(true);
+    const { data } = await db.from('profiles').select('telegram_chat_id').eq('id', u.id).single();
+    expect(data!.telegram_chat_id).toBe(u.chatId);
+  });
+
+  it('a rate limit (429) stops the user and leaves the rest for the next run', async () => {
+    const u = await makeUser('rate429');
+    const [a, b, c] = [await addMatch(u.id, 90), await addMatch(u.id, 85), await addMatch(u.id, 80)] as [string, string, string];
+    const bot = new FakeBot({ ok: false, blocked: false, status: 429 }, undefined, '85%');
+    expect(await run(sendAlerts, bot, u.id)).toEqual({ users: 1, sent: 1, blocked: 0, failed: 1 });
+    expect(await notified([a, b, c])).toEqual(new Map([[a, true], [b, false], [c, false]]));
+  });
+
   it('a failing chat does not block other users; a non-403 failure leaves matches unmarked', async () => {
     const a = await makeUser('isoa');
     const b = await makeUser('isob');
@@ -212,6 +277,18 @@ describe('sendDigests', () => {
     expect(await run(sendDigests, bot, u.id, later)).toEqual({ users: 1, sent: 1, blocked: 0, failed: 0 });
     expect(await run(sendDigests, bot, u.id, later)).toEqual({ users: 0, sent: 0, blocked: 0, failed: 0 });
     expect(bot.sent).toHaveLength(1);
+  });
+
+  it('does not count matches for stale jobs in the digest', async () => {
+    const u = await makeUser('digeststale', { timezone: 'Europe/Kyiv', digest_hour: 8 });
+    await addMatch(u.id, 90, { createdAt: hoursAgo(1), firstSeenAt: hoursAgo(72) });
+    await addMatch(u.id, 80, { createdAt: hoursAgo(1) });
+    const bot = new FakeBot();
+    expect(await run(sendDigests, bot, u.id, at)).toEqual({ users: 1, sent: 1, blocked: 0, failed: 0 });
+    const text = bot.sent[0]!.text;
+    expect(text).toContain('1 new job ');
+    expect(text).toContain('80%');
+    expect(text).not.toContain('90%');
   });
 
   it('sends the digest even with instant alerts off', async () => {
