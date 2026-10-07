@@ -1,6 +1,6 @@
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(24);
+select plan(25);
 
 insert into auth.users (id, email, raw_user_meta_data) values
   ('11111111-1111-1111-1111-111111111111', 'a@test.dev', '{"full_name":"Alice"}'),
@@ -9,6 +9,8 @@ insert into auth.users (id, email, raw_user_meta_data) values
 -- trigger side effects (as superuser)
 select is((select full_name from public.profiles where id = '11111111-1111-1111-1111-111111111111'),
   'Alice', 'profile created with name from metadata');
+select is((select locale from public.profiles where id = '11111111-1111-1111-1111-111111111111'),
+  'en', 'new profile defaults to English');
 select is((select count(*)::int from public.board_columns where user_id = '11111111-1111-1111-1111-111111111111'),
   6, 'six default board columns');
 select is((select kind from public.board_columns where user_id = '11111111-1111-1111-1111-111111111111' and key = 'offer'),

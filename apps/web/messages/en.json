@@ -1,5 +1,5 @@
 {
-  "app": { "name": "JOB/PARSER", "tagline": "Fresh jobs. Fast applications. Zero chaos." },
+  "app": { "name": "BigOffer", "tagline": "Fresh jobs. Fast applications. Zero chaos." },
   "nav": {
     "today": "Today",
     "board": "Board",
