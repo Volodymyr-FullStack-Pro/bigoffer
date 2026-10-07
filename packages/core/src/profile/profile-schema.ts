@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { isCountryCode } from '../jobs/regions';
 
 export function emptyToUndefined<T extends Record<string, unknown>>(
   input: T,
@@ -41,6 +42,7 @@ export const profileUpdateSchema = z.object({
   full_name: z.string().trim().min(1).max(120),
   timezone: z.string().refine(isValidTimeZone),
   contacts: contactsSchema,
+  country: z.string().refine(isCountryCode).nullable(),
 });
 
 export type Contacts = z.infer<typeof contactsSchema>;

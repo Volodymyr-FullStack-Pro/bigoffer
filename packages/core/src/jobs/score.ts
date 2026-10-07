@@ -2,6 +2,7 @@ import type { RemoteType, Seniority } from './job';
 import { SENIORITIES } from './job';
 import { regionBucket } from './normalize';
 import type { SearchProfile } from './search';
+import { remoteBlockedFor } from './regions';
 
 export type ScorableJob = {
   title: string;
@@ -13,6 +14,10 @@ export type ScorableJob = {
   salaryMinUsd: number | null;
   salaryMaxUsd: number | null;
   skills?: string[];
+  /** AI verdict; false means the posting is not a real vacancy (course, ad, spam). */
+  isJob?: boolean | null;
+  /** AI: where a remote hire may live (region codes or ISO countries); empty when not stated. */
+  remoteRegions?: string[];
 };
 
 export type MatchBreakdown = {
@@ -23,6 +28,8 @@ export type MatchBreakdown = {
   salary: number;
   matchedSkills: string[];
   excludedBy: string | null;
+  /** The job's remote regions when they exclude the candidate's country. */
+  blockedRegions: string[] | null;
 };
 
 function escapeRegex(s: string): string {
@@ -116,6 +123,7 @@ export function scoreJob(
   profile: SearchProfile,
   job: ScorableJob,
 ): { score: number; hidden: boolean; breakdown: MatchBreakdown } | null {
+  if (job.isJob === false) return null;
   const title = normalizeText(job.title);
   const raw = `${job.title}\n${job.tags.join(' ')}\n${job.descriptionText}`;
   const text = normalizeText(raw);
@@ -134,14 +142,20 @@ export function scoreJob(
   const role = inTitle ? 25 : inText ? 12 : 0;
   const skills =
     profile.skills.length === 0 ? (inText ? 35 : 0) : Math.round((35 * matchedSkills.length) / profile.skills.length);
+  const regions = job.remoteRegions ?? [];
+  const blockedRegions =
+    job.remoteType === 'remote' && remoteBlockedFor(regions, profile.candidateCountry) ? regions : null;
+  const keywordExclusion = profile.excludeKeywords.find((e) => containsTerm(text, e))?.toLowerCase() ?? null;
   const breakdown: MatchBreakdown = {
     skills,
     role,
     seniority: seniorityPoints(profile.seniority, job.seniority),
-    location: locationPoints(profile, job),
+    location: blockedRegions ? 0 : locationPoints(profile, job),
     salary: salaryPoints(profile.salaryMinUsd, job),
     matchedSkills,
-    excludedBy: profile.excludeKeywords.find((e) => containsTerm(text, e))?.toLowerCase() ?? null,
+    // 'region' hides the row like an exclude keyword, so upsert_job_matches keeps rescoring it.
+    excludedBy: keywordExclusion ?? (blockedRegions ? 'region' : null),
+    blockedRegions,
   };
   const score = Math.min(
     100,

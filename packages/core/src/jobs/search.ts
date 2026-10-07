@@ -39,6 +39,8 @@ export type SearchProfile = Omit<SearchProfileInput, 'id' | 'name' | 'isActive' 
   id: string;
   userId: string;
   sources: SourceId[] | null;
+  /** Owner's country of residence (profiles.country, ISO alpha-2): remote jobs restricted elsewhere are hidden. */
+  candidateCountry?: string | null;
 };
 
 export type SourceQuerySpec = { sourceId: SourceId; params: Record<string, string>; queryKey: string };

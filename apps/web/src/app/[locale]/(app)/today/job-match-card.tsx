@@ -12,6 +12,10 @@ export type JobMatchView = {
   salaryMinUsd: number | null;
   salaryMaxUsd: number | null;
   seenAt: string;
+  summary: string | null;
+  why: string | null;
+  seniority: 'intern' | 'junior' | 'middle' | 'senior' | 'lead' | null;
+  skills: { name: string; matched: boolean }[];
   postings: { sourceId: string; url: string }[];
 };
 
@@ -47,8 +51,34 @@ export async function JobMatchCard({ match }: { match: JobMatchView }) {
           {match.score}% {t('match')}
         </span>
       </div>
+      {match.summary && (
+        <p data-testid="match-summary" className="text-sm">
+          {match.summary}
+        </p>
+      )}
+      {match.why && (
+        <p data-testid="match-why" className="border-l-4 border-brand pl-3 text-sm">
+          <span className="font-semibold">{t('why')}: </span>
+          {match.why}
+        </p>
+      )}
+      {match.skills.length > 0 && (
+        <ul className="flex flex-wrap gap-1.5">
+          {match.skills.map((s) => (
+            <li
+              key={s.name}
+              data-testid="match-skill"
+              data-matched={s.matched}
+              className={`rounded-sm border-2 border-border px-1.5 py-0.5 font-mono text-xs ${s.matched ? 'bg-brand text-brand-foreground' : ''}`}
+            >
+              {s.name}
+            </li>
+          ))}
+        </ul>
+      )}
       <p className="flex flex-wrap gap-x-4 gap-y-1 font-mono text-xs uppercase text-muted-foreground">
         <span>{t(`remote_${match.remoteType}`)}</span>
+        {match.seniority && <span>{t(`seniority_${match.seniority}`)}</span>}
         {match.location && <span>{match.location}</span>}
         {salary && <span>{salary}</span>}
         <span>{format.relativeTime(new Date(match.seenAt))}</span>

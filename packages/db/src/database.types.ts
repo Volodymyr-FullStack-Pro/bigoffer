@@ -23,7 +23,20 @@ export type Database = {
           }
         },"public": {
           Tables: {
-            "board_columns": {
+            "ai_usage": {
+                  Row: {
+                    "day": string,"input_tokens": number,"model": string,"output_tokens": number,"requests": number,"sensitivity": string
+                  }
+                  Insert: {
+                    "day": string,"input_tokens"?: number,"model": string,"output_tokens"?: number,"requests"?: number,"sensitivity": string
+                  }
+                  Update: {
+                    "day"?: string,"input_tokens"?: number,"model"?: string,"output_tokens"?: number,"requests"?: number,"sensitivity"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"board_columns": {
                   Row: {
                     "id": string,"key": string,"kind": string,"position": number,"title": NonNullable<Json>,"user_id": string
                   }
@@ -57,13 +70,13 @@ isOneToOne: false
                   ]
                 },"job_matches": {
                   Row: {
-                    "breakdown": NonNullable<Json>,"created_at": string,"explanation": Json | null,"id": string,"job_id": string,"score": number,"search_profile_id": string | null,"state": string,"updated_at": string,"user_id": string
+                    "breakdown": NonNullable<Json>,"created_at": string,"explained_at": string | null,"explanation": Json | null,"id": string,"job_id": string,"score": number,"search_profile_id": string | null,"state": string,"updated_at": string,"user_id": string
                   }
                   Insert: {
-                    "breakdown"?: NonNullable<Json>,"created_at"?: string,"explanation"?: Json | null,"id"?: string,"job_id": string,"score": number,"search_profile_id"?: string | null,"state"?: string,"updated_at"?: string,"user_id": string
+                    "breakdown"?: NonNullable<Json>,"created_at"?: string,"explained_at"?: string | null,"explanation"?: Json | null,"id"?: string,"job_id": string,"score": number,"search_profile_id"?: string | null,"state"?: string,"updated_at"?: string,"user_id": string
                   }
                   Update: {
-                    "breakdown"?: NonNullable<Json>,"created_at"?: string,"explanation"?: Json | null,"id"?: string,"job_id"?: string,"score"?: number,"search_profile_id"?: string | null,"state"?: string,"updated_at"?: string,"user_id"?: string
+                    "breakdown"?: NonNullable<Json>,"created_at"?: string,"explained_at"?: string | null,"explanation"?: Json | null,"id"?: string,"job_id"?: string,"score"?: number,"search_profile_id"?: string | null,"state"?: string,"updated_at"?: string,"user_id"?: string
                   }
                   Relationships: [
                     {
@@ -113,13 +126,13 @@ isOneToOne: false
                   ]
                 },"jobs": {
                   Row: {
-                    "company_id": string,"description_text": string,"enrich_error": string | null,"enriched_at": string | null,"fingerprint": string,"first_seen_at": string,"id": string,"lang": string | null,"last_seen_at": string,"location": string | null,"posted_at": string | null,"remote_type": string,"role_id": string | null,"salary_max_usd": number | null,"salary_min_usd": number | null,"salary_raw": string | null,"seniority": string | null,"skills": (string)[],"status": string,"summary": Json | null,"tags": (string)[],"title": string,"title_normalized": string | null
+                    "company_id": string,"description_text": string,"enrich_attempts": number,"enrich_error": string | null,"enriched_at": string | null,"fingerprint": string,"first_seen_at": string,"id": string,"is_job": boolean | null,"lang": string | null,"last_seen_at": string,"location": string | null,"posted_at": string | null,"remote_regions": (string)[],"remote_type": string,"role": string | null,"role_id": string | null,"salary_max_usd": number | null,"salary_min_usd": number | null,"salary_raw": string | null,"seniority": string | null,"skills": (string)[],"status": string,"summary": Json | null,"tags": (string)[],"title": string,"title_normalized": string | null
                   }
                   Insert: {
-                    "company_id": string,"description_text"?: string,"enrich_error"?: string | null,"enriched_at"?: string | null,"fingerprint": string,"first_seen_at"?: string,"id"?: string,"lang"?: string | null,"last_seen_at"?: string,"location"?: string | null,"posted_at"?: string | null,"remote_type"?: string,"role_id"?: string | null,"salary_max_usd"?: number | null,"salary_min_usd"?: number | null,"salary_raw"?: string | null,"seniority"?: string | null,"skills"?: (string)[],"status"?: string,"summary"?: Json | null,"tags"?: (string)[],"title": string,"title_normalized"?: string | null
+                    "company_id": string,"description_text"?: string,"enrich_attempts"?: number,"enrich_error"?: string | null,"enriched_at"?: string | null,"fingerprint": string,"first_seen_at"?: string,"id"?: string,"is_job"?: boolean | null,"lang"?: string | null,"last_seen_at"?: string,"location"?: string | null,"posted_at"?: string | null,"remote_regions"?: (string)[],"remote_type"?: string,"role"?: string | null,"role_id"?: string | null,"salary_max_usd"?: number | null,"salary_min_usd"?: number | null,"salary_raw"?: string | null,"seniority"?: string | null,"skills"?: (string)[],"status"?: string,"summary"?: Json | null,"tags"?: (string)[],"title": string,"title_normalized"?: string | null
                   }
                   Update: {
-                    "company_id"?: string,"description_text"?: string,"enrich_error"?: string | null,"enriched_at"?: string | null,"fingerprint"?: string,"first_seen_at"?: string,"id"?: string,"lang"?: string | null,"last_seen_at"?: string,"location"?: string | null,"posted_at"?: string | null,"remote_type"?: string,"role_id"?: string | null,"salary_max_usd"?: number | null,"salary_min_usd"?: number | null,"salary_raw"?: string | null,"seniority"?: string | null,"skills"?: (string)[],"status"?: string,"summary"?: Json | null,"tags"?: (string)[],"title"?: string,"title_normalized"?: string | null
+                    "company_id"?: string,"description_text"?: string,"enrich_attempts"?: number,"enrich_error"?: string | null,"enriched_at"?: string | null,"fingerprint"?: string,"first_seen_at"?: string,"id"?: string,"is_job"?: boolean | null,"lang"?: string | null,"last_seen_at"?: string,"location"?: string | null,"posted_at"?: string | null,"remote_regions"?: (string)[],"remote_type"?: string,"role"?: string | null,"role_id"?: string | null,"salary_max_usd"?: number | null,"salary_min_usd"?: number | null,"salary_raw"?: string | null,"seniority"?: string | null,"skills"?: (string)[],"status"?: string,"summary"?: Json | null,"tags"?: (string)[],"title"?: string,"title_normalized"?: string | null
                   }
                   Relationships: [
                     {
@@ -157,13 +170,13 @@ isOneToOne: false
                   ]
                 },"profiles": {
                   Row: {
-                    "contacts": NonNullable<Json>,"created_at": string,"digest_hour": number,"follow_up_days": (number)[],"full_name": string,"ghost_after_days": number,"id": string,"inbound_email_token": string,"locale": string,"onboarded_at": string | null,"plan": string,"telegram_chat_id": number | null,"timezone": string,"updated_at": string
+                    "contacts": NonNullable<Json>,"country": string | null,"created_at": string,"digest_hour": number,"follow_up_days": (number)[],"full_name": string,"ghost_after_days": number,"id": string,"inbound_email_token": string,"locale": string,"onboarded_at": string | null,"plan": string,"telegram_chat_id": number | null,"timezone": string,"updated_at": string
                   }
                   Insert: {
-                    "contacts"?: NonNullable<Json>,"created_at"?: string,"digest_hour"?: number,"follow_up_days"?: (number)[],"full_name"?: string,"ghost_after_days"?: number,"id": string,"inbound_email_token"?: string,"locale"?: string,"onboarded_at"?: string | null,"plan"?: string,"telegram_chat_id"?: number | null,"timezone"?: string,"updated_at"?: string
+                    "contacts"?: NonNullable<Json>,"country"?: string | null,"created_at"?: string,"digest_hour"?: number,"follow_up_days"?: (number)[],"full_name"?: string,"ghost_after_days"?: number,"id": string,"inbound_email_token"?: string,"locale"?: string,"onboarded_at"?: string | null,"plan"?: string,"telegram_chat_id"?: number | null,"timezone"?: string,"updated_at"?: string
                   }
                   Update: {
-                    "contacts"?: NonNullable<Json>,"created_at"?: string,"digest_hour"?: number,"follow_up_days"?: (number)[],"full_name"?: string,"ghost_after_days"?: number,"id"?: string,"inbound_email_token"?: string,"locale"?: string,"onboarded_at"?: string | null,"plan"?: string,"telegram_chat_id"?: number | null,"timezone"?: string,"updated_at"?: string
+                    "contacts"?: NonNullable<Json>,"country"?: string | null,"created_at"?: string,"digest_hour"?: number,"follow_up_days"?: (number)[],"full_name"?: string,"ghost_after_days"?: number,"id"?: string,"inbound_email_token"?: string,"locale"?: string,"onboarded_at"?: string | null,"plan"?: string,"telegram_chat_id"?: number | null,"timezone"?: string,"updated_at"?: string
                   }
                   Relationships: [
                     
@@ -309,6 +322,17 @@ isOneToOne: false
           Functions: {
             "find_similar_job":
 { Args: { "p_company_id": string,"p_title": string }; Returns: string
+                           },
+"jobs_to_enrich":
+{ Args: { "p_job_ids"?: (string)[],"p_limit": number }; Returns: string[]
+                           },
+"matches_to_explain":
+{ Args: { "p_day_start": string,"p_min_score": number,"p_per_user": number,"p_user_ids"?: (string)[] }; Returns: {
+              "locale": string,"match_id": string,"user_id": string
+            }[]
+                           },
+"record_ai_usage":
+{ Args: { "p_day": string,"p_input": number,"p_model": string,"p_output": number,"p_requests": number,"p_sensitivity": string }; Returns: undefined
                            },
 "text_array_max_len":
 { Args: { "arr": (string)[] }; Returns: number

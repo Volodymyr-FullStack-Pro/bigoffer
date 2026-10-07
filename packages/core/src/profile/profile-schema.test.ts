@@ -32,6 +32,7 @@ describe('profileUpdateSchema', () => {
       github: 'https://github.com/someone',
       telegram: '@someone',
     },
+    country: null,
   };
 
   it('parses a valid profile and trims the name', () => {
@@ -58,5 +59,12 @@ describe('profileUpdateSchema', () => {
   it('rejects an invalid email', () => {
     const bad = { ...valid, contacts: { ...valid.contacts, email: 'nope' } };
     expect(profileUpdateSchema.safeParse(bad).success).toBe(false);
+  });
+
+  it('accepts a supported country or null', () => {
+    const base = { full_name: 'A', timezone: 'Europe/Kyiv', contacts: {} };
+    expect(profileUpdateSchema.safeParse({ ...base, country: 'UA' }).success).toBe(true);
+    expect(profileUpdateSchema.safeParse({ ...base, country: null }).success).toBe(true);
+    expect(profileUpdateSchema.safeParse({ ...base, country: 'XX' }).success).toBe(false);
   });
 });

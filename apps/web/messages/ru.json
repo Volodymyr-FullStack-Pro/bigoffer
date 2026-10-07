@@ -60,7 +60,13 @@
     "remote_unknown": "Формат не указан",
     "salary": "${min, number}–{max, number}/мес",
     "salaryFrom": "от ${min, number}/мес",
-    "salaryTo": "до ${max, number}/мес"
+    "salaryTo": "до ${max, number}/мес",
+    "why": "Почему подходит",
+    "seniority_intern": "Стажёр",
+    "seniority_junior": "Junior",
+    "seniority_middle": "Middle",
+    "seniority_senior": "Senior",
+    "seniority_lead": "Lead"
   },
   "comingSoon": {
     "badge": "Скоро",
@@ -82,7 +88,10 @@
     "save": "Сохранить",
     "saved": "Сохранено",
     "invalid": "Проверьте поля: {fields}",
-    "error": "Не удалось сохранить. Попробуйте ещё раз."
+    "error": "Не удалось сохранить. Попробуйте ещё раз.",
+    "country": "Страна проживания",
+    "countryNone": "Не указана",
+    "countryHint": "Удалённые вакансии, которые нанимают только в других странах, будут скрыты."
   },
   "search": {
     "title": "Настройки поиска",
