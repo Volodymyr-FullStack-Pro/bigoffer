@@ -25,7 +25,9 @@
 - [ ] Створіть проєкт на supabase.com, регіон **Frankfurt (`eu-central-1`)**. Збережіть **пароль бази даних**.
 - [ ] Зі сторінки проєкту візьміть: **Project URL**, **publishable key**, **secret key** (Project Settings → API Keys) і **project ref** (частина адреси `https://<project-ref>.supabase.co`).
 - [ ] Authentication → URL Configuration: **Site URL** = `https://<vercel-адреса>`, **Redirect URLs** = `https://<vercel-адреса>/**`. Якщо адреси Vercel ще немає, поверніться сюди після кроку 6.
-- [ ] Google-вхід: у Google Cloud Console створіть OAuth client типу **Web application**, у **Authorized redirect URIs** додайте `https://<project-ref>.supabase.co/auth/v1/callback`. У Supabase: Authentication → Providers → Google — увімкніть і вставте Client ID та Client Secret.
+- [ ] Authentication → Email Templates: Cloud не отримує шаблони з `config.toml` через `db push`, а вхід за magic-link і підтвердження пошти працюють лише з шаблонами, що використовують `token_hash`. Вставте вміст файлів: `supabase/templates/magic_link.html` у шаблон **Magic link** (тема `Your sign-in link`), `supabase/templates/confirmation.html` у шаблон **Confirm signup** (тема `Confirm your email`). Рекомендовано вставляти вручну. Альтернатива: `supabase config push --project-ref <ref>` надсилає auth-налаштування з `config.toml`, але там значення для localhost (site_url, redirects), тому після нього обов'язково перевірте Site URL і Redirect URLs.
+- [ ] Settings → API (Data API): залиште Data API **увімкненим** зі схемою `public` у Exposed schemas і залиште типові привілеї / автоматичне відкриття нових таблиць. Конвеєр вакансій спирається на типові гранти для `service_role`.
+- [ ] Google-вхід: у Google Cloud Console створіть OAuth client типу **Web application**, у **Authorized redirect URIs** додайте `https://<project-ref>.supabase.co/auth/v1/callback`. У Supabase: Authentication → Providers → Google — увімкніть і вставте Client ID та Client Secret. На екрані згоди (OAuth consent screen) виберіть **User type = External** і натисніть **Publish app**: у режимі Testing увійти можуть лише додані тестові користувачі.
 - [ ] Account → Access Tokens: створіть **access token** (для GitHub Actions).
 
 Вхід за magic-link без власного SMTP має жорсткі ліміти на листи і призначений лише для тестів. На старті основний спосіб входу — Google.
@@ -52,7 +54,8 @@ Repository → Settings → Secrets and variables → Actions.
 ## 6. Vercel
 
 - [ ] Add New → Project → Import Git Repository. **Root Directory** = `apps/web`, **Framework** = Next.js, **Production Branch** = `main`.
-- [ ] Environment Variables (Production): `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SITE_URL` (= адреса Vercel), `NEXT_PUBLIC_AUTH_GOOGLE_ENABLED=true`, `GEMINI_API_KEY_PRIVATE` (платний), `PRIVATE_AI_DAILY_LIMIT=100`, `TRIGGER_SECRET_KEY`.
+- [ ] Settings → Functions → **Function Region** = `fra1` (Frankfurt), поруч із Supabase `eu-central-1`. Settings → General → **Node.js Version** = `24.x`.
+- [ ] Environment Variables: додайте їх лише для середовища **Production**. Ніколи не копіюйте прод-змінні у Preview. Прев'ю-деплої без змінних падатимуть, тому вимкніть їх (Settings → Git → Ignored Build Step або вимкніть Preview deployments) або ігноруйте. Змінні (Production): `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SITE_URL` (= адреса Vercel), `NEXT_PUBLIC_AUTH_GOOGLE_ENABLED=true`, `GEMINI_API_KEY_PRIVATE` (платний), `PRIVATE_AI_DAILY_LIMIT=100`, `TRIGGER_SECRET_KEY`.
 - [ ] Після першого деплою, якщо адреса Vercel відрізняється від тієї, що ви вказали, оновіть `SITE_URL` у Vercel та Site URL і Redirect URLs у Supabase.
 
 ## 7. Перший запуск
@@ -67,7 +70,7 @@ Repository → Settings → Secrets and variables → Actions.
 ## 8. Пізніше: домен і Resend
 
 - [ ] Купіть домен, додайте його у Vercel (Settings → Domains).
-- [ ] Оновіть `SITE_URL` у Vercel і Site URL та Redirect URLs у Supabase.
+- [ ] Оновіть `SITE_URL` у Vercel і Site URL та Redirect URLs у Supabase. Робіть це разом: сайт треба завжди відкривати саме на хості з `SITE_URL` (`redirectTo` бере поточний origin, а callback перенаправляє на `SITE_URL`), інакше вхід закінчиться на іншому хості.
 - [ ] Resend: додайте домен, пропишіть DNS-записи, створіть API key.
 - [ ] Supabase → Authentication → SMTP: host `smtp.resend.com`, port `465`, user `resend`, password = API key, sender `no-reply@<домен>`.
 
