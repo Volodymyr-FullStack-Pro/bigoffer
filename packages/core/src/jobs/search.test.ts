@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildSourceQueries, parseList, searchProfileInputSchema } from './search';
+import { buildSourceQueries, parseList, searchProfileInputSchema, searchTerms } from './search';
 
 describe('parseList', () => {
   it('splits, trims and dedupes case-insensitively', () => {
@@ -40,8 +40,11 @@ describe('buildSourceQueries', () => {
   const bySource = (id: string) => specs.filter((s) => s.sourceId === id);
 
   it('creates one query per keyword for search sources', () => {
-    expect(bySource('dou').map((s) => s.params).filter((p) => p.search)).toEqual([{ search: 'full stack' }, { search: 'react developer' }]);
-    expect(bySource('robotaua')).toHaveLength(2);
+    expect(bySource('dou').map((s) => s.params).filter((p) => p.search)).toEqual(
+      searchTerms({ keywords: ['Full Stack', 'React Developer'], skills: ['React', 'Node.js'] }).map((search) => ({ search })),
+    );
+    expect(bySource('dou').filter((s) => s.params.search)).toHaveLength(5);
+    expect(bySource('robotaua')).toHaveLength(5);
     expect(bySource('himalayas')[0]!.params).toEqual({ q: 'full stack' });
   });
   it('maps skills to djinni primary keywords', () => {
@@ -81,10 +84,10 @@ describe('buildSourceQueries with source selection', () => {
       sources: ['workua', 'olx', 'linkedin', 'jobicy', 'arbeitnow', 'workingnomads', 'justjoin', 'jobico'],
     });
     const p = (id: string) => specs.filter((s) => s.sourceId === id).map((s) => s.params);
-    expect(p('workua')).toEqual([{ search: 'full stack', remote: '1' }]);
-    expect(p('olx')).toEqual([{ search: 'full stack' }]);
-    expect(p('linkedin')).toEqual([{ keywords: 'full stack', location: 'Worldwide', remote: '1' }]);
-    expect(p('jobicy')).toEqual([{ tag: 'full stack' }]);
+    expect(p('workua')[0]).toEqual({ search: 'full stack', remote: '1' });
+    expect(p('olx')[0]).toEqual({ search: 'full stack' });
+    expect(p('linkedin')[0]).toEqual({ keywords: 'full stack', location: 'Worldwide', remote: '1' });
+    expect(p('jobicy')[0]).toEqual({ tag: 'full stack' });
     expect(p('arbeitnow')).toEqual([{}]);
     expect(p('workingnomads')).toEqual([{}]);
     expect(p('justjoin')).toEqual([{}]);
@@ -111,5 +114,29 @@ describe('DOU categories', () => {
   it('adds none for unrelated profiles', () => {
     const specs = buildSourceQueries({ keywords: ['accountant'], skills: ['Excel'], remoteType: 'office', sources: ['dou'] });
     expect(specs.some((s) => s.params.category)).toBe(false);
+  });
+});
+
+describe('searchTerms', () => {
+  it('uses all keywords plus job-title variants, capped at 6', () => {
+    expect(searchTerms({ keywords: ['full stack', 'react', 'node.js', 'next.js', 'frontend'], skills: ['TypeScript'] })).toEqual([
+      'full stack', 'react', 'node.js', 'next.js', 'frontend', 'full stack developer',
+    ]);
+  });
+  it('adds title variants for short profiles', () => {
+    expect(searchTerms({ keywords: ['react'], skills: ['Node.js'] })).toEqual(['react', 'react developer', 'frontend developer', 'node.js developer']);
+  });
+  it('dedupes case-insensitively and drops blanks', () => {
+    expect(searchTerms({ keywords: [' React ', 'react', ''], skills: [] })).toEqual(['react', 'react developer', 'frontend developer']);
+  });
+});
+
+describe('adzuna queries', () => {
+  it('builds 2 terms x 4 countries with remote', () => {
+    const specs = buildSourceQueries({ keywords: ['react', 'node.js'], skills: [], remoteType: 'remote', sources: ['adzuna'] });
+    expect(specs.map((s) => s.params)).toEqual([
+      { what: 'react remote', country: 'pl' }, { what: 'react remote', country: 'de' }, { what: 'react remote', country: 'gb' }, { what: 'react remote', country: 'nl' },
+      { what: 'node.js remote', country: 'pl' }, { what: 'node.js remote', country: 'de' }, { what: 'node.js remote', country: 'gb' }, { what: 'node.js remote', country: 'nl' },
+    ]);
   });
 });

@@ -88,6 +88,35 @@ const SEARCH_SOURCES: [SourceId, string][] = [
   ['jobicy', 'tag'],
 ];
 
+const MAX_TERMS = 6;
+/** Job-title variants that job boards match better than bare technology names. */
+const TITLE_VARIANTS: [RegExp, string[]][] = [
+  [/^full ?-?stack$/, ['full stack developer']],
+  [/^react(\.js)?$/, ['react developer', 'frontend developer']],
+  [/^front ?-?end$/, ['frontend developer']],
+  [/^node(\.js)?$/, ['node.js developer']],
+  [/^next(\.js)?$/, ['next.js developer']],
+  [/^(javascript|js)$/, ['javascript developer']],
+  [/^(typescript|ts)$/, ['typescript developer']],
+];
+
+/** Search terms for keyword-based sources: the profile's keywords first, then title variants of keywords and skills. */
+export function searchTerms(profile: Pick<SearchProfile, 'keywords' | 'skills'>): string[] {
+  const out: string[] = [];
+  const push = (t: string) => {
+    const v = t.trim().toLowerCase();
+    if (v && !out.includes(v)) out.push(v);
+  };
+  for (const k of profile.keywords) push(k);
+  for (const t of [...profile.keywords, ...profile.skills]) {
+    const key = t.trim().toLowerCase();
+    for (const [re, variants] of TITLE_VARIANTS) if (re.test(key)) variants.forEach(push);
+  }
+  return out.slice(0, MAX_TERMS);
+}
+
+export const ADZUNA_COUNTRIES = ['pl', 'de', 'gb', 'nl'] as const;
+
 export function queryKey(sourceId: SourceId, params: Record<string, string>): string {
   const sorted = Object.fromEntries(
     Object.keys(params)
@@ -106,7 +135,7 @@ export function buildSourceQueries(
 ): SourceQuerySpec[] {
   const enabled = new Set<SourceId>(profile.sources ?? defaultSources(profile.remoteType));
   const remote = profile.remoteType === 'remote';
-  const keywords = profile.keywords.map((k) => k.trim().toLowerCase()).filter(Boolean).slice(0, 3);
+  const keywords = searchTerms(profile);
   const specs: SourceQuerySpec[] = [];
   const add = (sourceId: SourceId, params: Record<string, string>) => {
     if (enabled.has(sourceId)) specs.push({ sourceId, params, queryKey: queryKey(sourceId, params) });
@@ -122,6 +151,9 @@ export function buildSourceQueries(
       'linkedin',
       remote ? { keywords: keyword, location: 'Worldwide', remote: '1' } : { keywords: keyword, location: 'Ukraine' },
     );
+  }
+  for (const term of keywords.slice(0, 2)) {
+    for (const country of ADZUNA_COUNTRIES) add('adzuna', { what: `${term} remote`, country });
   }
 
   const terms = [...profile.keywords, ...profile.skills].map((t) => t.toLowerCase());

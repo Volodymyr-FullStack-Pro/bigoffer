@@ -13,6 +13,7 @@ describe('SOURCE_CATALOG', () => {
   it('marks LinkedIn as beta and Jooble as needing a key', () => {
     expect(sourceInfo('linkedin')?.beta).toBe(true);
     expect(sourceInfo('jooble')?.requiresKey).toBe('JOOBLE_API_KEY');
+    expect(sourceInfo('adzuna')?.requiresKey).toBe('ADZUNA_APP_ID');
     expect(sourceInfo('nope')).toBeUndefined();
   });
   it('lists browser sources', () => {
