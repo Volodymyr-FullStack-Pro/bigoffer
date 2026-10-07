@@ -36,6 +36,19 @@ export type Database = {
                   Relationships: [
                     
                   ]
+                },"ai_user_usage": {
+                  Row: {
+                    "day": string,"requests": number,"user_id": string
+                  }
+                  Insert: {
+                    "day": string,"requests"?: number,"user_id": string
+                  }
+                  Update: {
+                    "day"?: string,"requests"?: number,"user_id"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
                 },"answer_bank": {
                   Row: {
                     "answer": NonNullable<Json>,"id": string,"key": string,"question": string,"updated_at": string,"user_id": string
@@ -533,7 +546,10 @@ isOneToOne: false
             [_ in never]: never
           }
           Functions: {
-            "find_similar_job":
+            "consume_private_ai":
+{ Args: { "p_limit": number }; Returns: boolean
+                           },
+"find_similar_job":
 { Args: { "p_company_id": string,"p_title": string }; Returns: string
                            },
 "jobs_to_enrich":
