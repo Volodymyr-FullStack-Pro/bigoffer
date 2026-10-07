@@ -12,7 +12,12 @@ export const expireJobsTask = schedules.task({
     const now = new Date();
     const expired = await expireJobs(db, now);
     const timedOut = await failStaleRuns(db, now);
-    const discovered = await discoverBoards(db, pipelineDeps());
+    let discovered: { checked: number; added: number } | null = null;
+    try {
+      discovered = await discoverBoards(db, pipelineDeps());
+    } catch (err) {
+      logger.error('board discovery failed', { error: err instanceof Error ? err.message : String(err) });
+    }
     logger.info('expired jobs', { expired, timedOut, discovered });
     return { expired, timedOut, discovered };
   },

@@ -52,4 +52,29 @@ describe('source boards', () => {
     const { data } = await db.from('source_boards').select('origin, enabled').eq('source_id', 'ashby').eq('slug', found).single();
     expect(data).toEqual({ origin: 'discovered', enabled: true });
   });
+
+  it('remembers a failed candidate as disabled and does not re-check it', async () => {
+    const dead = `dead${uniq}`;
+    const { data: company } = await db.from('companies').select('id').eq('normalized_name', `boards ${uniq}`).single();
+    const { data: job } = await db
+      .from('jobs')
+      .insert({ fingerprint: `boards-${uniq}-dead`, title: 'Backend Engineer', company_id: company!.id, description_text: `https://jobs.lever.co/${dead}/x` })
+      .select('id')
+      .single();
+    expect(job).not.toBeNull();
+    let calls = 0;
+    const lever: SourceAdapter = {
+      id: 'lever',
+      search: async (p) => {
+        if (p.board === dead) calls += 1;
+        return [];
+      },
+    };
+    const deps = { adapters: { lever }, createContext: () => ({}) as never };
+    await discoverBoards(db, deps);
+    const { data } = await db.from('source_boards').select('origin, enabled, failures').eq('source_id', 'lever').eq('slug', dead).single();
+    expect(data).toEqual({ origin: 'discovered', enabled: false, failures: 3 });
+    await discoverBoards(db, deps);
+    expect(calls).toBe(1);
+  });
 });

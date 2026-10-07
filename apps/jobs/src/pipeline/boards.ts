@@ -78,24 +78,29 @@ export async function discoverBoards(
       }
     }
   }
+  const verifiable = [...candidates.values()].filter((c) => deps.adapters[c.sourceId]);
   let checked = 0;
   let added = 0;
-  for (const c of [...candidates.values()].slice(0, MAX_CHECKS)) {
-    const adapter: SourceAdapter | undefined = deps.adapters[c.sourceId];
-    if (!adapter) continue;
+  for (const c of verifiable.slice(0, MAX_CHECKS)) {
+    const adapter = deps.adapters[c.sourceId]!;
     checked += 1;
     const ctx = deps.createContext(c.sourceId);
+    let ok = false;
     try {
-      const found = await adapter.search({ board: c.slug }, ctx);
-      if (found.length > 0) {
-        const { error: insertError } = await db.from('source_boards').insert({ source_id: c.sourceId, slug: c.slug, origin: 'discovered' });
-        if (!insertError) added += 1;
-      }
+      ok = (await adapter.search({ board: c.slug }, ctx)).length > 0;
     } catch {
-      // not a real board, or the API refused: skip
+      // not a real board, or the API refused: remembered below as a dead candidate
     } finally {
       await ctx.dispose?.().catch(() => undefined);
     }
+    // A failed candidate is stored disabled so it counts as known and is not re-checked every night.
+    const { error: insertError } = await db.from('source_boards').insert({
+      source_id: c.sourceId,
+      slug: c.slug,
+      origin: 'discovered',
+      ...(ok ? {} : { enabled: false, failures: MAX_FAILURES }),
+    });
+    if (!insertError && ok) added += 1;
   }
   return { checked, added };
 }
