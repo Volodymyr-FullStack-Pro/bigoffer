@@ -66,7 +66,8 @@
     "seniority_junior": "Junior",
     "seniority_middle": "Middle",
     "seniority_senior": "Senior",
-    "seniority_lead": "Lead"
+    "seniority_lead": "Lead",
+    "onboardingBanner": "Finish setting up: CV, letter template and typical answers"
   },
   "feed": {
     "progress": "{done} / {total}",
@@ -272,5 +273,37 @@
     "createSearch": "Create a job search from my CV",
     "fillContacts": "Fill empty contacts from CV",
     "contactsFilled": "Contacts updated."
+  },
+  "bank": {
+    "title": "Answer bank",
+    "hint": "Typical form questions are answered from here instantly, without AI.",
+    "q_salary": "Salary expectations",
+    "q_start_date": "When can you start",
+    "q_english": "English level",
+    "q_why_looking": "Why are you looking for a new job",
+    "q_work_format": "Preferred work format",
+    "save": "Save",
+    "delete": "Delete",
+    "newQuestion": "Another question you often get",
+    "newAnswer": "Your answer",
+    "add": "Add to bank",
+    "saved": "Saved.",
+    "error": "Couldn't save. Try again."
+  },
+  "template": {
+    "title": "Cover letter template",
+    "hint": "AI replaces only the [...] parts with lines about each job.",
+    "save": "Save template",
+    "saved": "Saved.",
+    "error": "Couldn't save. Try again."
+  },
+  "onboarding": {
+    "title": "Let's set you up",
+    "stepCv": "Upload your CV",
+    "stepSearch": "Set up what you're looking for",
+    "manualSearch": "Set up the search manually",
+    "stepTemplate": "Your cover letter template",
+    "stepAnswers": "Answers to typical questions",
+    "finish": "Done — show me jobs"
   }
 }
