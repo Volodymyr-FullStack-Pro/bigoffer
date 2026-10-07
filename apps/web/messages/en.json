@@ -288,7 +288,8 @@
     "newAnswer": "Your answer",
     "add": "Add to bank",
     "saved": "Saved.",
-    "error": "Couldn't save. Try again."
+    "error": "Couldn't save. Try again.",
+    "deleted": "Deleted."
   },
   "template": {
     "title": "Cover letter template",

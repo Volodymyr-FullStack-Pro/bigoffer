@@ -14,11 +14,11 @@ export function AnswerBank({ answers, locale }: { answers: BankAnswer[]; locale:
   const [values, setValues] = useState<Record<string, string>>(Object.fromEntries([...base, ...custom].map((a) => [a.key, a.answer])));
   const [newQ, setNewQ] = useState('');
   const [newA, setNewA] = useState('');
-  const [status, setStatus] = useState<'idle' | 'saved' | 'error'>('idle');
+  const [status, setStatus] = useState<'idle' | 'saved' | 'deleted' | 'error'>('idle');
   const field = 'brutal bg-card px-2 py-1 text-sm';
 
   const save = async (a: BankAnswer) => {
-    const res = await saveBankAnswer({ key: a.key, question: a.question, answer: values[a.key] ?? '', locale });
+    const res = await saveBankAnswer({ key: a.key, question: a.question, answer: values[a.key] ?? a.answer, locale });
     setStatus(res.ok ? 'saved' : 'error');
   };
 
@@ -30,11 +30,11 @@ export function AnswerBank({ answers, locale }: { answers: BankAnswer[]; locale:
         <div key={a.key} data-testid="bank-answer" data-key={a.key} className="flex flex-col gap-1">
           <label htmlFor={`bank-${a.key}`} className="font-mono text-xs uppercase">{a.question}</label>
           <div className="flex gap-2">
-            <textarea id={`bank-${a.key}`} value={values[a.key] ?? ''} maxLength={2000} onChange={(e) => setValues((v) => ({ ...v, [a.key]: e.target.value }))} className={`${field} min-h-14 flex-1`} />
+            <textarea id={`bank-${a.key}`} value={values[a.key] ?? a.answer} maxLength={2000} onChange={(e) => setValues((v) => ({ ...v, [a.key]: e.target.value }))} className={`${field} min-h-14 flex-1`} />
             <div className="flex flex-col gap-1">
               <button type="button" data-testid="bank-save" onClick={() => void save(a)} className="brutal brutal-press px-3 py-1 text-sm font-semibold">{t('save')}</button>
               {!(BANK_KEYS as readonly string[]).includes(a.key) && (
-                <button type="button" onClick={async () => setStatus((await deleteBankAnswer(a.key)) ? 'saved' : 'error')} className="text-xs text-danger underline">{t('delete')}</button>
+                <button type="button" onClick={async () => setStatus((await deleteBankAnswer(a.key)) ? 'deleted' : 'error')} className="text-xs text-danger underline">{t('delete')}</button>
               )}
             </div>
           </div>
@@ -57,7 +57,7 @@ export function AnswerBank({ answers, locale }: { answers: BankAnswer[]; locale:
           {t('add')}
         </button>
       </div>
-      <p role="status" className="text-sm">{status === 'saved' && t('saved')}{status === 'error' && t('error')}</p>
+      <p role="status" className="text-sm">{status === 'saved' && t('saved')}{status === 'deleted' && t('deleted')}{status === 'error' && t('error')}</p>
     </section>
   );
 }
