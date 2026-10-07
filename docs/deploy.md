@@ -41,8 +41,27 @@
 ## 4. Trigger.dev Cloud
 
 - [ ] Створіть проєкт, візьміть **project ref** (`proj_…`) і **Personal Access Token** (Account → Personal Access Tokens).
-- [ ] Project → Environment Variables (середовище **Production**), додайте: `SUPABASE_URL`, `SUPABASE_SECRET_KEY`, `GEMINI_API_KEY_PUBLIC`, `JOOBLE_API_KEY` (якщо є), `AI_DAILY_LIMIT` (необов'язково, за замовчуванням 900).
+- [ ] Project → Environment Variables (середовище **Production**), додайте: `SUPABASE_URL`, `SUPABASE_SECRET_KEY`, `GEMINI_API_KEY_PUBLIC`, `JOOBLE_API_KEY` (якщо є), `ADZUNA_APP_ID` і `ADZUNA_APP_KEY` (якщо є), `SCRAPE_INTERVAL_MULTIPLIER` (необов'язково, за замовчуванням 1), `AI_DAILY_LIMIT` (необов'язково, за замовчуванням 900).
 - [ ] Візьміть **`TRIGGER_SECRET_KEY`** для Production (Project → API Keys) — він піде у Vercel.
+
+### Jooble
+
+- [ ] Ключ беруть на jooble.org/api/about (форма запиту API-ключа). Він іде в Trigger.dev як `JOOBLE_API_KEY`; з ключем джерело Jooble працює, без нього вимкнене.
+
+### Adzuna
+
+- [ ] На developer.adzuna.com → Register створіть акаунт і візьміть **App ID** та **App Key**. Вони йдуть у Trigger.dev як `ADZUNA_APP_ID` і `ADZUNA_APP_KEY`.
+- Adzuna — офіційний API: шукає по країнах pl, de, gb, nl запитом «<термін> remote» кожні 6 годин. Без обох ключів джерело вимкнене.
+
+### Множник частоти
+
+`SCRAPE_INTERVAL_MULTIPLIER` (число ≥ 1, за замовчуванням 1) множить інтервали опитування джерел: 1 — як є, 2 — удвічі рідше й приблизно удвічі дешевше. Менше за 1 або некоректне значення рахується як 1.
+
+### Як стежити за витратами Trigger.dev
+
+- Типова машина задач — `micro`; `sync-profile`, `schedule-queries` і `expire-jobs` працюють на `small-1x`, а браузерні джерела (Work.ua, OLX, LinkedIn) на `small-2x` на запуск. Якщо задачі не вистачає пам'яті, вона автоматично повторюється на `small-1x`.
+- Dashboard → Usage показує витрати за місяць проти $5 безкоштовного кредиту.
+- Якщо за перший тиждень витрачено понад $1.2, поставте `SCRAPE_INTERVAL_MULTIPLIER=2` у Trigger.dev (Environment Variables) і задеплойте задачі знову.
 
 ## 5. GitHub
 
@@ -89,7 +108,9 @@ Repository → Settings → Secrets and variables → Actions.
 | `SUPABASE_URL` | Trigger.dev | Supabase → Project URL | так |
 | `SUPABASE_SECRET_KEY` | Trigger.dev | Supabase → secret key | так |
 | `GEMINI_API_KEY_PUBLIC` | Trigger.dev | AI Studio, безкоштовний ключ | так (для AI-збагачення) |
-| `JOOBLE_API_KEY` | Trigger.dev | Jooble API | ні |
+| `JOOBLE_API_KEY` | Trigger.dev | jooble.org/api/about | ні |
+| `ADZUNA_APP_ID`, `ADZUNA_APP_KEY` | Trigger.dev | developer.adzuna.com → Register | ні (без обох ключів Adzuna вимкнена) |
+| `SCRAPE_INTERVAL_MULTIPLIER` | Trigger.dev | число ≥ 1, за замовчуванням 1; 2 — удвічі рідше й дешевше | ні |
 | `AI_DAILY_LIMIT` | Trigger.dev | число, за замовчуванням 900 | ні |
 | `AI_BATCH_SIZE`, `AI_MIN_INTERVAL_MS`, `AI_MODEL_PUBLIC`, `SCRAPER_USER_AGENT` | Trigger.dev | налаштування за потреби | ні |
 | `SUPABASE_ACCESS_TOKEN` | GitHub (secret) | Supabase → Account → Access Tokens | так |
