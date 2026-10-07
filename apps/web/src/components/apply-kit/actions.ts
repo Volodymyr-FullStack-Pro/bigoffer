@@ -4,14 +4,14 @@ import { answerForm, type ApplyKit, generateApplyKit, type KitJob } from '@jp/ai
 import { matchBankKey, rankAtTop, splitQuestions } from '@jp/core';
 import type { Json, TablesInsert } from '@jp/db';
 import { revalidatePath } from 'next/cache';
-import { getLlm, privateAiAvailable } from '@/lib/ai';
+import { consumePrivateAi, getLlm, privateAiAvailable } from '@/lib/ai';
 import { getUserId } from '@/lib/auth';
 import { cvSignedUrl, loadPrimaryCv } from '@/lib/cv';
 import { createClient } from '@/lib/supabase/server';
 import { chooseTemplate } from './template';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-export type KitError = 'ai_unavailable' | 'no_cv' | 'not_found' | 'failed';
+export type KitError = 'ai_unavailable' | 'ai_limit' | 'no_cv' | 'not_found' | 'failed';
 export type FormAnswer = { question: string; answer: string; fromBank: boolean };
 export type StoredKit = ApplyKit & { formAnswers: FormAnswer[] };
 export type KitData = { kit: StoredKit | null; formAnswers: FormAnswer[]; aiAvailable: boolean; hasCv: boolean; contacts: Record<string, string>; cvLink: string | null; jobUrl: string | null };
@@ -107,6 +107,7 @@ export async function generateKit(jobId: string, opts: { lang: 'auto' | 'en' | '
     supabase.from('profiles').select('locale').eq('id', userId).single(),
   ]);
   const template = chooseTemplate(templates, opts.lang, profileRow?.locale);
+  if (!(await consumePrivateAi(supabase))) return { ok: false, error: 'ai_limit' };
   try {
     const kit = await generateApplyKit(getLlm(), { job, cv: cv.parsed, template, lang: opts.lang, tone: opts.tone, salaryMinUsd: profiles?.[0]?.salary_min_usd ?? null });
     const { data: existing } = await supabase.from('apply_kits').select('form_answers').eq('job_id', jobId).maybeSingle();
@@ -165,6 +166,7 @@ export async function answerFormQuestions(jobId: string, formText: string): Prom
     const [job, cv] = await Promise.all([loadJob(supabase, jobId), loadPrimaryCv(supabase)]);
     if (!job) return { ok: false, error: 'not_found' };
     if (!cv?.parsed) return { ok: false, error: 'no_cv' };
+    if (!(await consumePrivateAi(supabase))) return { ok: false, error: 'ai_limit' };
     try {
       const generated = await answerForm(getLlm(), { questions: missing.map((m) => m.question), job, cv: cv.parsed, lang });
       missing.forEach((m, i) => { m.answer = generated[i] ?? ''; });

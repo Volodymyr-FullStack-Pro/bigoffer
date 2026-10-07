@@ -2,7 +2,7 @@
 
 import { MESSAGE_FORMATS, type MessageFormat, recruiterMessage } from '@jp/ai';
 import { revalidatePath } from 'next/cache';
-import { getLlm, privateAiAvailable } from '@/lib/ai';
+import { consumePrivateAi, getLlm, privateAiAvailable } from '@/lib/ai';
 import { getUserId } from '@/lib/auth';
 import { loadPrimaryCv } from '@/lib/cv';
 import { createClient } from '@/lib/supabase/server';
@@ -12,7 +12,7 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export async function generateRecruiterMessage(
   applicationId: string,
   opts: { format: MessageFormat; kind: 'intro' | 'follow_up'; lang: 'en' | 'uk' | 'ru'; tone: 'default' | 'shorter' | 'formal' },
-): Promise<{ ok: true; subject: string | null; body: string } | { ok: false; error: 'ai_unavailable' | 'no_cv' | 'not_found' | 'failed' }> {
+): Promise<{ ok: true; subject: string | null; body: string } | { ok: false; error: 'ai_unavailable' | 'ai_limit' | 'no_cv' | 'not_found' | 'failed' }> {
   if (!(await getUserId()) || !UUID.test(applicationId) || !MESSAGE_FORMATS.includes(opts.format) || !['intro', 'follow_up'].includes(opts.kind) || !['en', 'uk', 'ru'].includes(opts.lang) || !['default', 'shorter', 'formal'].includes(opts.tone)) {
     return { ok: false, error: 'not_found' };
   }
@@ -26,6 +26,7 @@ export async function generateRecruiterMessage(
   if (!app) return { ok: false, error: 'not_found' };
   if (!cv?.parsed) return { ok: false, error: 'no_cv' };
   const contact = (app.contact ?? {}) as { name?: unknown };
+  if (!(await consumePrivateAi(supabase))) return { ok: false, error: 'ai_limit' };
   try {
     const res = await recruiterMessage(getLlm(), {
       format: opts.format,

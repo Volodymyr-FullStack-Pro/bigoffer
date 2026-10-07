@@ -4,13 +4,13 @@ import { parseCv, searchProfileFromCv } from '@jp/ai';
 import { revalidatePath } from 'next/cache';
 import { getLocale } from 'next-intl/server';
 import { redirect } from '@/i18n/navigation';
-import { privateAiAvailable, getLlm } from '@/lib/ai';
+import { consumePrivateAi, getLlm, privateAiAvailable } from '@/lib/ai';
 import { getUserId } from '@/lib/auth';
 import { loadPrimaryCv } from '@/lib/cv';
 import { createClient } from '@/lib/supabase/server';
 import { requestProfileSync } from '@/lib/trigger';
 
-export type CvState = { status: 'idle' | 'parsed' | 'stored' | 'invalid' | 'error'; message?: 'not_pdf' | 'too_big' | 'ai_unavailable' | 'parse_failed' };
+export type CvState = { status: 'idle' | 'parsed' | 'stored' | 'invalid' | 'error'; message?: 'not_pdf' | 'too_big' | 'ai_unavailable' | 'ai_limit' | 'parse_failed' };
 
 const MAX_BYTES = 5 * 1024 * 1024;
 
@@ -57,6 +57,11 @@ export async function uploadCv(_prev: CvState, formData: FormData): Promise<CvSt
     const { error: flagError } = await supabase.from('resumes').update({ parse_error: 'ai_unavailable' }).eq('id', row.id);
     if (flagError) console.error('cv: could not flag ai_unavailable', flagError.code ?? 'unknown');
     return { status: 'stored', message: 'ai_unavailable' };
+  }
+  if (!(await consumePrivateAi(supabase))) {
+    const { error: flagError } = await supabase.from('resumes').update({ parse_error: 'ai_limit' }).eq('id', row.id);
+    if (flagError) console.error('cv: could not flag ai_limit', flagError.code ?? 'unknown');
+    return { status: 'stored', message: 'ai_limit' };
   }
   try {
     const parsed = await parseCv(getLlm(), { pdfBase64: bytes.toString('base64') });

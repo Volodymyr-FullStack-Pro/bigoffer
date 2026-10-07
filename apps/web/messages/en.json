@@ -267,6 +267,7 @@
     "parsed": "CV read: check the skills below.",
     "storedNoAi": "CV saved. AI reading is unavailable (no private AI key).",
     "storedParseFailed": "CV saved, but AI couldn't read it.",
+    "aiLimit": "CV saved. Today's AI limit is used up — it will be read after 00:00 UTC (03:00 Kyiv); upload again then.",
     "notPdf": "Choose a PDF file.",
     "tooBig": "The file is larger than 5 MB.",
     "error": "Something went wrong. Try again.",
@@ -351,6 +352,7 @@
     "no": "Not yet",
     "appliedDone": "Moved to Applied.",
     "err_ai_unavailable": "AI for personal data is off (no paid private key).",
+    "err_ai_limit": "Today's AI limit is used up. It resets at 00:00 UTC (03:00 Kyiv).",
     "err_no_cv": "Upload your CV in Profile to generate letters.",
     "err_not_found": "This job is no longer available.",
     "err_failed": "Couldn't generate. Try again.",
@@ -377,6 +379,7 @@
     "outgoing": "Sent",
     "incoming": "Received",
     "err_ai_unavailable": "AI for personal data is off (no paid private key).",
+    "err_ai_limit": "Today's AI limit is used up. It resets at 00:00 UTC (03:00 Kyiv).",
     "err_no_cv": "Upload your CV in Profile first.",
     "err_not_found": "Card not found.",
     "err_failed": "Couldn't write the message. Try again."

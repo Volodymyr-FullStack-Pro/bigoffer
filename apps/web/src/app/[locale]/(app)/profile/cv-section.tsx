@@ -22,7 +22,7 @@ export function CvSection({ cv, aiAvailable, cvLink }: { cv: { fileName: string;
       </form>
       <p data-testid="cv-status" role="status" className="text-sm">
         {state.status === 'parsed' && t('parsed')}
-        {state.status === 'stored' && t(state.message === 'ai_unavailable' ? 'storedNoAi' : 'storedParseFailed')}
+        {state.status === 'stored' && t(state.message === 'ai_unavailable' ? 'storedNoAi' : state.message === 'ai_limit' ? 'aiLimit' : 'storedParseFailed')}
         {state.status === 'invalid' && t(state.message === 'too_big' ? 'tooBig' : 'notPdf')}
         {state.status === 'error' && t('error')}
       </p>
