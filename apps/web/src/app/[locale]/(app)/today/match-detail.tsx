@@ -101,16 +101,19 @@ export function MatchDetail({ match, onAction, onApplied, showDescription = true
       )}
       <div className="flex flex-wrap gap-2">
         {match.postings.filter((p) => /^https?:\/\//i.test(p.url)).map((p) => (
-          <span key={p.url} className="inline-flex items-center gap-2">
-            <a href={p.url} target="_blank" rel="noopener" data-testid="match-open" className="brutal brutal-press px-3 py-1.5 text-sm font-semibold">
-              {t('open', { source: sourceInfo(p.sourceId)?.name ?? p.sourceId })} ↗
-            </a>
+          <div key={p.url} className="flex flex-col gap-1">
+            <span className="inline-flex items-center gap-2">
+              <a href={p.url} target="_blank" rel="noopener" data-testid="match-open" className="brutal brutal-press px-3 py-1.5 text-sm font-semibold">
+                {t('open', { source: sourceInfo(p.sourceId)?.name ?? p.sourceId })} ↗
+              </a>
+              {sourceInfo(p.sourceId)?.applyPaywall && (
+                <span data-testid="paid-apply" className="font-mono text-xs text-warning">{t('paidApply')}</span>
+              )}
+            </span>
             {sourceInfo(p.sourceId)?.applyPaywall && (
-              <span data-testid="paid-apply" className="font-mono text-xs text-warning" title={t('paidApplyHint')}>
-                {t('paidApply')}
-              </span>
+              <p data-testid="paid-apply-hint" className="max-w-sm text-xs text-muted-foreground">{t('paidApplyHint')}</p>
             )}
-          </span>
+          </div>
         ))}
       </div>
       {onAction && <MatchActions onAction={onAction} />}
