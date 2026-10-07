@@ -15,18 +15,23 @@ type Done = { match: FeedMatch; index: number; action: MatchAction };
 
 const isDesktop = () => typeof window !== 'undefined' && window.matchMedia('(min-width: 768px)').matches;
 
-export function Feed({ matches, profiles, sources }: { matches: FeedMatch[]; profiles: { id: string; name: string }[]; sources: { id: string; name: string }[] }) {
+export function Feed({ matches, profiles, sources, focusId = null }: { matches: FeedMatch[]; profiles: { id: string; name: string }[]; sources: { id: string; name: string }[]; focusId?: string | null }) {
   const t = useTranslations('feed');
   const tt = useTranslations('today');
   // Decided once: a save/hide server action re-renders the page with fewer matches, which must not turn the feed into the "no matches yet" state.
   const [startedEmpty] = useState(matches.length === 0);
   const [items, setItems] = useState(matches);
   const [filters, setFilters] = useState<FeedFilters>(DEFAULT_FILTERS);
-  const [selectedId, setSelectedId] = useState<string | null>(matches[0]?.id ?? null);
+  const [selectedId, setSelectedId] = useState<string | null>(focusId ?? matches[0]?.id ?? null);
   const [done, setDone] = useState<Done[]>([]);
   const { toast, show, close } = useToast();
 
-  const visible = useMemo(() => sortMatches(filterMatches(items, filters), filters.sort), [items, filters]);
+  // The focused match (?match=) leads the list: selected on desktop, the first card on mobile.
+  const visible = useMemo(() => {
+    const sorted = sortMatches(filterMatches(items, filters), filters.sort);
+    const focused = focusId ? sorted.find((m) => m.id === focusId) : undefined;
+    return focused ? [focused, ...sorted.filter((m) => m !== focused)] : sorted;
+  }, [items, filters, focusId]);
   const selected = visible.find((m) => m.id === selectedId) ?? visible[0] ?? null;
 
   const act = useCallback(

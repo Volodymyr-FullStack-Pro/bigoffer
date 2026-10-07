@@ -395,5 +395,23 @@
     "err_no_cv": "Upload your CV in Profile first.",
     "err_not_found": "Card not found.",
     "err_failed": "Couldn't write the message. Try again."
+  },
+  "telegram": {
+    "title": "Telegram",
+    "intro": "Get new matching jobs and a daily digest in Telegram.",
+    "notConfigured": "The Telegram bot is not set up yet.",
+    "connect": "Connect Telegram",
+    "openBot": "Open the bot",
+    "linkHint": "Press Start in the bot. The link works for 15 minutes.",
+    "check": "I pressed Start",
+    "connected": "Telegram is connected",
+    "alerts": "Send new jobs right away",
+    "minScore": "Minimum match, %",
+    "digestHour": "Daily digest at",
+    "timezone": "Time zone: {timezone}",
+    "save": "Save",
+    "saved": "Saved",
+    "disconnect": "Disconnect",
+    "error": "Something went wrong. Please try again."
   }
 }

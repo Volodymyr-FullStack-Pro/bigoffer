@@ -169,3 +169,24 @@ export async function exhaustPrivateAi(email: string) {
   const { error } = await admin().from('ai_user_usage').upsert({ user_id: userId, day: new Date().toISOString().slice(0, 10), requests: 1000 });
   if (error) throw error;
 }
+
+/** Links a Telegram chat directly (the /start flow itself is covered by telegram.spec.ts). */
+export async function linkTelegramChat(email: string, chatId: number) {
+  const userId = await userIdByEmail(email);
+  const { error } = await admin().from('profiles').update({ telegram_chat_id: chatId }).eq('id', userId);
+  if (error) throw error;
+}
+
+export async function telegramChatId(email: string): Promise<number | null> {
+  const userId = await userIdByEmail(email);
+  const { data, error } = await admin().from('profiles').select('telegram_chat_id').eq('id', userId).single();
+  if (error) throw error;
+  return data.telegram_chat_id;
+}
+
+export async function profileLocale(email: string): Promise<string> {
+  const userId = await userIdByEmail(email);
+  const { data, error } = await admin().from('profiles').select('locale').eq('id', userId).single();
+  if (error) throw error;
+  return data.locale;
+}

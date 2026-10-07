@@ -9,6 +9,7 @@ import { mergeMatches } from './feed-filter';
 import type { FeedMatch } from './feed-types';
 
 const REMOTE = ['remote', 'hybrid', 'office'] as const;
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function since24h(): string {
   return new Date(Date.now() - 24 * 3600 * 1000).toISOString();
@@ -18,8 +19,11 @@ function windowStart(): string {
   return new Date(Date.now() - 3 * 24 * 3600 * 1000).toISOString();
 }
 
-export default async function TodayPage() {
+export default async function TodayPage({ searchParams }: { searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) {
   const userId = await requireUserId();
+  const { match } = await searchParams;
+  // ?match=<id> (the Telegram "Open" button) focuses that match when it is in the feed.
+  const focusId = typeof match === 'string' && UUID.test(match) ? match : null;
   const t = await getTranslations('today');
   const rawLocale = await getLocale();
   const locale = isLocale(rawLocale) ? rawLocale : 'en';
@@ -94,6 +98,7 @@ export default async function TodayPage() {
       )}
       <Feed
         matches={matches}
+        focusId={focusId && matches.some((m) => m.id === focusId) ? focusId : null}
         profiles={(profiles ?? []).map((p) => ({ id: p.id, name: p.name }))}
         sources={sourceIds.map((id) => ({ id, name: sourceInfo(id)?.name ?? id }))}
       />

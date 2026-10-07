@@ -5,7 +5,7 @@ import { useActionState } from 'react';
 import { Button } from '@/components/ui/button';
 import { sendMagicLink, type LoginState } from './actions';
 
-export function LoginForm() {
+export function LoginForm({ next }: { next?: string | undefined }) {
   const t = useTranslations('auth');
   const [state, action, pending] = useActionState<LoginState, FormData>(sendMagicLink, {
     status: 'idle',
@@ -21,6 +21,7 @@ export function LoginForm() {
 
   return (
     <form action={action} className="flex flex-col gap-3">
+      {next && <input type="hidden" name="next" value={next} />}
       <label className="flex flex-col gap-1">
         <span className="font-mono text-xs uppercase">{t('email')}</span>
         <input

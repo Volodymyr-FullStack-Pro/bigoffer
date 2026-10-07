@@ -4,7 +4,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { createBrowserSupabase } from '@/lib/supabase/browser';
 
-export function GoogleButton() {
+export function GoogleButton({ next }: { next?: string | undefined }) {
   const t = useTranslations('auth');
   const locale = useLocale();
 
@@ -14,7 +14,7 @@ export function GoogleButton() {
       onClick={() =>
         createBrowserSupabase().auth.signInWithOAuth({
           provider: 'google',
-          options: { redirectTo: `${window.location.origin}/auth/callback?next=/${locale}/today` },
+          options: { redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next ?? `/${locale}/today`)}` },
         })
       }
     >
