@@ -4,6 +4,7 @@ import { isLocale, type Locale } from '@jp/core';
 import { useFormatter, useLocale, useNow, useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { ApplyKitPanel } from '@/components/apply-kit/apply-kit-panel';
+import { RecruiterMessage } from './recruiter-message';
 import { useModalDialog } from './use-modal-dialog';
 import { fromZonedInput, toZonedInput } from './zoned-input';
 import { createLabel, getApplicationEvents, markPinged, markResponse, setApplicationLabel, updateApplication } from './actions';
@@ -42,7 +43,7 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, onClose,
 
   useEffect(() => {
     getApplicationEvents(card.id).then(setEvents).catch(() => setEvents([]));
-  }, [card.id, card.columnId, card.labelIds.length, card.followUpCount]);
+  }, [card.id, card.columnId, card.labelIds.length, card.followUpCount, card.lastActivityAt]);
 
   const attempt = async (fn: () => Promise<boolean>): Promise<boolean> => {
     let ok = false;
@@ -87,6 +88,7 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, onClose,
           {kitOpen && <ApplyKitPanel jobId={card.jobId} locale={locale} onApplied={onApplied} />}
         </div>
       )}
+      <RecruiterMessage applicationId={card.id} defaultLang={locale} onSent={() => onChanged({ lastActivityAt: new Date().toISOString() })} />
       <label className="flex flex-col gap-1 font-mono text-xs uppercase">
         {t('moveTo')}
         <select data-testid="panel-move" value={card.columnId} onChange={(e) => onMove(e.target.value)} className={field}>

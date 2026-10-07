@@ -255,7 +255,8 @@
     "addJobTitle": "Должность",
     "addCompany": "Компания",
     "addLocation": "Локация",
-    "addSubmit": "Добавить на доску"
+    "addSubmit": "Добавить на доску",
+    "event_message": "Отправлено сообщение"
   },
   "cv": {
     "title": "Ваше CV",
@@ -352,5 +353,30 @@
     "err_not_found": "Эта вакансия уже недоступна.",
     "err_failed": "Не удалось сгенерировать. Попробуйте ещё раз.",
     "savedToBank": "Сохранено в банк ответов."
+  },
+  "recruiter": {
+    "title": "Написать рекрутеру",
+    "format": "Формат",
+    "kind": "Тип сообщения",
+    "lang": "Язык",
+    "format_linkedin_note": "LinkedIn note (300)",
+    "format_inmail": "InMail",
+    "format_telegram": "Telegram",
+    "format_email": "Email",
+    "intro": "Первое сообщение",
+    "followUp": "Напоминание",
+    "generate": "Написать",
+    "writing": "Пишу…",
+    "subject": "Тема",
+    "body": "Сообщение",
+    "copy": "Копировать",
+    "sent": "Я отправил ✓",
+    "logged": "Записано",
+    "outgoing": "Отправлено",
+    "incoming": "Получено",
+    "err_ai_unavailable": "AI для личных данных выключен (нет платного приватного ключа).",
+    "err_no_cv": "Сначала загрузите CV в профиле.",
+    "err_not_found": "Карточка не найдена.",
+    "err_failed": "Не удалось написать сообщение. Попробуйте ещё раз."
   }
 }

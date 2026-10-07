@@ -255,7 +255,8 @@
     "addJobTitle": "Job title",
     "addCompany": "Company",
     "addLocation": "Location",
-    "addSubmit": "Add to board"
+    "addSubmit": "Add to board",
+    "event_message": "Message sent"
   },
   "cv": {
     "title": "Your CV",
@@ -352,5 +353,30 @@
     "err_not_found": "This job is no longer available.",
     "err_failed": "Couldn't generate. Try again.",
     "savedToBank": "Saved to answer bank."
+  },
+  "recruiter": {
+    "title": "Write to the recruiter",
+    "format": "Format",
+    "kind": "Message type",
+    "lang": "Language",
+    "format_linkedin_note": "LinkedIn note (300)",
+    "format_inmail": "InMail",
+    "format_telegram": "Telegram",
+    "format_email": "Email",
+    "intro": "First message",
+    "followUp": "Follow-up",
+    "generate": "Write",
+    "writing": "Writing…",
+    "subject": "Subject",
+    "body": "Message",
+    "copy": "Copy",
+    "sent": "I sent it ✓",
+    "logged": "Logged",
+    "outgoing": "Sent",
+    "incoming": "Received",
+    "err_ai_unavailable": "AI for personal data is off (no paid private key).",
+    "err_no_cv": "Upload your CV in Profile first.",
+    "err_not_found": "Card not found.",
+    "err_failed": "Couldn't write the message. Try again."
   }
 }

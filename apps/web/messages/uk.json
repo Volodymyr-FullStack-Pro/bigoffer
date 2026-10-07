@@ -255,7 +255,8 @@
     "addJobTitle": "Посада",
     "addCompany": "Компанія",
     "addLocation": "Локація",
-    "addSubmit": "Додати на дошку"
+    "addSubmit": "Додати на дошку",
+    "event_message": "Надіслано повідомлення"
   },
   "cv": {
     "title": "Ваше CV",
@@ -352,5 +353,30 @@
     "err_not_found": "Ця вакансія вже недоступна.",
     "err_failed": "Не вдалося згенерувати. Спробуйте ще раз.",
     "savedToBank": "Збережено в банк відповідей."
+  },
+  "recruiter": {
+    "title": "Написати рекрутеру",
+    "format": "Формат",
+    "kind": "Тип повідомлення",
+    "lang": "Мова",
+    "format_linkedin_note": "LinkedIn note (300)",
+    "format_inmail": "InMail",
+    "format_telegram": "Telegram",
+    "format_email": "Email",
+    "intro": "Перше повідомлення",
+    "followUp": "Нагадування",
+    "generate": "Написати",
+    "writing": "Пишу…",
+    "subject": "Тема",
+    "body": "Повідомлення",
+    "copy": "Копіювати",
+    "sent": "Я надіслав ✓",
+    "logged": "Записано",
+    "outgoing": "Надіслано",
+    "incoming": "Отримано",
+    "err_ai_unavailable": "AI для особистих даних вимкнено (немає платного приватного ключа).",
+    "err_no_cv": "Спочатку завантажте CV у профілі.",
+    "err_not_found": "Картку не знайдено.",
+    "err_failed": "Не вдалося написати повідомлення. Спробуйте ще раз."
   }
 }
