@@ -14,19 +14,23 @@ export type CvState = { status: 'idle' | 'parsed' | 'stored' | 'invalid' | 'erro
 
 const MAX_BYTES = 5 * 1024 * 1024;
 
-export async function uploadCv(_prev: CvState, formData: FormData): Promise<CvState> {
-  const userId = await getUserId();
-  const file = formData.get('cv');
-  if (!userId) return { status: 'error' };
-  if (!(file instanceof File) || file.size === 0) return { status: 'invalid', message: 'not_pdf' };
-  if (file.size > MAX_BYTES) return { status: 'invalid', message: 'too_big' };
-  const bytes = Buffer.from(await file.arrayBuffer());
-  if (bytes.subarray(0, 5).toString('latin1') !== '%PDF-') return { status: 'invalid', message: 'not_pdf' };
+const PATH = /^[0-9a-f-]{36}\/[0-9a-f-]{36}\.pdf$/i;
 
+// The browser uploads the PDF straight to Storage (Vercel caps request bodies at 4.5 MB); this only verifies and registers it.
+export async function registerCv(path: string, originalName: string): Promise<CvState> {
+  const userId = await getUserId();
+  if (!userId) return { status: 'error' };
+  if (typeof path !== 'string' || !PATH.test(path) || !path.startsWith(`${userId}/`)) return { status: 'invalid', message: 'not_pdf' };
   const supabase = await createClient();
-  const path = `${userId}/${crypto.randomUUID()}.pdf`;
-  const { error: uploadError } = await supabase.storage.from('resumes').upload(path, bytes, { contentType: 'application/pdf' });
-  if (uploadError) return { status: 'error' };
+  const { data: blob, error: downloadError } = await supabase.storage.from('resumes').download(path);
+  if (downloadError || !blob) return { status: 'error' };
+  const bytes = Buffer.from(await blob.arrayBuffer());
+  const reject = async (message: 'not_pdf' | 'too_big'): Promise<CvState> => {
+    await supabase.storage.from('resumes').remove([path]);
+    return { status: 'invalid', message };
+  };
+  if (bytes.length > MAX_BYTES) return reject('too_big');
+  if (bytes.subarray(0, 5).toString('latin1') !== '%PDF-') return reject('not_pdf');
 
   const previous = await loadPrimaryCv(supabase);
   if (previous) {
@@ -37,7 +41,7 @@ export async function uploadCv(_prev: CvState, formData: FormData): Promise<CvSt
       return { status: 'error' };
     }
   }
-  const fileName = file.name.replace(/[^\p{L}\p{N} ._()-]/gu, '').slice(0, 200) || 'cv.pdf';
+  const fileName = String(originalName).replace(/[^\p{L}\p{N} ._()-]/gu, '').slice(0, 200) || 'cv.pdf';
   const { data: row, error } = await supabase.from('resumes').insert({ user_id: userId, storage_path: path, file_name: fileName, is_primary: true }).select('id').single();
   if (error || !row) {
     await supabase.storage.from('resumes').remove([path]);
