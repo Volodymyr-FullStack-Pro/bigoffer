@@ -1,6 +1,7 @@
 // Fetches live samples from every source and trims them to 3 jobs.
 // Re-run when a source changes its markup; also serves as a manual canary.
 import { mkdir, writeFile } from 'node:fs/promises';
+import { chromium } from 'playwright';
 
 const UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130 Safari/537.36';
 const dir = new URL('../fixtures/', import.meta.url);
@@ -20,6 +21,19 @@ const trimLdHtml = (html) => {
   const list = JSON.parse(m[1]).filter((x) => x['@type'] === 'JobPosting').slice(0, 3);
   return `<html><body><script type="application/ld+json">${JSON.stringify(list)}</script></body></html>`;
 };
+
+async function renderTrim(url, selector) {
+  const browser = await chromium.launch({ headless: true });
+  try {
+    const page = await browser.newPage({ userAgent: UA, locale: 'uk-UA' });
+    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
+    await page.waitForSelector(selector, { timeout: 15000 });
+    const cards = await page.$$eval(selector, (els) => els.slice(0, 3).map((e) => e.outerHTML));
+    return `<html><body>${cards.join('\n')}</body></html>`;
+  } finally {
+    await browser.close();
+  }
+}
 
 const tasks = {
   'dou.xml': async () => trimRss(await get('https://jobs.dou.ua/vacancies/feeds/?search=react')),
@@ -45,9 +59,30 @@ const tasks = {
     const item = JSON.parse(await get(`https://hn.algolia.com/api/v1/items/${hit.objectID}`));
     return JSON.stringify({ ...item, children: item.children.filter((c) => c.text).slice(0, 3) }, null, 1);
   },
+  'arbeitnow.json': async () => {
+    const d = JSON.parse(await get('https://www.arbeitnow.com/api/job-board-api'));
+    return JSON.stringify({ ...d, data: d.data.slice(0, 3) }, null, 1);
+  },
+  'jobicy.json': async () => {
+    const d = JSON.parse(await get('https://jobicy.com/api/v2/remote-jobs?count=3&tag=react'));
+    return JSON.stringify({ ...d, jobs: d.jobs.slice(0, 3) }, null, 1);
+  },
+  'workingnomads.json': async () => JSON.stringify(JSON.parse(await get('https://www.workingnomads.com/api/exposed_jobs/')).slice(0, 3), null, 1),
+  'justjoin.json': async () => {
+    const d = JSON.parse(await get('https://justjoin.it/api/candidate-api/offers?from=0&itemsCount=3'));
+    return JSON.stringify(d, null, 1);
+  },
+  'linkedin.html': async () => {
+    const html = await get('https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search?keywords=react&location=Ukraine&start=0');
+    return [...html.matchAll(/<li>[\s\S]*?<\/li>/g)].slice(0, 3).map((m) => m[0]).join('\n');
+  },
+  'workua.html': async () => renderTrim('https://www.work.ua/jobs-remote-react/', 'div.card.job-link'),
+  'olx.html': async () => renderTrim('https://www.olx.ua/uk/rabota/q-react/', '[data-cy="l-card"]'),
 };
 
+const only = process.argv.slice(2);
 for (const [file, run] of Object.entries(tasks)) {
+  if (only.length && !only.includes(file)) continue;
   try {
     await writeFile(new URL(file, dir), await run());
     console.log('✓', file);

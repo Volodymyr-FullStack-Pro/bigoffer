@@ -21,6 +21,7 @@ export async function saveSearchProfile(_prev: SearchFormState, formData: FormDa
     seniority: formData.getAll('seniority').map(String),
     locations: parseList(String(formData.get('locations') ?? ''), 10),
     remoteType: String(formData.get('remoteType') ?? 'any'),
+    sources: formData.getAll('sources').map(String),
     salaryMinUsd: salary === '' ? null : Number(salary),
     isActive: formData.get('isActive') === 'on',
   });
@@ -40,6 +41,7 @@ export async function saveSearchProfile(_prev: SearchFormState, formData: FormDa
     seniority: p.seniority,
     locations: p.locations,
     remote_type: p.remoteType,
+    sources: p.sources,
     salary_min_usd: p.salaryMinUsd,
     is_active: p.isActive,
   };

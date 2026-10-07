@@ -1,4 +1,12 @@
-import { type NormalizedJob, type ScorableJob, type SearchProfile, SENIORITIES, type Seniority } from '@jp/core';
+import {
+  type NormalizedJob,
+  type ScorableJob,
+  type SearchProfile,
+  SENIORITIES,
+  SOURCE_IDS,
+  type Seniority,
+  type SourceId,
+} from '@jp/core';
 import type { Json } from '@jp/db';
 import type { Db } from '../db';
 
@@ -12,11 +20,12 @@ type ProfileRow = {
   locations: string[];
   remote_type: string;
   salary_min_usd: number | null;
+  sources: string[] | null;
   is_active?: boolean;
 };
 
 const PROFILE_COLUMNS =
-  'id, user_id, keywords, skills, exclude_keywords, seniority, locations, remote_type, salary_min_usd, is_active';
+  'id, user_id, keywords, skills, exclude_keywords, seniority, locations, remote_type, salary_min_usd, sources, is_active';
 
 export function toSearchProfile(row: ProfileRow): SearchProfile {
   return {
@@ -29,6 +38,10 @@ export function toSearchProfile(row: ProfileRow): SearchProfile {
     locations: row.locations,
     remoteType: (['any', 'remote', 'hybrid', 'office'] as const).find((r) => r === row.remote_type) ?? 'any',
     salaryMinUsd: row.salary_min_usd,
+    sources: (() => {
+      const valid = (row.sources ?? []).filter((s): s is SourceId => (SOURCE_IDS as readonly string[]).includes(s));
+      return valid.length > 0 ? valid : null;
+    })(),
   };
 }
 
@@ -133,6 +146,35 @@ async function findJobId(db: Db, job: NormalizedJob, companyId: string): Promise
   return similar ?? null;
 }
 
+/**
+ * Fields a richer posting of an already-stored job can fill in (e.g. a LinkedIn card without a description,
+ * later seen on a board with the full text and a salary). Title and company stay as first seen.
+ */
+async function backfillPatch(db: Db, jobId: string, job: NormalizedJob) {
+  const { data, error } = await db
+    .from('jobs')
+    .select('description_text, salary_raw, salary_min_usd, salary_max_usd, location')
+    .eq('id', jobId)
+    .single();
+  if (error) throw error;
+  const patch: {
+    description_text?: string;
+    salary_raw?: string | null;
+    salary_min_usd?: number | null;
+    salary_max_usd?: number | null;
+    location?: string;
+  } = {};
+  if (job.descriptionText.length > (data.description_text ?? '').length) patch.description_text = job.descriptionText;
+  const hasSalary = data.salary_min_usd != null || data.salary_max_usd != null;
+  if (!hasSalary && (job.salaryMinUsd != null || job.salaryMaxUsd != null)) {
+    patch.salary_raw = job.salaryRaw;
+    patch.salary_min_usd = job.salaryMinUsd;
+    patch.salary_max_usd = job.salaryMaxUsd;
+  }
+  if (data.location == null && job.location) patch.location = job.location;
+  return patch;
+}
+
 export async function saveJob(
   db: Db,
   sourceId: string,
@@ -188,7 +230,10 @@ export async function saveJob(
   }
 
   if (!isNew) {
-    const { error } = await db.from('jobs').update({ last_seen_at: nowIso, status: 'active' }).eq('id', jobId);
+    const { error } = await db
+      .from('jobs')
+      .update({ last_seen_at: nowIso, status: 'active', ...(await backfillPatch(db, jobId, job)) })
+      .eq('id', jobId);
     if (error) throw error;
   }
   const { error: upsertError } = await db
@@ -251,12 +296,23 @@ export async function getDueQueryIds(
   return data.map((q) => ({ id: q.id, sourceId: q.source_id, nextRunAt: q.next_run_at }));
 }
 
-export async function getRecentJobs(db: Db, since: Date): Promise<{ jobId: string; job: ScorableJob }[]> {
+/** Active jobs first seen since `since` that have at least one posting on one of `sources`. */
+export async function getRecentJobs(
+  db: Db,
+  since: Date,
+  sources: readonly SourceId[],
+): Promise<{ jobId: string; job: ScorableJob }[]> {
+  if (sources.length === 0) return [];
+  // The !inner embed + filter on it keeps only jobs with a posting on an enabled source; PostgREST nests the
+  // matching postings as an array, so each job comes back once.
   const { data, error } = await db
     .from('jobs')
-    .select('id, title, description_text, tags, remote_type, seniority, location, salary_min_usd, salary_max_usd, skills')
+    .select(
+      'id, title, description_text, tags, remote_type, seniority, location, salary_min_usd, salary_max_usd, skills, job_postings!inner(source_id)',
+    )
     .eq('status', 'active')
     .gte('first_seen_at', since.toISOString())
+    .in('job_postings.source_id', [...sources])
     .order('first_seen_at', { ascending: false })
     .limit(3000);
   if (error) throw error;
@@ -274,6 +330,31 @@ export async function getRecentJobs(db: Db, since: Date): Promise<{ jobId: strin
       skills: j.skills,
     },
   }));
+}
+
+/** Job ids of a profile's untouched ('new') matches whose job has no posting on any of `sources`. */
+export async function getNewMatchJobIdsOutsideSources(
+  db: Db,
+  profileId: string,
+  sources: readonly SourceId[],
+): Promise<string[]> {
+  const enabled = new Set<string>(sources);
+  const out: string[] = [];
+  const PAGE = 1000;
+  for (let from = 0; ; from += PAGE) {
+    const { data, error } = await db
+      .from('job_matches')
+      .select('job_id, jobs!inner(job_postings(source_id))')
+      .eq('search_profile_id', profileId)
+      .eq('state', 'new')
+      .order('job_id')
+      .range(from, from + PAGE - 1);
+    if (error) throw error;
+    for (const m of data) {
+      if (!m.jobs.job_postings.some((p) => enabled.has(p.source_id))) out.push(m.job_id);
+    }
+    if (data.length < PAGE) return out;
+  }
 }
 
 export type MatchRow = {

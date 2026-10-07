@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { loginAs, uniqueEmail } from './helpers/auth';
+import { seedProfileWithNullSources } from './helpers/seed';
 
 test('creates a search profile and keeps it after reload', async ({ context, page }) => {
   await loginAs(context, uniqueEmail('search'));
@@ -41,4 +42,43 @@ test('rejects a profile without keywords', async ({ context, page }) => {
   await page.getByLabel('Role keywords').fill('');
   await page.getByTestId('search-save').click();
   await expect(page.getByRole('status').first()).toContainText('keywords');
+});
+
+test('saves a chosen subset of job boards', async ({ context, page }) => {
+  await loginAs(context, uniqueEmail('search-sources'));
+  await page.goto('/en/search');
+  await page.getByLabel('Role keywords').fill('react');
+  await page.getByLabel('Work format').selectOption('remote');
+  for (const id of ['remoteok', 'remotive', 'himalayas', 'wwr', 'jobicy', 'workingnomads', 'hn', 'arbeitnow', 'justjoin', 'jooble', 'robotaua', 'olx']) {
+    const box = page.getByTestId(`source-${id}`);
+    if (await box.isChecked()) await box.uncheck();
+  }
+  await page.getByTestId('source-linkedin').check();
+  await page.getByTestId('search-save').click();
+  await expect(page.getByTestId('search-add')).toBeVisible();
+  await page.reload();
+  await expect(page.getByTestId('source-linkedin').first()).toBeChecked();
+  await expect(page.getByTestId('source-remoteok').first()).not.toBeChecked();
+  await expect(page.getByTestId('source-dou').first()).toBeChecked();
+});
+
+test('an office profile with no stored sources shows office defaults', async ({ context, page }) => {
+  const email = uniqueEmail('search-null-sources');
+  await loginAs(context, email);
+  await seedProfileWithNullSources(email, 'office');
+  await page.goto('/en/search');
+  await expect(page.getByTestId('source-remoteok').first()).not.toBeChecked();
+  await expect(page.getByTestId('source-workua').first()).toBeChecked();
+});
+
+test('rejects a profile with no job boards selected', async ({ context, page }) => {
+  await loginAs(context, uniqueEmail('search-no-sources'));
+  await page.goto('/en/search');
+  await page.getByLabel('Role keywords').fill('react');
+  for (const box of await page.locator('input[name="sources"]').all()) {
+    if (await box.isChecked()) await box.uncheck();
+  }
+  await page.getByTestId('search-save').click();
+  await expect(page.getByRole('status')).toContainText('sources');
+  await expect(page.getByText('Pick at least one job board')).toBeVisible();
 });

@@ -9,7 +9,13 @@ insert into public.sources (id, name, kind, min_interval_minutes) values
   ('himalayas', 'Himalayas', 'api', 120),
   ('wwr', 'We Work Remotely', 'rss', 120),
   ('hn', 'HN Who''s Hiring', 'api', 1440),
-  ('linkedin', 'LinkedIn (email alerts)', 'email', 0)
+  ('workua', 'Work.ua', 'html', 180),
+  ('olx', 'OLX Робота', 'html', 180),
+  ('linkedin', 'LinkedIn (guest, beta)', 'html', 240),
+  ('arbeitnow', 'Arbeitnow', 'api', 120),
+  ('jobicy', 'Jobicy', 'api', 120),
+  ('workingnomads', 'Working Nomads', 'api', 180),
+  ('justjoin', 'Just Join IT', 'api', 120)
 on conflict (id) do nothing;
 
 insert into public.roles (slug, name, category) values

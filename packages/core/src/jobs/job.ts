@@ -5,6 +5,7 @@ import { decodeEntities, htmlToText, normalizeWhitespace } from './text';
 
 export const SOURCE_IDS = [
   'dou', 'djinni', 'robotaua', 'jooble', 'remoteok', 'remotive', 'himalayas', 'wwr', 'hn',
+  'workua', 'olx', 'linkedin', 'arbeitnow', 'jobicy', 'workingnomads', 'justjoin',
 ] as const;
 export type SourceId = (typeof SOURCE_IDS)[number];
 

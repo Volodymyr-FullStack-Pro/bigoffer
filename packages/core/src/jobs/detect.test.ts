@@ -62,6 +62,19 @@ describe('parseSalary', () => {
     expect(parseSalary('$120k - $150k')).toEqual({ minUsd: 10000, maxUsd: 12500 });
     expect(parseSalary('98500 - 164000 USD', 'year')).toEqual({ minUsd: 8208, maxUsd: 13667 });
   });
+  it('treats an implausibly small "yearly" salary as already monthly', () => {
+    expect(parseSalary('3820 - 4497 USD', 'year')).toEqual({ minUsd: 3820, maxUsd: 4497 });
+    expect(parseSalary('up to 4000 USD', 'year')).toEqual({ minUsd: null, maxUsd: 4000 });
+  });
+  it('drops the max of an implausibly wide range', () => {
+    expect(parseSalary('190000 - 1700000 USD', 'year')).toEqual({ minUsd: 15833, maxUsd: null });
+    expect(parseSalary('$1000 - $5000')).toEqual({ minUsd: 1000, maxUsd: null });
+    expect(parseSalary('$1000 - $4000')).toEqual({ minUsd: 1000, maxUsd: 4000 });
+  });
+  it('drops salaries above $100k a month', () => {
+    expect(parseSalary('1500000 - 2000000 USD', 'month')).toBeNull();
+    expect(parseSalary('5000000 USD', 'year')).toBeNull();
+  });
   it('handles EUR', () => {
     expect(parseSalary('€4,000')).toEqual({ minUsd: 4320, maxUsd: 4320 });
   });

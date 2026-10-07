@@ -1,6 +1,6 @@
 'use client';
 
-import { SEARCH_REMOTE_TYPES, SENIORITIES } from '@jp/core';
+import { SEARCH_REMOTE_TYPES, SENIORITIES, SOURCE_CATALOG, type SourceInfo } from '@jp/core';
 import { useTranslations } from 'next-intl';
 import { useActionState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -15,9 +15,12 @@ export type SearchProfileValues = {
   seniority: string[];
   locations: string[];
   remoteType: string;
+  sources: string[];
   salaryMinUsd: number | null;
   isActive: boolean;
 };
+
+const MARKETS = ['ua', 'remote', 'europe', 'global'] as const;
 
 const input = 'brutal bg-card px-3 py-2 outline-none focus:ring-2 focus:ring-brand';
 
@@ -31,10 +34,33 @@ function TextField({ name, label, hint, defaultValue, invalid }: { name: string;
   );
 }
 
+function SourceCheckbox({ source, checked }: { source: SourceInfo; checked: boolean }) {
+  const t = useTranslations('search');
+  return (
+    <div className="flex flex-col">
+      <label className="flex items-center gap-2">
+        <input
+          type="checkbox"
+          name="sources"
+          value={source.id}
+          defaultChecked={checked}
+          data-testid={`source-${source.id}`}
+          aria-describedby={source.id === 'linkedin' ? 'source-linkedin-warning' : undefined}
+        />
+        {source.name}
+        {source.beta && <span className="brutal px-1 font-mono text-[10px] uppercase">{t('beta')}</span>}
+        {source.requiresKey && <span className="text-xs text-muted-foreground">({t('needsKey')})</span>}
+      </label>
+      {source.id === 'linkedin' && <span id="source-linkedin-warning" className="max-w-xs text-xs text-muted-foreground">{t('linkedinWarning')}</span>}
+    </div>
+  );
+}
+
 export function SearchProfileForm({ values }: { values: SearchProfileValues }) {
   const t = useTranslations('search');
   const [state, action, pending] = useActionState<SearchFormState, FormData>(saveSearchProfile, { status: 'idle' });
   const invalid = new Set(state.fields ?? []);
+  const selected = values.sources;
 
   return (
     <div className="brutal flex flex-col gap-4 p-5">
@@ -71,6 +97,22 @@ export function SearchProfileForm({ values }: { values: SearchProfileValues }) {
             <span className="font-mono text-xs uppercase">{t('salaryMin')}</span>
             <input name="salaryMinUsd" type="number" min={0} defaultValue={values.salaryMinUsd ?? ''} className={input} />
           </label>
+        </div>
+
+        <div className="flex flex-col gap-3">
+          <div>
+            <span className="font-mono text-xs uppercase">{t('sources')}</span>
+            <p className="text-xs text-muted-foreground">{t('sourcesHint')}</p>
+          </div>
+          {MARKETS.map((market) => (
+            <fieldset key={market} className="flex flex-wrap gap-x-4 gap-y-2">
+              <legend className="mb-1 text-sm font-semibold">{t(`market_${market}`)}</legend>
+              {SOURCE_CATALOG.filter((s) => s.market === market).map((s) => (
+                <SourceCheckbox key={s.id} source={s} checked={selected.includes(s.id)} />
+              ))}
+            </fieldset>
+          ))}
+          {invalid.has('sources') && <p className="text-sm text-danger">{t('sourcesRequired')}</p>}
         </div>
 
         <label className="flex items-center gap-2">

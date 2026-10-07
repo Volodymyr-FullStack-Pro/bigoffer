@@ -1,4 +1,4 @@
-import type { SourceId } from '@jp/core';
+import { BROWSER_SOURCE_IDS, type SourceId } from '@jp/core';
 import { idempotencyKeys, logger, schedules } from '@trigger.dev/sdk';
 import { getDb } from '../db';
 import { getDueQueryIds } from '../pipeline/repository';
@@ -24,6 +24,7 @@ export const scheduleQueries = schedules.task({
             queue: `scrape-${q.sourceId}`,
             idempotencyKey: await idempotencyKeys.create(`scrape:${q.id}:${q.nextRunAt}`, { scope: 'global' }),
             idempotencyKeyTTL: '6h',
+            ...(BROWSER_SOURCE_IDS.has(q.sourceId as SourceId) ? { machine: 'small-2x' as const } : {}),
           },
         })),
       );

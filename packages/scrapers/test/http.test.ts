@@ -50,3 +50,52 @@ describe('createHttpContext', () => {
     await expect(ctx.fetchText('https://a.test/x')).rejects.toThrow('HTTP 404');
   });
 });
+
+describe('renderPage', () => {
+  it('lazily creates the renderer, paces with fetches and disposes', async () => {
+    sleep.mockClear();
+    const render = vi.fn(async () => '<html>ok</html>');
+    const close = vi.fn(async () => {});
+    const factory = vi.fn(async () => ({ render, close }));
+    const ctx = createHttpContext(
+      { userAgent: 'UA', fetchImpl: fakeFetch(new Response('x')), sleep, random: () => 0, minDelayMs: 1000, maxDelayMs: 1000 },
+      {},
+      factory,
+    );
+    await ctx.fetchText('https://a.test/');
+    expect(await ctx.renderPage!('https://b.test/', { waitForSelector: '.card' })).toBe('<html>ok</html>');
+    await ctx.renderPage!('https://b.test/2');
+    expect(factory).toHaveBeenCalledTimes(1);
+    expect(render).toHaveBeenCalledWith('https://b.test/', { waitForSelector: '.card' });
+    expect(sleep).toHaveBeenCalledTimes(2);
+    await ctx.dispose!();
+    expect(close).toHaveBeenCalledTimes(1);
+  });
+
+  it('serializes concurrent renders and launches one renderer', async () => {
+    let active = 0;
+    let max = 0;
+    const render = vi.fn(async () => {
+      active++;
+      max = Math.max(max, active);
+      await new Promise((r) => setTimeout(r, 5));
+      active--;
+      return 'h';
+    });
+    const factory = vi.fn(async () => {
+      await new Promise((r) => setTimeout(r, 5));
+      return { render, close: async () => {} };
+    });
+    const ctx = createHttpContext({ userAgent: 'UA', fetchImpl: fakeFetch(), sleep }, {}, factory);
+    await Promise.all([ctx.renderPage!('https://b.test/1'), ctx.renderPage!('https://b.test/2')]);
+    expect(factory).toHaveBeenCalledTimes(1);
+    expect(render).toHaveBeenCalledTimes(2);
+    expect(max).toBe(1);
+  });
+
+  it('has no renderPage without a factory and dispose is a no-op', async () => {
+    const ctx = createHttpContext({ userAgent: 'UA', fetchImpl: fakeFetch(), sleep });
+    expect(ctx.renderPage).toBeUndefined();
+    await expect(ctx.dispose!()).resolves.toBeUndefined();
+  });
+});

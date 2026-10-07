@@ -1,10 +1,10 @@
-import type { RawJob } from '@jp/core';
+import { normalizeJob, type RawJob } from '@jp/core';
 import type { AdapterContext, SourceAdapter } from '@jp/scrapers';
 import { SourceBlockedError } from '@jp/scrapers';
-import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { getDb } from '../src/db';
 import { expireJobs } from '../src/pipeline/expire';
-import { getDueQueryIds, getProfile } from '../src/pipeline/repository';
+import { getDueQueryIds, getProfile, saveJob } from '../src/pipeline/repository';
 import { runQuery } from '../src/pipeline/run-query';
 import { syncAllProfiles, syncProfile } from '../src/pipeline/sync-profiles';
 
@@ -219,5 +219,139 @@ describe('expireJobs', () => {
     expect(await expireJobs(db, now)).toBeGreaterThanOrEqual(1);
     const { data } = await db.from('jobs').select('status').eq('title', rawJobs[1]!.title).single();
     expect(data!.status).toBe('expired');
+  });
+});
+
+describe('browser sources and source selection', () => {
+  it('disposes the adapter context after a run, even on error', async () => {
+    const dispose = vi.fn(async () => {});
+    const failing: SourceAdapter = { id: 'dou', search: async () => { throw new Error('boom'); } };
+    const deps = { db, adapters: { dou: failing }, createContext: () => ({ ...ctx, dispose }), now: () => now };
+    await makeDue(douQueryId);
+    await expect(runQuery(deps, douQueryId)).rejects.toThrow('boom');
+    expect(dispose).toHaveBeenCalledTimes(1);
+  });
+
+  it('only links queries for the sources the profile selected', async () => {
+    const { data: sp, error } = await db
+      .from('search_profiles')
+      .insert({ user_id: userId, name: 'UA only', keywords: ['react'], sources: ['dou', 'workua'] })
+      .select('id')
+      .single();
+    if (error) throw error;
+    try {
+      const profile = await getProfile(db, sp.id);
+      const { queryIds } = await syncProfile(db, profile!, now);
+      const { data } = await db.from('search_queries').select('source_id').in('id', queryIds);
+      expect([...new Set(data!.map((q) => q.source_id))].sort()).toEqual(['dou', 'workua']);
+    } finally {
+      await db.from('search_profiles').delete().eq('id', sp.id);
+    }
+  });
+
+  it('links queries whose key contains commas and quotes (multi-param params), so they become due', async () => {
+    const { data: sp, error } = await db
+      .from('search_profiles')
+      .insert({ user_id: userId, name: 'LI remote', keywords: [`react${uniq}`], remote_type: 'remote', sources: ['linkedin', 'workua'] })
+      .select('id')
+      .single();
+    if (error) throw error;
+    try {
+      const profile = await getProfile(db, sp.id);
+      const { queryIds } = await syncProfile(db, profile!, now);
+      expect(queryIds).toHaveLength(2); // linkedin + workua(remote) both have multi-param keys
+      const { data } = await db.from('search_queries').select('id').in('id', queryIds);
+      await db.from('search_queries').update({ next_run_at: now.toISOString() }).in('id', queryIds);
+      const due = (await getDueQueryIds(db, now, 5000)).map((q) => q.id);
+      for (const q of data!) expect(due).toContain(q.id);
+    } finally {
+      await db.from('search_profiles').delete().eq('id', sp.id);
+    }
+  });
+
+  it('matches only jobs posted on the profile\'s enabled sources and drops matches from boards turned off', async () => {
+    const token = `zq${uniq.replace(/\W/g, '')}`;
+    const { data: u, error: userError } = await db.auth.admin.createUser({ email: `src-${uniq}@e2e.test`, email_confirm: true });
+    if (userError) throw userError;
+    const save = async (sourceId: string, id: string) => {
+      const job = await normalizeJob({
+        externalId: `${id}-${uniq}`,
+        url: `https://example.com/${sourceId}/${id}-${uniq}`,
+        title: `${token} Engineer ${id}`,
+        company: `${id === 'dou-only' ? 'Gamma' : 'Delta'} ${uniq}`,
+        description: `${token} work`,
+        postedAt: now.toISOString(),
+      });
+      return (await saveJob(db, sourceId, job!, now)).jobId;
+    };
+    const douJob = await save('dou', 'dou-only');
+    const remotiveJob = await save('remotive', 'remotive-only');
+    const { data: sp, error } = await db
+      .from('search_profiles')
+      .insert({ user_id: u.user.id, name: 'Sources', keywords: [token], sources: ['dou'] })
+      .select('id')
+      .single();
+    if (error) throw error;
+    const matchedJobs = async () => {
+      const { data } = await db.from('job_matches').select('job_id, state').eq('search_profile_id', sp.id);
+      return data!.map((m) => m.job_id).sort();
+    };
+    try {
+      await syncProfile(db, (await getProfile(db, sp.id))!, now);
+      expect(await matchedJobs()).toEqual([douJob]);
+
+      await db.from('search_profiles').update({ sources: ['remotive'] }).eq('id', sp.id);
+      await syncProfile(db, (await getProfile(db, sp.id))!, now);
+      expect(await matchedJobs()).toEqual([remotiveJob]);
+    } finally {
+      await db.from('search_profiles').delete().eq('id', sp.id);
+      await db.auth.admin.deleteUser(u.user.id);
+    }
+  });
+});
+
+describe('saveJob', () => {
+  it('backfills a thin job when a richer posting of the same job appears on another source', async () => {
+    const base = { title: `Platform Engineer ${uniq}`, company: `Thin ${uniq}`, postedAt: now.toISOString() };
+    const thin = await normalizeJob({ ...base, externalId: `li-${uniq}`, url: `https://linkedin.com/jobs/view/${uniq}`, description: '' });
+    const { jobId, isNew } = await saveJob(db, 'linkedin', thin!, now);
+    expect(isNew).toBe(true);
+
+    const rich = await normalizeJob({
+      ...base,
+      title: `platform engineer ${uniq}`,
+      externalId: `rich-${uniq}`,
+      url: `https://remotive.com/x/rich-${uniq}`,
+      description: 'Kubernetes, Terraform and AWS. Small platform team.',
+      salaryRaw: '$5000 - $6000',
+      salaryPeriod: 'month',
+    });
+    expect(rich!.fingerprint).toBe(thin!.fingerprint);
+    const second = await saveJob(db, 'remotive', rich!, now);
+    expect(second).toEqual({ jobId, isNew: false });
+
+    // Same job, different region -> different fingerprint, found by the fuzzy company+title match; fills location.
+    const located = await normalizeJob({ ...base, externalId: `loc-${uniq}`, url: `https://dou.ua/x/${uniq}`, description: '', location: 'Berlin' });
+    expect(located!.fingerprint).not.toBe(thin!.fingerprint);
+    expect(await saveJob(db, 'dou', located!, now)).toEqual({ jobId, isNew: false });
+
+    const { data: row } = await db
+      .from('jobs')
+      .select('title, description_text, salary_min_usd, salary_max_usd, salary_raw, location')
+      .eq('id', jobId)
+      .single();
+    expect(row).toEqual({
+      title: base.title, // first seen wins
+      description_text: rich!.descriptionText,
+      salary_min_usd: 5000,
+      salary_max_usd: 6000,
+      salary_raw: '$5000 - $6000',
+      location: 'Berlin',
+    });
+
+    // A later thinner posting never overwrites richer data.
+    await saveJob(db, 'linkedin', thin!, now);
+    const { data: again } = await db.from('jobs').select('description_text, salary_min_usd').eq('id', jobId).single();
+    expect(again).toEqual({ description_text: rich!.descriptionText, salary_min_usd: 5000 });
   });
 });

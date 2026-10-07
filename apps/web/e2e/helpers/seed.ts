@@ -47,3 +47,12 @@ export async function seedMatch(
   if (mErr) throw mErr;
   return { matchId: match.id, title };
 }
+
+export async function seedProfileWithNullSources(email: string, remoteType: 'hybrid' | 'office') {
+  const db = admin();
+  const userId = await userIdByEmail(email);
+  const { error } = await db
+    .from('search_profiles')
+    .insert({ user_id: userId, name: 'Legacy profile', keywords: ['react'], remote_type: remoteType, sources: null });
+  if (error) throw error;
+}

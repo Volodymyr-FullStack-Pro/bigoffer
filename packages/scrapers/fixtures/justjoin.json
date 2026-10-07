@@ -1,0 +1,390 @@
+{
+ "data": [
+  {
+   "guid": "7037f4dc-1797-4c0e-a5f7-40630758758d",
+   "slug": "intent-senior-ui-designer-warsaw-ux",
+   "title": "Senior UI Designer",
+   "workplaceType": "remote",
+   "workingTime": "full_time",
+   "experienceLevel": "senior",
+   "category": {
+    "key": "ux",
+    "parentKey": null
+   },
+   "city": "Warsaw",
+   "street": "Al. Jerozolimskie 93",
+   "latitude": 52.2264535,
+   "longitude": 20.9989552,
+   "isRemoteInterview": false,
+   "companyName": ".intent",
+   "companyLogoThumbUrl": "https://imgproxy.justjoinit.tech/Oe8pFyF1fehRuMt_Ri6R6OPSrE1D1B7cBePA52-AA30/h:200/w:200/plain/https://public.justjoin.it/companies/logos/original/1c4b241e21d55a86d15d545d2d8ad7dfa338b3eb.png",
+   "publishedAt": "2026-10-03T14:00:13.294Z",
+   "isOpenToHireUkrainians": false,
+   "locations": [
+    {
+     "city": "Warsaw",
+     "street": "Al. Jerozolimskie 93",
+     "latitude": 52.2264535,
+     "longitude": 20.9989552,
+     "slug": "intent-senior-ui-designer-warsaw-ux"
+    }
+   ],
+   "employmentTypes": [
+    {
+     "from": 15000,
+     "fromPerUnit": 15000,
+     "to": 22000,
+     "toPerUnit": 22000,
+     "currency": "PLN",
+     "currencySource": "original",
+     "type": "b2b",
+     "unit": "Month",
+     "gross": false
+    },
+    {
+     "from": 3929,
+     "fromPerUnit": 3929.273084479365,
+     "to": 5763,
+     "toPerUnit": 5762.933857236402,
+     "currency": "USD",
+     "currencySource": "conversion",
+     "type": "b2b",
+     "unit": "Month",
+     "gross": false
+    },
+    {
+     "from": 3441,
+     "fromPerUnit": 3441.31412315316,
+     "to": 5047,
+     "toPerUnit": 5047.260713957968,
+     "currency": "EUR",
+     "currencySource": "conversion",
+     "type": "b2b",
+     "unit": "Month",
+     "gross": false
+    },
+    {
+     "from": 3232,
+     "fromPerUnit": 3231.574638602235,
+     "to": 4740,
+     "toPerUnit": 4739.642803283278,
+     "currency": "CHF",
+     "currencySource": "conversion",
+     "type": "b2b",
+     "unit": "Month",
+     "gross": false
+    },
+    {
+     "from": 2954,
+     "fromPerUnit": 2954.035212099735,
+     "to": 4333,
+     "toPerUnit": 4332.584977746278,
+     "currency": "GBP",
+     "currencySource": "conversion",
+     "type": "b2b",
+     "unit": "Month",
+     "gross": false
+    }
+   ],
+   "requiredSkills": [
+    {
+     "skillId": "00000000-0000-0000-0000-000000000000",
+     "name": "UI Design",
+     "level": 4,
+     "group": null
+    },
+    {
+     "skillId": "00000000-0000-0000-0000-000000000000",
+     "name": "Mobile Apps design",
+     "level": 4,
+     "group": null
+    },
+    {
+     "skillId": "00000000-0000-0000-0000-000000000000",
+     "name": "IoT(wearables) design",
+     "level": 4,
+     "group": null
+    },
+    {
+     "skillId": "00000000-0000-0000-0000-000000000000",
+     "name": "Figma",
+     "level": 4,
+     "group": null
+    }
+   ],
+   "niceToHaveSkills": [],
+   "languages": [],
+   "isPromoted": false,
+   "isSuperOffer": true,
+   "applyMethod": "external",
+   "applyUrl": "https://intent.recruitee.com/o/senior-ui-designer-3?source=justjoin.it",
+   "lastPublishedAt": "2026-08-10T13:46:24.663012Z",
+   "expiredAt": "2026-11-08T22:59:59.999999Z",
+   "companyProfileSlug": null,
+   "hybridWorkSchedule": null
+  },
+  {
+   "guid": "37e6a886-b800-4316-8b4d-e8842b40ddd0",
+   "slug": "intent-backend-expert-node-js--warszawa-javascript-806e3bc4",
+   "title": "Backend Expert (node.js)",
+   "workplaceType": "remote",
+   "workingTime": "freelance",
+   "experienceLevel": "senior",
+   "category": {
+    "key": "javascript",
+    "parentKey": null
+   },
+   "city": "Warszawa",
+   "street": "Al. Jerozolimskie 93",
+   "latitude": 52.2264535,
+   "longitude": 20.9989552,
+   "isRemoteInterview": false,
+   "companyName": ".intent",
+   "companyLogoThumbUrl": "https://imgproxy.justjoinit.tech/nZtzRhDqO1ujAAGQisfrRXZ1QmnKVQKlJ5pphiVt_jQ/h:200/w:200/plain/https://public.justjoin.it/offers/company_logos/original/89235f8c746745e36de9f49573d9830e2f514e94.png",
+   "publishedAt": "2026-10-03T12:39:17.17Z",
+   "isOpenToHireUkrainians": false,
+   "locations": [
+    {
+     "city": "Warszawa",
+     "street": "Al. Jerozolimskie 93",
+     "latitude": 52.2264535,
+     "longitude": 20.9989552,
+     "slug": "intent-backend-expert-node-js--warszawa-javascript-806e3bc4"
+    }
+   ],
+   "employmentTypes": [
+    {
+     "from": 22680,
+     "fromPerUnit": 135,
+     "to": 36960,
+     "toPerUnit": 220,
+     "currency": "PLN",
+     "currencySource": "original",
+     "type": "b2b",
+     "unit": "Hour",
+     "gross": false
+    },
+    {
+     "from": 5899,
+     "fromPerUnit": 35.111446331504084,
+     "to": 9613,
+     "toPerUnit": 57.21865328096962,
+     "currency": "USD",
+     "currencySource": "conversion",
+     "type": "b2b",
+     "unit": "Hour",
+     "gross": false
+    },
+    {
+     "from": 5193,
+     "fromPerUnit": 30.912254991756676,
+     "to": 8463,
+     "toPerUnit": 50.3755266532331,
+     "currency": "EUR",
+     "currencySource": "conversion",
+     "type": "b2b",
+     "unit": "Hour",
+     "gross": false
+    },
+    {
+     "from": 4911,
+     "fromPerUnit": 29.232168377289796,
+     "to": 8003,
+     "toPerUnit": 47.63760772595374,
+     "currency": "CHF",
+     "currencySource": "conversion",
+     "type": "b2b",
+     "unit": "Hour",
+     "gross": false
+    },
+    {
+     "from": 4444,
+     "fromPerUnit": 26.44984326018807,
+     "to": 7241,
+     "toPerUnit": 43.10344827586204,
+     "currency": "GBP",
+     "currencySource": "conversion",
+     "type": "b2b",
+     "unit": "Hour",
+     "gross": false
+    }
+   ],
+   "requiredSkills": [
+    {
+     "skillId": "00000000-0000-0000-0000-000000000000",
+     "name": "AWS",
+     "level": 4,
+     "group": null
+    },
+    {
+     "skillId": "00000000-0000-0000-0000-000000000000",
+     "name": "Node.js",
+     "level": 4,
+     "group": null
+    },
+    {
+     "skillId": "00000000-0000-0000-0000-000000000000",
+     "name": "Next.js",
+     "level": 4,
+     "group": null
+    }
+   ],
+   "niceToHaveSkills": [],
+   "languages": [],
+   "isPromoted": false,
+   "isSuperOffer": true,
+   "applyMethod": "external",
+   "applyUrl": "https://intent.recruitee.com/o/senior-backend-developer-freelance?source=justjoin.it",
+   "lastPublishedAt": "2026-10-01T12:39:17.17027Z",
+   "expiredAt": "2026-12-30T22:59:59.999999Z",
+   "companyProfileSlug": null,
+   "hybridWorkSchedule": null
+  },
+  {
+   "guid": "f66be142-0abc-4e9d-bc52-0dcb3796db80",
+   "slug": "intent-senior-qa-engineer-mobile-iot--warszawa-mobile",
+   "title": "Senior QA Engineer (Mobile & IoT)",
+   "workplaceType": "remote",
+   "workingTime": "full_time",
+   "experienceLevel": "senior",
+   "category": {
+    "key": "mobile",
+    "parentKey": null
+   },
+   "city": "Warszawa",
+   "street": "Al. Jerozolimskie 93",
+   "latitude": 52.2264535,
+   "longitude": 20.9989552,
+   "isRemoteInterview": false,
+   "companyName": ".intent",
+   "companyLogoThumbUrl": "https://imgproxy.justjoinit.tech/Oe8pFyF1fehRuMt_Ri6R6OPSrE1D1B7cBePA52-AA30/h:200/w:200/plain/https://public.justjoin.it/companies/logos/original/1c4b241e21d55a86d15d545d2d8ad7dfa338b3eb.png",
+   "publishedAt": "2026-10-03T12:00:22.484Z",
+   "isOpenToHireUkrainians": false,
+   "locations": [
+    {
+     "city": "Warszawa",
+     "street": "Al. Jerozolimskie 93",
+     "latitude": 52.2264535,
+     "longitude": 20.9989552,
+     "slug": "intent-senior-qa-engineer-mobile-iot--warszawa-mobile"
+    }
+   ],
+   "employmentTypes": [
+    {
+     "from": 13000,
+     "fromPerUnit": 13000,
+     "to": 25000,
+     "toPerUnit": 25000,
+     "currency": "PLN",
+     "currencySource": "original",
+     "type": "b2b",
+     "unit": "Month",
+     "gross": false
+    },
+    {
+     "from": 3344,
+     "fromPerUnit": 3343.535402896013,
+     "to": 6430,
+     "toPerUnit": 6429.875774800025,
+     "currency": "USD",
+     "currencySource": "conversion",
+     "type": "b2b",
+     "unit": "Month",
+     "gross": false
+    },
+    {
+     "from": 2972,
+     "fromPerUnit": 2971.768202080236,
+     "to": 5715,
+     "toPerUnit": 5714.9388501543,
+     "currency": "EUR",
+     "currencySource": "conversion",
+     "type": "b2b",
+     "unit": "Month",
+     "gross": false
+    },
+    {
+     "from": 2769,
+     "fromPerUnit": 2769.374973371396,
+     "to": 5326,
+     "toPerUnit": 5325.7211026373,
+     "currency": "CHF",
+     "currencySource": "conversion",
+     "type": "b2b",
+     "unit": "Month",
+     "gross": false
+    },
+    {
+     "from": 2531,
+     "fromPerUnit": 2531.497672969447,
+     "to": 4868,
+     "toPerUnit": 4868.264755710475,
+     "currency": "GBP",
+     "currencySource": "conversion",
+     "type": "b2b",
+     "unit": "Month",
+     "gross": false
+    }
+   ],
+   "requiredSkills": [
+    {
+     "skillId": "00000000-0000-0000-0000-000000000000",
+     "name": "IoT",
+     "level": 3,
+     "group": null
+    },
+    {
+     "skillId": "00000000-0000-0000-0000-000000000000",
+     "name": "Manual Testing",
+     "level": 4,
+     "group": null
+    },
+    {
+     "skillId": "00000000-0000-0000-0000-000000000000",
+     "name": "Mobile App Testing",
+     "level": 4,
+     "group": null
+    },
+    {
+     "skillId": "00000000-0000-0000-0000-000000000000",
+     "name": "Bluetooth Low Energy",
+     "level": 3,
+     "group": null
+    },
+    {
+     "skillId": "00000000-0000-0000-0000-000000000000",
+     "name": "Test Case Management",
+     "level": 3,
+     "group": null
+    }
+   ],
+   "niceToHaveSkills": [],
+   "languages": [
+    {
+     "code": "en",
+     "level": "B2"
+    }
+   ],
+   "isPromoted": false,
+   "isSuperOffer": true,
+   "applyMethod": "external",
+   "applyUrl": "https://intent.recruitee.com/o/senior-qa-engineer?source=justjoin.it",
+   "lastPublishedAt": "2026-07-22T12:10:37.070194Z",
+   "expiredAt": "2026-10-20T12:10:16.239Z",
+   "companyProfileSlug": null,
+   "hybridWorkSchedule": null
+  }
+ ],
+ "meta": {
+  "from": 0,
+  "totalItems": 10000,
+  "prev": {
+   "cursor": null,
+   "itemsCount": 3
+  },
+  "next": {
+   "cursor": 3,
+   "itemsCount": 3
+  }
+ }
+}
