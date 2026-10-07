@@ -45,10 +45,23 @@ export type SearchProfile = Omit<SearchProfileInput, 'id' | 'name' | 'isActive' 
 
 export type SourceQuerySpec = { sourceId: SourceId; params: Record<string, string>; queryKey: string };
 
+/** Djinni categories queried per profile (keywords first). */
+const MAX_DJINNI_CATEGORIES = 4;
+
 export const DJINNI_PRIMARY_KEYWORDS: Record<string, string> = {
   javascript: 'JavaScript',
   js: 'JavaScript',
   typescript: 'JavaScript',
+  'full stack': 'Fullstack',
+  fullstack: 'Fullstack',
+  'full-stack': 'Fullstack',
+  frontend: 'JavaScript',
+  'front end': 'JavaScript',
+  'front-end': 'JavaScript',
+  vue: 'Vue.js',
+  'vue.js': 'Vue.js',
+  nuxt: 'Vue.js',
+  angular: 'Angular',
   react: 'React.js',
   'react.js': 'React.js',
   'next.js': 'React.js',
@@ -58,8 +71,6 @@ export const DJINNI_PRIMARY_KEYWORDS: Record<string, string> = {
   python: 'Python',
   java: 'Java',
   php: 'PHP',
-  'c#': 'C# / .NET',
-  '.net': 'C# / .NET',
   golang: 'Golang',
   go: 'Golang',
   ruby: 'Ruby',
@@ -76,6 +87,26 @@ export const DJINNI_PRIMARY_KEYWORDS: Record<string, string> = {
   hr: 'HR',
   recruiter: 'HR',
 };
+
+const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const DJINNI_TERMS_LONGEST_FIRST = Object.keys(DJINNI_PRIMARY_KEYWORDS)
+  .sort((a, b) => b.length - a.length)
+  .map((key) => ({ key, re: new RegExp(`(?<![\\p{L}\\p{N}.#+-])${escapeRegExp(key)}(?![\\p{L}\\p{N}#+-])`, 'u') }));
+
+/** Djinni categories for one keyword/skill: exact lookup, else every known term contained as whole words (longest first). */
+function djinniCategories(raw: string): string[] {
+  const t = raw.trim().toLowerCase();
+  const exact = DJINNI_PRIMARY_KEYWORDS[t];
+  if (exact) return [exact];
+  const found: string[] = [];
+  let rest = t;
+  for (const { key, re } of DJINNI_TERMS_LONGEST_FIRST) {
+    if (!re.test(rest)) continue;
+    found.push(DJINNI_PRIMARY_KEYWORDS[key]!);
+    rest = rest.replace(re, ' ');
+  }
+  return found;
+}
 
 const SEARCH_SOURCES: [SourceId, string][] = [
   ['dou', 'search'],
@@ -167,12 +198,8 @@ export function buildSourceQueries(
   for (const category of categories) add('dou', { category });
 
   const djinni = [
-    ...new Set(
-      [...profile.skills, ...profile.keywords]
-        .map((t) => DJINNI_PRIMARY_KEYWORDS[t.trim().toLowerCase()])
-        .filter((v): v is string => Boolean(v)),
-    ),
-  ].slice(0, 2);
+    ...new Set([...profile.keywords, ...profile.skills].flatMap((t) => djinniCategories(t))),
+  ].slice(0, MAX_DJINNI_CATEGORIES);
   if (djinni.length === 0) add('djinni', {});
   for (const primary of djinni) add('djinni', { primary_keyword: primary });
 

@@ -5,11 +5,12 @@ import { useEffect, useState } from 'react';
 import { saveBankAnswer } from '@/app/[locale]/(app)/profile/profile-extras-actions';
 import { answerFormQuestions, type FormAnswer, generateKit, getApplyKitData, type KitData, type KitError, markAppliedFromKit, saveKitLetter, type StoredKit } from './actions';
 import { ContactChips } from './contact-chips';
+import { PeopleSearch } from './people-search';
 
 type Lang = 'auto' | 'en' | 'uk' | 'ru';
 type Tone = 'default' | 'shorter' | 'formal';
 
-export function ApplyKitPanel({ jobId, locale, onApplied }: { jobId: string; locale: 'en' | 'uk' | 'ru'; onApplied?: (r: { columnId: string; rank: string }) => void }) {
+export function ApplyKitPanel({ jobId, locale, onApplied, hidePeopleSearch }: { jobId: string; locale: 'en' | 'uk' | 'ru'; hidePeopleSearch?: boolean; onApplied?: (r: { columnId: string; rank: string }) => void }) {
   const t = useTranslations('kit');
   const [data, setData] = useState<KitData | null>(null);
   const [kit, setKit] = useState<StoredKit | null>(null);
@@ -159,6 +160,8 @@ export function ApplyKitPanel({ jobId, locale, onApplied }: { jobId: string; loc
         <h4 className="font-mono text-xs uppercase">{t('contacts')}</h4>
         <ContactChips contacts={data.contacts} cvLink={data.cvLink} />
       </div>
+
+      {!hidePeopleSearch && <PeopleSearch company={data.company} isPlaceholder={data.companyIsPlaceholder} />}
 
       <div className="flex flex-col gap-2">
         <label className="flex flex-col gap-1 font-mono text-xs uppercase">

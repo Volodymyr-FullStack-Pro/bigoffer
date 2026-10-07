@@ -49,6 +49,7 @@ function SourceCheckbox({ source, checked }: { source: SourceInfo; checked: bool
         />
         {source.name}
         {source.beta && <span className="brutal px-1 font-mono text-[10px] uppercase">{t('beta')}</span>}
+        {source.lowYield && <span data-testid={`low-yield-${source.id}`} className="text-xs text-muted-foreground">({t('lowYield')})</span>}
         {source.requiresKey && <span className="text-xs text-muted-foreground">({t('needsKey')})</span>}
       </label>
       {source.id === 'linkedin' && <span id="source-linkedin-warning" className="max-w-xs text-xs text-muted-foreground">{t('linkedinWarning')}</span>}

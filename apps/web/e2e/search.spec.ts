@@ -90,3 +90,12 @@ test('rejects a profile with no job boards selected', async ({ context, page }) 
   await expect(page.getByRole('status')).toContainText('sources');
   await expect(page.getByText('Pick at least one job board')).toBeVisible();
 });
+
+test('a new profile leaves rarely relevant sources off and flags them', async ({ context, page }) => {
+  await loginAs(context, uniqueEmail('search-low-yield'));
+  await page.goto('/en/search');
+  await expect(page.getByTestId('source-arbeitnow')).not.toBeChecked();
+  await expect(page.getByTestId('low-yield-arbeitnow')).toHaveText('(rarely relevant)');
+  await expect(page.getByTestId('source-djinni')).toBeChecked();
+  await expect(page.getByTestId('low-yield-djinni')).toHaveCount(0);
+});

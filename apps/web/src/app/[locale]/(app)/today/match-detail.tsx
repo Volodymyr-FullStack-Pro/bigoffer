@@ -4,6 +4,7 @@ import { isLocale, type Locale, sourceInfo } from '@jp/core';
 import { useFormatter, useLocale, useNow, useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { ApplyKitPanel } from '@/components/apply-kit/apply-kit-panel';
+import { PeopleSearch } from '@/components/apply-kit/people-search';
 import { ScoreMeter } from '@/components/ui/score-meter';
 import type { FeedMatch } from './feed-types';
 
@@ -43,7 +44,7 @@ function ApplyKitToggle({ jobId, onApplied }: { jobId: string; onApplied?: () =>
       <button type="button" data-testid="apply-kit-open" aria-expanded={open} onClick={() => setOpen((v) => !v)} className="brutal brutal-press self-start px-4 py-2 font-semibold">
         {tk('open')}
       </button>
-      {open && <ApplyKitPanel jobId={jobId} locale={locale} onApplied={onApplied} />}
+      {open && <ApplyKitPanel jobId={jobId} locale={locale} hidePeopleSearch onApplied={onApplied} />}
     </div>
   );
 }
@@ -117,6 +118,7 @@ export function MatchDetail({ match, onAction, onApplied, showDescription = true
         ))}
       </div>
       {onAction && <MatchActions onAction={onAction} />}
+      <PeopleSearch company={match.company} isPlaceholder={match.companyIsPlaceholder} />
       <ApplyKitToggle key={match.id} jobId={match.jobId} onApplied={onApplied} />
       {showDescription && match.description && (
         <div className="max-h-[50vh] overflow-y-auto whitespace-pre-line border-t-2 border-border pt-3 text-sm">{match.description}</div>

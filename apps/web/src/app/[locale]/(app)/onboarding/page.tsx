@@ -39,6 +39,13 @@ export default async function OnboardingPage() {
           <AnswerBank answers={answers} locale={locale} />
         </li>
       </ol>
+      <p data-testid="profiles-tip" className="brutal flex flex-col gap-2 p-3 text-sm">
+        <span>{t('profilesTip')}</span>
+        <span className="flex flex-wrap gap-x-4 gap-y-1 font-semibold">
+          <a href="https://djinni.co/my/profile/" target="_blank" rel="noopener noreferrer" className="underline">Djinni</a>
+          <a href="https://www.linkedin.com/in/" target="_blank" rel="noopener noreferrer" className="underline">LinkedIn</a>
+        </span>
+      </p>
       <form action={finishOnboarding}>
         <button type="submit" data-testid="onboarding-finish" className="brutal brutal-press bg-brand px-6 py-3 font-semibold text-brand-foreground">{t('finish')}</button>
       </form>

@@ -29,7 +29,7 @@ export default async function TodayPage() {
     supabase
       .from('job_matches')
       .select(
-        'id, job_id, score, created_at, breakdown, explanation, search_profile_id, jobs!inner(title, location, remote_type, seniority, salary_min_usd, salary_max_usd, posted_at, first_seen_at, summary, skills, description_text, is_job, companies(name), job_postings(source_id, url))',
+        'id, job_id, score, created_at, breakdown, explanation, search_profile_id, jobs!inner(title, location, remote_type, seniority, salary_min_usd, salary_max_usd, posted_at, first_seen_at, summary, skills, description_text, is_job, company_is_placeholder, companies(name), job_postings(source_id, url))',
       )
       .in('state', ['new', 'seen'])
       .eq('jobs.status', 'active')
@@ -62,6 +62,7 @@ export default async function TodayPage() {
       score: m.score,
       title: m.jobs.title,
       company: m.jobs.companies?.name ?? '',
+      companyIsPlaceholder: m.jobs.company_is_placeholder,
       location: m.jobs.location,
       remoteType: REMOTE.find((r) => r === m.jobs.remote_type) ?? 'unknown',
       seniority: (SENIORITIES as readonly string[]).includes(m.jobs.seniority ?? '') ? (m.jobs.seniority as Seniority) : null,

@@ -208,6 +208,7 @@ export async function saveJob(
           title: job.title,
           title_normalized: job.canonicalTitle,
           company_id: companyId,
+          company_is_placeholder: job.companyIsPlaceholder,
           description_text: job.descriptionText,
           location: job.location,
           remote_type: job.remoteType,

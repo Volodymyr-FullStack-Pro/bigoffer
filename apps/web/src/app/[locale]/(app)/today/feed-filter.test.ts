@@ -8,6 +8,7 @@ const m = (id: string, over: Partial<FeedMatch> = {}): FeedMatch => ({
   score: 80,
   title: id,
   company: 'Acme',
+  companyIsPlaceholder: false,
   location: null,
   remoteType: 'remote',
   seniority: null,
