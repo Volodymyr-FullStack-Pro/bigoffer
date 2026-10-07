@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_FILTERS, filterMatches, sortMatches } from './feed-filter';
+import { DEFAULT_FILTERS, filterMatches, mergeMatches, sortMatches } from './feed-filter';
 import type { FeedMatch } from './feed-types';
 
 const m = (id: string, over: Partial<FeedMatch> = {}): FeedMatch => ({
@@ -61,5 +61,11 @@ describe('fresh filter and sorting', () => {
   it('newest sorts by postedAt ?? firstSeenAt descending; best keeps the order', () => {
     expect(sortMatches(items, 'newest').map((x) => x.id)).toEqual(['new', 'unposted', 'stale-seen', 'old']);
     expect(sortMatches(items, 'best').map((x) => x.id)).toEqual(['old', 'new', 'unposted', 'stale-seen']);
+  });
+});
+
+describe('mergeMatches', () => {
+  it('keeps base order and appends only fresh matches not already present', () => {
+    expect(mergeMatches([m('a'), m('b')], [m('b'), m('c')]).map((x) => x.id)).toEqual(['a', 'b', 'c']);
   });
 });

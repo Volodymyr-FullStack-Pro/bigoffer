@@ -33,3 +33,9 @@ export function sortMatches(items: FeedMatch[], sort: FeedFilters['sort']): Feed
   if (sort === 'best') return items;
   return [...items].sort((a, b) => freshness(b) - freshness(a));
 }
+
+/** Base set (score order) first, then fresh matches that are not already in it. */
+export function mergeMatches(base: FeedMatch[], fresh: FeedMatch[]): FeedMatch[] {
+  const seen = new Set(base.map((m) => m.id));
+  return [...base, ...fresh.filter((m) => !seen.has(m.id))];
+}

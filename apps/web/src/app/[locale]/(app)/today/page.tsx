@@ -5,9 +5,14 @@ import { requireUserId } from '@/lib/auth';
 import { createClient } from '@/lib/supabase/server';
 import { cardSkills, matchedSkillsOf } from './card-skills';
 import { Feed } from './feed';
+import { mergeMatches } from './feed-filter';
 import type { FeedMatch } from './feed-types';
 
 const REMOTE = ['remote', 'hybrid', 'office'] as const;
+
+function since24h(): string {
+  return new Date(Date.now() - 24 * 3600 * 1000).toISOString();
+}
 
 function windowStart(): string {
   return new Date(Date.now() - 3 * 24 * 3600 * 1000).toISOString();
@@ -20,7 +25,7 @@ export default async function TodayPage() {
   const locale = isLocale(rawLocale) ? rawLocale : 'en';
   const supabase = await createClient();
   const since = windowStart();
-  const [{ data }, { data: profiles }, { data: me }] = await Promise.all([
+  const baseQuery = () =>
     supabase
       .from('job_matches')
       .select(
@@ -29,16 +34,17 @@ export default async function TodayPage() {
       .in('state', ['new', 'seen'])
       .eq('jobs.status', 'active')
       .not('jobs.is_job', 'is', false)
-      .gte('created_at', since)
-      .order('score', { ascending: false })
-      .order('created_at', { ascending: false })
-      .limit(200),
+      .gte('created_at', since);
+  const [{ data: bestRows }, { data: freshRows }, { data: profiles }, { data: me }] = await Promise.all([
+    baseQuery().order('score', { ascending: false }).order('created_at', { ascending: false }).limit(200),
+    // Fresh jobs can score below the top 200, so fetch them separately for the "New in 24h" filter and "Newest" sort.
+    baseQuery().gte('jobs.first_seen_at', since24h()).order('first_seen_at', { ascending: false, referencedTable: 'jobs' }).limit(200),
     supabase.from('search_profiles').select('id, name, skills').order('created_at'),
     supabase.from('profiles').select('onboarded_at').eq('id', userId).maybeSingle(),
   ]);
 
   const profileSkills = new Map((profiles ?? []).map((p) => [p.id, p.skills]));
-  const matches: FeedMatch[] = (data ?? []).map((m) => {
+  const toMatch = (m: NonNullable<typeof bestRows>[number]): FeedMatch => {
     const matched = matchedSkillsOf(m.breakdown);
     const wanted = m.search_profile_id ? (profileSkills.get(m.search_profile_id) ?? []) : [];
     const b = m.breakdown as Partial<Record<'skills' | 'role' | 'seniority' | 'location' | 'salary', unknown>> | null;
@@ -66,7 +72,8 @@ export default async function TodayPage() {
       firstSeenAt: m.jobs.first_seen_at,
       postings: m.jobs.job_postings.map((p) => ({ sourceId: p.source_id, url: p.url })),
     };
-  });
+  };
+  const matches = mergeMatches((bestRows ?? []).map(toMatch), (freshRows ?? []).map(toMatch));
   const sourceIds = [...new Set(matches.flatMap((m) => m.postings.map((p) => p.sourceId)))];
 
   return (
