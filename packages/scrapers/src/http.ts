@@ -3,6 +3,10 @@ import { type AdapterContext, type PageRenderer, SourceBlockedError } from './ty
 export const DEFAULT_USER_AGENT =
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130 Safari/537.36';
 
+/** Query-string credentials (e.g. Adzuna app_key) must never reach logs or stored error messages. */
+export const maskSecrets = (url: string): string =>
+  url.replace(/([?&](?:app_key|api_key|key|token|secret)=)[^&\s]*/gi, '$1***');
+
 export type HttpOptions = {
   userAgent: string;
   timeoutMs?: number;
@@ -45,12 +49,12 @@ export function createHttpContext(
         }
         throw err;
       }
-      if (res.status === 403 || res.status === 429) throw new SourceBlockedError(res.status, url);
+      if (res.status === 403 || res.status === 429) throw new SourceBlockedError(res.status, maskSecrets(url));
       if (res.status >= 500 && attempt < retries) {
         await sleep(1000 * 2 ** attempt);
         continue;
       }
-      if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status} for ${maskSecrets(url)}`);
       return res;
     }
   }

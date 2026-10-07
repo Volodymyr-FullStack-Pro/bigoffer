@@ -1,5 +1,6 @@
 import type { SourceId } from '@jp/core';
 import type { SourceAdapter } from '../types';
+import { adzunaAdapter } from './adzuna';
 import { arbeitnowAdapter } from './arbeitnow';
 import { djinniAdapter } from './djinni';
 import { douAdapter } from './dou';
@@ -46,4 +47,5 @@ export const ADAPTERS: Record<SourceId, SourceAdapter> = {
   ashby: ashbyAdapter,
   workable: workableAdapter,
   telegram: telegramAdapter,
+  adzuna: adzunaAdapter,
 };
