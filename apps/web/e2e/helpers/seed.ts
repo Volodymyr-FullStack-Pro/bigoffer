@@ -1,3 +1,7 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { normalizeCv } from '@jp/ai';
+import { fakeResponder } from '@jp/ai/testing';
 import { rankAtEnd } from '@jp/core';
 import { createClient } from '@supabase/supabase-js';
 
@@ -120,4 +124,22 @@ export async function matchState(matchId: string): Promise<string | null> {
   const { data, error } = await admin().from('job_matches').select('state').eq('id', matchId).maybeSingle();
   if (error) throw error;
   return data?.state ?? null;
+}
+
+export async function seedCv(email: string) {
+  const db = admin();
+  const userId = await userIdByEmail(email);
+  const path = `${userId}/${crypto.randomUUID()}.pdf`;
+  const { error: uErr } = await db.storage.from('resumes').upload(path, readFileSync(join(__dirname, '..', 'fixtures', 'cv.pdf')), { contentType: 'application/pdf' });
+  if (uErr) throw uErr;
+  const parsed = normalizeCv(fakeResponder({ task: 'parse_cv' } as never) as never);
+  const { error } = await db.from('resumes').insert({ user_id: userId, storage_path: path, file_name: 'cv.pdf', parsed, is_primary: true });
+  if (error) throw error;
+}
+
+export async function seedBankAnswer(email: string, key: string, answerEn: string) {
+  const db = admin();
+  const userId = await userIdByEmail(email);
+  const { error } = await db.from('answer_bank').upsert({ user_id: userId, key, question: key, answer: { en: answerEn } }, { onConflict: 'user_id,key' });
+  if (error) throw error;
 }

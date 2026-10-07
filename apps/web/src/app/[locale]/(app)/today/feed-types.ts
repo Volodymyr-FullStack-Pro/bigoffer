@@ -2,6 +2,7 @@ export type RemoteType = 'remote' | 'hybrid' | 'office' | 'unknown';
 
 export type FeedMatch = {
   id: string;
+  jobId: string;
   score: number;
   title: string;
   company: string;

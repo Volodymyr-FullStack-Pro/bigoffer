@@ -5,6 +5,7 @@ export type BoardLabel = { id: string; key: string | null; name: string | null; 
 
 export type BoardCard = {
   id: string;
+  jobId: string | null;
   columnId: string;
   rank: string;
   title: string;
