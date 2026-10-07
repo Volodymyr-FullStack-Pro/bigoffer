@@ -5,6 +5,7 @@ import { telegramDeps } from '../runtime';
 
 export const telegramAlertsTask = schedules.task({
   id: 'telegram-alerts',
+  queue: { concurrencyLimit: 1 },
   cron: '*/15 * * * *',
   run: async () => {
     const deps = telegramDeps();

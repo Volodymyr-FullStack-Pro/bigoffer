@@ -3,7 +3,7 @@ import type { Db } from '../db';
 
 /** `onlyUserIds` restricts the run to those users (tests; never set in production). */
 export type TelegramDeps = { bot: BotApi; siteUrl: string; now: Date; onlyUserIds?: string[] };
-export type TelegramResult = { users: number; sent: number; blocked: number };
+export type TelegramResult = { users: number; sent: number; blocked: number; failed: number };
 
 const MAX_ALERTS = 5;
 const FETCH_LIMIT = 50;
@@ -33,13 +33,10 @@ const MATCH_SELECT = 'id, score, explanation, jobs!inner(title, location, remote
 
 const PROFILE_SELECT = 'id, locale, timezone, digest_hour, digest_last_sent_on, telegram_chat_id, telegram_min_score';
 
-/** Users with a linked chat who have Telegram notifications on. */
-async function linkedProfiles(db: Db, onlyUserIds?: string[]): Promise<Profile[]> {
-  let query = db
-    .from('profiles')
-    .select(PROFILE_SELECT)
-    .not('telegram_chat_id', 'is', null)
-    .eq('telegram_alerts', true);
+/** Users with a linked chat; instant alerts additionally require telegram_alerts (the digest does not). */
+async function linkedProfiles(db: Db, onlyUserIds: string[] | undefined, alertsOnly: boolean): Promise<Profile[]> {
+  let query = db.from('profiles').select(PROFILE_SELECT).not('telegram_chat_id', 'is', null);
+  if (alertsOnly) query = query.eq('telegram_alerts', true);
   if (onlyUserIds) query = query.in('id', onlyUserIds);
   const { data, error } = await query;
   if (error) throw error;
@@ -77,54 +74,76 @@ async function dropChat(db: Db, userId: string): Promise<void> {
   await db.from('profiles').update({ telegram_chat_id: null }).eq('id', userId);
 }
 
+/** Marks matches as notified; retries once, since a lost mark would send the same alerts again. */
+async function markNotified(db: Db, ids: string[], now: Date): Promise<boolean> {
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const { error } = await db.from('job_matches').update({ notified_at: now.toISOString() }).in('id', ids);
+    if (!error) return true;
+  }
+  return false;
+}
+
+function logFailure(what: string, err: unknown): void {
+  console.error(`[telegram] ${what} failed`, err instanceof Error ? err.message : String(err));
+}
+
 export async function sendAlerts(db: Db, deps: TelegramDeps): Promise<TelegramResult> {
-  const result: TelegramResult = { users: 0, sent: 0, blocked: 0 };
-  const profiles = await linkedProfiles(db, deps.onlyUserIds);
+  const result: TelegramResult = { users: 0, sent: 0, blocked: 0, failed: 0 };
+  const profiles = await linkedProfiles(db, deps.onlyUserIds, true);
   for (const p of profiles) {
-    const { data, error } = await freshMatches(db, p.id, deps.now)
-      .is('notified_at', null)
-      .gte('score', p.telegram_min_score)
-      .limit(FETCH_LIMIT);
-    if (error) throw error;
-    const matches = (data ?? []) as unknown as MatchRow[];
-    if (matches.length === 0) continue;
-    result.users++;
-    const locale = toTgLocale(p.locale);
-    const shown = matches.slice(0, MAX_ALERTS);
-    const rest = matches.slice(MAX_ALERTS);
-    const done: string[] = [];
-    let stop = false;
-    for (const m of shown) {
-      const msg = alertMessage(toAlertJob(m, locale), locale, deps.siteUrl);
-      const res = await deps.bot.sendMessage(p.telegram_chat_id, msg.text, msg.replyMarkup);
-      if (res.ok) {
-        done.push(m.id);
-        result.sent++;
-      } else {
-        if (res.blocked) {
-          result.blocked++;
-          await dropChat(db, p.id);
-        }
-        stop = true;
-        break;
-      }
-    }
-    if (!stop && rest.length > 0) {
-      const res = await deps.bot.sendMessage(p.telegram_chat_id, overflowMessage(rest.length, locale, deps.siteUrl));
-      if (res.ok) {
-        done.push(...rest.map((m) => m.id));
-        result.sent++;
-      } else if (res.blocked) {
-        result.blocked++;
-        await dropChat(db, p.id);
-      }
-    }
-    if (done.length > 0) {
-      const { error: markError } = await db.from('job_matches').update({ notified_at: deps.now.toISOString() }).in('id', done);
-      if (markError) throw markError;
+    try {
+      await alertUser(db, deps, p, result);
+    } catch (err) {
+      result.failed++;
+      logFailure('alerts for a user', err);
     }
   }
   return result;
+}
+
+async function alertUser(db: Db, deps: TelegramDeps, p: Profile, result: TelegramResult): Promise<void> {
+  const { data, error } = await freshMatches(db, p.id, deps.now)
+    .is('notified_at', null)
+    .gte('score', p.telegram_min_score)
+    .limit(FETCH_LIMIT);
+  if (error) throw error;
+  const matches = (data ?? []) as unknown as MatchRow[];
+  if (matches.length === 0) return;
+  result.users++;
+  const locale = toTgLocale(p.locale);
+  const shown = matches.slice(0, MAX_ALERTS);
+  const rest = matches.slice(MAX_ALERTS);
+  const done: string[] = [];
+  let stop = false;
+  for (const m of shown) {
+    const msg = alertMessage(toAlertJob(m, locale), locale, deps.siteUrl);
+    const res = await deps.bot.sendMessage(p.telegram_chat_id, msg.text, msg.replyMarkup);
+    if (res.ok) {
+      done.push(m.id);
+      result.sent++;
+    } else {
+      if (res.blocked) {
+        result.blocked++;
+        await dropChat(db, p.id);
+      } else result.failed++;
+      stop = true;
+      break;
+    }
+  }
+  if (!stop && rest.length > 0) {
+    const res = await deps.bot.sendMessage(p.telegram_chat_id, overflowMessage(rest.length, locale, deps.siteUrl));
+    if (res.ok) {
+      done.push(...rest.map((m) => m.id));
+      result.sent++;
+    } else if (res.blocked) {
+      result.blocked++;
+      await dropChat(db, p.id);
+    } else result.failed++;
+  }
+  if (done.length > 0 && !(await markNotified(db, done, deps.now))) {
+    result.failed++;
+    logFailure('marking notified matches', 'update error');
+  }
 }
 
 /** Local hour (0-23) and ISO date (YYYY-MM-DD) in a time zone; null for an invalid zone. */
@@ -143,46 +162,59 @@ export function localTime(now: Date, timeZone: string): { hour: number; date: st
 }
 
 /**
- * Daily digest at the user's digest_hour. `digest_last_sent_on` is set whenever that hour was processed
- * (sent, or nothing to report), so an empty day is not rechecked; a failed send leaves it unset.
+ * Daily digest: sent once per local day once the user's local hour reaches digest_hour (catch-up, so a missed
+ * hourly run still delivers later that day). `digest_last_sent_on` is set whenever the day was processed
+ * (sent, or nothing to report), so an empty day is not rechecked; a failed send leaves it unset and is retried.
+ * Independent of telegram_alerts (that toggle only controls instant alerts).
  */
 export async function sendDigests(db: Db, deps: TelegramDeps): Promise<TelegramResult> {
-  const result: TelegramResult = { users: 0, sent: 0, blocked: 0 };
-  const profiles = await linkedProfiles(db, deps.onlyUserIds);
+  const result: TelegramResult = { users: 0, sent: 0, blocked: 0, failed: 0 };
+  const profiles = await linkedProfiles(db, deps.onlyUserIds, false);
   for (const p of profiles) {
     const local = localTime(deps.now, p.timezone);
-    if (!local || local.hour !== p.digest_hour || p.digest_last_sent_on === local.date) continue;
-    result.users++;
-    const markDone = () => db.from('profiles').update({ digest_last_sent_on: local.date }).eq('id', p.id);
-
-    const { data, count, error } = await freshMatches(db, p.id, deps.now).limit(DIGEST_TOP);
-    if (error) throw error;
-    const { data: apps, error: appsError } = await db
-      .from('applications')
-      .select('company, title')
-      .eq('user_id', p.id)
-      .eq('outcome', 'open')
-      .lte('next_action_at', deps.now.toISOString())
-      .order('next_action_at', { ascending: true })
-      .limit(DIGEST_TOP);
-    if (appsError) throw appsError;
-
-    const locale = toTgLocale(p.locale);
-    const top = ((data ?? []) as unknown as MatchRow[]).map((m) => toAlertJob(m, locale));
-    const followUps = apps ?? [];
-    if (top.length === 0 && followUps.length === 0) {
-      await markDone();
-      continue;
-    }
-    const msg = digestMessage({ total: count ?? top.length, top, followUps }, locale, deps.siteUrl);
-    const res = await deps.bot.sendMessage(p.telegram_chat_id, msg.text, msg.replyMarkup);
-    if (res.ok) {
-      result.sent++;
-      await markDone();
-    } else if (res.blocked) {
-      result.blocked++;
-      await dropChat(db, p.id);
+    if (!local || local.hour < p.digest_hour || p.digest_last_sent_on === local.date) continue;
+    try {
+      await digestUser(db, deps, p, local.date, result);
+    } catch (err) {
+      result.failed++;
+      logFailure('digest for a user', err);
     }
   }
   return result;
+}
+
+async function digestUser(db: Db, deps: TelegramDeps, p: Profile, date: string, result: TelegramResult): Promise<void> {
+  result.users++;
+  const markDone = async () => {
+    const { error } = await db.from('profiles').update({ digest_last_sent_on: date }).eq('id', p.id);
+    if (error) throw error;
+  };
+  const { data, count, error } = await freshMatches(db, p.id, deps.now).limit(DIGEST_TOP);
+  if (error) throw error;
+  const { data: apps, error: appsError } = await db
+    .from('applications')
+    .select('company, title')
+    .eq('user_id', p.id)
+    .eq('outcome', 'open')
+    .lte('next_action_at', deps.now.toISOString())
+    .order('next_action_at', { ascending: true })
+    .limit(DIGEST_TOP);
+  if (appsError) throw appsError;
+
+  const locale = toTgLocale(p.locale);
+  const top = ((data ?? []) as unknown as MatchRow[]).map((m) => toAlertJob(m, locale));
+  const followUps = apps ?? [];
+  if (top.length === 0 && followUps.length === 0) {
+    await markDone();
+    return;
+  }
+  const msg = digestMessage({ total: count ?? top.length, top, followUps }, locale, deps.siteUrl);
+  const res = await deps.bot.sendMessage(p.telegram_chat_id, msg.text, msg.replyMarkup);
+  if (res.ok) {
+    result.sent++;
+    await markDone();
+  } else if (res.blocked) {
+    result.blocked++;
+    await dropChat(db, p.id);
+  } else result.failed++;
 }

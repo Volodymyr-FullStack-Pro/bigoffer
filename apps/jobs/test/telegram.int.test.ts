@@ -11,9 +11,13 @@ let chatSeq = 7_000_000_000 + (Date.now() % 1_000_000) * 100;
 
 class FakeBot implements BotApi {
   sent: { chatId: number; text: string }[] = [];
-  constructor(private result: BotResult = { ok: true }) {}
+  constructor(
+    private result: BotResult = { ok: true },
+    private failChat?: number,
+  ) {}
   async sendMessage(chatId: number, text: string): Promise<BotResult> {
     this.sent.push({ chatId, text });
+    if (this.failChat !== undefined && chatId !== this.failChat) return { ok: true };
     return this.result;
   }
   async answerCallback(): Promise<BotResult> {
@@ -95,14 +99,14 @@ describe('sendAlerts', () => {
     const u = await makeUser('basic', { telegram_min_score: 75 });
     const [a, b, c] = [await addMatch(u.id, 90), await addMatch(u.id, 80), await addMatch(u.id, 60)] as [string, string, string];
     const bot = new FakeBot();
-    expect(await run(sendAlerts, bot, u.id)).toEqual({ users: 1, sent: 2, blocked: 0 });
+    expect(await run(sendAlerts, bot, u.id)).toEqual({ users: 1, sent: 2, blocked: 0, failed: 0 });
     expect(bot.sent).toHaveLength(2);
     expect(bot.sent[0]!.chatId).toBe(u.chatId);
     expect(bot.sent[0]!.text).toContain('90%');
     expect(bot.sent[0]!.text).toContain('why');
     expect(bot.sent[1]!.text).toContain('80%');
     expect(await notified([a, b, c])).toEqual(new Map([[a, true], [b, true], [c, false]]));
-    expect(await run(sendAlerts, bot, u.id)).toEqual({ users: 0, sent: 0, blocked: 0 });
+    expect(await run(sendAlerts, bot, u.id)).toEqual({ users: 0, sent: 0, blocked: 0, failed: 0 });
     expect(bot.sent).toHaveLength(2);
   });
 
@@ -111,7 +115,7 @@ describe('sendAlerts', () => {
     const ids: string[] = [];
     for (let i = 0; i < 7; i++) ids.push(await addMatch(u.id, 95 - i));
     const bot = new FakeBot();
-    expect(await run(sendAlerts, bot, u.id)).toEqual({ users: 1, sent: 6, blocked: 0 });
+    expect(await run(sendAlerts, bot, u.id)).toEqual({ users: 1, sent: 6, blocked: 0, failed: 0 });
     expect(bot.sent).toHaveLength(6);
     expect(bot.sent[5]!.text).toContain('2 more new jobs');
     expect([...(await notified(ids)).values()].every(Boolean)).toBe(true);
@@ -121,24 +125,37 @@ describe('sendAlerts', () => {
     const off = await makeUser('off', { telegram_alerts: false });
     await addMatch(off.id, 99);
     const bot = new FakeBot();
-    expect(await run(sendAlerts, bot, off.id)).toEqual({ users: 0, sent: 0, blocked: 0 });
+    expect(await run(sendAlerts, bot, off.id)).toEqual({ users: 0, sent: 0, blocked: 0, failed: 0 });
 
     const u = await makeUser('filters');
     const notJob = await addMatch(u.id, 99, { isJob: false });
     const unknown = await addMatch(u.id, 98, { isJob: null });
     await addMatch(u.id, 97, { createdAt: new Date(Date.now() - 25 * 3600_000).toISOString() });
     await addMatch(u.id, 96, { state: 'hidden' });
-    expect(await run(sendAlerts, bot, u.id)).toEqual({ users: 1, sent: 1, blocked: 0 });
+    expect(await run(sendAlerts, bot, u.id)).toEqual({ users: 1, sent: 1, blocked: 0, failed: 0 });
     expect(bot.sent).toHaveLength(1);
     expect((await notified([notJob, unknown])).get(notJob)).toBe(false);
     expect((await notified([notJob, unknown])).get(unknown)).toBe(true);
+  });
+
+  it('a failing chat does not block other users; a non-403 failure leaves matches unmarked', async () => {
+    const a = await makeUser('isoa');
+    const b = await makeUser('isob');
+    const ma = await addMatch(a.id, 90);
+    const mb = await addMatch(b.id, 90);
+    const bot = new FakeBot({ ok: false, blocked: false, status: 500 }, b.chatId);
+    const res = await sendAlerts(db, { bot, siteUrl: 'https://example.test', now: new Date(), onlyUserIds: [a.id, b.id] });
+    expect(res).toEqual({ users: 2, sent: 1, blocked: 0, failed: 1 });
+    expect(await notified([ma, mb])).toEqual(new Map([[ma, true], [mb, false]]));
+    const { data } = await db.from('profiles').select('telegram_chat_id').eq('id', b.id).single();
+    expect(data!.telegram_chat_id).toBe(b.chatId);
   });
 
   it('unlinks the chat when the bot is blocked and leaves the match unmarked', async () => {
     const u = await makeUser('blocked');
     const m = await addMatch(u.id, 90);
     const bot = new FakeBot({ ok: false, blocked: true, status: 403 });
-    expect(await run(sendAlerts, bot, u.id)).toEqual({ users: 1, sent: 0, blocked: 1 });
+    expect(await run(sendAlerts, bot, u.id)).toEqual({ users: 1, sent: 0, blocked: 1, failed: 0 });
     const { data } = await db.from('profiles').select('telegram_chat_id').eq('id', u.id).single();
     expect(data!.telegram_chat_id).toBeNull();
     expect((await notified([m])).get(m)).toBe(false);
@@ -165,7 +182,7 @@ describe('sendDigests', () => {
       { user_id: u.id, column_id: col!.id, rank: 'b', title: 'Later role', company: 'LaterCo', next_action_at: new Date(at.getTime() + 86_400_000).toISOString() },
     ]);
     const bot = new FakeBot();
-    expect(await run(sendDigests, bot, u.id, at)).toEqual({ users: 1, sent: 1, blocked: 0 });
+    expect(await run(sendDigests, bot, u.id, at)).toEqual({ users: 1, sent: 1, blocked: 0, failed: 0 });
     const text = bot.sent[0]!.text;
     expect(text).toContain('12 new jobs');
     expect(text.split('\n').filter((l) => l.startsWith('• ') && l.includes('%'))).toHaveLength(10);
@@ -174,32 +191,63 @@ describe('sendDigests', () => {
     const { data } = await db.from('profiles').select('digest_last_sent_on').eq('id', u.id).single();
     expect(data!.digest_last_sent_on).toBe('2026-10-08');
 
-    expect(await run(sendDigests, bot, u.id, at)).toEqual({ users: 0, sent: 0, blocked: 0 });
+    expect(await run(sendDigests, bot, u.id, at)).toEqual({ users: 0, sent: 0, blocked: 0, failed: 0 });
     expect(bot.sent).toHaveLength(1);
   });
 
-  it('does nothing outside the digest hour', async () => {
+  it('does nothing before the digest hour', async () => {
     const u = await makeUser('wronghour', { timezone: 'Europe/Kyiv', digest_hour: 8 });
-    await addMatch(u.id, 80, { createdAt: new Date(at.getTime() + 3600_000 - 7200_000).toISOString() });
+    const early = new Date('2026-10-08T04:10:00Z'); // 07:10 Kyiv
+    await addMatch(u.id, 80, { createdAt: new Date(early.getTime() - 3600_000).toISOString() });
     const bot = new FakeBot();
-    const later = new Date('2026-10-08T06:10:00Z'); // 09:10 Kyiv
-    expect(await run(sendDigests, bot, u.id, later)).toEqual({ users: 0, sent: 0, blocked: 0 });
+    expect(await run(sendDigests, bot, u.id, early)).toEqual({ users: 0, sent: 0, blocked: 0, failed: 0 });
     expect(bot.sent).toHaveLength(0);
+  });
+
+  it('catches up later the same day, once', async () => {
+    const u = await makeUser('catchup', { timezone: 'Europe/Kyiv', digest_hour: 8 });
+    const later = new Date('2026-10-08T07:10:00Z'); // 10:10 Kyiv
+    await addMatch(u.id, 80, { createdAt: new Date(later.getTime() - 3600_000).toISOString() });
+    const bot = new FakeBot();
+    expect(await run(sendDigests, bot, u.id, later)).toEqual({ users: 1, sent: 1, blocked: 0, failed: 0 });
+    expect(await run(sendDigests, bot, u.id, later)).toEqual({ users: 0, sent: 0, blocked: 0, failed: 0 });
+    expect(bot.sent).toHaveLength(1);
+  });
+
+  it('sends the digest even with instant alerts off', async () => {
+    const u = await makeUser('digestnoalerts', { timezone: 'Europe/Kyiv', digest_hour: 8, telegram_alerts: false });
+    await addMatch(u.id, 80, { createdAt: hoursAgo(1) });
+    const bot = new FakeBot();
+    expect(await run(sendDigests, bot, u.id, at)).toEqual({ users: 1, sent: 1, blocked: 0, failed: 0 });
+  });
+
+  it('a failing chat does not block other users and is retried the same day', async () => {
+    const a = await makeUser('dga', { timezone: 'Europe/Kyiv', digest_hour: 8 });
+    const b = await makeUser('dgb', { timezone: 'Europe/Kyiv', digest_hour: 8 });
+    await addMatch(a.id, 80, { createdAt: hoursAgo(1) });
+    await addMatch(b.id, 80, { createdAt: hoursAgo(1) });
+    const bot = new FakeBot({ ok: false, blocked: false, status: 500 }, b.chatId);
+    const res = await sendDigests(db, { bot, siteUrl: 'https://example.test', now: at, onlyUserIds: [a.id, b.id] });
+    expect(res).toEqual({ users: 2, sent: 1, blocked: 0, failed: 1 });
+    const { data } = await db.from('profiles').select('id, digest_last_sent_on').in('id', [a.id, b.id]);
+    const byId = new Map((data ?? []).map((r) => [r.id, r.digest_last_sent_on]));
+    expect(byId.get(a.id)).toBe('2026-10-08');
+    expect(byId.get(b.id)).toBeNull();
   });
 
   it('sends nothing when there is nothing to report, and does not recheck that day', async () => {
     const u = await makeUser('empty', { timezone: 'Europe/Kyiv', digest_hour: 8 });
     const bot = new FakeBot();
-    expect(await run(sendDigests, bot, u.id, at)).toEqual({ users: 1, sent: 0, blocked: 0 });
+    expect(await run(sendDigests, bot, u.id, at)).toEqual({ users: 1, sent: 0, blocked: 0, failed: 0 });
     expect(bot.sent).toHaveLength(0);
-    expect(await run(sendDigests, bot, u.id, at)).toEqual({ users: 0, sent: 0, blocked: 0 });
+    expect(await run(sendDigests, bot, u.id, at)).toEqual({ users: 0, sent: 0, blocked: 0, failed: 0 });
   });
 
   it('unlinks the chat when the digest is blocked', async () => {
     const u = await makeUser('digestblocked', { timezone: 'Europe/Kyiv', digest_hour: 8 });
     await addMatch(u.id, 80, { createdAt: hoursAgo(1) });
     const bot = new FakeBot({ ok: false, blocked: true, status: 403 });
-    expect(await run(sendDigests, bot, u.id, at)).toEqual({ users: 1, sent: 0, blocked: 1 });
+    expect(await run(sendDigests, bot, u.id, at)).toEqual({ users: 1, sent: 0, blocked: 1, failed: 0 });
     const { data } = await db.from('profiles').select('telegram_chat_id').eq('id', u.id).single();
     expect(data!.telegram_chat_id).toBeNull();
   });
