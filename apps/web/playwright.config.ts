@@ -23,6 +23,14 @@ export default defineConfig({
     url: `${baseURL}/en/login`,
     reuseExistingServer: !process.env.CI,
     timeout: 180_000,
-    env: { AI_PROVIDER: 'fake', ALLOW_FAKE_AI: '1' },
+    // No TELEGRAM_BOT_TOKEN: the bot client is a no-op, so the webhook can be tested without Telegram.
+    env: {
+      AI_PROVIDER: 'fake',
+      ALLOW_FAKE_AI: '1',
+      TELEGRAM_WEBHOOK_SECRET: 'e2e-secret',
+      NEXT_PUBLIC_TELEGRAM_BOT_USERNAME: 'bigoffer_test_bot',
+      TELEGRAM_BOT_TOKEN: '',
+      SUPABASE_SECRET_KEY: process.env.SUPABASE_SECRET_KEY ?? '',
+    },
   },
 });

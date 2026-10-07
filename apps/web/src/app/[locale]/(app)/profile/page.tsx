@@ -8,6 +8,7 @@ import { CvSection } from './cv-section';
 import { loadProfileExtras } from './extras-data';
 import { LetterTemplate } from './letter-template';
 import { ProfileForm } from './profile-form';
+import { TelegramSection } from './telegram-section';
 
 export default async function ProfilePage() {
   const t = await getTranslations('profile');
@@ -15,7 +16,7 @@ export default async function ProfilePage() {
   const supabase = await createClient();
   const { data: profile, error } = await supabase
     .from('profiles')
-    .select('full_name, timezone, contacts, country')
+    .select('full_name, timezone, contacts, country, telegram_chat_id, telegram_alerts, telegram_min_score, digest_hour')
     .eq('id', userId)
     .single();
 
@@ -48,6 +49,16 @@ export default async function ProfilePage() {
         countries={countries}
         contacts={contacts.success ? contacts.data : {}}
         timeZones={Intl.supportedValuesOf('timeZone')}
+      />
+      <TelegramSection
+        botConfigured={Boolean(process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME)}
+        settings={{
+          connected: profile.telegram_chat_id !== null,
+          alerts: profile.telegram_alerts,
+          minScore: profile.telegram_min_score,
+          digestHour: profile.digest_hour,
+          timezone: profile.timezone ?? 'Europe/Kyiv',
+        }}
       />
       <CvSection cv={cv ? { fileName: cv.fileName, parsed: cv.parsed, parseError: cv.parseError } : null} aiAvailable={privateAiAvailable()} cvLink={cvLink} />
       <LetterTemplate body={template} locale={locale} />

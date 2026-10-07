@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
   alertMessage,
+  botReplies,
   createBotApi,
   decodeCallback,
   digestMessage,
@@ -9,6 +10,7 @@ import {
   overflowMessage,
   parseStart,
   telegramUpdateSchema,
+  toTgLocale,
   type AlertJob,
 } from './index';
 
@@ -133,5 +135,20 @@ describe('bot api', () => {
     const r = await failing.sendMessage(1, 'x');
     expect(r).toEqual({ ok: false, blocked: false, status: 0 });
     expect(JSON.stringify(r)).not.toContain('SECRET');
+  });
+});
+
+describe('bot replies', () => {
+  it('maps locales and falls back to en', () => {
+    expect(toTgLocale('uk')).toBe('uk');
+    expect(toTgLocale('ru-RU')).toBe('ru');
+    expect(toTgLocale('de')).toBe('en');
+    expect(toTgLocale(null)).toBe('en');
+  });
+  it('formats the welcome text in each locale', () => {
+    expect(botReplies('en').welcome(75, 9)).toContain('75%');
+    expect(botReplies('en').welcome(75, 9)).toContain('09:00');
+    expect(botReplies('uk').welcome(80, 18)).toContain('18:00');
+    expect(botReplies('ru').unavailable).toBe('Недоступно');
   });
 });

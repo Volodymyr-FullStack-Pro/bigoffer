@@ -160,3 +160,54 @@ export function digestMessage(
     replyMarkup: { inline_keyboard: [[{ text: t.open, url: `${base(siteUrl)}/${locale}/today` }]] },
   };
 }
+
+export function toTgLocale(value: string | null | undefined): TgLocale {
+  const base = (value ?? '').slice(0, 2).toLowerCase();
+  return base === 'uk' || base === 'ru' ? base : 'en';
+}
+
+type Replies = {
+  welcome: (minScore: number, digestHour: number) => string;
+  howToLink: string;
+  expired: string;
+  stopped: string;
+  hidden: string;
+  added: string;
+  unavailable: string;
+};
+
+const hh = (h: number) => `${String(h).padStart(2, '0')}:00`;
+
+const REPLIES: Record<TgLocale, Replies> = {
+  en: {
+    welcome: (s, h) => `Done! New jobs with a match of ${s}% or more will arrive here, and a daily digest at ${hh(h)}.`,
+    howToLink: 'To link this chat, open BigOffer → Profile → Connect Telegram.',
+    expired: 'This link has expired. Generate a new one in your BigOffer profile.',
+    stopped: 'Notifications are off. Reconnect from your BigOffer profile at any time.',
+    hidden: 'Hidden',
+    added: 'Added to the board',
+    unavailable: 'Unavailable',
+  },
+  uk: {
+    welcome: (s, h) => `Готово! Сюди прийдуть нові вакансії від ${s}% і щоденний дайджест о ${hh(h)}.`,
+    howToLink: 'Щоб підключити цей чат, відкрийте BigOffer → Профіль → Підключити Telegram.',
+    expired: 'Посилання застаріло — згенеруйте нове в профілі BigOffer.',
+    stopped: 'Сповіщення вимкнено. Підключити знову можна в профілі BigOffer.',
+    hidden: 'Сховано',
+    added: 'Додано на дошку',
+    unavailable: 'Недоступно',
+  },
+  ru: {
+    welcome: (s, h) => `Готово! Сюда придут новые вакансии от ${s}% и ежедневный дайджест в ${hh(h)}.`,
+    howToLink: 'Чтобы подключить этот чат, откройте BigOffer → Профиль → Подключить Telegram.',
+    expired: 'Ссылка устарела — создайте новую в профиле BigOffer.',
+    stopped: 'Уведомления выключены. Подключить снова можно в профиле BigOffer.',
+    hidden: 'Скрыто',
+    added: 'Добавлено на доску',
+    unavailable: 'Недоступно',
+  },
+};
+
+export function botReplies(locale: TgLocale): Replies {
+  return REPLIES[locale];
+}
