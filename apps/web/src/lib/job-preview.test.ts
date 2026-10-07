@@ -53,14 +53,14 @@ describe('parseJobPreview is linear on adversarial input', () => {
     'unterminated meta': (n) => `<meta property="og:title" ${'a'.repeat(n)}`,
   };
   // Median of 3 runs after a warm-up, so one noisy run on a busy CI runner does not decide.
-  const time = (html: string) => {
+  const time = (html: string): number => {
     parseJobPreview(html);
     const runs = [0, 1, 2].map(() => {
       const start = performance.now();
       parseJobPreview(html);
       return performance.now() - start;
     });
-    return runs.sort((x, y) => x - y)[1];
+    return runs.sort((x, y) => x - y)[1]!;
   };
   for (const [name, gen] of Object.entries(cases)) {
     it(`scales linearly on ${name}`, () => {
