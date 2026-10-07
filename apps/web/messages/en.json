@@ -350,6 +350,7 @@
     "err_ai_unavailable": "AI for personal data is off (no paid private key).",
     "err_no_cv": "Upload your CV in Profile to generate letters.",
     "err_not_found": "This job is no longer available.",
-    "err_failed": "Couldn't generate. Try again."
+    "err_failed": "Couldn't generate. Try again.",
+    "savedToBank": "Saved to answer bank."
   }
 }

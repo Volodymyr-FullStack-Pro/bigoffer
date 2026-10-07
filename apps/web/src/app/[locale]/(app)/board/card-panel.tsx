@@ -9,7 +9,7 @@ import { fromZonedInput, toZonedInput } from './zoned-input';
 import { createLabel, getApplicationEvents, markPinged, markResponse, setApplicationLabel, updateApplication } from './actions';
 import type { BoardCardView, BoardColumn, BoardLabel } from './board-types';
 
-export function CardPanel({ card, timeZone, columns, labels, labelName, onClose, onMove, onDelete, onChanged, onLabelCreated }: {
+export function CardPanel({ card, timeZone, columns, labels, labelName, onClose, onMove, onDelete, onChanged, onLabelCreated, onApplied }: {
   card: BoardCardView;
   timeZone: string;
   columns: BoardColumn[];
@@ -20,6 +20,7 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, onClose,
   onDelete: () => void;
   onChanged: (patch: Partial<BoardCardView>) => void;
   onLabelCreated: (l: BoardLabel) => void;
+  onApplied: (r: { columnId: string; rank: string }) => void;
 }) {
   const t = useTranslations('board');
   const tk = useTranslations('kit');
@@ -83,7 +84,7 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, onClose,
           <button type="button" data-testid="apply-kit-open" aria-expanded={kitOpen} onClick={() => setKitOpen((v) => !v)} className="brutal brutal-press self-start px-4 py-2 font-semibold">
             {tk('open')}
           </button>
-          {kitOpen && <ApplyKitPanel jobId={card.jobId} locale={locale} />}
+          {kitOpen && <ApplyKitPanel jobId={card.jobId} locale={locale} onApplied={onApplied} />}
         </div>
       )}
       <label className="flex flex-col gap-1 font-mono text-xs uppercase">

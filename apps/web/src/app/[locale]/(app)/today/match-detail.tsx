@@ -1,7 +1,6 @@
 'use client';
 
-import { sourceInfo } from '@jp/core';
-import { isLocale, type Locale } from '@jp/core';
+import { isLocale, type Locale, sourceInfo } from '@jp/core';
 import { useFormatter, useLocale, useNow, useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { ApplyKitPanel } from '@/components/apply-kit/apply-kit-panel';
@@ -34,7 +33,7 @@ export function MatchActions({ onAction, compact = false }: { onAction: (a: Matc
   );
 }
 
-function ApplyKitToggle({ jobId }: { jobId: string }) {
+function ApplyKitToggle({ jobId, onApplied }: { jobId: string; onApplied?: () => void }) {
   const tk = useTranslations('kit');
   const rawLocale = useLocale();
   const locale: Locale = isLocale(rawLocale) ? rawLocale : 'en';
@@ -44,12 +43,12 @@ function ApplyKitToggle({ jobId }: { jobId: string }) {
       <button type="button" data-testid="apply-kit-open" aria-expanded={open} onClick={() => setOpen((v) => !v)} className="brutal brutal-press self-start px-4 py-2 font-semibold">
         {tk('open')}
       </button>
-      {open && <ApplyKitPanel jobId={jobId} locale={locale} />}
+      {open && <ApplyKitPanel jobId={jobId} locale={locale} onApplied={onApplied} />}
     </div>
   );
 }
 
-export function MatchDetail({ match, onAction, showDescription = true }: { match: FeedMatch; onAction?: (a: MatchAction) => void; showDescription?: boolean }) {
+export function MatchDetail({ match, onAction, onApplied, showDescription = true }: { match: FeedMatch; onAction?: (a: MatchAction) => void; onApplied?: () => void; showDescription?: boolean }) {
   const t = useTranslations('today');
   const tf = useTranslations('feed');
   const format = useFormatter();
@@ -108,7 +107,7 @@ export function MatchDetail({ match, onAction, showDescription = true }: { match
         ))}
       </div>
       {onAction && <MatchActions onAction={onAction} />}
-      <ApplyKitToggle key={match.id} jobId={match.jobId} />
+      <ApplyKitToggle key={match.id} jobId={match.jobId} onApplied={onApplied} />
       {showDescription && match.description && (
         <div className="max-h-[50vh] overflow-y-auto whitespace-pre-line border-t-2 border-border pt-3 text-sm">{match.description}</div>
       )}

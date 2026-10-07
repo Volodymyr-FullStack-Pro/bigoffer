@@ -3,13 +3,13 @@
 import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { saveBankAnswer } from '@/app/[locale]/(app)/profile/profile-extras-actions';
-import { answerFormQuestions, type FormAnswer, generateKit, getApplyKitData, type KitData, type KitError, markAppliedFromKit, type StoredKit } from './actions';
+import { answerFormQuestions, type FormAnswer, generateKit, getApplyKitData, type KitData, type KitError, markAppliedFromKit, saveKitLetter, type StoredKit } from './actions';
 import { ContactChips } from './contact-chips';
 
 type Lang = 'auto' | 'en' | 'uk' | 'ru';
 type Tone = 'default' | 'shorter' | 'formal';
 
-export function ApplyKitPanel({ jobId, locale, onApplied }: { jobId: string; locale: 'en' | 'uk' | 'ru'; onApplied?: () => void }) {
+export function ApplyKitPanel({ jobId, locale, onApplied }: { jobId: string; locale: 'en' | 'uk' | 'ru'; onApplied?: (r: { columnId: string; rank: string }) => void }) {
   const t = useTranslations('kit');
   const [data, setData] = useState<KitData | null>(null);
   const [kit, setKit] = useState<StoredKit | null>(null);
@@ -20,7 +20,9 @@ export function ApplyKitPanel({ jobId, locale, onApplied }: { jobId: string; loc
   const [answers, setAnswers] = useState<FormAnswer[]>([]);
   const [letter, setLetter] = useState('');
   const [copied, setCopied] = useState<string | null>(null);
-  const [awaitingReturn, setAwaitingReturn] = useState(false);
+  const [lastCopied, setLastCopied] = useState<'full' | 'short' | null>(null);
+  const [savedKey, setSavedKey] = useState<number | null>(null);
+  const [awaitingReturn, setAwaitingReturn] = useState<'click' | 'hidden' | null>(null);
   const [askApplied, setAskApplied] = useState(false);
   const [appliedState, setAppliedState] = useState<'idle' | 'done' | 'error'>('idle');
 
@@ -31,16 +33,18 @@ export function ApplyKitPanel({ jobId, locale, onApplied }: { jobId: string; loc
       setData(d);
       setKit(d.kit);
       setLetter(d.kit?.coverLetter ?? '');
-      setAnswers(d.kit?.formAnswers ?? []);
+      setAnswers(d.formAnswers);
     });
     return () => { alive = false; };
   }, [jobId]);
 
   useEffect(() => {
     if (!awaitingReturn) return;
+    // The prompt only appears after the user actually left the page and came back.
     const onVisible = () => {
-      if (document.visibilityState === 'visible') {
-        setAwaitingReturn(false);
+      if (document.visibilityState === 'hidden') setAwaitingReturn('hidden');
+      else if (awaitingReturn === 'hidden') {
+        setAwaitingReturn(null);
         setAskApplied(true);
       }
     };
@@ -67,16 +71,22 @@ export function ApplyKitPanel({ jobId, locale, onApplied }: { jobId: string; loc
   const copy = async (key: string, text: string) => {
     await navigator.clipboard.writeText(text).catch(() => undefined);
     setCopied(key);
+    if (key === 'letter') {
+      setLastCopied('full');
+      // Keep the user's edits so they survive a reload.
+      void saveKitLetter(jobId, letter).catch(() => undefined);
+    } else if (key === 'short') setLastCopied('short');
   };
 
   const confirmApplied = async (yes: boolean) => {
     setAskApplied(false);
     if (!yes) return;
-    const kind = letter.trim() ? 'full' : kit?.shortMessage ? 'short' : 'none';
+    const kind = lastCopied ?? 'none';
+    const text = kind === 'full' ? letter : kind === 'short' ? (kit?.shortMessage ?? null) : null;
     try {
-      const ok = await markAppliedFromKit(jobId, kind);
-      setAppliedState(ok ? 'done' : 'error');
-      if (ok) onApplied?.();
+      const res = await markAppliedFromKit(jobId, kind, text);
+      setAppliedState(res.ok ? 'done' : 'error');
+      if (res.ok) onApplied?.({ columnId: res.columnId, rank: res.rank });
     } catch {
       setAppliedState('error');
     }
@@ -115,15 +125,15 @@ export function ApplyKitPanel({ jobId, locale, onApplied }: { jobId: string; loc
           <div>
             <h4 className="font-mono text-xs uppercase">{t('requirements')}</h4>
             <ul className="flex flex-col gap-1 text-sm">
-              {kit.requirements.map((r) => (
-                <li key={r.text} data-testid="kit-requirement" data-status={r.status}>
+              {kit.requirements.map((r, i) => (
+                <li key={`${i}-${r.text}`} data-testid="kit-requirement" data-status={r.status}>
                   {r.status === 'met' ? '✓' : r.status === 'missing' ? '✗' : '?'} {r.text}
                 </li>
               ))}
             </ul>
             {kit.redFlags.length > 0 && (
               <ul className="mt-2 flex flex-col gap-1 text-sm text-danger">
-                {kit.redFlags.map((f) => <li key={f} data-testid="kit-red-flag">⚑ {f}</li>)}
+                {kit.redFlags.map((f, i) => <li key={`${i}-${f}`} data-testid="kit-red-flag">⚑ {f}</li>)}
               </ul>
             )}
           </div>
@@ -182,7 +192,11 @@ export function ApplyKitPanel({ jobId, locale, onApplied }: { jobId: string; loc
             <textarea value={a.answer} onChange={(e) => setAnswers((list) => list.map((x, j) => (j === i ? { ...x, answer: e.target.value } : x)))} className={`${field} min-h-14`} aria-label={a.question} />
             <div className="flex gap-2">
               <button type="button" onClick={() => void copy(`a${i}`, a.answer)} className="text-xs underline">{copied === `a${i}` ? `✓ ${t('copied')}` : t('copy')}</button>
-              <button type="button" data-testid="kit-save-answer" onClick={() => void saveBankAnswer({ key: null, question: a.question, answer: a.answer, locale })} className="text-xs underline">{t('saveToBank')}</button>
+              <button type="button" data-testid="kit-save-answer" onClick={async () => {
+                const res = await saveBankAnswer({ key: null, question: a.question, answer: a.answer, locale }).catch(() => ({ ok: false }));
+                setSavedKey(res.ok ? i : null);
+              }} className="text-xs underline">{t('saveToBank')}</button>
+              {savedKey === i && <span role="status" className="text-xs text-success">{t('savedToBank')}</span>}
             </div>
           </div>
         ))}
@@ -194,7 +208,7 @@ export function ApplyKitPanel({ jobId, locale, onApplied }: { jobId: string; loc
           target="_blank"
           rel="noopener"
           data-testid="kit-apply"
-          onClick={() => setAwaitingReturn(true)}
+          onClick={() => setAwaitingReturn('click')}
           className="brutal brutal-press self-start bg-brand px-4 py-2 font-semibold text-brand-foreground"
         >
           {t('apply')} ↗
