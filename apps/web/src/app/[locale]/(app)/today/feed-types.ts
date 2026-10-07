@@ -6,6 +6,7 @@ export type FeedMatch = {
   score: number;
   title: string;
   company: string;
+  companyIsPlaceholder: boolean;
   location: string | null;
   remoteType: RemoteType;
   seniority: 'intern' | 'junior' | 'middle' | 'senior' | 'lead' | null;

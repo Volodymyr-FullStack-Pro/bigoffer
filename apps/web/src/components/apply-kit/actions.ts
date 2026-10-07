@@ -14,20 +14,20 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export type KitError = 'ai_unavailable' | 'ai_limit' | 'no_cv' | 'not_found' | 'failed';
 export type FormAnswer = { question: string; answer: string; fromBank: boolean };
 export type StoredKit = ApplyKit & { formAnswers: FormAnswer[] };
-export type KitData = { kit: StoredKit | null; formAnswers: FormAnswer[]; aiAvailable: boolean; hasCv: boolean; contacts: Record<string, string>; cvLink: string | null; jobUrl: string | null; company: string };
+export type KitData = { kit: StoredKit | null; formAnswers: FormAnswer[]; aiAvailable: boolean; hasCv: boolean; contacts: Record<string, string>; cvLink: string | null; jobUrl: string | null; company: string; companyIsPlaceholder: boolean };
 
 type Supabase = Awaited<ReturnType<typeof createClient>>;
 
-async function loadJob(supabase: Supabase, jobId: string): Promise<(KitJob & { url: string | null; salaryMinUsd: number | null }) | null> {
+async function loadJob(supabase: Supabase, jobId: string): Promise<(KitJob & { url: string | null; salaryMinUsd: number | null; companyIsPlaceholder: boolean }) | null> {
   const { data } = await supabase
     .from('jobs')
-    .select('title, description_text, salary_raw, salary_min_usd, salary_max_usd, companies(name), job_postings(url, seen_at)')
+    .select('title, company_is_placeholder, description_text, salary_raw, salary_min_usd, salary_max_usd, companies(name), job_postings(url, seen_at)')
     .eq('id', jobId)
     .maybeSingle();
   if (!data) return null;
   const salary = data.salary_raw ?? (data.salary_min_usd || data.salary_max_usd ? `$${data.salary_min_usd ?? '?'}–${data.salary_max_usd ?? '?'} per month` : null);
   const url = [...data.job_postings].sort((a, b) => (a.seen_at < b.seen_at ? 1 : -1)).find((p) => /^https?:\/\//i.test(p.url))?.url ?? null;
-  return { title: data.title, company: data.companies?.name ?? '', description: data.description_text, salary, url, salaryMinUsd: null };
+  return { title: data.title, company: data.companies?.name ?? '', description: data.description_text, salary, url, salaryMinUsd: null, companyIsPlaceholder: data.company_is_placeholder };
 }
 
 function toStored(row: { lang: string; requirements: unknown; red_flags: string[]; cover_letter: string; short_message: string; salary_hint: string | null; form_answers: unknown }): StoredKit {
@@ -75,6 +75,7 @@ export async function getApplyKitData(jobId: string): Promise<KitData | null> {
     cvLink: cv ? await cvSignedUrl(supabase, cv.path) : null,
     jobUrl: job?.url ?? null,
     company: job?.company ?? '',
+    companyIsPlaceholder: job?.companyIsPlaceholder ?? false,
   };
 }
 

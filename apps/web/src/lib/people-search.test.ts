@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { hasRealCompany, peopleSearchLinks } from './people-search';
+import { canSearchPeople, peopleSearchLinks } from './people-search';
 
 describe('peopleSearchLinks', () => {
   it('builds LinkedIn people searches for the company', () => {
@@ -14,13 +14,13 @@ describe('peopleSearchLinks', () => {
   });
 });
 
-describe('hasRealCompany', () => {
-  it('rejects empty and source-name placeholder companies', () => {
-    expect(hasRealCompany('')).toBe(false);
-    expect(hasRealCompany('  ')).toBe(false);
-    expect(hasRealCompany(null)).toBe(false);
-    expect(hasRealCompany('Djinni')).toBe(false);
-    expect(hasRealCompany('LinkedIn')).toBe(false);
-    expect(hasRealCompany('Acme')).toBe(true);
+describe('canSearchPeople', () => {
+  it('needs a non-empty company that is not a placeholder', () => {
+    expect(canSearchPeople('Acme', false)).toBe(true);
+    expect(canSearchPeople('', false)).toBe(false);
+    expect(canSearchPeople('  ', false)).toBe(false);
+    expect(canSearchPeople(null, false)).toBe(false);
+    expect(canSearchPeople('Djinni', true)).toBe(false);
+    expect(canSearchPeople('Djinni', false)).toBe(true);
   });
 });

@@ -391,6 +391,20 @@ describe('saveJob', () => {
     expect(again).toEqual({ description_text: rich!.descriptionText, salary_min_usd: 5000 });
   });
 
+  it('stores whether the company is a placeholder and clears the flag on a real-company posting', async () => {
+    const ph = await normalizeJob({ title: `Dev ${uniq}`, company: 'Djinni', companyIsPlaceholder: true, externalId: `ph-${uniq}`, url: `https://djinni.co/jobs/ph-${uniq}`, description: 'x' });
+    const saved = await saveJob(db, 'djinni', ph!, now);
+    const flag = async (id: string) => (await db.from('jobs').select('company_is_placeholder').eq('id', id).single()).data?.company_is_placeholder;
+    expect(await flag(saved.jobId)).toBe(true);
+
+    const real = await normalizeJob({ title: `Real Dev ${uniq}`, company: `Real ${uniq}`, externalId: `real-${uniq}`, url: `https://dou.ua/x/real-${uniq}`, description: 'x' });
+    const realSaved = await saveJob(db, 'dou', real!, now);
+    expect(await flag(realSaved.jobId)).toBe(false);
+    await db.from('jobs').update({ company_is_placeholder: true }).eq('id', realSaved.jobId);
+    await saveJob(db, 'dou', real!, now);
+    expect(await flag(realSaved.jobId)).toBe(false);
+  });
+
   it('unions board-stated remote regions across postings of the same job', async () => {
     const job = await normalizeJob({ title: `Region Engineer ${uniq}`, company: `Regions ${uniq}`, postedAt: now.toISOString(), externalId: `reg-${uniq}`, url: `https://remotive.com/x/reg-${uniq}`, description: 'Region test job.' });
     const { jobId } = await saveJob(db, 'remotive', { ...job!, remoteRegions: ['US'] }, now);

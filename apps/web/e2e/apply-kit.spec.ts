@@ -111,8 +111,8 @@ test('offers LinkedIn people searches for the job company', async ({ context, pa
   await seedMatch(email, { score: 90 });
   await page.goto('/en/today');
   await openKit(page, isMobile);
-  const link = visible(page, 'people-recruiters').first();
+  const link = visible(page, 'people-recruiters');
   await expect(link).toHaveAttribute('href', /linkedin\.com\/search\/results\/people\/\?keywords=Acme%20/);
   await expect(link).toHaveAttribute('target', '_blank');
-  await expect(visible(page, 'people-engineers').first()).toHaveAttribute('href', /engineering%20manager$/);
+  await expect(visible(page, 'people-engineers')).toHaveAttribute('href', /engineering%20manager$/);
 });

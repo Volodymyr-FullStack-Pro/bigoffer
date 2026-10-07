@@ -10,7 +10,7 @@ import { PeopleSearch } from './people-search';
 type Lang = 'auto' | 'en' | 'uk' | 'ru';
 type Tone = 'default' | 'shorter' | 'formal';
 
-export function ApplyKitPanel({ jobId, locale, onApplied }: { jobId: string; locale: 'en' | 'uk' | 'ru'; onApplied?: (r: { columnId: string; rank: string }) => void }) {
+export function ApplyKitPanel({ jobId, locale, onApplied, hidePeopleSearch }: { jobId: string; locale: 'en' | 'uk' | 'ru'; hidePeopleSearch?: boolean; onApplied?: (r: { columnId: string; rank: string }) => void }) {
   const t = useTranslations('kit');
   const [data, setData] = useState<KitData | null>(null);
   const [kit, setKit] = useState<StoredKit | null>(null);
@@ -161,7 +161,7 @@ export function ApplyKitPanel({ jobId, locale, onApplied }: { jobId: string; loc
         <ContactChips contacts={data.contacts} cvLink={data.cvLink} />
       </div>
 
-      <PeopleSearch company={data.company} />
+      {!hidePeopleSearch && <PeopleSearch company={data.company} isPlaceholder={data.companyIsPlaceholder} />}
 
       <div className="flex flex-col gap-2">
         <label className="flex flex-col gap-1 font-mono text-xs uppercase">
