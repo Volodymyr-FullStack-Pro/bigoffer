@@ -38,7 +38,7 @@ export default async function TodayPage() {
   const [{ data: bestRows }, { data: freshRows }, { data: profiles }, { data: me }] = await Promise.all([
     baseQuery().order('score', { ascending: false }).order('created_at', { ascending: false }).limit(200),
     // Fresh jobs can score below the top 200, so fetch them separately for the "New in 24h" filter and "Newest" sort.
-    baseQuery().gte('jobs.first_seen_at', since24h()).order('first_seen_at', { ascending: false, referencedTable: 'jobs' }).limit(200),
+    baseQuery().gte('jobs.first_seen_at', since24h()).order('jobs(first_seen_at)', { ascending: false }).limit(200),
     supabase.from('search_profiles').select('id, name, skills').order('created_at'),
     supabase.from('profiles').select('onboarded_at').eq('id', userId).maybeSingle(),
   ]);
