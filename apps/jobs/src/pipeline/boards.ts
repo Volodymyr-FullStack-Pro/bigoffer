@@ -14,13 +14,15 @@ const MAX_CHECKS = 20;
 const PAGE = 1000;
 const MAX_SCANNED_JOBS = 5000;
 const MAX_FAILURES = 3;
+/** Discovery stops auto-enabling past this many enabled discovered boards; further ones wait for manual enabling. */
+export const MAX_DISCOVERED_ENABLED = 100;
 
 export async function getEnabledBoards(db: Db): Promise<BoardRef[]> {
-  const { data, error } = await db.from('source_boards').select('source_id, slug').eq('enabled', true);
+  const { data, error } = await db.from('source_boards').select('source_id, slug, name').eq('enabled', true);
   if (error) throw error;
   return data
     .filter((b) => BOARD_SOURCE_IDS.has(b.source_id as SourceId))
-    .map((b) => ({ sourceId: b.source_id as SourceId, slug: b.slug }));
+    .map((b) => ({ sourceId: b.source_id as SourceId, slug: b.slug, ...(b.name ? { name: b.name } : {}) }));
 }
 
 export async function recordBoardRun(db: Db, sourceId: string, slug: string, ok: boolean): Promise<void> {
@@ -47,7 +49,7 @@ export async function recordBoardRun(db: Db, sourceId: string, slug: string, ok:
 
 export async function discoverBoards(
   db: Db,
-  deps: Pick<RunQueryDeps, 'adapters' | 'createContext'> & { now?: () => Date },
+  deps: Pick<RunQueryDeps, 'adapters' | 'createContext'> & { now?: () => Date; maxEnabled?: number },
 ): Promise<{ checked: number; added: number }> {
   const since = new Date((deps.now?.() ?? new Date()).getTime() - 14 * 24 * 3600 * 1000).toISOString();
   // PostgREST caps a response at 1000 rows, so page through the newest jobs.
@@ -78,6 +80,14 @@ export async function discoverBoards(
       }
     }
   }
+  const maxEnabled = deps.maxEnabled ?? MAX_DISCOVERED_ENABLED;
+  const { count: enabledCount, error: countError } = await db
+    .from('source_boards')
+    .select('slug', { count: 'exact', head: true })
+    .eq('origin', 'discovered')
+    .eq('enabled', true);
+  if (countError) throw countError;
+  let enabledDiscovered = enabledCount ?? 0;
   const verifiable = [...candidates.values()].filter((c) => deps.adapters[c.sourceId]);
   let checked = 0;
   let added = 0;
@@ -93,14 +103,19 @@ export async function discoverBoards(
     } finally {
       await ctx.dispose?.().catch(() => undefined);
     }
-    // A failed candidate is stored disabled so it counts as known and is not re-checked every night.
+    // A failed candidate is stored disabled so it counts as known and is not re-checked every night;
+    // a verified one over the cap is stored disabled (no failures) for manual enabling.
+    const enable = ok && enabledDiscovered < maxEnabled;
     const { error: insertError } = await db.from('source_boards').insert({
       source_id: c.sourceId,
       slug: c.slug,
       origin: 'discovered',
-      ...(ok ? {} : { enabled: false, failures: MAX_FAILURES }),
+      ...(ok ? (enable ? {} : { enabled: false }) : { enabled: false, failures: MAX_FAILURES }),
     });
-    if (!insertError && ok) added += 1;
+    if (!insertError && enable) {
+      added += 1;
+      enabledDiscovered += 1;
+    }
   }
   return { checked, added };
 }

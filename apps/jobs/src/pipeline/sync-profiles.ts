@@ -5,6 +5,7 @@ import { matchJobs } from './match';
 import { deleteNewMatches, getActiveProfiles, getNewMatchJobIdsOutsideSources, getRecentJobs } from './repository';
 
 const RECENT_DAYS = 7;
+const CHUNK = 100;
 
 async function linkQueries(db: Db, profile: SearchProfile, boards: BoardRef[]): Promise<string[]> {
   const specs = [
@@ -19,21 +20,34 @@ async function linkQueries(db: Db, profile: SearchProfile, boards: BoardRef[]): 
     );
   if (upsertError) throw upsertError;
 
-  const { data, error } = await db
-    .from('search_queries')
-    .select('id')
-    // PostgREST list values containing commas/quotes (multi-param JSON keys) must be double-quoted and escaped;
-    // supabase-js .in() quotes them without escaping inner quotes, so build the filter by hand.
-    .filter('query_key', 'in', `(${specs.map((s) => `"${s.queryKey.replace(/[\\"]/g, '\\$&')}"`).join(',')})`);
-  if (error) throw error;
-  const ids = data.map((q) => q.id);
+  const ids: string[] = [];
+  for (let i = 0; i < specs.length; i += CHUNK) {
+    const { data, error } = await db
+      .from('search_queries')
+      .select('id')
+      // PostgREST list values containing commas/quotes (multi-param JSON keys) must be double-quoted and escaped;
+      // supabase-js .in() quotes them without escaping inner quotes, so build the filter by hand.
+      .filter('query_key', 'in', `(${specs.slice(i, i + CHUNK).map((s) => `"${s.queryKey.replace(/[\\"]/g, '\\$&')}"`).join(',')})`);
+    if (error) throw error;
+    ids.push(...data.map((q) => q.id));
+  }
 
-  const { error: deleteError } = await db
+  // Prune links to queries the profile no longer has, in chunks so the URL stays short with hundreds of boards.
+  const { data: linked, error: linkedError } = await db
     .from('search_profile_queries')
-    .delete()
-    .eq('search_profile_id', profile.id)
-    .not('search_query_id', 'in', `(${ids.join(',')})`);
-  if (deleteError) throw deleteError;
+    .select('search_query_id')
+    .eq('search_profile_id', profile.id);
+  if (linkedError) throw linkedError;
+  const keep = new Set(ids);
+  const stale = linked.map((l) => l.search_query_id).filter((id) => !keep.has(id));
+  for (let i = 0; i < stale.length; i += CHUNK) {
+    const { error: deleteError } = await db
+      .from('search_profile_queries')
+      .delete()
+      .eq('search_profile_id', profile.id)
+      .in('search_query_id', stale.slice(i, i + CHUNK));
+    if (deleteError) throw deleteError;
+  }
 
   const { error: linkError } = await db
     .from('search_profile_queries')

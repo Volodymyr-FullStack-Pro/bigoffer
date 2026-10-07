@@ -1,13 +1,21 @@
 import type { SourceAdapter } from '@jp/scrapers';
+import { SourceBlockedError } from '@jp/scrapers';
 import { afterAll, describe, expect, it } from 'vitest';
 import { getDb } from '../src/db';
 import { discoverBoards, getEnabledBoards, recordBoardRun } from '../src/pipeline/boards';
+import { runQuery } from '../src/pipeline/run-query';
 
 const db = getDb();
 const uniq = `${Date.now()}`.slice(-8);
 const slug = `testco${uniq}`;
 
 afterAll(async () => {
+  const { data: queries } = await db.from('search_queries').select('id').like('query_key', `%${uniq}%`);
+  const queryIds = (queries ?? []).map((q) => q.id);
+  if (queryIds.length > 0) {
+    await db.from('source_runs').delete().in('query_id', queryIds);
+    await db.from('search_queries').delete().in('id', queryIds);
+  }
   await db.from('source_boards').delete().like('slug', `%${uniq}%`);
   await db.from('job_postings').delete().eq('external_id', `boards-${uniq}`);
   await db.from('jobs').delete().like('fingerprint', `boards-${uniq}%`);
@@ -19,8 +27,9 @@ describe('source boards', () => {
     const boards = await getEnabledBoards(db);
     expect(boards).toEqual(
       expect.arrayContaining([
-        { sourceId: 'greenhouse', slug: 'gitlab' },
-        { sourceId: 'telegram', slug: 'job_it_junior' },
+        { sourceId: 'greenhouse', slug: 'gitlab', name: 'GitLab' },
+        { sourceId: 'lever', slug: 'ajax', name: 'Ajax Systems' },
+        expect.objectContaining({ sourceId: 'telegram', slug: 'job_it_junior' }),
       ]),
     );
   });
@@ -76,5 +85,57 @@ describe('source boards', () => {
     expect(data).toEqual({ origin: 'discovered', enabled: false, failures: 3 });
     await discoverBoards(db, deps);
     expect(calls).toBe(1);
+  });
+
+  it('stores a verified board as disabled once the discovered-enabled cap is reached', async () => {
+    const capped = `capped${uniq}`;
+    const { data: company } = await db.from('companies').select('id').eq('normalized_name', `boards ${uniq}`).single();
+    await db
+      .from('jobs')
+      .insert({ fingerprint: `boards-${uniq}-cap`, title: 'Data Engineer', company_id: company!.id, description_text: `https://jobs.ashbyhq.com/${capped}/x` });
+    const ashby: SourceAdapter = {
+      id: 'ashby',
+      search: async (p) => (p.board === capped ? [{ externalId: '1', url: 'https://jobs.ashbyhq.com/x/1', title: 'Data Engineer', company: 'X' }] : []),
+    };
+    await discoverBoards(db, { adapters: { ashby }, createContext: () => ({}) as never, maxEnabled: 0 });
+    const { data } = await db.from('source_boards').select('origin, enabled, failures').eq('source_id', 'ashby').eq('slug', capped).single();
+    expect(data).toEqual({ origin: 'discovered', enabled: false, failures: 0 });
+  });
+
+  it('counts a 403 against the board without pausing its source, and a 429 still pauses it', async () => {
+    const board = `forbid${uniq}`;
+    const now = new Date();
+    await db.from('source_boards').insert({ source_id: 'lever', slug: board, origin: 'discovered' });
+    const { data: q, error } = await db
+      .from('search_queries')
+      .insert({ source_id: 'lever', query_key: `lever:{"board":"${board}"}`, params: { board }, next_run_at: now.toISOString() })
+      .select('id')
+      .single();
+    if (error) throw error;
+    const { data: before } = await db.from('sources').select('paused_until').eq('id', 'lever').single();
+    const adapterFor = (status: number): SourceAdapter => ({
+      id: 'lever',
+      search: async () => {
+        throw new SourceBlockedError(status, 'https://api.lever.co/x');
+      },
+    });
+    const run = (status: number) => runQuery({ db, adapters: { lever: adapterFor(status) }, createContext: () => ({}) as never, now: () => now }, q.id);
+    const board403 = async () => (await db.from('source_boards').select('failures').eq('source_id', 'lever').eq('slug', board).single()).data!.failures;
+
+    const result = await run(403);
+    expect(result).toMatchObject({ status: 'blocked', alert: null });
+    expect(await board403()).toBe(1);
+    const { data: after } = await db.from('sources').select('paused_until').eq('id', 'lever').single();
+    expect(after).toEqual(before);
+
+    await db.from('search_queries').update({ next_run_at: now.toISOString() }).eq('id', q.id);
+    try {
+      await run(429);
+      expect(await board403()).toBe(1);
+      const { data: paused } = await db.from('sources').select('paused_until').eq('id', 'lever').single();
+      expect(new Date(paused!.paused_until!).getTime()).toBeGreaterThan(now.getTime());
+    } finally {
+      await db.from('sources').update({ paused_until: before!.paused_until }).eq('id', 'lever');
+    }
   });
 });
