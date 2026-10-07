@@ -8,6 +8,7 @@ import { getLlm, privateAiAvailable } from '@/lib/ai';
 import { getUserId } from '@/lib/auth';
 import { cvSignedUrl, loadPrimaryCv } from '@/lib/cv';
 import { createClient } from '@/lib/supabase/server';
+import { chooseTemplate } from './template';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export type KitError = 'ai_unavailable' | 'no_cv' | 'not_found' | 'failed';
@@ -100,12 +101,12 @@ export async function generateKit(jobId: string, opts: { lang: 'auto' | 'en' | '
   const [job, cv] = await Promise.all([loadJob(supabase, jobId), loadPrimaryCv(supabase)]);
   if (!job) return { ok: false, error: 'not_found' };
   if (!cv?.parsed) return { ok: false, error: 'no_cv' };
-  const langForTemplate = opts.lang === 'auto' ? null : opts.lang;
-  const [{ data: templates }, { data: profiles }] = await Promise.all([
+  const [{ data: templates }, { data: profiles }, { data: profileRow }] = await Promise.all([
     supabase.from('letter_templates').select('locale, body'),
     supabase.from('search_profiles').select('salary_min_usd').not('salary_min_usd', 'is', null).limit(1),
+    supabase.from('profiles').select('locale').eq('id', userId).single(),
   ]);
-  const template = (langForTemplate ? templates?.find((t) => t.locale === langForTemplate) : templates?.[0])?.body ?? null;
+  const template = chooseTemplate(templates, opts.lang, profileRow?.locale);
   try {
     const kit = await generateApplyKit(getLlm(), { job, cv: cv.parsed, template, lang: opts.lang, tone: opts.tone, salaryMinUsd: profiles?.[0]?.salary_min_usd ?? null });
     const { data: existing } = await supabase.from('apply_kits').select('form_answers').eq('job_id', jobId).maybeSingle();
@@ -116,6 +117,7 @@ export async function generateKit(jobId: string, opts: { lang: 'auto' | 'en' | '
       cover_letter: kit.coverLetter,
       short_message: kit.shortMessage,
       salary_hint: kit.salaryHint,
+      generated_at: new Date().toISOString(),
     });
     if (!stored) return { ok: false, error: 'failed' };
     return { ok: true, kit: { ...kit, formAnswers: Array.isArray(existing?.form_answers) ? (existing.form_answers as FormAnswer[]) : [] } };

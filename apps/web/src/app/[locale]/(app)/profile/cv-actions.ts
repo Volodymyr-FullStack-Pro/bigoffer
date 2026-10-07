@@ -54,16 +54,22 @@ export async function uploadCv(_prev: CvState, formData: FormData): Promise<CvSt
   revalidatePath('/[locale]/profile', 'page');
 
   if (!privateAiAvailable()) {
-    await supabase.from('resumes').update({ parse_error: 'ai_unavailable' }).eq('id', row.id);
+    const { error: flagError } = await supabase.from('resumes').update({ parse_error: 'ai_unavailable' }).eq('id', row.id);
+    if (flagError) console.error('cv: could not flag ai_unavailable', flagError.code ?? 'unknown');
     return { status: 'stored', message: 'ai_unavailable' };
   }
   try {
     const parsed = await parseCv(getLlm(), { pdfBase64: bytes.toString('base64') });
-    await supabase.from('resumes').update({ parsed, parse_error: null }).eq('id', row.id);
+    const { error: parsedError } = await supabase.from('resumes').update({ parsed, parse_error: null }).eq('id', row.id);
+    if (parsedError) {
+      console.error('cv: could not store parsed CV', parsedError.code ?? 'unknown');
+      return { status: 'stored', message: 'parse_failed' };
+    }
     return { status: 'parsed' };
   } catch (err) {
-    console.error('parseCv failed', err instanceof Error ? err.message : err);
-    await supabase.from('resumes').update({ parse_error: 'parse_failed' }).eq('id', row.id);
+    console.error('parseCv failed', err instanceof Error ? err.name : 'unknown');
+    const { error: flagError } = await supabase.from('resumes').update({ parse_error: 'parse_failed' }).eq('id', row.id);
+    if (flagError) console.error('cv: could not flag parse_failed', flagError.code ?? 'unknown');
     return { status: 'stored', message: 'parse_failed' };
   }
 }
