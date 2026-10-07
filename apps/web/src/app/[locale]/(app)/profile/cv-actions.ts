@@ -22,6 +22,9 @@ export async function registerCv(path: string, originalName: string): Promise<Cv
   if (!userId) return { status: 'error' };
   if (typeof path !== 'string' || !PATH.test(path) || !path.startsWith(`${userId}/`)) return { status: 'invalid', message: 'not_pdf' };
   const supabase = await createClient();
+  // An already-registered object must never be touched (the reject paths below delete it).
+  const { data: existing } = await supabase.from('resumes').select('id').eq('storage_path', path).maybeSingle();
+  if (existing) return { status: 'error' };
   const { data: blob, error: downloadError } = await supabase.storage.from('resumes').download(path);
   if (downloadError || !blob) return { status: 'error' };
   const bytes = Buffer.from(await blob.arrayBuffer());
