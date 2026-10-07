@@ -2,19 +2,55 @@
 
 import type { ParsedCv } from '@jp/ai';
 import { useTranslations } from 'next-intl';
-import { useActionState, useState } from 'react';
-import { createSearchProfileFromCv, fillContactsFromCv, uploadCv, type CvState } from './cv-actions';
+import { useState, useTransition } from 'react';
+import { createBrowserSupabase } from '@/lib/supabase/browser';
+import { createSearchProfileFromCv, fillContactsFromCv, registerCv, type CvState } from './cv-actions';
+
+const MAX_BYTES = 5 * 1024 * 1024;
 
 export function CvSection({ cv, aiAvailable, cvLink }: { cv: { fileName: string; parsed: ParsedCv | null; parseError: string | null } | null; aiAvailable: boolean; cvLink: string | null }) {
   const t = useTranslations('cv');
-  const [state, action, pending] = useActionState<CvState, FormData>(uploadCv, { status: 'idle' });
+  const [state, setState] = useState<CvState>({ status: 'idle' });
+  const [uploading, setUploading] = useState(false);
+  const [registering, startTransition] = useTransition();
+  const pending = uploading || registering;
   const [filled, setFilled] = useState<boolean | null>(null);
   const parsed = cv?.parsed ?? null;
+
+  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const file = new FormData(e.currentTarget).get('cv');
+    if (!(file instanceof File) || file.size === 0 || (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf'))) return setState({ status: 'invalid', message: 'not_pdf' });
+    if (file.size > MAX_BYTES) return setState({ status: 'invalid', message: 'too_big' });
+    setUploading(true);
+    try {
+      const supabase = createBrowserSupabase();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return setState({ status: 'error' });
+      const path = `${user.id}/${crypto.randomUUID()}.pdf`;
+      const { error } = await supabase.storage.from('resumes').upload(path, file, { contentType: 'application/pdf' });
+      if (error) {
+        const tooBig = /413|payload too large|exceeded the maximum/i.test(`${error.message} ${(error as { statusCode?: string }).statusCode ?? ''}`);
+        return setState(tooBig ? { status: 'invalid', message: 'too_big' } : { status: 'error' });
+      }
+      startTransition(async () => {
+        try {
+          setState(await registerCv(path, file.name));
+        } catch {
+          setState({ status: 'error' });
+        }
+      });
+    } catch {
+      setState({ status: 'error' });
+    } finally {
+      setUploading(false);
+    }
+  }
   return (
     <section data-testid="cv-section" className="brutal flex max-w-2xl flex-col gap-4 p-5">
       <h2 className="font-display text-lg font-bold">{t('title')}</h2>
       {!aiAvailable && <p className="text-sm text-warning">{t('aiUnavailable')}</p>}
-      <form action={action} className="flex flex-wrap items-center gap-3">
+      <form onSubmit={onSubmit} className="flex flex-wrap items-center gap-3">
         <input data-testid="cv-file" type="file" name="cv" accept="application/pdf" required className="text-sm" />
         <button type="submit" data-testid="cv-upload" disabled={pending} className="brutal brutal-press bg-brand px-4 py-2 font-semibold text-brand-foreground disabled:opacity-50">
           {pending ? t('uploading') : t('upload')}
@@ -22,7 +58,7 @@ export function CvSection({ cv, aiAvailable, cvLink }: { cv: { fileName: string;
       </form>
       <p data-testid="cv-status" role="status" className="text-sm">
         {state.status === 'parsed' && t('parsed')}
-        {state.status === 'stored' && t(state.message === 'ai_unavailable' ? 'storedNoAi' : 'storedParseFailed')}
+        {state.status === 'stored' && t(state.message === 'ai_unavailable' ? 'storedNoAi' : state.message === 'ai_limit' ? 'aiLimit' : 'storedParseFailed')}
         {state.status === 'invalid' && t(state.message === 'too_big' ? 'tooBig' : 'notPdf')}
         {state.status === 'error' && t('error')}
       </p>

@@ -162,3 +162,9 @@ export async function applicationLetter(email: string, jobId: string) {
   if (error) throw error;
   return data ? { kind: data.letter_kind, used: data.letter_used } : null;
 }
+
+export async function exhaustPrivateAi(email: string) {
+  const userId = await userIdByEmail(email);
+  const { error } = await admin().from('ai_user_usage').upsert({ user_id: userId, day: new Date().toISOString().slice(0, 10), requests: 1000 });
+  if (error) throw error;
+}

@@ -38,11 +38,11 @@ function pdfOfSize(bytes: number): Buffer {
   return Buffer.from(`${body}${filler.repeat(count)}%%EOF\n`, 'latin1');
 }
 
-test('uploads a ~2 MB CV through the server action', async ({ context, page }, info) => {
+test('uploads a 4.8 MB CV straight to Storage (above the 4.5 MB request cap)', async ({ context, page }, info) => {
   test.skip(info.project.name !== 'desktop');
-  await loginAs(context, uniqueEmail('cv-2mb'));
+  await loginAs(context, uniqueEmail('cv-4mb'));
   await page.goto('/en/profile');
-  await page.getByTestId('cv-file').setInputFiles({ name: 'big.pdf', mimeType: 'application/pdf', buffer: pdfOfSize(2 * 1024 * 1024) });
+  await page.getByTestId('cv-file').setInputFiles({ name: 'big.pdf', mimeType: 'application/pdf', buffer: pdfOfSize(4.8 * 1024 * 1024) });
   await page.getByTestId('cv-upload').click();
   await expect(page.getByTestId('cv-status')).toContainText('CV read');
 });

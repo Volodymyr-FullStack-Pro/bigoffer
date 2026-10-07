@@ -4,29 +4,36 @@ import { parseCv, searchProfileFromCv } from '@jp/ai';
 import { revalidatePath } from 'next/cache';
 import { getLocale } from 'next-intl/server';
 import { redirect } from '@/i18n/navigation';
-import { privateAiAvailable, getLlm } from '@/lib/ai';
+import { consumePrivateAi, getLlm, privateAiAvailable } from '@/lib/ai';
 import { getUserId } from '@/lib/auth';
 import { loadPrimaryCv } from '@/lib/cv';
 import { createClient } from '@/lib/supabase/server';
 import { requestProfileSync } from '@/lib/trigger';
 
-export type CvState = { status: 'idle' | 'parsed' | 'stored' | 'invalid' | 'error'; message?: 'not_pdf' | 'too_big' | 'ai_unavailable' | 'parse_failed' };
+export type CvState = { status: 'idle' | 'parsed' | 'stored' | 'invalid' | 'error'; message?: 'not_pdf' | 'too_big' | 'ai_unavailable' | 'ai_limit' | 'parse_failed' };
 
 const MAX_BYTES = 5 * 1024 * 1024;
 
-export async function uploadCv(_prev: CvState, formData: FormData): Promise<CvState> {
-  const userId = await getUserId();
-  const file = formData.get('cv');
-  if (!userId) return { status: 'error' };
-  if (!(file instanceof File) || file.size === 0) return { status: 'invalid', message: 'not_pdf' };
-  if (file.size > MAX_BYTES) return { status: 'invalid', message: 'too_big' };
-  const bytes = Buffer.from(await file.arrayBuffer());
-  if (bytes.subarray(0, 5).toString('latin1') !== '%PDF-') return { status: 'invalid', message: 'not_pdf' };
+const PATH = /^[0-9a-f-]{36}\/[0-9a-f-]{36}\.pdf$/i;
 
+// The browser uploads the PDF straight to Storage (Vercel caps request bodies at 4.5 MB); this only verifies and registers it.
+export async function registerCv(path: string, originalName: string): Promise<CvState> {
+  const userId = await getUserId();
+  if (!userId) return { status: 'error' };
+  if (typeof path !== 'string' || !PATH.test(path) || !path.startsWith(`${userId}/`)) return { status: 'invalid', message: 'not_pdf' };
   const supabase = await createClient();
-  const path = `${userId}/${crypto.randomUUID()}.pdf`;
-  const { error: uploadError } = await supabase.storage.from('resumes').upload(path, bytes, { contentType: 'application/pdf' });
-  if (uploadError) return { status: 'error' };
+  // An already-registered object must never be touched (the reject paths below delete it).
+  const { data: existing } = await supabase.from('resumes').select('id').eq('storage_path', path).maybeSingle();
+  if (existing) return { status: 'error' };
+  const { data: blob, error: downloadError } = await supabase.storage.from('resumes').download(path);
+  if (downloadError || !blob) return { status: 'error' };
+  const bytes = Buffer.from(await blob.arrayBuffer());
+  const reject = async (message: 'not_pdf' | 'too_big'): Promise<CvState> => {
+    await supabase.storage.from('resumes').remove([path]);
+    return { status: 'invalid', message };
+  };
+  if (bytes.length > MAX_BYTES) return reject('too_big');
+  if (bytes.subarray(0, 5).toString('latin1') !== '%PDF-') return reject('not_pdf');
 
   const previous = await loadPrimaryCv(supabase);
   if (previous) {
@@ -37,7 +44,7 @@ export async function uploadCv(_prev: CvState, formData: FormData): Promise<CvSt
       return { status: 'error' };
     }
   }
-  const fileName = file.name.replace(/[^\p{L}\p{N} ._()-]/gu, '').slice(0, 200) || 'cv.pdf';
+  const fileName = String(originalName).replace(/[^\p{L}\p{N} ._()-]/gu, '').slice(0, 200) || 'cv.pdf';
   const { data: row, error } = await supabase.from('resumes').insert({ user_id: userId, storage_path: path, file_name: fileName, is_primary: true }).select('id').single();
   if (error || !row) {
     await supabase.storage.from('resumes').remove([path]);
@@ -57,6 +64,11 @@ export async function uploadCv(_prev: CvState, formData: FormData): Promise<CvSt
     const { error: flagError } = await supabase.from('resumes').update({ parse_error: 'ai_unavailable' }).eq('id', row.id);
     if (flagError) console.error('cv: could not flag ai_unavailable', flagError.code ?? 'unknown');
     return { status: 'stored', message: 'ai_unavailable' };
+  }
+  if (!(await consumePrivateAi(supabase))) {
+    const { error: flagError } = await supabase.from('resumes').update({ parse_error: 'ai_limit' }).eq('id', row.id);
+    if (flagError) console.error('cv: could not flag ai_limit', flagError.code ?? 'unknown');
+    return { status: 'stored', message: 'ai_limit' };
   }
   try {
     const parsed = await parseCv(getLlm(), { pdfBase64: bytes.toString('base64') });

@@ -1,6 +1,6 @@
 import { expect, type Page, test } from '@playwright/test';
 import { loginAs, uniqueEmail } from './helpers/auth';
-import { applicationLetter, seedBankAnswer, seedCardFromJob, seedCv, seedMatch } from './helpers/seed';
+import { applicationLetter, exhaustPrivateAi, seedBankAnswer, seedCardFromJob, seedCv, seedMatch } from './helpers/seed';
 
 const visible = (page: Page, id: string) => page.getByTestId(id).filter({ visible: true });
 
@@ -53,6 +53,19 @@ test('generates the apply kit, answers form questions from the bank and AI, mark
   await expect.poll(() => applicationLetter(email, jobId)).toMatchObject({ kind: 'short', used: expect.stringContaining('[fake]') });
   await page.goto('/en/board');
   await expect(page.locator('[data-testid="board-column"][data-column-key="applied"]').getByText(title)).toBeVisible();
+});
+
+test('an exhausted daily AI limit blocks generation with an explanation', async ({ context, page, isMobile }) => {
+  const email = uniqueEmail('kit-limit');
+  await loginAs(context, email);
+  await seedCv(email);
+  await seedMatch(email, { score: 90 });
+  await exhaustPrivateAi(email);
+  await page.goto('/en/today');
+  await openKit(page, isMobile);
+  await visible(page, 'kit-generate').click();
+  await expect(visible(page, 'kit-error')).toContainText("Today's AI limit is used up");
+  await expect(visible(page, 'kit-letter')).toHaveCount(0);
 });
 
 test('without a CV the kit explains what to do', async ({ context, page, isMobile }) => {
