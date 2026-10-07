@@ -8,6 +8,8 @@ export type SourceInfo = {
   market: SourceMarket;
   url: string;
   beta?: true;
+  /** Rarely relevant for the target audience (measured share of good matches); off by default, still selectable. */
+  lowYield?: true;
   requiresKey?: string;
   browser?: true;
   /** The board's apply button needs a paid subscription; point users to the company site. */
@@ -19,20 +21,20 @@ export const SOURCE_CATALOG: readonly SourceInfo[] = [
   { id: 'djinni', name: 'Djinni', market: 'ua', url: 'https://djinni.co' },
   { id: 'workua', name: 'Work.ua', market: 'ua', url: 'https://www.work.ua', browser: true },
   { id: 'robotaua', name: 'robota.ua', market: 'ua', url: 'https://robota.ua' },
-  { id: 'jobico', name: 'Jobico', market: 'ua', url: 'https://www.jobico.io' },
-  { id: 'olx', name: 'OLX Робота', market: 'ua', url: 'https://www.olx.ua/uk/rabota/', browser: true },
+  { id: 'jobico', name: 'Jobico', market: 'ua', url: 'https://www.jobico.io', lowYield: true },
+  { id: 'olx', name: 'OLX Робота', market: 'ua', url: 'https://www.olx.ua/uk/rabota/', browser: true, lowYield: true },
   { id: 'jooble', name: 'Jooble', market: 'global', url: 'https://jooble.org', requiresKey: 'JOOBLE_API_KEY' },
   { id: 'adzuna', name: 'Adzuna', market: 'europe', url: 'https://www.adzuna.com', requiresKey: 'ADZUNA_APP_ID' },
   { id: 'linkedin', name: 'LinkedIn', market: 'global', url: 'https://www.linkedin.com/jobs', beta: true },
   { id: 'remoteok', name: 'Remote OK', market: 'remote', url: 'https://remoteok.com', applyPaywall: true },
   { id: 'remotive', name: 'Remotive', market: 'remote', url: 'https://remotive.com' },
   { id: 'himalayas', name: 'Himalayas', market: 'remote', url: 'https://himalayas.app' },
-  { id: 'wwr', name: 'We Work Remotely', market: 'remote', url: 'https://weworkremotely.com' },
-  { id: 'jobicy', name: 'Jobicy', market: 'remote', url: 'https://jobicy.com' },
+  { id: 'wwr', name: 'We Work Remotely', market: 'remote', url: 'https://weworkremotely.com', lowYield: true },
+  { id: 'jobicy', name: 'Jobicy', market: 'remote', url: 'https://jobicy.com', lowYield: true },
   { id: 'workingnomads', name: 'Working Nomads', market: 'remote', url: 'https://www.workingnomads.com' },
   { id: 'hn', name: "HN Who's Hiring", market: 'remote', url: 'https://news.ycombinator.com' },
-  { id: 'arbeitnow', name: 'Arbeitnow', market: 'europe', url: 'https://www.arbeitnow.com' },
-  { id: 'justjoin', name: 'Just Join IT', market: 'europe', url: 'https://justjoin.it' },
+  { id: 'arbeitnow', name: 'Arbeitnow', market: 'europe', url: 'https://www.arbeitnow.com', lowYield: true },
+  { id: 'justjoin', name: 'Just Join IT', market: 'europe', url: 'https://justjoin.it', lowYield: true },
   { id: 'telegram', name: 'Telegram channels', market: 'ua', url: 'https://t.me' },
   { id: 'greenhouse', name: 'Greenhouse boards', market: 'global', url: 'https://www.greenhouse.com' },
   { id: 'lever', name: 'Lever boards', market: 'global', url: 'https://www.lever.co' },
@@ -53,7 +55,7 @@ export const BROWSER_SOURCE_IDS: ReadonlySet<SourceId> = new Set(
 export function defaultSources(remoteType: 'any' | 'remote' | 'hybrid' | 'office'): SourceId[] {
   const markets: SourceMarket[] =
     remoteType === 'office' || remoteType === 'hybrid' ? ['ua', 'global'] : ['ua', 'remote', 'europe', 'global'];
-  return SOURCE_CATALOG.filter((s) => !s.beta && markets.includes(s.market)).map((s) => s.id);
+  return SOURCE_CATALOG.filter((s) => !s.beta && !s.lowYield && markets.includes(s.market)).map((s) => s.id);
 }
 
 /** Sources polled per board/channel from source_boards rather than per search keyword. */

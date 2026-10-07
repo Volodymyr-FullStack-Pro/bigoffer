@@ -1,6 +1,6 @@
 import type { SourceId } from './job';
 import { describe, expect, it } from 'vitest';
-import { buildSourceQueries, parseList, searchProfileInputSchema, searchTerms } from './search';
+import { buildSourceQueries, DJINNI_PRIMARY_KEYWORDS, parseList, searchProfileInputSchema, searchTerms } from './search';
 
 describe('parseList', () => {
   it('splits, trims and dedupes case-insensitively', () => {
@@ -39,6 +39,7 @@ describe('searchProfileInputSchema', () => {
 describe('buildSourceQueries', () => {
   const specs = buildSourceQueries({ keywords: ['Full Stack', 'React Developer'], skills: ['React', 'Node.js'], remoteType: 'any', sources: null });
   const bySource = (id: string) => specs.filter((s) => s.sourceId === id);
+  const withLowYield = buildSourceQueries({ keywords: ['Full Stack', 'React Developer'], skills: ['React', 'Node.js'], remoteType: 'any', sources: ['wwr', 'hn'] });
 
   it('creates one query per keyword for search sources', () => {
     expect(bySource('dou').map((s) => s.params).filter((p) => p.search)).toEqual(
@@ -50,13 +51,14 @@ describe('buildSourceQueries', () => {
   });
   it('maps skills to djinni primary keywords', () => {
     expect(bySource('djinni').map((s) => s.params)).toEqual([
+      { primary_keyword: 'Fullstack' },
       { primary_keyword: 'React.js' },
       { primary_keyword: 'Node.js' },
     ]);
   });
   it('uses a slug tag for remoteok and no params for feeds', () => {
     expect(bySource('remoteok')[0]!.params).toEqual({ tag: 'react' });
-    expect(bySource('wwr')[0]!.params).toEqual({});
+    expect(withLowYield.find((s) => s.sourceId === 'wwr')!.params).toEqual({});
     expect(bySource('hn')[0]!.params).toEqual({});
   });
   it('builds deterministic unique query keys', () => {
@@ -76,7 +78,8 @@ describe('buildSourceQueries with source selection', () => {
   it('falls back to defaults when sources is null', () => {
     const ids = new Set(buildSourceQueries({ ...base, sources: null }).map((s) => s.sourceId));
     expect(ids.has('linkedin')).toBe(false);
-    expect(ids.has('justjoin')).toBe(true);
+    expect(ids.has('justjoin')).toBe(false);
+    expect(ids.has('djinni')).toBe(true);
   });
 
   it('builds params for new sources', () => {
@@ -151,5 +154,16 @@ describe('adzuna queries', () => {
       { what: 'react remote', country: 'pl' }, { what: 'react remote', country: 'de' }, { what: 'react remote', country: 'gb' }, { what: 'react remote', country: 'nl' },
       { what: 'node.js remote', country: 'pl' }, { what: 'node.js remote', country: 'de' }, { what: 'node.js remote', country: 'gb' }, { what: 'node.js remote', country: 'nl' },
     ]);
+  });
+});
+
+describe('djinni categories', () => {
+  it('maps full stack / frontend profiles to valid Djinni categories, max 4', () => {
+    const specs = buildSourceQueries({ keywords: ['full stack', 'frontend'], skills: ['React', 'Node.js', 'TypeScript', 'Vue'], remoteType: 'any', sources: ['djinni'] });
+    expect(specs.map((s) => s.params.primary_keyword)).toEqual(['Fullstack', 'JavaScript', 'React.js', 'Node.js']);
+  });
+  it('never emits an unknown category', () => {
+    const valid = new Set(['Fullstack', 'React.js', 'Node.js', 'JavaScript', 'Vue.js', 'Angular', 'Python', 'Java', 'PHP', 'C# / .NET', 'Golang', 'Ruby', 'iOS', 'Android', 'Flutter', 'DevOps', 'QA', 'Project Manager', 'Product Manager', 'Design', 'Marketing', 'Sales', 'HR']);
+    for (const v of Object.values(DJINNI_PRIMARY_KEYWORDS)) expect(valid.has(v), v).toBe(true);
   });
 });

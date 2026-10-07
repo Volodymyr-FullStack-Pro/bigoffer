@@ -45,10 +45,23 @@ export type SearchProfile = Omit<SearchProfileInput, 'id' | 'name' | 'isActive' 
 
 export type SourceQuerySpec = { sourceId: SourceId; params: Record<string, string>; queryKey: string };
 
+/** Djinni categories queried per profile (keywords first). */
+const MAX_DJINNI_CATEGORIES = 4;
+
 export const DJINNI_PRIMARY_KEYWORDS: Record<string, string> = {
   javascript: 'JavaScript',
   js: 'JavaScript',
   typescript: 'JavaScript',
+  'full stack': 'Fullstack',
+  fullstack: 'Fullstack',
+  'full-stack': 'Fullstack',
+  frontend: 'JavaScript',
+  'front end': 'JavaScript',
+  'front-end': 'JavaScript',
+  vue: 'Vue.js',
+  'vue.js': 'Vue.js',
+  nuxt: 'Vue.js',
+  angular: 'Angular',
   react: 'React.js',
   'react.js': 'React.js',
   'next.js': 'React.js',
@@ -168,11 +181,11 @@ export function buildSourceQueries(
 
   const djinni = [
     ...new Set(
-      [...profile.skills, ...profile.keywords]
+      [...profile.keywords, ...profile.skills]
         .map((t) => DJINNI_PRIMARY_KEYWORDS[t.trim().toLowerCase()])
         .filter((v): v is string => Boolean(v)),
     ),
-  ].slice(0, 2);
+  ].slice(0, MAX_DJINNI_CATEGORIES);
   if (djinni.length === 0) add('djinni', {});
   for (const primary of djinni) add('djinni', { primary_keyword: primary });
 

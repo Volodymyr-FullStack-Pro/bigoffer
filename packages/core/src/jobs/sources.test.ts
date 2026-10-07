@@ -3,9 +3,9 @@ import { SOURCE_IDS } from './job';
 import { BOARD_SOURCE_IDS, BROWSER_SOURCE_IDS, defaultSources, SOURCE_CATALOG, sourceInfo } from './sources';
 
 describe('SOURCE_CATALOG', () => {
-  it('lists Jobico as a Ukrainian board polled by default', () => {
+  it('lists Jobico as a Ukrainian board, off by default', () => {
     expect(sourceInfo('jobico')).toMatchObject({ name: 'Jobico', market: 'ua' });
-    expect(defaultSources('office')).toContain('jobico');
+    expect(defaultSources('office')).not.toContain('jobico');
   });
   it('has exactly one entry per source id', () => {
     expect(SOURCE_CATALOG.map((s) => s.id).sort()).toEqual([...SOURCE_IDS].sort());
@@ -30,10 +30,10 @@ describe('defaultSources', () => {
     expect(office).not.toContain('linkedin');
     expect(defaultSources('hybrid')).toEqual(office);
   });
-  it('uses every non-beta board for remote and any', () => {
+  it('uses every non-beta, non-low-yield board for remote and any', () => {
     const remote = defaultSources('remote');
     expect(remote).toContain('djinni');
-    expect(remote).toContain('justjoin');
+    expect(remote).toContain('remotive');
     expect(remote).not.toContain('linkedin');
     expect(defaultSources('any')).toEqual(remote);
   });
@@ -42,5 +42,16 @@ describe('defaultSources', () => {
     expect(sourceInfo('dou')?.applyPaywall).toBeUndefined();
     expect([...BOARD_SOURCE_IDS].sort()).toEqual(['ashby', 'greenhouse', 'lever', 'telegram', 'workable']);
     expect(defaultSources('remote')).toEqual(expect.arrayContaining(['greenhouse', 'ashby', 'telegram']));
+  });
+});
+
+describe('lowYield', () => {
+  it('keeps low-yield boards out of the defaults but in the catalog', () => {
+    const low = ['arbeitnow', 'wwr', 'jobico', 'jobicy', 'justjoin', 'olx'] as const;
+    for (const id of low) {
+      expect(sourceInfo(id)?.lowYield, id).toBe(true);
+      expect(defaultSources('any'), id).not.toContain(id);
+    }
+    expect(defaultSources('any')).toEqual(expect.arrayContaining(['dou', 'djinni', 'workua', 'robotaua', 'remotive', 'himalayas']));
   });
 });
