@@ -34,7 +34,8 @@ describe('parseJobPreview', () => {
   });
 });
 
-describe('parseJobPreview is linear on adversarial input', () => {
+// Timing-based: run in isolation (PERF=1, a dedicated CI step), not alongside other packages' suites competing for CPU.
+describe.skipIf(!process.env.PERF)('parseJobPreview is linear on adversarial input', () => {
   // parseJobPreview caps input at 512_000 chars, so stay below it: N and 4N are real sizes.
   const N = 100_000;
   const rep = (unit: string, size: number) => unit.repeat(Math.max(1, Math.floor(size / unit.length)));
