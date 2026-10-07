@@ -54,6 +54,38 @@ describe('board adapters', () => {
     }
     await expectValid(jobs);
   });
+  it('lever and ashby use the board display name as company when given', async () => {
+    const lever = fakeContext({ 'api.lever.co': fx('lever.json') });
+    const leverJobs = await leverAdapter.search({ board: 'ajax', name: 'Ajax Systems' }, lever.ctx);
+    expect(leverJobs.length).toBeGreaterThan(0);
+    expect(leverJobs.every((j) => j.company === 'Ajax Systems')).toBe(true);
+    const ashby = fakeContext({ 'api.ashbyhq.com': fx('ashby.json') });
+    const ashbyJobs = await ashbyAdapter.search({ board: 'preply', name: 'Preply' }, ashby.ctx);
+    expect(ashbyJobs.every((j) => j.company === 'Preply')).toBe(true);
+    const fallback = await leverAdapter.search({ board: 'ajax' }, fakeContext({ 'api.lever.co': fx('lever.json') }).ctx);
+    expect(fallback.every((j) => j.company === 'ajax')).toBe(true);
+  });
+  it('lever throws on a non-list response so the board counts as failed', async () => {
+    const { ctx } = fakeContext({ 'api.lever.co': { ok: false, error: 'Document not found' } });
+    await expect(leverAdapter.search({ board: 'gone' }, ctx)).rejects.toThrow(/Lever/);
+  });
+  it('telegram throws on a page without any messages but keeps [] when all posts are filtered', async () => {
+    const dead = fakeContext({ 't.me/s/renamed_chan': '<html><head><meta property="og:title" content="Telegram"></head><body></body></html>' });
+    await expect(telegramAdapter.search({ board: 'renamed_chan' }, dead.ctx)).rejects.toThrow(/no public posts/);
+    const filtered = fakeContext({
+      't.me/s/quiet_chan': '<div class="tgme_widget_message" data-post="quiet_chan/1"><div class="tgme_widget_message_text">hi</div></div>',
+    });
+    expect(await telegramAdapter.search({ board: 'quiet_chan' }, filtered.ctx)).toEqual([]);
+  });
+  it('telegram ignores posts whose data-post names another channel', async () => {
+    const text = 'We are hiring a Senior Developer for our team, remote, great salary and benefits, apply now via the link below please.';
+    const html = ['evil_chan/5', 'my_chan/6', 'MY_CHAN/7', 'my chan/8']
+      .map((p) => `<div class="tgme_widget_message" data-post="${p}"><div class="tgme_widget_message_text">${text}</div></div>`)
+      .join('');
+    const { ctx } = fakeContext({ 't.me/s/my_chan': html });
+    const jobs = await telegramAdapter.search({ board: 'my_chan' }, ctx);
+    expect(jobs.map((j) => j.externalId)).toEqual(['my_chan/6', 'MY_CHAN/7']);
+  });
   it('returns nothing without a board', async () => {
     const { ctx } = fakeContext({});
     expect(await greenhouseAdapter.search({}, ctx)).toEqual([]);

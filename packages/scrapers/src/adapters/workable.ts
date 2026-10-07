@@ -12,9 +12,9 @@ export const workableAdapter: SourceAdapter = {
       const location = [j.city, j.country].filter(Boolean).join(', ') || null;
       return {
         externalId: j.shortcode,
-        url: j.url ?? `https://apply.workable.com/${params.board}/j/${j.shortcode}/`,
+        url: j.url ?? `https://apply.workable.com/${encodeURIComponent(params.board!)}/j/${j.shortcode}/`,
         title: j.title,
-        company: data.name || params.board!,
+        company: data.name || params.name || params.board!,
         description: j.description ?? '',
         location,
         postedAt: j.published_on ?? j.created_at ?? null,

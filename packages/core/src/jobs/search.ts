@@ -127,7 +127,7 @@ export function buildSourceQueries(
   const terms = [...profile.keywords, ...profile.skills].map((t) => t.toLowerCase());
   const has = (re: RegExp) => terms.some((t) => re.test(t));
   const categories = [
-    has(/front|react|vue|angular|next|full ?stack|javascript|typescript/) ? 'Front End' : null,
+    has(/front|react|vue|angular|\bnext\b|full ?stack|javascript|typescript/) ? 'Front End' : null,
     has(/node|nest|express|full ?stack|back ?end/) ? 'Node.js' : null,
     has(/javascript|typescript|full ?stack/) ? 'JavaScript' : null,
   ].filter((c): c is string => c !== null);

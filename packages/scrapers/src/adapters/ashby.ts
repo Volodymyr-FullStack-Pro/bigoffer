@@ -15,7 +15,7 @@ export const ashbyAdapter: SourceAdapter = {
         externalId: j.id,
         url: j.jobUrl,
         title: j.title.trim(),
-        company: params.board!,
+        company: params.name ?? params.board!,
         description: j.descriptionPlain ?? '',
         location: locations.join(', ') || null,
         postedAt: j.publishedAt ?? null,

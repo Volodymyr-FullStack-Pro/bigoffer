@@ -28,4 +28,17 @@ describe('boardQuerySpecs', () => {
     ]);
     expect(specs[0]!.queryKey).toBe('greenhouse:{"board":"gitlab"}');
   });
+
+  it('carries the company display name in params when the board has one', () => {
+    const [named, plain] = boardQuerySpecs(
+      [
+        { sourceId: 'lever', slug: 'ajax', name: 'Ajax Systems' },
+        { sourceId: 'lever', slug: 'eleks' },
+      ],
+      ['lever'],
+    );
+    expect(named!.params).toEqual({ board: 'ajax', name: 'Ajax Systems' });
+    expect(named!.queryKey).toContain('Ajax Systems');
+    expect(plain!.params).toEqual({ board: 'eleks' });
+  });
 });

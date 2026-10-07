@@ -16,7 +16,7 @@ export const greenhouseAdapter: SourceAdapter = {
         externalId: String(j.id),
         url: j.absolute_url,
         title: j.title,
-        company: j.company_name ?? params.board!,
+        company: j.company_name ?? params.name ?? params.board!,
         description: decodeHtml(j.content ?? ''),
         location,
         postedAt: j.first_published ?? j.updated_at ?? null,

@@ -8,7 +8,7 @@ export function isTechTitle(title: string): boolean {
   return TECH.test(title);
 }
 
-export type BoardRef = { sourceId: SourceId; slug: string };
+export type BoardRef = { sourceId: SourceId; slug: string; name?: string };
 
 /** One shared query per board of an enabled source (deduplicated across users by queryKey). */
 export function boardQuerySpecs(boards: BoardRef[], enabled: readonly SourceId[]): SourceQuerySpec[] {
@@ -16,7 +16,7 @@ export function boardQuerySpecs(boards: BoardRef[], enabled: readonly SourceId[]
   return boards
     .filter((b) => on.has(b.sourceId))
     .map((b) => {
-      const params = { board: b.slug };
+      const params: Record<string, string> = b.name ? { board: b.slug, name: b.name } : { board: b.slug };
       return { sourceId: b.sourceId, params, queryKey: queryKey(b.sourceId, params) };
     });
 }
