@@ -21,7 +21,7 @@ export async function generateRecruiterMessage(
   const [{ data: app }, cv, { data: previous }] = await Promise.all([
     supabase.from('applications').select('title, company, contact, jobs(description_text)').eq('id', applicationId).maybeSingle(),
     loadPrimaryCv(supabase),
-    supabase.from('application_messages').select('body').eq('application_id', applicationId).eq('direction', 'out').order('sent_at').limit(5),
+    supabase.from('application_messages').select('body').eq('application_id', applicationId).eq('direction', 'out').order('sent_at', { ascending: false }).limit(5),
   ]);
   if (!app) return { ok: false, error: 'not_found' };
   if (!cv?.parsed) return { ok: false, error: 'no_cv' };
@@ -35,7 +35,7 @@ export async function generateRecruiterMessage(
       recruiterName: typeof contact.name === 'string' ? contact.name : null,
       lang: opts.lang,
       tone: opts.tone,
-      previous: (previous ?? []).map((p) => p.body),
+      previous: (previous ?? []).map((p) => p.body).reverse(),
     });
     return { ok: true, ...res };
   } catch (err) {
@@ -49,12 +49,14 @@ export async function logSentMessage(applicationId: string, channel: 'email' | '
   const text = body.trim().slice(0, 10_000);
   if (!userId || !UUID.test(applicationId) || !['email', 'linkedin', 'telegram', 'other'].includes(channel) || !text) return false;
   const supabase = await createClient();
+  const { data, error: uErr } = await supabase.from('applications').update({ last_activity_at: new Date().toISOString() }).eq('id', applicationId).select('id');
+  if (uErr || (data?.length ?? 0) === 0) return false;
   const { error } = await supabase.from('application_messages').insert({ application_id: applicationId, user_id: userId, direction: 'out', channel, body: text });
   if (error) return false;
-  const { data } = await supabase.from('applications').update({ last_activity_at: new Date().toISOString() }).eq('id', applicationId).select('id');
-  await supabase.from('application_events').insert({ application_id: applicationId, user_id: userId, type: 'message', payload: { direction: 'out', channel } });
+  const { error: eErr } = await supabase.from('application_events').insert({ application_id: applicationId, user_id: userId, type: 'message', payload: { direction: 'out', channel } });
+  if (eErr) console.error('logSentMessage event failed', eErr.name ?? 'unknown');
   revalidatePath('/[locale]/board', 'page');
-  return (data?.length ?? 0) > 0;
+  return true;
 }
 
 export async function listMessages(applicationId: string) {

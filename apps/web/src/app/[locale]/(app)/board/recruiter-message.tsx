@@ -25,7 +25,7 @@ export function RecruiterMessage({ applicationId, defaultLang, onSent }: { appli
     void listMessages(applicationId).then((h) => {
       setHistory(h);
       if (h.some((m) => m.direction === 'out')) setKind('follow_up');
-    });
+    }).catch(() => setHistory([]));
   }, [applicationId]);
 
   const field = 'brutal bg-card px-2 py-1 text-sm';
@@ -72,7 +72,7 @@ export function RecruiterMessage({ applicationId, defaultLang, onSent }: { appli
       </div>
       {error && <p data-testid="msg-error" role="alert" className="text-sm text-danger">{t(`err_${error}` as never)}</p>}
       {subject && <p className="text-sm"><span className="font-semibold">{t('subject')}:</span> {subject}</p>}
-      <textarea data-testid="msg-body" value={body} maxLength={limit} onChange={(e) => setBody(e.target.value)} aria-label={t('body')} className={`${field} min-h-28`} />
+      <textarea data-testid="msg-body" value={body} maxLength={limit} onChange={(e) => { setBody(e.target.value); setSent(false); }} aria-label={t('body')} className={`${field} min-h-28`} />
       <p data-testid="msg-count" className="font-mono text-xs text-muted-foreground">{body.length} / {limit}</p>
       <div className="flex gap-2">
         <button type="button" data-testid="msg-copy" disabled={!body} onClick={() => void navigator.clipboard.writeText(subject ? `${subject}\n\n${body}` : body).catch(() => undefined)} className="brutal brutal-press px-3 py-1 text-sm font-semibold disabled:opacity-50">{t('copy')}</button>
