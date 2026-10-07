@@ -167,6 +167,7 @@
     "market_europe": "Europe",
     "market_global": "Aggregators",
     "beta": "beta",
+    "lowYield": "rarely relevant",
     "linkedinWarning": "LinkedIn public listings, collected rarely and without your account. Off by default.",
     "needsKey": "needs API key",
     "sourcesRequired": "Pick at least one job board",
@@ -307,6 +308,7 @@
     "error": "Couldn't save. Try again."
   },
   "onboarding": {
+    "profilesTip": "Recruiters search too: keep your Djinni profile active and LinkedIn set to “Open to work”.",
     "title": "Let's set you up",
     "stepCv": "Upload your CV",
     "stepSearch": "Set up what you're looking for",
@@ -314,6 +316,12 @@
     "stepTemplate": "Your cover letter template",
     "stepAnswers": "Answers to typical questions",
     "finish": "Done — show me jobs"
+  },
+  "people": {
+    "title": "Find a person at the company",
+    "recruiters": "Recruiters",
+    "engineers": "Engineering managers",
+    "hint": "A referral is the #1 way people get hired: write a short note before or right after applying."
   },
   "kit": {
     "title": "Apply kit",

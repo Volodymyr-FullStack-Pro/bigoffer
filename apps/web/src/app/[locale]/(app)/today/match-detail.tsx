@@ -4,6 +4,7 @@ import { isLocale, type Locale, sourceInfo } from '@jp/core';
 import { useFormatter, useLocale, useNow, useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { ApplyKitPanel } from '@/components/apply-kit/apply-kit-panel';
+import { PeopleSearch } from '@/components/apply-kit/people-search';
 import { ScoreMeter } from '@/components/ui/score-meter';
 import type { FeedMatch } from './feed-types';
 
@@ -117,6 +118,7 @@ export function MatchDetail({ match, onAction, onApplied, showDescription = true
         ))}
       </div>
       {onAction && <MatchActions onAction={onAction} />}
+      <PeopleSearch company={match.company} />
       <ApplyKitToggle key={match.id} jobId={match.jobId} onApplied={onApplied} />
       {showDescription && match.description && (
         <div className="max-h-[50vh] overflow-y-auto whitespace-pre-line border-t-2 border-border pt-3 text-sm">{match.description}</div>

@@ -104,3 +104,15 @@ test('applying from the board card panel moves the card to Applied without reloa
   await expect(col('saved').getByText(title)).toHaveCount(0);
   await expect.poll(() => applicationLetter(email, jobId)).toMatchObject({ kind: 'full' });
 });
+
+test('offers LinkedIn people searches for the job company', async ({ context, page, isMobile }) => {
+  const email = uniqueEmail('kit-people');
+  await loginAs(context, email);
+  await seedMatch(email, { score: 90 });
+  await page.goto('/en/today');
+  await openKit(page, isMobile);
+  const link = visible(page, 'people-recruiters').first();
+  await expect(link).toHaveAttribute('href', /linkedin\.com\/search\/results\/people\/\?keywords=Acme%20/);
+  await expect(link).toHaveAttribute('target', '_blank');
+  await expect(visible(page, 'people-engineers').first()).toHaveAttribute('href', /engineering%20manager$/);
+});

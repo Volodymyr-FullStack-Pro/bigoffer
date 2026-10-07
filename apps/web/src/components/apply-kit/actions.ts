@@ -14,7 +14,7 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export type KitError = 'ai_unavailable' | 'ai_limit' | 'no_cv' | 'not_found' | 'failed';
 export type FormAnswer = { question: string; answer: string; fromBank: boolean };
 export type StoredKit = ApplyKit & { formAnswers: FormAnswer[] };
-export type KitData = { kit: StoredKit | null; formAnswers: FormAnswer[]; aiAvailable: boolean; hasCv: boolean; contacts: Record<string, string>; cvLink: string | null; jobUrl: string | null };
+export type KitData = { kit: StoredKit | null; formAnswers: FormAnswer[]; aiAvailable: boolean; hasCv: boolean; contacts: Record<string, string>; cvLink: string | null; jobUrl: string | null; company: string };
 
 type Supabase = Awaited<ReturnType<typeof createClient>>;
 
@@ -74,6 +74,7 @@ export async function getApplyKitData(jobId: string): Promise<KitData | null> {
     contacts,
     cvLink: cv ? await cvSignedUrl(supabase, cv.path) : null,
     jobUrl: job?.url ?? null,
+    company: job?.company ?? '',
   };
 }
 

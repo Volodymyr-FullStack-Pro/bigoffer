@@ -37,6 +37,7 @@ test('onboarding: answer bank, letter template, finish', async ({ context, page 
   await page.getByTestId('template-body').fill('Hi [company]! [why me]');
   await page.getByTestId('template-save').click();
   await expect(page.getByTestId('letter-template').getByRole('status')).toHaveText('Saved.');
+  await expect(page.getByTestId('profiles-tip')).toBeVisible();
   await page.getByTestId('onboarding-finish').click();
   await expect(page).toHaveURL(/\/en\/today$/);
   await expect(page.getByTestId('onboarding-banner')).toHaveCount(0);
