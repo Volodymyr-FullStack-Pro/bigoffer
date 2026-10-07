@@ -6,6 +6,7 @@ import { pipelineDeps } from '../runtime';
 
 export const expireJobsTask = schedules.task({
   id: 'expire-jobs',
+  machine: 'small-1x', // bulk-loads jobs/profiles; micro (0.25 GB) is too small
   cron: '0 3 * * *',
   run: async () => {
     const db = getDb();

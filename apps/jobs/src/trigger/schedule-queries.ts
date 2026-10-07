@@ -7,6 +7,7 @@ import { scrapeQuery } from './scrape-query';
 
 export const scheduleQueries = schedules.task({
   id: 'schedule-queries',
+  machine: 'small-1x', // bulk-loads jobs/profiles; micro (0.25 GB) is too small
   cron: '5 * * * *',
   run: async () => {
     const db = getDb();

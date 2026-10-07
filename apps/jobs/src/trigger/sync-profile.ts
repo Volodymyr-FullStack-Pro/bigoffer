@@ -5,6 +5,7 @@ import { syncProfile } from '../pipeline/sync-profiles';
 
 export const syncProfileTask = task({
   id: 'sync-profile',
+  machine: 'small-1x', // bulk-loads jobs/profiles; micro (0.25 GB) is too small
   run: async (payload: { profileId: string }) => {
     const db = getDb();
     const profile = await getProfile(db, payload.profileId);
