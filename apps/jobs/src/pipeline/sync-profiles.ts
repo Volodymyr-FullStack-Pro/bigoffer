@@ -1,12 +1,16 @@
-import { buildSourceQueries, defaultSources, type SearchProfile, scoreJob } from '@jp/core';
+import { type BoardRef, boardQuerySpecs, buildSourceQueries, defaultSources, type SearchProfile, scoreJob } from '@jp/core';
 import type { Db } from '../db';
+import { getEnabledBoards } from './boards';
 import { matchJobs } from './match';
 import { deleteNewMatches, getActiveProfiles, getNewMatchJobIdsOutsideSources, getRecentJobs } from './repository';
 
 const RECENT_DAYS = 7;
 
-async function linkQueries(db: Db, profile: SearchProfile): Promise<string[]> {
-  const specs = buildSourceQueries(profile);
+async function linkQueries(db: Db, profile: SearchProfile, boards: BoardRef[]): Promise<string[]> {
+  const specs = [
+    ...buildSourceQueries(profile),
+    ...boardQuerySpecs(boards, profile.sources ?? defaultSources(profile.remoteType)),
+  ];
   const { error: upsertError } = await db
     .from('search_queries')
     .upsert(
@@ -52,7 +56,7 @@ export async function syncProfile(
     await deleteNewMatches(db, profile.id);
     return { queryIds: [], matched: 0 };
   }
-  const queryIds = await linkQueries(db, profile);
+  const queryIds = await linkQueries(db, profile, await getEnabledBoards(db));
   const since = new Date(now.getTime() - RECENT_DAYS * 24 * 3600 * 1000);
   const sources = profile.sources ?? defaultSources(profile.remoteType);
   const recent = await getRecentJobs(db, since, sources);
@@ -79,6 +83,7 @@ export async function syncAllProfiles(db: Db, _now: Date): Promise<number> {
     if (unlinkError) throw unlinkError;
   }
   const profiles = await getActiveProfiles(db);
-  for (const profile of profiles) await linkQueries(db, profile);
+  const boards = await getEnabledBoards(db);
+  for (const profile of profiles) await linkQueries(db, profile, boards);
   return profiles.length;
 }

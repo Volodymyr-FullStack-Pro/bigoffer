@@ -1,6 +1,7 @@
-import { normalizeJob, type NormalizedJob } from '@jp/core';
+import { BOARD_SOURCE_IDS, normalizeJob, type NormalizedJob, type SourceId } from '@jp/core';
 import { type AdapterContext, SourceBlockedError, type SourceAdapter } from '@jp/scrapers';
 import type { Db } from '../db';
+import { recordBoardRun } from './boards';
 import { matchJobs } from './match';
 import {
   deferQuery,
@@ -33,6 +34,17 @@ export type RunQueryResult = {
 };
 
 const SKIPPED: RunQueryResult = { status: 'skipped', found: 0, inserted: 0, matched: 0, alert: null };
+
+// Board bookkeeping is extra: a failure to record must never change the run's outcome.
+async function trackBoard(db: Db, sourceId: string, params: unknown, ok: boolean): Promise<void> {
+  const board = (params as { board?: unknown } | null)?.board;
+  if (typeof board !== 'string' || !BOARD_SOURCE_IDS.has(sourceId as SourceId)) return;
+  try {
+    await recordBoardRun(db, sourceId, board, ok);
+  } catch (e) {
+    console.error('board bookkeeping failed', e);
+  }
+}
 
 export async function runQuery(deps: RunQueryDeps, queryId: string): Promise<RunQueryResult> {
   const { db } = deps;
@@ -93,6 +105,7 @@ export async function runQuery(deps: RunQueryDeps, queryId: string): Promise<Run
       } catch {
         // ignored: the original error below is what matters
       }
+      await trackBoard(db, source.id, query.params, false);
       throw err;
     }
 
@@ -100,6 +113,7 @@ export async function runQuery(deps: RunQueryDeps, queryId: string): Promise<Run
     await finishRun(db, runId, { status: 'ok', found, inserted });
     const { alert } = await updateSourceHealth(db, source, found === 0 ? 'empty' : 'ok', now);
     await markQueryRun(db, queryId, now, source.min_interval_minutes);
+    await trackBoard(db, source.id, query.params, true);
     return { status: 'ok', found, inserted, matched, alert };
   } finally {
     await ctx.dispose?.().catch((e: unknown) => console.error('dispose failed', e));

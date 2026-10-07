@@ -86,8 +86,10 @@ describe('syncProfile', () => {
       .select('id, source_id, params')
       .in('id', queryIds)
       .eq('source_id', 'dou');
-    expect(data).toHaveLength(1);
-    douQueryId = data![0]!.id;
+    // DOU also gets category queries (Plan 6c); the keyword query is the one without a category.
+    const keyword = data!.filter((q) => !('category' in (q.params as Record<string, unknown>)));
+    expect(keyword).toHaveLength(1);
+    douQueryId = keyword[0]!.id;
   });
 });
 
