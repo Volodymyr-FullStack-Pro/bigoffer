@@ -49,7 +49,7 @@ test('saves a chosen subset of job boards', async ({ context, page }) => {
   await page.goto('/en/search');
   await page.getByLabel('Role keywords').fill('react');
   await page.getByLabel('Work format').selectOption('remote');
-  for (const id of ['remoteok', 'remotive', 'himalayas', 'wwr', 'jobicy', 'workingnomads', 'hn', 'arbeitnow', 'justjoin', 'jooble', 'robotaua', 'olx', 'jobico']) {
+  for (const id of ['remoteok', 'remotive', 'himalayas', 'wwr', 'jobicy', 'workingnomads', 'hn', 'arbeitnow', 'justjoin', 'jooble', 'robotaua', 'olx', 'jobico', 'greenhouse', 'lever', 'ashby', 'workable', 'telegram']) {
     const box = page.getByTestId(`source-${id}`);
     if (await box.isChecked()) await box.uncheck();
   }
@@ -60,6 +60,14 @@ test('saves a chosen subset of job boards', async ({ context, page }) => {
   await expect(page.getByTestId('source-linkedin').first()).toBeChecked();
   await expect(page.getByTestId('source-remoteok').first()).not.toBeChecked();
   await expect(page.getByTestId('source-dou').first()).toBeChecked();
+});
+
+test('lists the company-board and Telegram sources for a new profile', async ({ context, page }) => {
+  await loginAs(context, uniqueEmail('search-new-sources'));
+  await page.goto('/en/search');
+  for (const id of ['greenhouse', 'lever', 'ashby', 'workable', 'telegram']) {
+    await expect(page.getByTestId(`source-${id}`)).toBeVisible();
+  }
 });
 
 test('an office profile with no stored sources shows office defaults', async ({ context, page }) => {

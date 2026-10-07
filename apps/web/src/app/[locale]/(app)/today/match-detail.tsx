@@ -101,9 +101,16 @@ export function MatchDetail({ match, onAction, onApplied, showDescription = true
       )}
       <div className="flex flex-wrap gap-2">
         {match.postings.filter((p) => /^https?:\/\//i.test(p.url)).map((p) => (
-          <a key={p.url} href={p.url} target="_blank" rel="noopener" data-testid="match-open" className="brutal brutal-press px-3 py-1.5 text-sm font-semibold">
-            {t('open', { source: sourceInfo(p.sourceId)?.name ?? p.sourceId })} ↗
-          </a>
+          <span key={p.url} className="inline-flex items-center gap-2">
+            <a href={p.url} target="_blank" rel="noopener" data-testid="match-open" className="brutal brutal-press px-3 py-1.5 text-sm font-semibold">
+              {t('open', { source: sourceInfo(p.sourceId)?.name ?? p.sourceId })} ↗
+            </a>
+            {sourceInfo(p.sourceId)?.applyPaywall && (
+              <span data-testid="paid-apply" className="font-mono text-xs text-warning" title={t('paidApplyHint')}>
+                {t('paidApply')}
+              </span>
+            )}
+          </span>
         ))}
       </div>
       {onAction && <MatchActions onAction={onAction} />}
