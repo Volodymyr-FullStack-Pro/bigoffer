@@ -239,13 +239,13 @@ isOneToOne: false
                   ]
                 },"job_matches": {
                   Row: {
-                    "breakdown": NonNullable<Json>,"created_at": string,"explained_at": string | null,"explanation": Json | null,"id": string,"job_id": string,"score": number,"search_profile_id": string | null,"state": string,"updated_at": string,"user_id": string
+                    "breakdown": NonNullable<Json>,"created_at": string,"explained_at": string | null,"explanation": Json | null,"id": string,"job_id": string,"notified_at": string | null,"score": number,"search_profile_id": string | null,"state": string,"updated_at": string,"user_id": string
                   }
                   Insert: {
-                    "breakdown"?: NonNullable<Json>,"created_at"?: string,"explained_at"?: string | null,"explanation"?: Json | null,"id"?: string,"job_id": string,"score": number,"search_profile_id"?: string | null,"state"?: string,"updated_at"?: string,"user_id": string
+                    "breakdown"?: NonNullable<Json>,"created_at"?: string,"explained_at"?: string | null,"explanation"?: Json | null,"id"?: string,"job_id": string,"notified_at"?: string | null,"score": number,"search_profile_id"?: string | null,"state"?: string,"updated_at"?: string,"user_id": string
                   }
                   Update: {
-                    "breakdown"?: NonNullable<Json>,"created_at"?: string,"explained_at"?: string | null,"explanation"?: Json | null,"id"?: string,"job_id"?: string,"score"?: number,"search_profile_id"?: string | null,"state"?: string,"updated_at"?: string,"user_id"?: string
+                    "breakdown"?: NonNullable<Json>,"created_at"?: string,"explained_at"?: string | null,"explanation"?: Json | null,"id"?: string,"job_id"?: string,"notified_at"?: string | null,"score"?: number,"search_profile_id"?: string | null,"state"?: string,"updated_at"?: string,"user_id"?: string
                   }
                   Relationships: [
                     {
@@ -358,13 +358,13 @@ isOneToOne: false
                   ]
                 },"profiles": {
                   Row: {
-                    "contacts": NonNullable<Json>,"country": string | null,"created_at": string,"digest_hour": number,"follow_up_days": (number)[],"full_name": string,"ghost_after_days": number,"id": string,"inbound_email_token": string,"locale": string,"onboarded_at": string | null,"plan": string,"telegram_chat_id": number | null,"timezone": string,"updated_at": string
+                    "contacts": NonNullable<Json>,"country": string | null,"created_at": string,"digest_hour": number,"digest_last_sent_on": string | null,"follow_up_days": (number)[],"full_name": string,"ghost_after_days": number,"id": string,"inbound_email_token": string,"locale": string,"onboarded_at": string | null,"plan": string,"telegram_alerts": boolean,"telegram_chat_id": number | null,"telegram_min_score": number,"timezone": string,"updated_at": string
                   }
                   Insert: {
-                    "contacts"?: NonNullable<Json>,"country"?: string | null,"created_at"?: string,"digest_hour"?: number,"follow_up_days"?: (number)[],"full_name"?: string,"ghost_after_days"?: number,"id": string,"inbound_email_token"?: string,"locale"?: string,"onboarded_at"?: string | null,"plan"?: string,"telegram_chat_id"?: number | null,"timezone"?: string,"updated_at"?: string
+                    "contacts"?: NonNullable<Json>,"country"?: string | null,"created_at"?: string,"digest_hour"?: number,"digest_last_sent_on"?: string | null,"follow_up_days"?: (number)[],"full_name"?: string,"ghost_after_days"?: number,"id": string,"inbound_email_token"?: string,"locale"?: string,"onboarded_at"?: string | null,"plan"?: string,"telegram_alerts"?: boolean,"telegram_chat_id"?: number | null,"telegram_min_score"?: number,"timezone"?: string,"updated_at"?: string
                   }
                   Update: {
-                    "contacts"?: NonNullable<Json>,"country"?: string | null,"created_at"?: string,"digest_hour"?: number,"follow_up_days"?: (number)[],"full_name"?: string,"ghost_after_days"?: number,"id"?: string,"inbound_email_token"?: string,"locale"?: string,"onboarded_at"?: string | null,"plan"?: string,"telegram_chat_id"?: number | null,"timezone"?: string,"updated_at"?: string
+                    "contacts"?: NonNullable<Json>,"country"?: string | null,"created_at"?: string,"digest_hour"?: number,"digest_last_sent_on"?: string | null,"follow_up_days"?: (number)[],"full_name"?: string,"ghost_after_days"?: number,"id"?: string,"inbound_email_token"?: string,"locale"?: string,"onboarded_at"?: string | null,"plan"?: string,"telegram_alerts"?: boolean,"telegram_chat_id"?: number | null,"telegram_min_score"?: number,"timezone"?: string,"updated_at"?: string
                   }
                   Relationships: [
                     
@@ -540,20 +540,42 @@ isOneToOne: false
                   Relationships: [
                     
                   ]
+                },"telegram_link_tokens": {
+                  Row: {
+                    "created_at": string,"expires_at": string,"token_hash": string,"user_id": string
+                  }
+                  Insert: {
+                    "created_at"?: string,"expires_at": string,"token_hash": string,"user_id": string
+                  }
+                  Update: {
+                    "created_at"?: string,"expires_at"?: string,"token_hash"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
                 }
           }
           Views: {
             [_ in never]: never
           }
           Functions: {
-            "consume_private_ai":
+            "bot_save_match":
+{ Args: { "p_column_key": string,"p_match_id": string,"p_rank": string,"p_user_id": string }; Returns: string
+                           },
+"consume_private_ai":
 { Args: { "p_limit": number }; Returns: boolean
+                           },
+"create_telegram_link_token":
+{ Args: { "p_token_hash": string }; Returns: undefined
                            },
 "find_similar_job":
 { Args: { "p_company_id": string,"p_title": string }; Returns: string
                            },
 "jobs_to_enrich":
 { Args: { "p_job_ids"?: (string)[],"p_limit": number }; Returns: string[]
+                           },
+"link_telegram":
+{ Args: { "p_chat_id": number,"p_token_hash": string }; Returns: string
                            },
 "matches_to_explain":
 { Args: { "p_day_start": string,"p_min_score": number,"p_per_user": number,"p_user_ids"?: (string)[] }; Returns: {
@@ -582,6 +604,9 @@ isOneToOne: false
                            },
 "text_array_max_len":
 { Args: { "arr": (string)[] }; Returns: number
+                           },
+"unlink_telegram":
+{ Args: Record<PropertyKey, never>; Returns: undefined
                            },
 "upsert_job_matches":
 { Args: { "rows": Json }; Returns: undefined
