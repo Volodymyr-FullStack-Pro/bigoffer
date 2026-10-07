@@ -1,3 +1,4 @@
+import { safeRedirectPath } from '@jp/core';
 import { getTranslations } from 'next-intl/server';
 import { LocaleSwitcher } from '@/components/locale-switcher';
 import { ThemeToggle } from '@/components/theme-toggle';
@@ -8,9 +9,11 @@ import { LoginForm } from './login-form';
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; next?: string | string[] }>;
 }) {
-  const { error } = await searchParams;
+  const { error, next: rawNext } = await searchParams;
+  // Where to return after sign-in (e.g. a Telegram deep link); same-origin relative paths only.
+  const next = safeRedirectPath(typeof rawNext === 'string' ? rawNext : null) ?? undefined;
   const t = await getTranslations('auth');
   const tApp = await getTranslations('app');
   const tTheme = await getTranslations('theme');
@@ -32,13 +35,13 @@ export default async function LoginPage({
           <p className="mt-2 text-muted-foreground">{t('subtitle')}</p>
         </div>
         {error && <p className="text-sm text-danger">{t('error')}</p>}
-        <LoginForm />
+        <LoginForm next={next} />
         {publicEnv.NEXT_PUBLIC_AUTH_GOOGLE_ENABLED && (
           <>
             <div className="text-center font-mono text-xs uppercase text-muted-foreground">
               {t('or')}
             </div>
-            <GoogleButton />
+            <GoogleButton next={next} />
           </>
         )}
       </section>

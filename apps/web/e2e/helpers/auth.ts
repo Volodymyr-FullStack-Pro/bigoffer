@@ -7,14 +7,22 @@ const PUBLISHABLE = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!;
 const SECRET = process.env.SUPABASE_SECRET_KEY!;
 const PASSWORD = 'E2e-password-123!';
 
+const adminClient = () => createClient(URL, SECRET, { auth: { persistSession: false } });
+
+export async function ensureUser(email: string) {
+  const { error } = await adminClient().auth.admin.createUser({ email, password: PASSWORD, email_confirm: true });
+  if (error && !/already/i.test(error.message)) throw error;
+}
+
+/** The /auth/confirm URL a magic-link email for `email` would open, carrying `next`. */
+export async function magicLinkConfirmPath(email: string, next: string) {
+  const { data, error } = await adminClient().auth.admin.generateLink({ type: 'magiclink', email });
+  if (error) throw error;
+  return `/auth/confirm?token_hash=${data.properties.hashed_token}&type=magiclink&next=${encodeURIComponent(next)}`;
+}
+
 export async function loginAs(context: BrowserContext, email: string) {
-  const admin = createClient(URL, SECRET, { auth: { persistSession: false } });
-  const { error: createError } = await admin.auth.admin.createUser({
-    email,
-    password: PASSWORD,
-    email_confirm: true,
-  });
-  if (createError && !/already/i.test(createError.message)) throw createError;
+  await ensureUser(email);
 
   const jar = new Map<string, string>();
   const supabase = createServerClient(URL, PUBLISHABLE, {
