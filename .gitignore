@@ -9,3 +9,10 @@ dist/
 # personal files
 docs/*.pdf
 docs/*.rtf
+
+.env.local
+supabase/.temp/
+supabase/.branches/
+playwright-report/
+test-results/
+coverage/

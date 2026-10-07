@@ -1,0 +1,54 @@
+{
+  "app": { "name": "JOB/PARSER", "tagline": "Fresh jobs. Fast applications. Zero chaos." },
+  "nav": {
+    "today": "Today",
+    "board": "Board",
+    "analytics": "Analytics",
+    "prep": "Prep",
+    "profile": "Profile",
+    "soon": "soon",
+    "signOut": "Sign out"
+  },
+  "auth": {
+    "title": "Sign in",
+    "subtitle": "We'll email you a sign-in link.",
+    "email": "Email",
+    "send": "Send link",
+    "sent": "Done! Check your inbox and follow the link.",
+    "invalidEmail": "Enter a valid email.",
+    "error": "Couldn't sign you in. Please try again.",
+    "or": "or",
+    "google": "Continue with Google"
+  },
+  "theme": { "light": "Light theme", "dark": "Dark theme", "system": "System theme" },
+  "locale": { "label": "Language" },
+  "pages": {
+    "today": { "title": "Today" },
+    "board": { "title": "Application board" },
+    "analytics": { "title": "Analytics" },
+    "prep": { "title": "Interview prep" }
+  },
+  "comingSoon": {
+    "badge": "Soon",
+    "today": "Every morning, fresh jobs matched to your profile will show up here.",
+    "board": "A drag-and-drop kanban board of your applications will live here.",
+    "analytics": "Your application funnel, rejection reasons and what to improve will live here.",
+    "prep": "Top questions for your role, flashcards and live coding will live here."
+  },
+  "profile": {
+    "title": "Profile",
+    "fullName": "Full name",
+    "timezone": "Time zone",
+    "contacts": "Contacts for applications",
+    "email": "Email",
+    "phone": "Phone",
+    "linkedin": "LinkedIn",
+    "github": "GitHub",
+    "portfolio": "Portfolio",
+    "telegram": "Telegram",
+    "save": "Save",
+    "saved": "Saved",
+    "invalid": "Check these fields: {fields}",
+    "error": "Couldn't save. Please try again."
+  }
+}
