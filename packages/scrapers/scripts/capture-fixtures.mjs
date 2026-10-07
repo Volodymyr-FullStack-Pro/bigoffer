@@ -35,6 +35,15 @@ async function renderTrim(url, selector) {
   }
 }
 
+const pick = (list, isTech) => [...list.filter((j) => isTech(j)).slice(0, 3), ...list.filter((j) => !isTech(j)).slice(0, 1)];
+const tech = (t) => /engineer|developer|front|full|software|web/i.test(t ?? '');
+const trimTelegram = (html) => {
+  const head = html.match(/<meta property="og:title"[^>]*>/)?.[0] ?? '';
+  const posts = [...html.matchAll(/<div class="tgme_widget_message_wrap[\s\S]*?(?=<div class="tgme_widget_message_wrap|<\/section>)/g)].map((m) => m[0]);
+  const jobby = posts.filter((p) => p.includes('tgme_widget_message_text'));
+  return `<html><head>${head}</head><body>\n${jobby.slice(-6).join('\n')}\n</body></html>`;
+};
+
 const tasks = {
   'dou.xml': async () => trimRss(await get('https://jobs.dou.ua/vacancies/feeds/?search=react')),
   'djinni.html': async () => trimLdHtml(await get('https://djinni.co/jobs/?primary_keyword=JavaScript')),
@@ -78,6 +87,20 @@ const tasks = {
   },
   'workua.html': async () => renderTrim('https://www.work.ua/jobs-remote-react/', 'div.card.job-link'),
   'olx.html': async () => renderTrim('https://www.olx.ua/uk/rabota/q-react/', '[data-cy="l-card"]'),
+  'greenhouse.json': async () => {
+    const d = JSON.parse(await get('https://boards-api.greenhouse.io/v1/boards/gitlab/jobs?content=true'));
+    return JSON.stringify({ jobs: pick(d.jobs, (j) => tech(j.title)) }, null, 1);
+  },
+  'lever.json': async () => JSON.stringify(pick(JSON.parse(await get('https://api.lever.co/v0/postings/spotify?mode=json')), (j) => tech(j.text)), null, 1),
+  'ashby.json': async () => {
+    const d = JSON.parse(await get('https://api.ashbyhq.com/posting-api/job-board/supabase'));
+    return JSON.stringify({ jobs: pick(d.jobs, (j) => tech(j.title)) }, null, 1);
+  },
+  'workable.json': async () => {
+    const d = JSON.parse(await get('https://apply.workable.com/api/v1/widget/accounts/modash'));
+    return JSON.stringify({ ...d, jobs: pick(d.jobs, (j) => tech(j.title)) }, null, 1);
+  },
+  'telegram.html': async () => trimTelegram(await get('https://t.me/s/job_it_junior')),
 };
 
 const only = process.argv.slice(2);
