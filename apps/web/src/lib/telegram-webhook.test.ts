@@ -25,10 +25,16 @@ function fakes(over: Partial<WebhookStore> = {}) {
 }
 
 const run = (f: ReturnType<typeof fakes>, body: unknown, header: string | null = SECRET, secret: { value: string | undefined } = { value: SECRET }) =>
-  handleTelegramWebhook({ secretHeader: header, readBody: async () => body }, { secret: secret.value, store: f.store, bot: f.bot });
+  handleTelegramWebhook({ secretHeader: header, readBody: async () => body }, { secret: secret.value, store: () => f.store, bot: f.bot });
 
-const startUpdate = (text: string) => ({ update_id: 1, message: { message_id: 3, text, chat: { id: 42 }, from: { language_code: 'ru' } } });
-const callback = (data: string) => ({ update_id: 2, callback_query: { id: 'cb1', data, message: { message_id: 7, chat: { id: 42 } } } });
+const startUpdate = (text: string, type = 'private') => ({
+  update_id: 1,
+  message: { message_id: 3, text, chat: { id: 42, type }, from: { language_code: 'ru' } },
+});
+const callback = (data: string, type = 'private') => ({
+  update_id: 2,
+  callback_query: { id: 'cb1', data, message: { message_id: 7, chat: { id: 42, type } } },
+});
 
 describe('telegram webhook', () => {
   it('rejects a missing, wrong or unconfigured secret with 401 and does nothing', async () => {
@@ -40,6 +46,43 @@ describe('telegram webhook', () => {
     expect(await run(f, startUpdate(`/start ${TOKEN}`), SECRET, { value: undefined })).toEqual({ status: 401 });
     expect(f.store.linkChat).not.toHaveBeenCalled();
     expect(f.bot.sendMessage).not.toHaveBeenCalled();
+  });
+
+  it('creates the store only after the secret check', async () => {
+    const f = fakes();
+    const store = vi.fn(() => {
+      throw new Error('SUPABASE_SECRET_KEY is not set');
+    });
+    const deps = { secret: SECRET, store, bot: f.bot };
+    expect(await handleTelegramWebhook({ secretHeader: 'wrong', readBody: async () => startUpdate('/stop') }, deps)).toEqual({ status: 401 });
+    expect(store).not.toHaveBeenCalled();
+    await expect(handleTelegramWebhook({ secretHeader: SECRET, readBody: async () => startUpdate('/stop') }, deps)).rejects.toThrow();
+  });
+
+  it('ignores /start and /stop outside a private chat', async () => {
+    const f = fakes();
+    expect(await run(f, startUpdate(`/start ${TOKEN}`, 'group'))).toEqual({ status: 200 });
+    await run(f, startUpdate('/stop', 'supergroup'));
+    await run(f, startUpdate('/stop', 'channel'));
+    expect(f.store.linkChat).not.toHaveBeenCalled();
+    expect(f.store.unlinkChat).not.toHaveBeenCalled();
+    expect(f.bot.sendMessage).not.toHaveBeenCalled();
+  });
+
+  it('answers "unavailable" to a button press outside a private chat', async () => {
+    const f = fakes();
+    await run(f, callback(`h:${MATCH}`, 'group'));
+    expect(f.store.hideMatch).not.toHaveBeenCalled();
+    expect(f.bot.answerCallback).toHaveBeenCalledWith('cb1', 'Unavailable');
+  });
+
+  it('answers "unavailable" when the store fails during a button press', async () => {
+    const err = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const f = fakes({ hideMatch: vi.fn(async () => { throw new Error('db down'); }) });
+    expect(await run(f, callback(`h:${MATCH}`))).toEqual({ status: 200 });
+    expect(f.bot.answerCallback).toHaveBeenCalledWith('cb1', 'Unavailable');
+    expect(f.bot.clearButtons).not.toHaveBeenCalled();
+    err.mockRestore();
   });
 
   it('answers 200 to an invalid body without any action', async () => {

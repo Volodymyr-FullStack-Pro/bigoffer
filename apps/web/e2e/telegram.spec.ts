@@ -1,6 +1,6 @@
 import { expect, type Page, test } from '@playwright/test';
 import { loginAs, uniqueEmail } from './helpers/auth';
-import { linkTelegramChat, matchState, seedMatch, telegramChatId } from './helpers/seed';
+import { linkTelegramChat, matchState, profileLocale, seedMatch, telegramChatId } from './helpers/seed';
 
 const SECRET = 'e2e-secret';
 const WEBHOOK = '/api/telegram/webhook';
@@ -17,6 +17,17 @@ test('connect shows a one-time t.me link', async ({ context, page }) => {
   await expect(section.getByTestId('telegram-link')).toHaveAttribute('target', '_blank');
 });
 
+test('connecting from the Russian UI makes Russian the bot language', async ({ context, page, isMobile }) => {
+  test.skip(isMobile, 'locale write is device-independent');
+  const email = uniqueEmail('tg-locale');
+  await loginAs(context, email);
+  expect(await profileLocale(email)).not.toBe('ru');
+  await page.goto('/ru/profile');
+  await page.getByTestId('telegram-connect').click();
+  await expect(page.getByTestId('telegram-link')).toBeVisible();
+  expect(await profileLocale(email)).toBe('ru');
+});
+
 test('/start with the link token connects the chat; /stop disconnects it', async ({ context, page, request, isMobile }) => {
   test.skip(isMobile, 'webhook flow is device-independent');
   const email = uniqueEmail('tg-start');
@@ -29,7 +40,7 @@ test('/start with the link token connects the chat; /stop disconnects it', async
 
   const res = await request.post(WEBHOOK, {
     headers,
-    data: { update_id: 1, message: { message_id: 1, text: `/start ${token}`, chat: { id: chatId } } },
+    data: { update_id: 1, message: { message_id: 1, text: `/start ${token}`, chat: { id: chatId, type: 'private' } } },
   });
   expect(res.status()).toBe(200);
   expect(await telegramChatId(email)).toBe(chatId);
@@ -38,10 +49,10 @@ test('/start with the link token connects the chat; /stop disconnects it', async
   await expect(page.getByTestId('telegram-connected')).toBeVisible();
 
   // The token is single-use: replaying it does not relink another chat.
-  await request.post(WEBHOOK, { headers, data: { update_id: 2, message: { message_id: 2, text: `/start ${token}`, chat: { id: chatId + 1 } } } });
+  await request.post(WEBHOOK, { headers, data: { update_id: 2, message: { message_id: 2, text: `/start ${token}`, chat: { id: chatId + 1, type: 'private' } } } });
   expect(await telegramChatId(email)).toBe(chatId);
 
-  await request.post(WEBHOOK, { headers, data: { update_id: 3, message: { message_id: 3, text: '/stop', chat: { id: chatId } } } });
+  await request.post(WEBHOOK, { headers, data: { update_id: 3, message: { message_id: 3, text: '/stop', chat: { id: chatId, type: 'private' } } } });
   expect(await telegramChatId(email)).toBeNull();
 });
 
@@ -53,7 +64,7 @@ test('the Hide button hides the match from Today; a foreign chat cannot touch it
   await linkTelegramChat(email, chatId);
   const { matchId, title } = await seedMatch(email, { score: 90 });
   const press = (chat: number) =>
-    request.post(WEBHOOK, { headers, data: { update_id: 4, callback_query: { id: 'cb', data: `h:${matchId}`, message: { message_id: 9, chat: { id: chat } } } } });
+    request.post(WEBHOOK, { headers, data: { update_id: 4, callback_query: { id: 'cb', data: `h:${matchId}`, message: { message_id: 9, chat: { id: chat, type: 'private' } } } } });
 
   expect((await press(chatId + 1)).status()).toBe(200);
   expect(await matchState(matchId)).toBe('new');

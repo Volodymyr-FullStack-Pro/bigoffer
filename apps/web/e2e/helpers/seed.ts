@@ -183,3 +183,10 @@ export async function telegramChatId(email: string): Promise<number | null> {
   if (error) throw error;
   return data.telegram_chat_id;
 }
+
+export async function profileLocale(email: string): Promise<string> {
+  const userId = await userIdByEmail(email);
+  const { data, error } = await admin().from('profiles').select('locale').eq('id', userId).single();
+  if (error) throw error;
+  return data.locale;
+}

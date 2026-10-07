@@ -1,6 +1,8 @@
 'use server';
 
+import { isLocale } from '@jp/core';
 import { revalidatePath } from 'next/cache';
+import { getLocale } from 'next-intl/server';
 import { z } from 'zod';
 import { getUserId } from '@/lib/auth';
 import { createClient } from '@/lib/supabase/server';
@@ -8,9 +10,16 @@ import { hashLinkToken, newLinkToken } from '@/lib/telegram-link';
 
 export async function createTelegramLink(): Promise<{ ok: true; url: string } | { ok: false }> {
   const bot = process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME;
-  if (!bot || !(await getUserId())) return { ok: false };
-  const token = newLinkToken();
+  const userId = await getUserId();
+  if (!bot || !userId) return { ok: false };
   const supabase = await createClient();
+  // Bot messages use profiles.locale: take the language the user is connecting from.
+  const locale = await getLocale();
+  if (isLocale(locale)) {
+    const { error: localeError } = await supabase.from('profiles').update({ locale }).eq('id', userId);
+    if (localeError) console.error('createTelegramLink locale update failed', localeError.code);
+  }
+  const token = newLinkToken();
   const { error } = await supabase.rpc('create_telegram_link_token', { p_token_hash: hashLinkToken(token) });
   if (error) {
     console.error('createTelegramLink failed', error.code);

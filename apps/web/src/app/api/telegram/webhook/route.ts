@@ -7,7 +7,7 @@ export async function POST(request: Request) {
     { secretHeader: request.headers.get('x-telegram-bot-api-secret-token'), readBody: () => request.json() },
     {
       secret: process.env.TELEGRAM_WEBHOOK_SECRET,
-      store: supabaseWebhookStore(createAdminSupabase()),
+      store: () => supabaseWebhookStore(createAdminSupabase()),
       bot: createBotApi(process.env.TELEGRAM_BOT_TOKEN || undefined),
     },
   );

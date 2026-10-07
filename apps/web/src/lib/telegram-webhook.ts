@@ -1,5 +1,5 @@
 import { createHash, timingSafeEqual } from 'node:crypto';
-import { type BotApi, botReplies, decodeCallback, parseStart, rankAtTop, telegramUpdateSchema, type TgLocale, toTgLocale } from '@jp/core';
+import { type BotApi, botReplies, decodeCallback, isPrivateChat, parseStart, rankAtTop, type TelegramUpdate, telegramUpdateSchema, type TgLocale, toTgLocale } from '@jp/core';
 import type { Database } from '@jp/db';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { hashLinkToken } from './telegram-link';
@@ -17,7 +17,8 @@ export type WebhookStore = {
   saveApplied(userId: string, matchId: string): Promise<void>;
 };
 
-type Deps = { secret: string | undefined; store: WebhookStore; bot: BotApi };
+/** The store is created lazily, only for a request that passed the secret check. */
+type Deps = { secret: string | undefined; store: () => WebhookStore; bot: BotApi };
 type Input = { secretHeader: string | null; readBody: () => Promise<unknown> };
 
 const digest = (s: string) => createHash('sha256').update(s).digest();
@@ -32,8 +33,9 @@ const STOP_RE = /^\/stop(?:@\w+)?\s*$/;
 const START_RE = /^\/start(?:@\w+)?(?:\s|$)/;
 const BARE_START_RE = /^\/start(?:@\w+)?\s*$/;
 
-export async function handleTelegramWebhook(input: Input, { secret, store, bot }: Deps): Promise<{ status: 200 | 401 }> {
+export async function handleTelegramWebhook(input: Input, { secret, store: makeStore, bot }: Deps): Promise<{ status: 200 | 401 }> {
   if (!secretMatches(input.secretHeader, secret)) return { status: 401 };
+  const store = makeStore();
   const parsed = telegramUpdateSchema.safeParse(await input.readBody().catch(() => null));
   // Garbage gets 200 too, so Telegram does not keep retrying it.
   if (!parsed.success) return { status: 200 };
@@ -41,7 +43,8 @@ export async function handleTelegramWebhook(input: Input, { secret, store, bot }
 
   try {
     const message = update.message;
-    if (message?.text) {
+    // Linking, /stop and buttons work only in a one-to-one chat with the bot.
+    if (message?.text && isPrivateChat(message.chat)) {
       const chatId = message.chat.id;
       const text = message.text.trim();
       const fallback = toTgLocale(message.from?.language_code);
@@ -65,25 +68,36 @@ export async function handleTelegramWebhook(input: Input, { secret, store, bot }
     }
 
     const cb = update.callback_query;
-    if (cb) {
-      const action = cb.data ? decodeCallback(cb.data) : null;
-      const chat = cb.message?.chat.id;
-      const profile = action && chat !== undefined ? await store.profileByChat(chat) : null;
-      const replies = botReplies(profile?.locale ?? 'en');
-      if (!action || !profile || !cb.message || !(await store.ownsMatch(profile.id, action.matchId))) {
-        await bot.answerCallback(cb.id, replies.unavailable);
-      } else {
-        if (action.kind === 'hide') await store.hideMatch(profile.id, action.matchId);
-        else await store.saveApplied(profile.id, action.matchId);
-        await bot.answerCallback(cb.id, action.kind === 'hide' ? replies.hidden : replies.added);
-        await bot.clearButtons(cb.message.chat.id, cb.message.message_id);
-      }
-    }
+    if (cb) await handleCallback(cb, store, bot);
   } catch (err) {
     // Never log the update or the error message: they may carry the link token or user data.
     console.error('telegram webhook failed', err instanceof Error ? err.name : 'unknown');
   }
   return { status: 200 };
+}
+
+type Callback = NonNullable<TelegramUpdate['callback_query']>;
+
+/** Every button press is answered (so the client stops spinning), even when the store fails. */
+async function handleCallback(cb: Callback, store: WebhookStore, bot: BotApi): Promise<void> {
+  let replies = botReplies('en');
+  try {
+    const action = cb.data ? decodeCallback(cb.data) : null;
+    const chat = cb.message && isPrivateChat(cb.message.chat) ? cb.message.chat.id : undefined;
+    const profile = action && chat !== undefined ? await store.profileByChat(chat) : null;
+    replies = botReplies(profile?.locale ?? 'en');
+    if (!action || !profile || !cb.message || !(await store.ownsMatch(profile.id, action.matchId))) {
+      await bot.answerCallback(cb.id, replies.unavailable);
+      return;
+    }
+    if (action.kind === 'hide') await store.hideMatch(profile.id, action.matchId);
+    else await store.saveApplied(profile.id, action.matchId);
+    await bot.answerCallback(cb.id, action.kind === 'hide' ? replies.hidden : replies.added);
+    await bot.clearButtons(cb.message.chat.id, cb.message.message_id);
+  } catch (err) {
+    console.error('telegram callback failed', err instanceof Error ? err.name : 'unknown');
+    await bot.answerCallback(cb.id, replies.unavailable);
+  }
 }
 
 type Admin = SupabaseClient<Database>;
