@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { SENIORITIES, SOURCE_IDS, type SourceId } from './job';
-import { defaultSources } from './sources';
+import { BROWSER_SOURCE_IDS, defaultSources } from './sources';
 
 export function parseList(text: string, max = 30): string[] {
   const seen = new Set<string>();
@@ -142,7 +142,8 @@ export function buildSourceQueries(
   };
 
   for (const [sourceId, param] of SEARCH_SOURCES) {
-    for (const keyword of keywords) {
+    // Browser sources are the most expensive to run, so they get only the first two terms (like Adzuna).
+    for (const keyword of BROWSER_SOURCE_IDS.has(sourceId) ? keywords.slice(0, 2) : keywords) {
       add(sourceId, sourceId === 'workua' && remote ? { [param]: keyword, remote: '1' } : { [param]: keyword });
     }
   }

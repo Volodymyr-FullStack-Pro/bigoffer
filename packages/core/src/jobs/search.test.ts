@@ -1,3 +1,4 @@
+import type { SourceId } from './job';
 import { describe, expect, it } from 'vitest';
 import { buildSourceQueries, parseList, searchProfileInputSchema, searchTerms } from './search';
 
@@ -128,6 +129,18 @@ describe('searchTerms', () => {
   });
   it('dedupes case-insensitively and drops blanks', () => {
     expect(searchTerms({ keywords: [' React ', 'react', ''], skills: [] })).toEqual(['react', 'react developer', 'frontend developer']);
+  });
+});
+
+describe('browser source terms', () => {
+  it('limits Work.ua and OLX to the first 2 terms while other keyword sources keep all', () => {
+    const profile = { keywords: ['full stack', 'react', 'node.js', 'next.js'], skills: [], remoteType: 'remote' as const, sources: ['workua', 'olx', 'jobicy'] as SourceId[] };
+    const specs = buildSourceQueries(profile);
+    const terms = (id: string) => specs.filter((s) => s.sourceId === id).map((s) => s.params.search ?? s.params.tag);
+    expect(terms('workua')).toEqual(['full stack', 'react']);
+    expect(terms('olx')).toEqual(['full stack', 'react']);
+    expect(terms('jobicy')).toHaveLength(searchTerms(profile).length);
+    expect(terms('jobicy').length).toBeGreaterThan(2);
   });
 });
 
