@@ -24,7 +24,7 @@ export default async function TodayPage() {
     supabase
       .from('job_matches')
       .select(
-        'id, job_id, score, created_at, breakdown, explanation, search_profile_id, jobs!inner(title, location, remote_type, seniority, salary_min_usd, salary_max_usd, summary, skills, description_text, is_job, companies(name), job_postings(source_id, url))',
+        'id, job_id, score, created_at, breakdown, explanation, search_profile_id, jobs!inner(title, location, remote_type, seniority, salary_min_usd, salary_max_usd, posted_at, first_seen_at, summary, skills, description_text, is_job, companies(name), job_postings(source_id, url))',
       )
       .in('state', ['new', 'seen'])
       .eq('jobs.status', 'active')
@@ -62,6 +62,8 @@ export default async function TodayPage() {
       breakdown: b ? { skills: num(b.skills), role: num(b.role), seniority: num(b.seniority), location: num(b.location), salary: num(b.salary) } : null,
       profileId: m.search_profile_id,
       createdAt: m.created_at,
+      postedAt: m.jobs.posted_at,
+      firstSeenAt: m.jobs.first_seen_at,
       postings: m.jobs.job_postings.map((p) => ({ sourceId: p.source_id, url: p.url })),
     };
   });

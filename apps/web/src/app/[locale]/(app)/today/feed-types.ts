@@ -20,5 +20,8 @@ export type FeedMatch = {
   breakdown: { skills: number; role: number; seniority: number; location: number; salary: number } | null;
   profileId: string | null;
   createdAt: string;
+  /** When the board says the job was posted (null if unknown). */
+  postedAt: string | null;
+  firstSeenAt: string;
   postings: { sourceId: string; url: string }[];
 };

@@ -48,6 +48,10 @@
   },
   "today": {
     "title": "Today",
+    "filterFresh": "New in 24h",
+    "sortLabel": "Sort",
+    "sortBest": "Best match",
+    "sortNewest": "Newest",
     "subtitle": "{count, plural, one {# matching job from the last 3 days} other {# matching jobs from the last 3 days}}",
     "empty": "No matches yet. Set up what you're looking for — the first jobs arrive within an hour.",
     "setup": "Set up job search",

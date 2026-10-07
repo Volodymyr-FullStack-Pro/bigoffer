@@ -37,6 +37,7 @@ export async function seedMatch(
     state?: 'new' | 'seen';
     sourceId?: string;
     url?: string;
+    postedAt?: string;
   } = {},
 ) {
   const db = admin();
@@ -51,7 +52,7 @@ export async function seedMatch(
   if (cErr) throw cErr;
   const { data: job, error: jErr } = await db
     .from('jobs')
-    .insert({ fingerprint: `e2e-${tag}`, title, company_id: company.id, remote_type: 'remote', salary_min_usd: 3000, salary_max_usd: 4500, status: opts.status ?? 'active', seniority: opts.seniority ?? null, skills: opts.skills ?? [], summary: opts.summary ?? null, is_job: opts.isJob ?? null })
+    .insert({ fingerprint: `e2e-${tag}`, title, company_id: company.id, remote_type: 'remote', salary_min_usd: 3000, salary_max_usd: 4500, status: opts.status ?? 'active', seniority: opts.seniority ?? null, skills: opts.skills ?? [], summary: opts.summary ?? null, is_job: opts.isJob ?? null, posted_at: opts.postedAt ?? null })
     .select('id')
     .single();
   if (jErr) throw jErr;
