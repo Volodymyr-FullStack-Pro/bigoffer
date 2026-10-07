@@ -71,7 +71,11 @@ pnpm --filter @jp/web test:e2e                     # Playwright E2E (starts the 
 E2E uses port 3000 by default; if another local app occupies it, set `E2E_PORT`, e.g.
 `E2E_PORT=3100 pnpm --filter @jp/web test:e2e`.
 
-### Deploying the jobs pipeline
+### Deploying the jobs pipeline manually
 
 `pnpm --filter @jp/jobs deploy` (requires `trigger login` and `TRIGGER_PROJECT_REF`). The Trigger.dev Playwright
 build extension is pinned to the same Playwright version as `packages/scrapers` — bump both together.
+
+## Deploy
+
+Production runs on Vercel + Supabase Cloud + Trigger.dev Cloud, deployed by GitHub Actions on every push to `main`; the owner's step-by-step guide (in Ukrainian) is in [docs/deploy.md](docs/deploy.md).
