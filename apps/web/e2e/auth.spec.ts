@@ -65,3 +65,18 @@ test('magic link form confirms sending', async ({ page }) => {
   await page.getByRole('button', { name: 'Send link' }).click();
   await expect(page.getByRole('status')).toContainText('Check your inbox');
 });
+
+test('/auth/confirm with an invalid PKCE code redirects to the login error', async ({ page }) => {
+  // The happy path (default Supabase template -> ?code=) needs the PKCE verifier cookie set by the
+  // browser that requested the email, which admin generateLink cannot produce; the exchange itself is
+  // the helper shared with /auth/callback.
+  const res = await page.request.get('/auth/confirm?code=bogus&next=%2Fuk%2Ftoday', { maxRedirects: 0 });
+  expect(res.status()).toBe(307);
+  expect(new URL(res.headers().location!).pathname + new URL(res.headers().location!).search).toBe('/uk/login?error=auth');
+});
+
+test('/auth/confirm without params redirects to the login error', async ({ page }) => {
+  const res = await page.request.get('/auth/confirm', { maxRedirects: 0 });
+  expect(res.status()).toBe(307);
+  expect(new URL(res.headers().location!).search).toBe('?error=auth');
+});

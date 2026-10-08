@@ -2,7 +2,7 @@ import 'server-only';
 import { DEFAULT_LOCALE, isLocale, type Locale } from '@jp/core';
 import { NextResponse } from 'next/server';
 import { serverEnv } from '@/env';
-import type { createClient } from '@/lib/supabase/server';
+import { createClient } from '@/lib/supabase/server';
 
 type Supabase = Awaited<ReturnType<typeof createClient>>;
 
@@ -41,4 +41,14 @@ export async function signedInRedirect(supabase: Supabase, userId: string, next:
   }
   const locale = isLocale(profile?.locale) ? profile.locale : DEFAULT_LOCALE;
   return redirectTo(`/${locale}/today`);
+}
+
+/** PKCE code exchange shared by /auth/callback (OAuth) and /auth/confirm (default email templates). */
+export async function exchangeCodeAndRedirect(code: string | null, next: string | null) {
+  if (code) {
+    const supabase = await createClient();
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+    if (!error) return signedInRedirect(supabase, data.user.id, next);
+  }
+  return authErrorRedirect(next);
 }
