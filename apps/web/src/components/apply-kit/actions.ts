@@ -8,7 +8,7 @@ import { consumePrivateAi, getLlm, privateAiAvailable } from '@/lib/ai';
 import { getUserId } from '@/lib/auth';
 import { cvSignedUrl, loadPrimaryCv } from '@/lib/cv';
 import { createClient } from '@/lib/supabase/server';
-import { chooseTemplate } from './template';
+import { chooseTemplate, kitCandidate } from './template';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export type KitError = 'ai_unavailable' | 'ai_limit' | 'no_cv' | 'not_found' | 'failed';
@@ -106,12 +106,12 @@ export async function generateKit(jobId: string, opts: { lang: 'auto' | 'en' | '
   const [{ data: templates }, { data: profiles }, { data: profileRow }] = await Promise.all([
     supabase.from('letter_templates').select('locale, body'),
     supabase.from('search_profiles').select('salary_min_usd').not('salary_min_usd', 'is', null).limit(1),
-    supabase.from('profiles').select('locale').eq('id', userId).single(),
+    supabase.from('profiles').select('locale, full_name, contacts').eq('id', userId).single(),
   ]);
   const template = chooseTemplate(templates, opts.lang, profileRow?.locale);
   if (!(await consumePrivateAi(supabase))) return { ok: false, error: 'ai_limit' };
   try {
-    const kit = await generateApplyKit(getLlm(), { job, cv: cv.parsed, template, lang: opts.lang, tone: opts.tone, salaryMinUsd: profiles?.[0]?.salary_min_usd ?? null });
+    const kit = await generateApplyKit(getLlm(), { job, cv: cv.parsed, template, lang: opts.lang, tone: opts.tone, salaryMinUsd: profiles?.[0]?.salary_min_usd ?? null, candidate: kitCandidate(profileRow) });
     const { data: existing } = await supabase.from('apply_kits').select('form_answers').eq('job_id', jobId).maybeSingle();
     const stored = await storeKit(supabase, userId, jobId, {
       lang: kit.lang,
@@ -149,7 +149,7 @@ export async function answerFormQuestions(jobId: string, formText: string): Prom
   const [{ data: bank }, { data: kit }, { data: profile }] = await Promise.all([
     supabase.from('answer_bank').select('key, answer'),
     supabase.from('apply_kits').select('id, lang').eq('job_id', jobId).maybeSingle(),
-    supabase.from('profiles').select('locale').eq('id', userId).single(),
+    supabase.from('profiles').select('locale, full_name, contacts').eq('id', userId).single(),
   ]);
   const lang = kit?.lang ?? profile?.locale ?? 'en';
   const fromBank = (q: string): string | null => {
