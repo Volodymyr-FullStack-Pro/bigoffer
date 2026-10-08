@@ -8,6 +8,14 @@ import { createSearchProfileFromCv, fillContactsFromCv, registerCv, type CvState
 
 const MAX_BYTES = 5 * 1024 * 1024;
 
+const STORED_MESSAGE: Partial<Record<NonNullable<CvState['message']>, 'storedNoAi' | 'aiLimit' | 'providerLimit' | 'keyMisconfigured' | 'storedParseFailed'>> = {
+  ai_unavailable: 'storedNoAi',
+  ai_limit: 'aiLimit',
+  ai_provider_limit: 'providerLimit',
+  ai_key_invalid: 'keyMisconfigured',
+  parse_failed: 'storedParseFailed',
+};
+
 export function CvSection({ cv, aiAvailable, cvLink }: { cv: { fileName: string; parsed: ParsedCv | null; parseError: string | null } | null; aiAvailable: boolean; cvLink: string | null }) {
   const t = useTranslations('cv');
   const [state, setState] = useState<CvState>({ status: 'idle' });
@@ -57,8 +65,9 @@ export function CvSection({ cv, aiAvailable, cvLink }: { cv: { fileName: string;
         </button>
       </form>
       <p data-testid="cv-status" role="status" className="text-sm">
+        {state.status === 'idle' && cv && !parsed && cv.parseError && t(STORED_MESSAGE[cv.parseError as keyof typeof STORED_MESSAGE] ?? 'storedParseFailed')}
         {state.status === 'parsed' && t('parsed')}
-        {state.status === 'stored' && t(state.message === 'ai_unavailable' ? 'storedNoAi' : state.message === 'ai_limit' ? 'aiLimit' : 'storedParseFailed')}
+        {state.status === 'stored' && t(STORED_MESSAGE[state.message ?? 'parse_failed'] ?? 'storedParseFailed')}
         {state.status === 'invalid' && t(state.message === 'too_big' ? 'tooBig' : 'notPdf')}
         {state.status === 'error' && t('error')}
       </p>
