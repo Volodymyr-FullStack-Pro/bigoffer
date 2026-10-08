@@ -102,6 +102,9 @@ const SYSTEM = [
   'Skills: concrete technologies, tools and professional skills, canonical names.',
 ].join('\n');
 
+/** The CV read gets 2 minutes (the default request timeout is 60 s); the web route's maxDuration must exceed it. */
+export const PARSE_CV_TIMEOUT_MS = 120_000;
+
 export async function parseCv(llm: LlmClient, input: { pdfBase64: string }): Promise<ParsedCv> {
   const res = await llm.generateJson({
     sensitivity: 'private',
@@ -110,7 +113,10 @@ export async function parseCv(llm: LlmClient, input: { pdfBase64: string }): Pro
     system: SYSTEM,
     prompt: 'Extract the facts from the attached CV.',
     files: [{ mimeType: 'application/pdf', dataBase64: input.pdfBase64 }],
-    maxOutputTokens: 4000,
+    // A long CV's JSON needs room; extraction needs little thinking, and a PDF read can take over a minute.
+    maxOutputTokens: 8000,
+    thinking: 'low',
+    timeoutMs: PARSE_CV_TIMEOUT_MS,
   });
   return normalizeCv(res.data);
 }

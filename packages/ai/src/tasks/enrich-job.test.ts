@@ -57,6 +57,7 @@ describe('enrichJob', () => {
     expect(res.usage.requests).toBe(1);
     expect(llm.calls).toHaveLength(1);
     expect(llm.calls[0]!.sensitivity).toBe('public');
+    expect(llm.calls[0]!.thinking).toBe('low');
     expect(llm.calls[0]!.prompt).toContain('Senior Frontend Developer');
     expect(llm.calls[0]!.prompt).toContain('Acme');
     expect(llm.calls[0]!.prompt.length).toBeLessThan(7_000);

@@ -2,7 +2,7 @@ import { ApiError } from '@google/genai';
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import { LlmError, LlmInvalidOutputError, LlmRateLimitError, LlmUnavailableError } from './errors';
-import { createGeminiClient, type GeminiResponse } from './gemini';
+import { createGeminiClient, type GeminiResponse, thinkingConfigFor } from './gemini';
 
 const schema = z.object({ answer: z.string() });
 const ok = (text: string, prompt = 10, out = 3): GeminiResponse => ({
@@ -103,5 +103,32 @@ describe('createGeminiClient', () => {
     const second = await client.generateJson({ sensitivity: 'public', schema, system: 's', prompt: 'p' }).catch((e: unknown) => e);
     expect(second).toBeInstanceOf(LlmError);
     expect((second as LlmError).status).toBeNull();
+  });
+});
+
+describe('thinking and timeout per request', () => {
+  it('sends neither by default', async () => {
+    const { client, calls } = setup([ok('{"answer":"42"}')]);
+    await client.generateJson({ sensitivity: 'public', schema, system: 's', prompt: 'Q?' });
+    const config = calls[0]!.params.config as Record<string, unknown>;
+    expect(config.thinkingConfig).toBeUndefined();
+    expect(config.httpOptions).toBeUndefined();
+  });
+
+  it('passes a thinking budget and a per-request timeout', async () => {
+    const { client, calls } = setup([ok('{"answer":"42"}')]);
+    await client.generateJson({ sensitivity: 'public', schema, system: 's', prompt: 'Q?', thinking: 'low', timeoutMs: 120_000 });
+    expect(calls[0]!.params).toMatchObject({ config: { thinkingConfig: { thinkingBudget: 512 }, httpOptions: { timeout: 120_000 } } });
+  });
+
+  it('maps the effort to each model family', () => {
+    expect(thinkingConfigFor('gemini-flash-latest', 'low')).toEqual({ thinkingBudget: 512 });
+    expect(thinkingConfigFor('gemini-flash-latest', 'off')).toEqual({ thinkingBudget: 512 });
+    expect(thinkingConfigFor('gemini-2.5-flash', 'off')).toEqual({ thinkingBudget: 0 });
+    expect(thinkingConfigFor('gemini-2.5-flash-lite', 'off')).toEqual({ thinkingBudget: 0 });
+    expect(thinkingConfigFor('gemini-2.5-pro', 'off')).toEqual({ thinkingBudget: 512 });
+    expect(thinkingConfigFor('models/gemini-3-flash-preview', 'low')).toEqual({ thinkingLevel: 'LOW' });
+    expect(thinkingConfigFor('gemini-3-flash-preview', 'off')).toEqual({ thinkingLevel: 'MINIMAL' });
+    expect(thinkingConfigFor('gemini-2.5-flash', undefined)).toBeUndefined();
   });
 });

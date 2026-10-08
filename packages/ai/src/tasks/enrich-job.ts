@@ -133,6 +133,7 @@ export async function enrichJob(
     system: SYSTEM,
     prompt: buildEnrichPrompt(input),
     maxOutputTokens: 1500,
+    thinking: 'low',
   });
   return { enrichment: normalizeEnrichment(res.data), usage: res.usage, model: res.model };
 }
