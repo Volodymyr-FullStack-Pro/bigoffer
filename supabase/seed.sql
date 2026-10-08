@@ -1,0 +1,2 @@
+-- Reference data (sources, roles, skills) lives in supabase/migrations so every environment gets it.
+-- Nothing dev-only to seed.

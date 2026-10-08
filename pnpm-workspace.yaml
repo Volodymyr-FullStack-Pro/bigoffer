@@ -1,0 +1,11 @@
+packages:
+  - apps/*
+  - packages/*
+allowBuilds:
+  '@depot/cli': false
+  '@google/genai': false
+  '@parcel/watcher': false
+  '@swc/core': false
+  esbuild: true
+  protobufjs: false
+  unrs-resolver: true

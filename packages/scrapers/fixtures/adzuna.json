@@ -1,0 +1,8 @@
+{
+  "count": 3,
+  "results": [
+    { "id": "4870001001", "title": "Senior <strong>React</strong> Developer (Remote)", "description": "We are looking for a React developer to build our SaaS dashboard. TypeScript, Next.js, Node.js. Fully remote within Europe.", "redirect_url": "https://www.adzuna.pl/land/ad/4870001001?se=x", "created": "2026-10-06T09:12:00Z", "company": { "display_name": "Acme Software" }, "location": { "display_name": "Warszawa, Mazowieckie", "area": ["Polska", "Mazowieckie", "Warszawa"] }, "salary_min": 180000, "salary_max": 240000, "salary_is_predicted": "0", "contract_time": "full_time" },
+    { "id": "4870001002", "title": "Full Stack Engineer – Node.js / React", "description": "Remote-first team. Node.js, NestJS, React, PostgreSQL.", "redirect_url": "https://www.adzuna.pl/land/ad/4870001002?se=y", "created": "2026-10-05T15:40:00Z", "company": { "display_name": "Globex" }, "location": { "display_name": "Kraków, Małopolskie", "area": ["Polska", "Małopolskie", "Kraków"] }, "salary_is_predicted": "1", "salary_min": 150000, "salary_max": 150000 },
+    { "id": "4870001003", "title": "Frontend Developer", "description": "Vue or React, remote possible.", "redirect_url": "https://www.adzuna.pl/land/ad/4870001003", "created": "2026-10-04T08:00:00Z", "company": {}, "location": { "display_name": "Polska", "area": ["Polska"] } }
+  ]
+}

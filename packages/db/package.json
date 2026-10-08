@@ -1,0 +1,10 @@
+{
+  "name": "@jp/db",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": { ".": "./src/index.ts", "./service": "./src/service-client.ts" },
+  "scripts": { "typecheck": "tsc --noEmit" },
+  "dependencies": { "@supabase/supabase-js": "^2.117.2" },
+  "devDependencies": { "typescript": "6.0.3" }
+}

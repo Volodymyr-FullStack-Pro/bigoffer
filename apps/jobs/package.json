@@ -1,0 +1,33 @@
+{
+  "name": "@jp/jobs",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test:integration": "vitest run --config vitest.integration.config.ts",
+    "run-once": "tsx src/cli/run-once.ts",
+    "enrich-once": "tsx src/cli/enrich-once.ts",
+    "ai:smoke": "tsx src/cli/ai-smoke.ts",
+    "dev": "trigger dev",
+    "deploy": "trigger deploy"
+  },
+  "dependencies": {
+    "@jp/ai": "workspace:*",
+    "@jp/core": "workspace:*",
+    "@jp/db": "workspace:*",
+    "@jp/scrapers": "workspace:*",
+    "@supabase/supabase-js": "^2.117.2",
+    "@trigger.dev/sdk": "4.6.4",
+    "dotenv": "^18.0.5",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@trigger.dev/build": "4.6.4",
+    "@types/node": "^20",
+    "trigger.dev": "4.6.4",
+    "tsx": "^4.23.15",
+    "typescript": "6.0.3",
+    "vitest": "^5.0.3"
+  }
+}

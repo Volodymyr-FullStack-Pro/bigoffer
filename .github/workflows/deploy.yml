@@ -1,0 +1,54 @@
+name: deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  migrate:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+      SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+    steps:
+      - uses: actions/checkout@v7
+      - name: Check secrets
+        run: |
+          for v in SUPABASE_ACCESS_TOKEN SUPABASE_DB_PASSWORD SUPABASE_PROJECT_REF; do
+            if [ -z "${!v}" ]; then echo "::error::Missing GitHub secret $v (see docs/deploy.md)"; exit 1; fi
+          done
+      - uses: supabase/setup-cli@v3
+        with: { version: 2.119.0 }
+      - run: supabase link --project-ref "$SUPABASE_PROJECT_REF" --password "$SUPABASE_DB_PASSWORD"
+      - run: supabase db push --password "$SUPABASE_DB_PASSWORD"
+
+  trigger:
+    if: github.ref == 'refs/heads/main'
+    needs: migrate
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      TRIGGER_ACCESS_TOKEN: ${{ secrets.TRIGGER_ACCESS_TOKEN }}
+      TRIGGER_PROJECT_REF: ${{ vars.TRIGGER_PROJECT_REF }}
+    steps:
+      - uses: actions/checkout@v7
+      - name: Check secrets
+        run: |
+          if [ -z "$TRIGGER_ACCESS_TOKEN" ]; then echo "::error::Missing GitHub secret TRIGGER_ACCESS_TOKEN (see docs/deploy.md)"; exit 1; fi
+          if [ -z "$TRIGGER_PROJECT_REF" ]; then echo "::error::Missing GitHub variable TRIGGER_PROJECT_REF (see docs/deploy.md)"; exit 1; fi
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with: { node-version-file: .nvmrc, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @jp/jobs exec trigger deploy
