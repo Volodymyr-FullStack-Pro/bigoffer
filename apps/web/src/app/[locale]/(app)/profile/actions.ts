@@ -11,11 +11,13 @@ export type ProfileState = {
   status: 'idle' | 'saved' | 'invalid' | 'error';
   fields?: string[];
   values?: ProfileValues;
+  /** Bumped on every submit so the form remounts with `values` (React 19 resets uncontrolled forms after an action). */
+  rev?: number;
 };
 
 const CONTACT_KEYS = ['email', 'phone', 'linkedin', 'github', 'portfolio', 'telegram'] as const;
 
-export async function updateProfile(_prev: ProfileState, formData: FormData): Promise<ProfileState> {
+export async function updateProfile(prev: ProfileState, formData: FormData): Promise<ProfileState> {
   const values: ProfileValues = {
     full_name: String(formData.get('full_name') ?? ''),
     timezone: String(formData.get('timezone') ?? ''),
@@ -24,6 +26,7 @@ export async function updateProfile(_prev: ProfileState, formData: FormData): Pr
       CONTACT_KEYS.map((key) => [key, String(formData.get(`contacts.${key}`) ?? '')]),
     ),
   };
+  const rev = (prev.rev ?? 0) + 1;
   const raw = {
     full_name: values.full_name,
     timezone: values.timezone,
@@ -37,11 +40,12 @@ export async function updateProfile(_prev: ProfileState, formData: FormData): Pr
       status: 'invalid',
       fields: [...new Set(parsed.error.issues.map((issue) => issue.path.join('.')))],
       values,
+      rev,
     };
   }
 
   const userId = await getUserId();
-  if (!userId) return { status: 'error', values };
+  if (!userId) return { status: 'error', values, rev };
   const supabase = await createClient();
 
   const { data: before } = await supabase.from('profiles').select('country').eq('id', userId).maybeSingle();
@@ -54,7 +58,7 @@ export async function updateProfile(_prev: ProfileState, formData: FormData): Pr
       country: parsed.data.country,
     })
     .eq('id', userId);
-  if (error) return { status: 'error', values };
+  if (error) return { status: 'error', values, rev };
 
   // The country feeds match scoring: re-evaluate existing matches for the user's active searches.
   if (before && before.country !== parsed.data.country) {
@@ -63,5 +67,11 @@ export async function updateProfile(_prev: ProfileState, formData: FormData): Pr
   }
 
   revalidatePath('/[locale]/profile', 'page');
-  return { status: 'saved' };
+  const saved: ProfileValues = {
+    full_name: parsed.data.full_name,
+    timezone: parsed.data.timezone,
+    country: parsed.data.country ?? '',
+    contacts: Object.fromEntries(CONTACT_KEYS.map((key) => [key, parsed.data.contacts[key] ?? ''])),
+  };
+  return { status: 'saved', values: saved, rev };
 }
