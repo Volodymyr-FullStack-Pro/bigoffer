@@ -92,7 +92,7 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
     <section className="flex flex-col gap-6">
       <h1 className="text-3xl font-black md:text-4xl">{t('title')}</h1>
       {me && !me.onboarded_at && (
-        <Link href="/onboarding" data-testid="onboarding-banner" className="brutal brutal-press flex items-center justify-between gap-3 bg-ai p-4 font-semibold text-white">
+        <Link href="/onboarding" data-testid="onboarding-banner" className="brutal brutal-press flex items-center justify-between gap-3 bg-ai p-4 font-semibold text-ai-foreground">
           {t('onboardingBanner')} →
         </Link>
       )}

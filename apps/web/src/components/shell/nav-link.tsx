@@ -24,16 +24,20 @@ export function NavLink({
       aria-current={active ? 'page' : undefined}
       className={
         compact
-          ? `flex flex-1 flex-col items-center gap-0.5 py-2 text-[11px] ${active ? 'font-bold' : 'text-muted-foreground'}`
-          : `flex items-center gap-3 rounded-brutal border-2 px-3 py-2 font-semibold ${
-              active ? 'border-border bg-brand text-brand-foreground shadow-[3px_3px_0_var(--shadow-color)]' : 'border-transparent hover:border-border'
+          ? `relative flex flex-1 flex-col items-center gap-0.5 py-2 font-mono text-[11px] ${
+              active ? 'font-bold text-foreground before:absolute before:inset-x-4 before:top-0 before:h-0.5 before:bg-brand' : 'text-muted-foreground'
+            }`
+          : `mono-label relative flex items-center gap-3 rounded-brutal px-3 py-2 transition-colors ${
+              active
+                ? 'bg-muted font-bold text-foreground before:absolute before:inset-y-1.5 before:left-0 before:w-0.75 before:rounded-full before:bg-brand'
+                : 'text-muted-foreground hover:bg-muted hover:text-foreground'
             }`
       }
     >
       <Icon className={compact ? 'size-5' : 'size-4'} aria-hidden />
       <span>{label}</span>
       {badge && !compact && (
-        <span className="ml-auto rounded-sm bg-ai px-1.5 font-mono text-[10px] uppercase text-white">
+        <span className="ml-auto rounded-sm bg-ai px-1.5 font-mono text-[10px] uppercase text-ai-foreground">
           {badge}
         </span>
       )}

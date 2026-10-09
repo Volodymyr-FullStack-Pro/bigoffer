@@ -23,12 +23,16 @@ test('switches language and keeps the page', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Today' })).toBeVisible();
 });
 
-test('theme toggle cycles system → light → dark', async ({ page }) => {
+test('theme toggle cycles dark → light → system, dark by default', async ({ page }) => {
   await page.goto('/en/today');
   const toggle = page.getByTestId('theme-toggle');
-  await expect(toggle).toHaveAttribute('data-theme-current', 'system');
+  await expect(toggle).toHaveAttribute('data-theme-current', 'dark');
+  await expect(page.locator('html')).toHaveClass(/dark/);
   await toggle.click();
+  await expect(toggle).toHaveAttribute('data-theme-current', 'light');
   await expect(page.locator('html')).not.toHaveClass(/dark/);
+  await toggle.click();
+  await expect(toggle).toHaveAttribute('data-theme-current', 'system');
   await toggle.click();
   await expect(page.locator('html')).toHaveClass(/dark/);
   await page.screenshot({ path: `test-results/today-dark-${test.info().project.name}.png` });
