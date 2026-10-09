@@ -208,11 +208,11 @@
     "intro": "Tell us what you are looking for — we'll collect matching jobs from DOU, Djinni, robota.ua, remote boards and more every hour.",
     "name": "Profile name",
     "keywords": "Role keywords",
-    "keywordsHint": "Comma-separated, up to 5; all are searched, plus common job-title variants (up to 6 search terms). Example: full stack, react developer",
+    "keywordsHint": "Up to 5 job titles: pick a suggestion or type one and press Enter. We also search common variants.",
     "skills": "Your skills",
-    "skillsHint": "Comma-separated. Used for scoring. Example: React, Node.js, PostgreSQL",
+    "skillsHint": "Pick from suggestions or type a skill and press Enter; used for scoring.",
     "exclude": "Exclude jobs mentioning",
-    "excludeHint": "Comma-separated stop words. Example: 1C, gambling",
+    "excludeHint": "Jobs mentioning these words are hidden.",
     "seniority": "Seniority",
     "remoteType": "Work format",
     "remote_any": "Any",
@@ -256,7 +256,17 @@
     "role_data": "Data / ML",
     "role_design": "Design",
     "role_management": "Management",
-    "role_support": "Support"
+    "role_support": "Support",
+    "sectionWhat": "What you are looking for",
+    "sectionSkills": "Skills",
+    "sectionTerms": "Terms",
+    "suggested": "Suggested:",
+    "suggestedFromCv": "From your CV and popular:",
+    "keywordsPlaceholder": "Type a job title and press Enter",
+    "skillsPlaceholder": "Type a skill and press Enter",
+    "salaryAny": "No minimum",
+    "salaryFrom": "from {amount}",
+    "sourcesRecommended": "Use recommended"
   },
   "board": {
     "title": "Application board",
@@ -368,7 +378,11 @@
     "fillContacts": "Fill empty contacts from CV",
     "contactsFilled": "Contacts updated.",
     "providerLimit": "CV saved, but the AI provider's rate limit was reached. Try again in a minute.",
-    "keyMisconfigured": "CV saved, but the AI key is misconfigured (invalid key or no access). Check the private Gemini key."
+    "keyMisconfigured": "CV saved, but the AI key is misconfigured (invalid key or no access). Check the private Gemini key.",
+    "dropHere": "Drop your CV here or click to choose",
+    "dropHint": "PDF up to 5 MB",
+    "retry": "Try reading it again",
+    "retrying": "Reading…"
   },
   "bank": {
     "title": "Answer bank",

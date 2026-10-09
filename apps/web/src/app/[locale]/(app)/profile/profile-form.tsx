@@ -99,8 +99,9 @@ export function ProfileForm({ fullName, timezone, contacts, country, countries, 
         </div>
       </div>
 
-      <fieldset className="brutal grid gap-4 p-5 md:grid-cols-2">
-        <legend className="px-1 font-display text-lg font-bold">{t('contacts')}</legend>
+      {/* A heading inside the card (a <legend> would sit on the card's border). */}
+      <div role="group" aria-labelledby="contacts-title" className="brutal grid gap-4 p-5 md:grid-cols-2">
+        <h2 id="contacts-title" className="text-lg md:col-span-2">{t('contacts')}</h2>
         {CONTACT_FIELDS.map(({ key, type }) => (
           <Field
             key={key}
@@ -111,7 +112,7 @@ export function ProfileForm({ fullName, timezone, contacts, country, countries, 
             invalid={invalid.has(`contacts.${key}`)}
           />
         ))}
-      </fieldset>
+      </div>
 
       <div className="flex items-center gap-4">
         <Button type="submit" variant="brand" disabled={pending} data-testid="profile-save">
