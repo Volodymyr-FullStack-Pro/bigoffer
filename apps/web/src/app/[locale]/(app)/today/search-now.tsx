@@ -114,7 +114,7 @@ export function SearchNow({
               className="mt-1 h-1 w-full max-w-xs overflow-hidden rounded-full bg-muted"
             >
               <span
-                className="block h-full bg-brand transition-[width]"
+                className="block h-full bg-brand-gradient transition-[width]"
                 style={{ width: `${total ? Math.round((done / total) * 100) : 5}%` }}
               />
             </span>
