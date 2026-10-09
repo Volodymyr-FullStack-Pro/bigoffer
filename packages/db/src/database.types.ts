@@ -358,13 +358,13 @@ isOneToOne: false
                   ]
                 },"profiles": {
                   Row: {
-                    "contacts": NonNullable<Json>,"country": string | null,"created_at": string,"digest_hour": number,"digest_last_sent_on": string | null,"follow_up_days": (number)[],"full_name": string,"ghost_after_days": number,"id": string,"inbound_email_token": string,"locale": string,"onboarded_at": string | null,"plan": string,"telegram_alerts": boolean,"telegram_chat_id": number | null,"telegram_min_score": number,"timezone": string,"updated_at": string
+                    "contacts": NonNullable<Json>,"country": string | null,"created_at": string,"digest_hour": number,"digest_last_sent_on": string | null,"follow_up_days": (number)[],"full_name": string,"ghost_after_days": number,"id": string,"inbound_email_token": string,"locale": string,"onboarded_at": string | null,"plan": string,"search_requested_at": string | null,"telegram_alerts": boolean,"telegram_chat_id": number | null,"telegram_min_score": number,"timezone": string,"ui_prefs": NonNullable<Json>,"updated_at": string
                   }
                   Insert: {
-                    "contacts"?: NonNullable<Json>,"country"?: string | null,"created_at"?: string,"digest_hour"?: number,"digest_last_sent_on"?: string | null,"follow_up_days"?: (number)[],"full_name"?: string,"ghost_after_days"?: number,"id": string,"inbound_email_token"?: string,"locale"?: string,"onboarded_at"?: string | null,"plan"?: string,"telegram_alerts"?: boolean,"telegram_chat_id"?: number | null,"telegram_min_score"?: number,"timezone"?: string,"updated_at"?: string
+                    "contacts"?: NonNullable<Json>,"country"?: string | null,"created_at"?: string,"digest_hour"?: number,"digest_last_sent_on"?: string | null,"follow_up_days"?: (number)[],"full_name"?: string,"ghost_after_days"?: number,"id": string,"inbound_email_token"?: string,"locale"?: string,"onboarded_at"?: string | null,"plan"?: string,"search_requested_at"?: string | null,"telegram_alerts"?: boolean,"telegram_chat_id"?: number | null,"telegram_min_score"?: number,"timezone"?: string,"ui_prefs"?: NonNullable<Json>,"updated_at"?: string
                   }
                   Update: {
-                    "contacts"?: NonNullable<Json>,"country"?: string | null,"created_at"?: string,"digest_hour"?: number,"digest_last_sent_on"?: string | null,"follow_up_days"?: (number)[],"full_name"?: string,"ghost_after_days"?: number,"id"?: string,"inbound_email_token"?: string,"locale"?: string,"onboarded_at"?: string | null,"plan"?: string,"telegram_alerts"?: boolean,"telegram_chat_id"?: number | null,"telegram_min_score"?: number,"timezone"?: string,"updated_at"?: string
+                    "contacts"?: NonNullable<Json>,"country"?: string | null,"created_at"?: string,"digest_hour"?: number,"digest_last_sent_on"?: string | null,"follow_up_days"?: (number)[],"full_name"?: string,"ghost_after_days"?: number,"id"?: string,"inbound_email_token"?: string,"locale"?: string,"onboarded_at"?: string | null,"plan"?: string,"search_requested_at"?: string | null,"telegram_alerts"?: boolean,"telegram_chat_id"?: number | null,"telegram_min_score"?: number,"timezone"?: string,"ui_prefs"?: NonNullable<Json>,"updated_at"?: string
                   }
                   Relationships: [
                     
@@ -597,12 +597,20 @@ isOneToOne: false
 "reject_application":
 { Args: { "p_by": string,"p_column_id": string,"p_id": string,"p_note": string,"p_outcome"?: string,"p_rank": string,"p_reasons": (string)[],"p_stage": string }; Returns: undefined
                            },
+"request_search_now":
+{ Args: Record<PropertyKey, never>; Returns: string
+                           },
 "restore_match":
 { Args: { "p_application_id"?: string,"p_match_id": string }; Returns: undefined
                            },
 "save_match_to_board":
 { Args: { "p_column_key": string,"p_match_id": string,"p_rank": string }; Returns: {
               "application_id": string,"created": boolean
+            }[]
+                           },
+"search_now_status":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "done": number,"new_matches": number,"requested_at": string,"total": number
             }[]
                            },
 "text_array_max_len":

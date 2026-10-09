@@ -171,3 +171,15 @@ export function scoreJob(
   );
   return { score, hidden: breakdown.excludedBy !== null, breakdown };
 }
+
+/**
+ * Pre-save filter for whole-board feeds: keep a job only if at least one profile would show it
+ * (relevant and not hidden by role, region or an exclude keyword).
+ */
+export function wantedByAnyProfile(profiles: readonly SearchProfile[], job: ScorableJob): boolean {
+  return profiles.some((p) => {
+    const r = scoreJob(p, job);
+    return r !== null && !r.hidden;
+  });
+}
+

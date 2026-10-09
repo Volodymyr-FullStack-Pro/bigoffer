@@ -1,9 +1,10 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Toast, useToast } from '@/components/ui/toast';
 import { Link } from '@/i18n/navigation';
+import { useSaveUiPrefs } from '@/lib/use-save-ui-prefs';
 import { hideMatch, restoreMatch, saveMatch } from './actions';
 import { DEFAULT_FILTERS, filterMatches, sortMatches, type FeedFilters } from './feed-filter';
 import { FeedListItem } from './feed-list-item';
@@ -15,13 +16,39 @@ type Done = { match: FeedMatch; index: number; action: MatchAction };
 
 const isDesktop = () => typeof window !== 'undefined' && window.matchMedia('(min-width: 768px)').matches;
 
-export function Feed({ matches, profiles, sources, focusId = null }: { matches: FeedMatch[]; profiles: { id: string; name: string }[]; sources: { id: string; name: string }[]; focusId?: string | null }) {
+/** Saved filters, minus choices that no longer exist (a deleted profile, a board with no matches left). */
+function initialFilters(saved: Partial<FeedFilters> | undefined, profiles: { id: string }[], sources: { id: string }[]): FeedFilters {
+  const f = { ...DEFAULT_FILTERS, ...saved };
+  if (f.profileId !== 'all' && !profiles.some((p) => p.id === f.profileId)) f.profileId = 'all';
+  if (f.source !== 'all' && !sources.some((s) => s.id === f.source)) f.source = 'all';
+  return f;
+}
+
+export function Feed({
+  matches,
+  profiles,
+  sources,
+  focusId = null,
+  savedFilters,
+}: {
+  matches: FeedMatch[];
+  profiles: { id: string; name: string }[];
+  sources: { id: string; name: string }[];
+  focusId?: string | null;
+  savedFilters?: Partial<FeedFilters>;
+}) {
   const t = useTranslations('feed');
   const tt = useTranslations('today');
   // Decided once: a save/hide server action re-renders the page with fewer matches, which must not turn the feed into the "no matches yet" state.
   const [startedEmpty] = useState(matches.length === 0);
   const [items, setItems] = useState(matches);
-  const [filters, setFilters] = useState<FeedFilters>(DEFAULT_FILTERS);
+  const [filters, setFilters] = useState<FeedFilters>(() => initialFilters(savedFilters, profiles, sources));
+  const saveUiPrefs = useSaveUiPrefs();
+  const firstFilters = useRef(filters);
+  // Every filter change is remembered for this user (all devices) until they change it again.
+  useEffect(() => {
+    if (filters !== firstFilters.current) saveUiPrefs({ feed: filters });
+  }, [filters, saveUiPrefs]);
   const [selectedId, setSelectedId] = useState<string | null>(focusId ?? matches[0]?.id ?? null);
   const [done, setDone] = useState<Done[]>([]);
   const { toast, show, close } = useToast();

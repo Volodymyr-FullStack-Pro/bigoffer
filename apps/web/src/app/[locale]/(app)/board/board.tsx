@@ -6,6 +6,7 @@ import { arrayMove, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import { useTranslations } from 'next-intl';
 import { useMemo, useState } from 'react';
 import { Toast, useToast } from '@/components/ui/toast';
+import { useSaveUiPrefs } from '@/lib/use-save-ui-prefs';
 import { deleteApplication, markPinged, moveApplication, rejectApplication } from './actions';
 import { AddCardDialog } from './add-card-dialog';
 import { BoardColumnView } from './board-column';
@@ -17,20 +18,23 @@ import { TodayActions } from './today-actions';
 
 type PendingReject = { id: string; columnId: string; rank: string; reasons: RejectionReason[]; outcome: 'rejected' | 'ghosted' };
 
-export function Board({ columns, cards: initial, labels: initialLabels, rules, now: nowIso, timeZone }: {
+export function Board({ columns, cards: initial, labels: initialLabels, rules, now: nowIso, timeZone, savedSort }: {
   columns: BoardColumn[];
   cards: BoardCard[];
   labels: BoardLabel[];
   rules: FollowUpRules;
   now: string;
   timeZone: string;
+  /** Remembered per-column sort modes (column id -> mode). */
+  savedSort?: Record<string, 'smart' | 'manual'>;
 }) {
   const t = useTranslations('board');
+  const saveUiPrefs = useSaveUiPrefs();
   const now = useMemo(() => new Date(nowIso), [nowIso]);
   const [cards, setCards] = useState(initial);
   const [labels, setLabels] = useState(initialLabels);
   const [sort, setSort] = useState<Record<string, 'smart' | 'manual'>>(
-    Object.fromEntries(columns.map((c) => [c.id, c.kind === 'active' ? 'smart' : 'manual'])),
+    Object.fromEntries(columns.map((c) => [c.id, savedSort?.[c.id] ?? (c.kind === 'active' ? 'smart' : 'manual')])),
   );
   const [openId, setOpenId] = useState<string | null>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -193,7 +197,11 @@ export function Board({ columns, cards: initial, labels: initialLabels, rules, n
               column={col}
               cards={shown(col.id)}
               sort={sort[col.id] ?? 'manual'}
-              onToggleSort={() => setSort((s) => ({ ...s, [col.id]: s[col.id] === 'smart' ? 'manual' : 'smart' }))}
+              onToggleSort={() => {
+                const mode = sort[col.id] === 'smart' ? 'manual' : 'smart';
+                setSort((s) => ({ ...s, [col.id]: mode }));
+                saveUiPrefs({ boardSort: { [col.id]: mode } });
+              }}
               labels={labels}
               labelName={labelName}
               now={now}

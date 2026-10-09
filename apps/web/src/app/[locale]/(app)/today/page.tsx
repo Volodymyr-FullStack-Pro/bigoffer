@@ -3,9 +3,12 @@ import { getLocale, getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
 import { requireUserId } from '@/lib/auth';
 import { createClient } from '@/lib/supabase/server';
+import { parseUiPrefs } from '@/lib/ui-prefs';
 import { cardSkills, matchedSkillsOf } from './card-skills';
 import { Feed } from './feed';
 import { mergeMatches } from './feed-filter';
+import { SearchNow } from './search-now';
+import { getSearchNowStatus } from './search-now-actions';
 import type { FeedMatch } from './feed-types';
 
 const REMOTE = ['remote', 'hybrid', 'office'] as const;
@@ -40,7 +43,7 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
       .not('jobs.is_job', 'is', false)
       .gte('created_at', since);
   const cutoff = since24h();
-  const [{ data: bestRows }, { data: freshRows, error: freshError }, { data: profiles }, { data: me }] = await Promise.all([
+  const [{ data: bestRows }, { data: freshRows, error: freshError }, { data: profiles }, { data: me }, searchStatus] = await Promise.all([
     baseQuery().order('score', { ascending: false }).order('created_at', { ascending: false }).limit(200),
     // Fresh jobs can score below the top 200, so fetch them separately for the "New in 24h" filter and "Newest" sort.
     // Same rule as the client filter: posted within 24h, or no posted_at and first seen within 24h.
@@ -48,8 +51,9 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
       .or(`posted_at.gte.${cutoff},and(posted_at.is.null,first_seen_at.gte.${cutoff})`, { referencedTable: 'jobs' })
       .order('jobs(first_seen_at)', { ascending: false })
       .limit(200),
-    supabase.from('search_profiles').select('id, name, skills').order('created_at'),
-    supabase.from('profiles').select('onboarded_at').eq('id', userId).maybeSingle(),
+    supabase.from('search_profiles').select('id, name, skills, is_active').order('created_at'),
+    supabase.from('profiles').select('onboarded_at, ui_prefs').eq('id', userId).maybeSingle(),
+    getSearchNowStatus(),
   ]);
 
   if (freshError) console.error('today: fresh matches query failed', { code: freshError.code, message: freshError.message });
@@ -96,11 +100,13 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
           {t('onboardingBanner')} →
         </Link>
       )}
+      {(profiles ?? []).length > 0 && <SearchNow initialStatus={searchStatus} autopilot={(profiles ?? []).some((p) => p.is_active)} />}
       <Feed
         matches={matches}
         focusId={focusId && matches.some((m) => m.id === focusId) ? focusId : null}
         profiles={(profiles ?? []).map((p) => ({ id: p.id, name: p.name }))}
         sources={sourceIds.map((id) => ({ id, name: sourceInfo(id)?.name ?? id }))}
+        savedFilters={parseUiPrefs(me?.ui_prefs).feed}
       />
     </section>
   );

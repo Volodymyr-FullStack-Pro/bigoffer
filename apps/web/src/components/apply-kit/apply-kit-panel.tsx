@@ -3,6 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { saveBankAnswer } from '@/app/[locale]/(app)/profile/profile-extras-actions';
+import { useSaveUiPrefs } from '@/lib/use-save-ui-prefs';
 import { answerFormQuestions, type FormAnswer, generateKit, getApplyKitData, type KitData, type KitError, markAppliedFromKit, saveKitLetter, type StoredKit } from './actions';
 import { ContactChips } from './contact-chips';
 import { PeopleSearch } from './people-search';
@@ -15,6 +16,7 @@ export function ApplyKitPanel({ jobId, locale, onApplied, hidePeopleSearch }: { 
   const [data, setData] = useState<KitData | null>(null);
   const [kit, setKit] = useState<StoredKit | null>(null);
   const [lang, setLang] = useState<Lang>('auto');
+  const saveUiPrefs = useSaveUiPrefs();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<KitError | null>(null);
   const [formText, setFormText] = useState('');
@@ -32,6 +34,7 @@ export function ApplyKitPanel({ jobId, locale, onApplied, hidePeopleSearch }: { 
     void getApplyKitData(jobId).then((d) => {
       if (!alive || !d) return;
       setData(d);
+      setLang(d.kitLang);
       setKit(d.kit);
       setLetter(d.kit?.coverLetter ?? '');
       setAnswers(d.formAnswers);
@@ -106,7 +109,7 @@ export function ApplyKitPanel({ jobId, locale, onApplied, hidePeopleSearch }: { 
       <div className="flex flex-wrap items-end gap-2">
         <label className="flex flex-col gap-1 font-mono text-xs uppercase">
           {t('language')}
-          <select value={lang} onChange={(e) => setLang(e.target.value as Lang)} className={field}>
+          <select value={lang} onChange={(e) => { const v = e.target.value as Lang; setLang(v); saveUiPrefs({ kitLang: v }); }} className={field}>
             {(['auto', 'en', 'uk', 'ru'] as const).map((l) => <option key={l} value={l}>{t(`lang_${l}`)}</option>)}
           </select>
         </label>
