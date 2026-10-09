@@ -1,4 +1,5 @@
 import type { ButtonHTMLAttributes } from 'react';
+import { cn } from '@/lib/utils';
 
 type Variant = 'brand' | 'outline' | 'ghost';
 
@@ -15,7 +16,7 @@ export function Button({
 }: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: Variant }) {
   return (
     <button
-      className={`inline-flex items-center justify-center gap-2 px-5 py-2 text-[15px] font-medium disabled:opacity-50 ${variants[variant]} ${className}`}
+      className={cn('inline-flex items-center justify-center gap-2 px-5 py-2 text-[15px] font-medium disabled:opacity-50', variants[variant], className)}
       {...props}
     />
   );

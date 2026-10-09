@@ -61,19 +61,26 @@ export async function registerCv(path: string, originalName: string): Promise<Cv
   }
   revalidatePath('/[locale]/profile', 'page');
 
+  return parseAndStore(supabase, row.id, bytes);
+}
+
+type Supabase = Awaited<ReturnType<typeof createClient>>;
+
+/** Runs the AI CV parse for a stored resume row and records the outcome on it. */
+async function parseAndStore(supabase: Supabase, rowId: string, bytes: Buffer): Promise<CvState> {
   if (!privateAiAvailable()) {
-    const { error: flagError } = await supabase.from('resumes').update({ parse_error: 'ai_unavailable' }).eq('id', row.id);
+    const { error: flagError } = await supabase.from('resumes').update({ parse_error: 'ai_unavailable' }).eq('id', rowId);
     if (flagError) console.error('cv: could not flag ai_unavailable', flagError.code ?? 'unknown');
     return { status: 'stored', message: 'ai_unavailable' };
   }
   if (!(await consumePrivateAi(supabase))) {
-    const { error: flagError } = await supabase.from('resumes').update({ parse_error: 'ai_limit' }).eq('id', row.id);
+    const { error: flagError } = await supabase.from('resumes').update({ parse_error: 'ai_limit' }).eq('id', rowId);
     if (flagError) console.error('cv: could not flag ai_limit', flagError.code ?? 'unknown');
     return { status: 'stored', message: 'ai_limit' };
   }
   try {
     const parsed = await parseCv(getLlm(), { pdfBase64: bytes.toString('base64') });
-    const { error: parsedError } = await supabase.from('resumes').update({ parsed, parse_error: null }).eq('id', row.id);
+    const { error: parsedError } = await supabase.from('resumes').update({ parsed, parse_error: null }).eq('id', rowId);
     if (parsedError) {
       console.error('cv: could not store parsed CV', parsedError.code ?? 'unknown');
       return { status: 'stored', message: 'parse_failed' };
@@ -83,10 +90,23 @@ export async function registerCv(path: string, originalName: string): Promise<Cv
     // Sanitized: name, HTTP status and a truncated provider message, never the CV text or keys.
     console.error('parseCv failed', describeAiFailure(err));
     const failure = classifyAiFailure(err);
-    const { error: flagError } = await supabase.from('resumes').update({ parse_error: failure }).eq('id', row.id);
+    const { error: flagError } = await supabase.from('resumes').update({ parse_error: failure }).eq('id', rowId);
     if (flagError) console.error(`cv: could not flag ${failure}`, flagError.code ?? 'unknown');
     return { status: 'stored', message: failure };
   }
+}
+
+/** Re-runs the AI parse of the primary CV (e.g. after a provider hiccup) without uploading it again. */
+export async function retryCvParse(): Promise<CvState> {
+  if (!(await getUserId())) return { status: 'error' };
+  const supabase = await createClient();
+  const cv = await loadPrimaryCv(supabase);
+  if (!cv) return { status: 'error' };
+  const { data: blob, error } = await supabase.storage.from('resumes').download(cv.path);
+  if (error || !blob) return { status: 'error' };
+  const result = await parseAndStore(supabase, cv.id, Buffer.from(await blob.arrayBuffer()));
+  revalidatePath('/[locale]/profile', 'page');
+  return result;
 }
 
 export async function deleteCv(): Promise<{ ok: boolean }> {
