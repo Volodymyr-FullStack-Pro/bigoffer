@@ -21,7 +21,7 @@ export function ContactChips({ contacts, cvLink }: { contacts: Record<string, st
               await navigator.clipboard.writeText(i.value).catch(() => undefined);
               setCopied(i.key);
             }}
-            className="rounded-sm border-2 border-border px-2 py-0.5 font-mono text-xs hover:bg-muted"
+            className="rounded-sm border-[1.5px] border-border px-2 py-0.5 font-mono text-xs hover:bg-muted"
           >
             {copied === i.key ? `✓ ${t('copied')}` : i.label}
           </button>

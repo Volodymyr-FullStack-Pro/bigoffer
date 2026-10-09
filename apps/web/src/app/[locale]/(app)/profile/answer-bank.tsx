@@ -129,7 +129,7 @@ export function AnswerBank({ answers, locale }: { answers: BankAnswer[]; locale:
       {[...base, ...custom].map((a) => (
         <BankRow key={a.key} answer={a} locale={locale} removable={!(BANK_KEYS as readonly string[]).includes(a.key)} onDeleted={(ok) => setStatus(ok ? 'deleted' : 'error')} />
       ))}
-      <div className="flex flex-col gap-2 border-t-2 border-border pt-3">
+      <div className="flex flex-col gap-2 border-t border-border pt-3">
         <input data-testid="bank-add-question" value={newQ} maxLength={300} onChange={(e) => setNewQ(e.target.value)} placeholder={t('newQuestion')} className={FIELD} />
         <textarea data-testid="bank-add-answer" value={newA} maxLength={2000} onChange={(e) => setNewA(e.target.value)} placeholder={t('newAnswer')} className={`${FIELD} min-h-14`} />
         <button

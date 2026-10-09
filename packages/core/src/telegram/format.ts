@@ -12,12 +12,16 @@ export type AlertJob = {
   location: string | null;
   remote: string | null;
   why: string | null;
+  /** Board the job was found on ("Djinni") and the original posting URL. */
+  source?: string | null;
+  jobUrl?: string | null;
 };
 
 export type CallbackAction = { kind: 'hide' | 'applied'; matchId: string };
 
 type Dict = {
   open: string;
+  posting: string;
   hide: string;
   applied: string;
   overflow: (n: number) => string;
@@ -29,7 +33,8 @@ type Dict = {
 
 const DICT: Record<TgLocale, Dict> = {
   en: {
-    open: 'Open',
+    open: 'Open in BigOffer',
+    posting: 'Job posting ↗',
     hide: 'Hide',
     applied: 'Applied',
     overflow: (n) => `${n} more new ${n === 1 ? 'job' : 'jobs'} in BigOffer`,
@@ -39,7 +44,8 @@ const DICT: Record<TgLocale, Dict> = {
     remote: { remote: 'Remote', hybrid: 'Hybrid', office: 'Office' },
   },
   uk: {
-    open: 'Відкрити',
+    open: 'Відкрити в BigOffer',
+    posting: 'Вакансія ↗',
     hide: 'Сховати',
     applied: 'Подано',
     overflow: (n) => `ще ${n} ${ukPlural(n)} у BigOffer`,
@@ -49,7 +55,8 @@ const DICT: Record<TgLocale, Dict> = {
     remote: { remote: 'Віддалено', hybrid: 'Гібрид', office: 'Офіс' },
   },
   ru: {
-    open: 'Открыть',
+    open: 'Открыть в BigOffer',
+    posting: 'Вакансия ↗',
     hide: 'Скрыть',
     applied: 'Отклик отправлен',
     overflow: (n) => `ещё ${n} ${ruPlural(n)} в BigOffer`,
@@ -107,7 +114,8 @@ const base = (siteUrl: string) => siteUrl.replace(/\/+$/, '');
 
 function alertLines(job: AlertJob, locale: TgLocale): string[] {
   const lines = [`🔥 <b>${Math.round(job.score)}%</b> · ${safe(job.title, 200)}`];
-  if (job.company) lines.push(safe(job.company, 100));
+  const origin = [job.company, job.source].filter((v): v is string => Boolean(v && v.trim())).map((v) => safe(v, 100));
+  if (origin.length > 0) lines.push(origin.join(' · '));
   const remote = job.remote ? (DICT[locale].remote[job.remote] ?? job.remote) : null;
   const meta = [job.salary, job.location, remote]
     .filter((v): v is string => Boolean(v && v.trim()))
@@ -127,7 +135,10 @@ export function alertMessage(
     text: alertLines(job, locale).join('\n'),
     replyMarkup: {
       inline_keyboard: [
-        [{ text: t.open, url: `${base(siteUrl)}/${locale}/today?match=${encodeURIComponent(job.matchId)}` }],
+        [
+          { text: t.open, url: `${base(siteUrl)}/${locale}/today?match=${encodeURIComponent(job.matchId)}` },
+          ...(job.jobUrl && /^https?:\/\//i.test(job.jobUrl) ? [{ text: t.posting, url: job.jobUrl }] : []),
+        ],
         [
           { text: t.hide, callback_data: encodeCallback({ kind: 'hide', matchId: job.matchId }) },
           { text: t.applied, callback_data: encodeCallback({ kind: 'applied', matchId: job.matchId }) },

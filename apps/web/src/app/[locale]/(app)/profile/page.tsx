@@ -6,7 +6,6 @@ import { createClient } from '@/lib/supabase/server';
 import { AnswerBank } from './answer-bank';
 import { CvSection } from './cv-section';
 import { loadProfileExtras } from './extras-data';
-import { LetterTemplate } from './letter-template';
 import { ProfileForm } from './profile-form';
 import { TelegramSection } from './telegram-section';
 
@@ -37,7 +36,7 @@ export default async function ProfilePage() {
 
   const rawLocale = await getLocale();
   const locale = isLocale(rawLocale) ? rawLocale : 'en';
-  const { cv, cvLink, answers, template } = await loadProfileExtras(supabase, userId, locale);
+  const { cv, cvLink, answers } = await loadProfileExtras(supabase, userId, locale);
   const regionNames = new Intl.DisplayNames([locale], { type: 'region' });
   const countries = COUNTRY_CODES.map((code) => ({ code, name: regionNames.of(code) ?? code })).sort((a, b) =>
     a.name.localeCompare(b.name, locale),
@@ -65,7 +64,6 @@ export default async function ProfilePage() {
         }}
       />
       <CvSection cv={cv ? { fileName: cv.fileName, parsed: cv.parsed, parseError: cv.parseError } : null} aiAvailable={privateAiAvailable()} cvLink={cvLink} />
-      <LetterTemplate body={template} locale={locale} />
       <AnswerBank answers={answers} locale={locale} />
     </section>
   );

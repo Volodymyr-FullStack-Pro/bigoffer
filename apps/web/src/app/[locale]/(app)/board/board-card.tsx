@@ -6,7 +6,7 @@ import { useFormatter, useTranslations } from 'next-intl';
 import type { BoardCardView, BoardLabel } from './board-types';
 
 const URGENCY_STYLE: Record<string, string> = {
-  interview_soon: 'bg-ai text-white',
+  interview_soon: 'bg-ai text-ai-foreground',
   overdue: 'bg-danger text-white',
   ghosting: 'bg-foreground text-background',
   ping: 'bg-warning text-brand-foreground',

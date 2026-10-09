@@ -22,7 +22,7 @@ export function TodayActions({ cards, onPinged, onOpen, onGhosted }: {
         {actions.map((a) => {
           const card = byId.get(a.id)!;
           return (
-            <li key={a.id} data-testid="today-action" data-kind={a.kind} className="flex flex-wrap items-center justify-between gap-2 border-b-2 border-border pb-2 last:border-b-0">
+            <li key={a.id} data-testid="today-action" data-kind={a.kind} className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-2 last:border-b-0">
               <span>
                 <span className="font-semibold">{t(`today_${a.kind}`)}</span>: {card.company} — {card.title}
                 {a.at && <span suppressHydrationWarning className="font-mono text-xs"> · {format.dateTime(a.at, { dateStyle: 'medium', timeStyle: 'short' })}</span>}

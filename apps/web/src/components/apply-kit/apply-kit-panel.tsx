@@ -97,7 +97,7 @@ export function ApplyKitPanel({ jobId, locale, onApplied, hidePeopleSearch }: { 
   const field = 'brutal bg-card px-2 py-1 text-sm';
 
   return (
-    <section data-testid="apply-kit" aria-label={t('title')} className="flex flex-col gap-4 border-t-2 border-border pt-4">
+    <section data-testid="apply-kit" aria-label={t('title')} className="flex flex-col gap-4 border-t border-border pt-4">
       <h3 className="font-display text-lg font-black">{t('title')}</h3>
       {!data.aiAvailable && <p data-testid="kit-error" className="text-sm text-warning">{t('err_ai_unavailable')}</p>}
       {data.aiAvailable && !data.hasCv && <p data-testid="kit-error" className="text-sm text-warning">{t('err_no_cv')}</p>}
@@ -110,7 +110,7 @@ export function ApplyKitPanel({ jobId, locale, onApplied, hidePeopleSearch }: { 
             {(['auto', 'en', 'uk', 'ru'] as const).map((l) => <option key={l} value={l}>{t(`lang_${l}`)}</option>)}
           </select>
         </label>
-        <button type="button" data-testid="kit-generate" disabled={loading || !data.aiAvailable || !data.hasCv} onClick={() => void run('default')} className="brutal brutal-press bg-ai px-4 py-2 font-semibold text-white disabled:opacity-50">
+        <button type="button" data-testid="kit-generate" disabled={loading || !data.aiAvailable || !data.hasCv} onClick={() => void run('default')} className="brutal brutal-press bg-ai px-4 py-2 font-semibold text-ai-foreground disabled:opacity-50">
           {loading ? t('generating') : kit ? t('regenerate') : t('generate')}
         </button>
         {kit && (
@@ -123,6 +123,21 @@ export function ApplyKitPanel({ jobId, locale, onApplied, hidePeopleSearch }: { 
 
       {kit && (
         <>
+          <label className="flex flex-col gap-1 font-mono text-xs uppercase">
+            {t('letter')}
+            <textarea data-testid="kit-letter" value={letter} maxLength={6000} onChange={(e) => setLetter(e.target.value)} className={`${field} min-h-40 font-sans normal-case`} />
+          </label>
+          {/* Copy, then go straight to the posting to paste it. */}
+          <div className="flex flex-wrap gap-2">
+            <button type="button" data-testid="kit-copy-letter" onClick={() => void copy('letter', letter)} className="brutal brutal-press border-brand bg-brand px-3 py-1 text-sm font-semibold text-brand-foreground">
+              {copied === 'letter' ? `✓ ${t('copied')}` : t('copyLetter')}
+            </button>
+            {data.jobUrl && (
+              <a href={data.jobUrl} target="_blank" rel="noopener" data-testid="kit-open-job" onClick={() => setAwaitingReturn('click')} className="brutal brutal-press px-3 py-1 text-sm font-semibold">
+                {t('apply')} ↗
+              </a>
+            )}
+          </div>
           <div>
             <h4 className="font-mono text-xs uppercase">{t('requirements')}</h4>
             <ul className="flex flex-col gap-1 text-sm">
@@ -138,13 +153,6 @@ export function ApplyKitPanel({ jobId, locale, onApplied, hidePeopleSearch }: { 
               </ul>
             )}
           </div>
-          <label className="flex flex-col gap-1 font-mono text-xs uppercase">
-            {t('letter')}
-            <textarea data-testid="kit-letter" value={letter} maxLength={6000} onChange={(e) => setLetter(e.target.value)} className={`${field} min-h-40 font-sans normal-case`} />
-          </label>
-          <button type="button" data-testid="kit-copy-letter" onClick={() => void copy('letter', letter)} className="brutal brutal-press self-start px-3 py-1 text-sm font-semibold">
-            {copied === 'letter' ? `✓ ${t('copied')}` : t('copyLetter')}
-          </button>
           <div className="flex flex-col gap-1">
             <h4 className="font-mono text-xs uppercase">{t('short')}</h4>
             <p data-testid="kit-short" className="brutal p-2 text-sm">{kit.shortMessage}</p>

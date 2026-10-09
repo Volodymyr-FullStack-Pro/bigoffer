@@ -3,6 +3,7 @@ import { SENIORITIES } from './job';
 import { regionBucket } from './normalize';
 import type { SearchProfile } from './search';
 import { remoteBlockedFor } from './regions';
+import { detectRoleFamilies, roleOffTarget, targetRoleFamilies } from './roles';
 
 export type ScorableJob = {
   title: string;
@@ -18,6 +19,8 @@ export type ScorableJob = {
   isJob?: boolean | null;
   /** AI: where a remote hire may live (region codes or ISO countries); empty when not stated. */
   remoteRegions?: string[];
+  /** AI-normalized role title ("Backend Developer"); used when the title itself is generic. */
+  role?: string | null;
 };
 
 export type MatchBreakdown = {
@@ -139,7 +142,12 @@ export function scoreJob(
     inText || matchedSkills.length >= 2 || (matchedSkills.length === 1 && profile.skills.length === 1);
   if (!relevant) return null;
 
-  const role = inTitle ? 25 : inText ? 12 : 0;
+  // Role points come from the job's family, not from a tech keyword in the title ("Backend Developer (Node.js)").
+  const targets = targetRoleFamilies(profile);
+  const families = detectRoleFamilies(job.title, job.role);
+  const familyMatch = targets.length > 0 && families.some((f) => targets.includes(f));
+  const role = familyMatch ? 25 : families.length === 0 && inTitle ? 18 : inText ? 12 : 0;
+  const offTarget = roleOffTarget(families, targets);
   const skills =
     profile.skills.length === 0 ? (inText ? 35 : 0) : Math.round((35 * matchedSkills.length) / profile.skills.length);
   const regions = job.remoteRegions ?? [];
@@ -153,8 +161,8 @@ export function scoreJob(
     location: blockedRegions ? 0 : locationPoints(profile, job),
     salary: salaryPoints(profile.salaryMinUsd, job),
     matchedSkills,
-    // 'region' hides the row like an exclude keyword, so upsert_job_matches keeps rescoring it.
-    excludedBy: keywordExclusion ?? (blockedRegions ? 'region' : null),
+    // 'role' / 'region' hide the row like an exclude keyword, so upsert_job_matches keeps rescoring it.
+    excludedBy: keywordExclusion ?? (offTarget ? 'role' : blockedRegions ? 'region' : null),
     blockedRegions,
   };
   const score = Math.min(

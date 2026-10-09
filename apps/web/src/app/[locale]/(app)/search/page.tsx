@@ -1,4 +1,4 @@
-import { defaultSources, SEARCH_REMOTE_TYPES } from '@jp/core';
+import { defaultSources, ROLE_FAMILIES, type RoleFamily, SEARCH_REMOTE_TYPES, targetRoleFamilies } from '@jp/core';
 import { getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
 import { requireUserId } from '@/lib/auth';
@@ -8,6 +8,7 @@ import { SearchProfileForm, type SearchProfileValues } from './search-profile-fo
 const EMPTY: SearchProfileValues = {
   name: '',
   keywords: [],
+  targetRoles: [],
   skills: [],
   excludeKeywords: [],
   seniority: [],
@@ -25,13 +26,18 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
   const supabase = await createClient();
   const { data } = await supabase
     .from('search_profiles')
-    .select('id, name, keywords, skills, exclude_keywords, seniority, locations, remote_type, sources, salary_min_usd, is_active')
+    .select('id, name, keywords, target_roles, skills, exclude_keywords, seniority, locations, remote_type, sources, salary_min_usd, is_active')
     .order('created_at');
 
   const profiles: SearchProfileValues[] = (data ?? []).map((p) => ({
     id: p.id,
     name: p.name,
     keywords: p.keywords,
+    // No explicit choice yet: pre-check what the keywords imply, which is what matching already uses.
+    targetRoles: targetRoleFamilies({
+      targetRoles: p.target_roles.filter((r): r is RoleFamily => (ROLE_FAMILIES as readonly string[]).includes(r)),
+      keywords: p.keywords,
+    }),
     skills: p.skills,
     excludeKeywords: p.exclude_keywords,
     seniority: p.seniority,

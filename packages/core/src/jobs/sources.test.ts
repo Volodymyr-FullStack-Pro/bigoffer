@@ -28,7 +28,8 @@ describe('SOURCE_CATALOG', () => {
 describe('defaultSources', () => {
   it('uses Ukrainian and global boards for office/hybrid', () => {
     const office = defaultSources('office');
-    expect(office).toContain('workua');
+    expect(office).toContain('robotaua');
+    expect(office).not.toContain('workua');
     expect(office).toContain('jooble');
     expect(office).not.toContain('remoteok');
     expect(office).not.toContain('linkedin');
@@ -51,11 +52,11 @@ describe('defaultSources', () => {
 
 describe('lowYield', () => {
   it('keeps low-yield boards out of the defaults but in the catalog', () => {
-    const low = ['arbeitnow', 'wwr', 'jobico', 'jobicy', 'justjoin', 'olx'] as const;
+    const low = ['arbeitnow', 'wwr', 'jobico', 'jobicy', 'justjoin', 'olx', 'workua'] as const;
     for (const id of low) {
       expect(sourceInfo(id)?.lowYield, id).toBe(true);
       expect(defaultSources('any'), id).not.toContain(id);
     }
-    expect(defaultSources('any')).toEqual(expect.arrayContaining(['dou', 'djinni', 'workua', 'robotaua', 'remotive', 'himalayas']));
+    expect(defaultSources('any')).toEqual(expect.arrayContaining(['dou', 'djinni', 'itlead', 'robotaua', 'remotive', 'himalayas']));
   });
 });

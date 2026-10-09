@@ -32,7 +32,7 @@ export function RecruiterMessage({ applicationId, defaultLang, onSent }: { appli
   const limit = MESSAGE_LIMITS[fmt];
 
   return (
-    <section data-testid="recruiter-message" className="flex flex-col gap-3 border-t-2 border-border pt-3">
+    <section data-testid="recruiter-message" className="flex flex-col gap-3 border-t border-border pt-3">
       <h3 className="font-mono text-xs uppercase">{t('title')}</h3>
       <div className="flex flex-wrap gap-2">
         <select data-testid="msg-format" aria-label={t('format')} value={fmt} onChange={(e) => setFmt(e.target.value as MessageFormat)} className={field}>
@@ -65,7 +65,7 @@ export function RecruiterMessage({ applicationId, defaultLang, onSent }: { appli
               setBusy(false);
             }
           }}
-          className="brutal brutal-press bg-ai px-3 py-1 text-sm font-semibold text-white disabled:opacity-50"
+          className="brutal brutal-press bg-ai px-3 py-1 text-sm font-semibold text-ai-foreground disabled:opacity-50"
         >
           {busy ? t('writing') : t('generate')}
         </button>

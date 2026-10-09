@@ -7,7 +7,7 @@ export function PeopleSearch({ company, isPlaceholder }: { company: string | nul
   const t = useTranslations('people');
   if (!company || !canSearchPeople(company, isPlaceholder)) return null;
   const links = peopleSearchLinks(company.trim());
-  const link = 'rounded-sm border-2 border-border px-2 py-0.5 font-mono text-xs hover:bg-muted';
+  const link = 'rounded-sm border-[1.5px] border-border px-2 py-0.5 font-mono text-xs hover:bg-muted';
   return (
     <div data-testid="people-search" className="flex flex-col gap-1">
       <h4 className="font-mono text-xs uppercase">{t('title')}</h4>
