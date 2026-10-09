@@ -61,7 +61,7 @@ function BankRow({ answer, locale, removable, onDeleted }: { answer: BankAnswer;
 
   return (
     <div data-testid="bank-answer" data-key={answer.key} className="flex flex-col gap-1">
-      <label htmlFor={id} className="font-mono text-xs uppercase">{answer.question}</label>
+      <label htmlFor={id} className="font-mono text-xs">{answer.question}</label>
       <div className="flex gap-2">
         <div className="flex flex-1 flex-col gap-1">
           {presets ? (

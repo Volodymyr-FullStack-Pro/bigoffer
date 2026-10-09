@@ -139,7 +139,7 @@
     "seniority_middle": "Middle",
     "seniority_senior": "Senior",
     "seniority_lead": "Lead",
-    "onboardingBanner": "Завершіть налаштування: CV, шаблон листа і типові відповіді"
+    "onboardingBanner": "Завершіть налаштування: CV і типові відповіді"
   },
   "feed": {
     "progress": "{done} / {total}",

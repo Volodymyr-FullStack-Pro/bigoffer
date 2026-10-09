@@ -23,11 +23,11 @@ export function BoardColumnView({ column, cards, sort, onToggleSort, labels, lab
   return (
     <section data-testid="board-column" data-column-key={column.key} aria-label={column.title} className="flex w-72 shrink-0 flex-col gap-3">
       <header className="flex items-center justify-between gap-2">
-        <h2 className="font-display text-sm font-black uppercase">{column.title}</h2>
+        <h2 className="font-display text-sm font-semibold">{column.title}</h2>
         <span data-testid="column-count" className="font-mono text-xs font-bold">
           {total}{needsAction > 0 && <span className="text-danger"> · ● {needsAction}</span>}
         </span>
-        <button type="button" data-testid="column-sort" onClick={onToggleSort} className="font-mono text-[10px] uppercase underline" aria-label={t('sortToggle')}>
+        <button type="button" data-testid="column-sort" onClick={onToggleSort} className="font-mono text-[10px] underline" aria-label={t('sortToggle')}>
           {t(sort === 'smart' ? 'sortSmart' : 'sortManual')}
         </button>
       </header>

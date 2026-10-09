@@ -57,7 +57,7 @@ export default async function BoardPage() {
 
   return (
     <section className="flex flex-col gap-6">
-      <h1 className="text-3xl font-black md:text-4xl">{t('title')}</h1>
+      <h1 className="text-3xl font-semibold md:text-4xl">{t('title')}</h1>
       <Board
         columns={boardColumns}
         cards={cards}

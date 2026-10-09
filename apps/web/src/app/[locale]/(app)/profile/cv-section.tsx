@@ -88,7 +88,7 @@ export function CvSection({ cv, aiAvailable, cvLink }: { cv: { fileName: string;
       </p>
       {cv && (
         <div className="flex flex-col gap-3">
-          <p className="font-mono text-xs uppercase text-muted-foreground">
+          <p className="font-mono text-xs text-muted-foreground">
             {cv.fileName} {cvLink && <a data-testid="cv-link" href={cvLink} target="_blank" rel="noopener" className="underline">{t('open')}</a>}
           </p>
           <div>
@@ -98,7 +98,7 @@ export function CvSection({ cv, aiAvailable, cvLink }: { cv: { fileName: string;
           </div>
           {parsed && (
             <>
-              <p data-testid="cv-headline" className="font-display text-xl font-black">
+              <p data-testid="cv-headline" className="font-display text-xl font-semibold">
                 {parsed.headline}{parsed.seniority ? ` · ${parsed.seniority}` : ''}{parsed.yearsExperience != null ? ` · ${t('years', { count: parsed.yearsExperience })}` : ''}
               </p>
               <ul className="flex flex-wrap gap-1.5">

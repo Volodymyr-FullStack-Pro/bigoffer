@@ -2,39 +2,49 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* Apple-inspired system (apple.com tokens): SF Pro type, #f5f5f7 / #000 canvases, #0071e3 actions, glass chrome. */
 :root {
-  --background: #f4f1e8;
-  --foreground: #131516;
-  --card: #fffdf7;
-  --muted: #ebe6d8;
-  --muted-foreground: oklch(42% 0 0);
-  --border: #d9d4c5;
-  --border-strong: #131516;
-  --brand: #ffcb05;
-  --brand-foreground: #131516;
-  --ai: #6d28d9;
+  --background: #f5f5f7;
+  --foreground: #1d1d1f;
+  --card: #ffffff;
+  --muted: #ebebf0;
+  --muted-foreground: #6e6e73;
+  --border: #d2d2d7;
+  --border-strong: #1d1d1f;
+  --brand: #0071e3;
+  --brand-foreground: #ffffff;
+  --link: #0066cc;
+  --ai: #8944ab;
   --ai-foreground: #ffffff;
-  --success: #15803d;
-  --danger: #b91c1c;
-  --warning: #c2410c;
-  --radius: 5px;
-  --noise-opacity: 0.06;
+  --success: #1f7a37;
+  --danger: #d70015;
+  --warning: #c93400;
+  --glass: rgb(255 255 255 / 0.72);
+  --glass-border: rgb(0 0 0 / 0.06);
+  --shadow: 0 1px 2px rgb(0 0 0 / 0.04), 0 8px 28px rgb(0 0 0 / 0.06);
+  --glow: radial-gradient(60rem 30rem at 15% -10%, rgb(0 113 227 / 0.08), transparent 60%),
+    radial-gradient(50rem 28rem at 95% 0%, rgb(137 68 171 / 0.07), transparent 60%);
 }
 
 .dark {
-  --background: #131516;
-  --foreground: #f2f0e9;
-  --card: #1b1d1f;
-  --muted: #24272a;
-  --muted-foreground: #9a9da1;
-  --border: #2e3236;
-  --border-strong: #f2f0e9;
-  --ai: #a78bfa;
-  --ai-foreground: #131516;
-  --success: #4ade80;
-  --danger: #f87171;
-  --warning: #fb923c;
-  --noise-opacity: 0.07;
+  --background: #000000;
+  --foreground: #f5f5f7;
+  --card: #1c1c1e;
+  --muted: #2c2c2e;
+  --muted-foreground: #98989d;
+  --border: #38383a;
+  --border-strong: #f5f5f7;
+  --link: #2997ff;
+  --ai: #bf5af2;
+  --ai-foreground: #000000;
+  --success: #30d158;
+  --danger: #ff453a;
+  --warning: #ff9f0a;
+  --glass: rgb(28 28 30 / 0.68);
+  --glass-border: rgb(255 255 255 / 0.08);
+  --shadow: 0 1px 0 rgb(255 255 255 / 0.04) inset, 0 12px 40px rgb(0 0 0 / 0.5);
+  --glow: radial-gradient(60rem 32rem at 10% -12%, rgb(41 151 255 / 0.18), transparent 60%),
+    radial-gradient(52rem 30rem at 100% 0%, rgb(191 90 242 / 0.14), transparent 60%);
 }
 
 @theme inline {
@@ -47,15 +57,17 @@
   --color-border-strong: var(--border-strong);
   --color-brand: var(--brand);
   --color-brand-foreground: var(--brand-foreground);
+  --color-link: var(--link);
   --color-ai: var(--ai);
   --color-ai-foreground: var(--ai-foreground);
   --color-success: var(--success);
   --color-danger: var(--danger);
   --color-warning: var(--warning);
-  --font-display: var(--font-unbounded), system-ui, sans-serif;
-  --font-sans: var(--font-onest), system-ui, sans-serif;
-  --font-mono: var(--font-jetbrains), ui-monospace, monospace;
-  --radius-brutal: var(--radius);
+  /* SF Pro on Apple devices (as apple.com), Inter elsewhere. One family everywhere: no display or mono faces. */
+  --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', var(--font-inter), 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --font-display: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', var(--font-inter), 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --font-mono: var(--font-sans);
+  --radius-brutal: 12px;
 }
 
 @layer base {
@@ -67,24 +79,27 @@
   }
   body {
     background-color: var(--background);
+    background-image: var(--glow);
+    background-attachment: fixed;
     color: var(--foreground);
     font-family: var(--font-sans);
+    letter-spacing: -0.011em;
+    -webkit-font-smoothing: antialiased;
     min-height: 100dvh;
-  }
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    z-index: 0;
-    opacity: var(--noise-opacity);
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   }
   h1,
   h2,
   h3 {
     font-family: var(--font-display);
-    letter-spacing: -0.02em;
+    font-weight: 600;
+    letter-spacing: -0.022em;
+  }
+  h1 {
+    letter-spacing: -0.028em;
+  }
+  /* Numbers line up (scores, counters, salaries) — the job the mono face used to do. */
+  .font-mono {
+    font-variant-numeric: tabular-nums;
   }
   :focus-visible {
     outline: 2px solid var(--brand);
@@ -94,32 +109,58 @@
     background-color: var(--brand);
     color: var(--brand-foreground);
   }
+  input[type='checkbox'],
+  input[type='radio'] {
+    accent-color: var(--brand);
+  }
+  select {
+    appearance: none;
+    padding-right: 2rem !important;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2386868b' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+  }
 }
 
 @layer components {
-  /* Terminal Zine surface: hairline border, no offset shadow (class name kept from the zine era). */
+  /* Surface (class name kept from earlier styles): a soft card — 18px corners, hairline, gentle elevation. */
   .brutal {
-    border: 1.5px solid var(--border);
-    border-radius: var(--radius);
+    border: 1px solid var(--glass-border);
+    border-radius: 18px;
     background-color: var(--card);
+    box-shadow: var(--shadow);
+  }
+  input.brutal,
+  textarea.brutal,
+  select.brutal {
+    border-radius: 12px;
+    box-shadow: none;
+    border-color: var(--border);
   }
   .brutal-press {
     transition:
-      transform 80ms ease-out,
-      border-color 120ms ease-out,
-      background-color 120ms ease-out;
+      transform 120ms ease-out,
+      background-color 160ms ease-out,
+      border-color 160ms ease-out,
+      filter 160ms ease-out;
   }
   .brutal-press:hover {
-    border-color: var(--border-strong);
+    filter: brightness(1.06);
   }
   .brutal-press:active {
-    transform: translateY(1px);
+    transform: scale(0.98);
   }
-  /* The "terminal voice": monospace labels for buttons, badges, nav, scores, dates. */
+  /* Frosted glass for chrome (header, tab bar) and hero blocks. */
+  .glass {
+    background-color: var(--glass);
+    border: 1px solid var(--glass-border);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    backdrop-filter: saturate(180%) blur(20px);
+  }
   .mono-label {
-    font-family: var(--font-mono);
-    font-size: 13px;
-    letter-spacing: 0.01em;
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
   }
 }
 

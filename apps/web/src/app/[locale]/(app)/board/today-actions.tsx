@@ -17,7 +17,7 @@ export function TodayActions({ cards, onPinged, onOpen, onGhosted }: {
   const byId = new Map(cards.map((c) => [c.id, c]));
   return (
     <aside data-testid="today-actions" className="brutal flex flex-col gap-2 p-4">
-      <h2 className="font-display text-lg font-black">{t('todayTitle', { count: actions.length })}</h2>
+      <h2 className="font-display text-lg font-semibold">{t('todayTitle', { count: actions.length })}</h2>
       <ul className="flex flex-col gap-2">
         {actions.map((a) => {
           const card = byId.get(a.id)!;
