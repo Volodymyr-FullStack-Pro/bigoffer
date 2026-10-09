@@ -2,6 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { GlowCard } from '@/components/ui/glow-card';
 import { Toast, useToast } from '@/components/ui/toast';
 import { Link } from '@/i18n/navigation';
 import { useSaveUiPrefs } from '@/lib/use-save-ui-prefs';
@@ -191,15 +192,20 @@ export function Feed({
       ) : (
         <>
           <div className="hidden gap-6 md:grid md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
-            <nav aria-label={t('list')} className="brutal max-h-[75vh] overflow-y-auto p-0">
-              {visible.map((m) => (
-                <FeedListItem key={m.id} match={m} selected={m.id === selected?.id} onSelect={() => setSelectedId(m.id)} />
-              ))}
-            </nav>
+            <GlowCard className="self-start">
+              <nav aria-label={t('list')} className="brutal max-h-[75vh] overflow-y-auto p-0">
+                {visible.map((m) => (
+                  <FeedListItem key={m.id} match={m} selected={m.id === selected?.id} onSelect={() => setSelectedId(m.id)} />
+                ))}
+              </nav>
+            </GlowCard>
             {selected && (
-              <div className="brutal p-5">
-                <MatchDetail match={selected} onAction={(a) => void act(selected, a)} onApplied={() => appliedFromKit(selected)} />
-              </div>
+              // Sticky: the details stay in view while the list scrolls.
+              <GlowCard className="sticky top-20 self-start">
+                <div className="brutal p-6">
+                  <MatchDetail match={selected} onAction={(a) => void act(selected, a)} onApplied={() => appliedFromKit(selected)} />
+                </div>
+              </GlowCard>
             )}
           </div>
           <div className="md:hidden">

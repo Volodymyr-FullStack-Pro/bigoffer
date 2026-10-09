@@ -1,5 +1,7 @@
 import { safeRedirectPath } from '@jp/core';
 import { getTranslations } from 'next-intl/server';
+import { FlipWords } from '@/components/aceternity/flip-words';
+import { Spotlight } from '@/components/aceternity/spotlight-new';
 import { LegalLinks } from '@/components/legal-links';
 import { LocaleSwitcher } from '@/components/locale-switcher';
 import { ThemeToggle } from '@/components/theme-toggle';
@@ -20,7 +22,8 @@ export default async function LoginPage({
   const tTheme = await getTranslations('theme');
 
   return (
-    <div className="min-h-dvh">
+    <div className="relative min-h-dvh overflow-hidden">
+      <Spotlight />
       <header className="glass sticky top-0 z-20 rounded-none border-x-0 border-t-0">
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
           <span className="flex items-baseline gap-0.5 font-display text-xl font-semibold tracking-tight">
@@ -34,10 +37,13 @@ export default async function LoginPage({
         </div>
       </header>
       <main className="mx-auto flex max-w-6xl flex-col items-center gap-12 px-4 pt-16 pb-16 text-center md:pt-24">
-        {/* Apple-style hero: one big gradient headline, nothing else competing with it. */}
-        <p className="max-w-4xl bg-gradient-to-b from-foreground to-muted-foreground bg-clip-text font-display text-5xl leading-[1.05] font-semibold tracking-[-0.035em] text-balance text-transparent md:text-7xl">
-          {tApp('tagline')}
-        </p>
+        {/* Apple-style hero: one big headline with a rotating word, a soft spotlight behind it. */}
+        <h2 className="max-w-4xl font-display text-5xl leading-[1.05] font-semibold tracking-[-0.035em] text-balance md:text-7xl">
+          <span className="bg-gradient-to-b from-foreground to-muted-foreground bg-clip-text text-transparent">{tApp('heroBefore')} </span>
+          <FlipWords words={tApp('heroWords').split(',')} className="bg-gradient-to-r from-[#2997ff] via-[#bf5af2] to-[#ff375f] bg-clip-text text-transparent" />
+          <span className="bg-gradient-to-b from-foreground to-muted-foreground bg-clip-text text-transparent"> {tApp('heroAfter')}</span>
+        </h2>
+        <p className="-mt-6 max-w-xl text-lg text-muted-foreground md:text-xl">{tApp('tagline')}</p>
         <section className="glass flex w-full max-w-md flex-col gap-5 rounded-3xl p-6 text-left shadow-[var(--shadow)] sm:p-8">
           <div>
             <h1 className="text-2xl">{t('title')}</h1>

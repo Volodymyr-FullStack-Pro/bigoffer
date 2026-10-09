@@ -1,4 +1,4 @@
-import type { RawJob } from '@jp/core';
+import { kyivLocalDate, type RawJob } from '@jp/core';
 import type { SourceAdapter } from '../types';
 
 type RabotaResponse = {
@@ -40,7 +40,7 @@ export const robotauaAdapter: SourceAdapter = {
         location: d.cityName || null,
         salaryRaw: salaryRaw(d),
         salaryPeriod: 'month',
-        postedAt: d.date ?? null,
+        postedAt: d.date ? kyivLocalDate(d.date) : null,
       };
     });
   },

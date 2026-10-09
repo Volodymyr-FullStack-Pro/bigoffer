@@ -1,7 +1,10 @@
 {
   "app": {
     "name": "BigOffer",
-    "tagline": "Fresh jobs. Fast applications. Zero chaos."
+    "tagline": "Fresh jobs. Fast applications. Zero chaos.",
+    "heroBefore": "Your next",
+    "heroAfter": "starts here.",
+    "heroWords": "offer,interview,big move"
   },
   "legal": {
     "updated": "Last updated: {date}",
