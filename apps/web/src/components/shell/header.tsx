@@ -11,10 +11,11 @@ export async function Header() {
   const tNav = await getTranslations('nav');
 
   return (
-    <header className="sticky top-0 z-20 border-b-2 border-border bg-background/90 backdrop-blur">
+    <header className="sticky top-0 z-20 border-b border-border bg-background/90 backdrop-blur">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-4">
-        <Link href="/today" className="font-display text-lg font-black tracking-tight">
+        <Link href="/today" className="flex items-baseline gap-0.5 font-display text-lg font-black tracking-tight uppercase">
           {tApp('name')}
+          <span aria-hidden className="inline-block size-2 rounded-full bg-brand" />
         </Link>
         <div className="flex items-center gap-2">
           <LocaleSwitcher onChangeAction={setLocaleAction} />

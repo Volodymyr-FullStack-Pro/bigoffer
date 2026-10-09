@@ -70,7 +70,7 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, onClose,
 
   const field = 'brutal bg-card px-2 py-1 font-sans text-sm normal-case';
   return (
-    <dialog ref={dialogRef} onCancel={onDialogCancel} aria-labelledby="panel-title" data-testid="card-panel" className="fixed inset-y-0 right-0 left-auto m-0 h-dvh max-h-none w-full max-w-md overflow-y-auto border-l-2 border-border bg-background p-0 text-foreground shadow-[-4px_0_0_var(--shadow-color)] backdrop:bg-black/30">
+    <dialog ref={dialogRef} onCancel={onDialogCancel} aria-labelledby="panel-title" data-testid="card-panel" className="fixed inset-y-0 right-0 left-auto m-0 h-dvh max-h-none w-full max-w-md overflow-y-auto border-l border-border bg-background p-0 text-foreground shadow-2xl backdrop:bg-black/50">
       <div className="flex flex-col gap-4 p-5">
       <div className="flex items-start justify-between gap-3">
         <div>
@@ -114,7 +114,7 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, onClose,
                 onClick={async () => {
                   if (await attempt(() => setApplicationLabel(card.id, l.id, !on))) onChanged({ labelIds: on ? card.labelIds.filter((x) => x !== l.id) : [...card.labelIds, l.id] });
                 }}
-                className={`rounded-sm border-2 border-border px-2 py-0.5 font-mono text-xs uppercase ${on ? '' : 'opacity-50'}`}
+                className={`rounded-sm border-[1.5px] border-border px-2 py-0.5 font-mono text-xs uppercase ${on ? '' : 'opacity-50'}`}
                 style={{ background: on ? l.color : undefined }}
               >
                 {labelName(l)}
@@ -124,7 +124,7 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, onClose,
         </div>
         <div className="flex gap-2">
           <input value={newLabel} onChange={(e) => setNewLabel(e.target.value)} maxLength={40} placeholder={t('newLabel')} className={`${field} flex-1`} />
-          <input type="color" value={newColor} onChange={(e) => setNewColor(e.target.value)} aria-label={t('labelColor')} className="h-9 w-10 border-2 border-border" />
+          <input type="color" value={newColor} onChange={(e) => setNewColor(e.target.value)} aria-label={t('labelColor')} className="h-9 w-10 border-[1.5px] border-border" />
           <button type="button" onClick={async () => { let l: BoardLabel | null = null; try { l = await createLabel(newLabel, newColor.toUpperCase()); } catch { l = null; } setError(!l); if (l) { onLabelCreated(l); setNewLabel(''); } }} className="brutal brutal-press px-3 text-sm font-semibold">+</button>
         </div>
       </fieldset>
@@ -138,7 +138,7 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, onClose,
         {error && <span role="alert" className="text-sm text-danger">{t('saveError')}</span>}
         <button type="button" data-testid="panel-delete" onClick={() => { if (window.confirm(t('deleteConfirm'))) onDelete(); }} className="ml-auto text-sm text-danger underline">{t('delete')}</button>
       </div>
-      <section data-testid="panel-history" className="flex flex-col gap-1 border-t-2 border-border pt-3">
+      <section data-testid="panel-history" className="flex flex-col gap-1 border-t border-border pt-3">
         <h3 className="font-mono text-xs uppercase">{t('history')}</h3>
         <ul className="flex flex-col gap-1 text-sm">
           {events.map((e, i) => (

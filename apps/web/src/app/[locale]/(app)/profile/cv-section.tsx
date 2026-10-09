@@ -102,7 +102,7 @@ export function CvSection({ cv, aiAvailable, cvLink }: { cv: { fileName: string;
                 {parsed.headline}{parsed.seniority ? ` · ${parsed.seniority}` : ''}{parsed.yearsExperience != null ? ` · ${t('years', { count: parsed.yearsExperience })}` : ''}
               </p>
               <ul className="flex flex-wrap gap-1.5">
-                {parsed.skills.map((s) => <li key={s} data-testid="cv-skill" className="rounded-sm border-2 border-border px-1.5 py-0.5 font-mono text-xs">{s}</li>)}
+                {parsed.skills.map((s) => <li key={s} data-testid="cv-skill" className="rounded-sm border-[1.5px] border-border px-1.5 py-0.5 font-mono text-xs">{s}</li>)}
               </ul>
               <div className="flex flex-wrap gap-2">
                 <form action={createSearchProfileFromCv}>
