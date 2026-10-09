@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { SearchProfile } from './search';
-import { scoreJob, type ScorableJob } from './score';
+import { scoreJob, type ScorableJob, wantedByAnyProfile } from './score';
 
 const profile: SearchProfile = {
   id: 'p1',
@@ -171,6 +171,16 @@ describe('scoreJob role families', () => {
     const r = scoreJob({ ...owner, targetRoles: ['backend'] }, backend)!;
     expect(r.hidden).toBe(false);
     expect(r.breakdown.role).toBe(25);
+  });
+});
+
+describe('wantedByAnyProfile', () => {
+  it('keeps a job one profile shows and drops one every profile hides or ignores', () => {
+    const fe: SearchProfile = { ...profile, keywords: ['frontend'], targetRoles: [] };
+    expect(wantedByAnyProfile([fe], { ...job, title: 'Frontend Engineer', descriptionText: 'React' })).toBe(true);
+    expect(wantedByAnyProfile([fe], { ...job, title: 'Backend Engineer', descriptionText: 'React, Node.js' })).toBe(false);
+    expect(wantedByAnyProfile([fe], { ...job, title: 'Account Executive', descriptionText: 'Sales' })).toBe(false);
+    expect(wantedByAnyProfile([], job)).toBe(false);
   });
 });
 

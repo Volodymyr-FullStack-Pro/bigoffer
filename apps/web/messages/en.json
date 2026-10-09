@@ -495,5 +495,17 @@
     "saved": "Saved",
     "disconnect": "Disconnect",
     "error": "Something went wrong. Please try again."
+  },
+  "searchNow": {
+    "title": "Job search",
+    "hint": "New jobs are picked up automatically every few hours. Want them now?",
+    "start": "Find best jobs now",
+    "searching": "Searching…",
+    "progress": "Scanning boards: {done} / {total} · new matches: {found}",
+    "lastDone": "Last search found {found} new matches.",
+    "cooldown": "A search ran less than 30 minutes ago — try again a bit later.",
+    "failed": "Could not start the search. Try again later.",
+    "autopilot": "Auto-search",
+    "settings": "Search settings"
   }
 }

@@ -62,3 +62,10 @@ export function defaultSources(remoteType: 'any' | 'remote' | 'hybrid' | 'office
 
 /** Sources polled per board/channel from source_boards rather than per search keyword. */
 export const BOARD_SOURCE_IDS: ReadonlySet<SourceId> = new Set<SourceId>(['greenhouse', 'lever', 'ashby', 'workable', 'telegram']);
+
+/**
+ * Sources that return everything a company (or a thread/channel) posts, not search results: only jobs some
+ * active profile wants are stored from them.
+ */
+export const PREFILTERED_SOURCE_IDS: ReadonlySet<SourceId> = new Set<SourceId>([...BOARD_SOURCE_IDS, 'hn']);
+
