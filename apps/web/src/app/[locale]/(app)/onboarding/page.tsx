@@ -23,7 +23,7 @@ export default async function OnboardingPage() {
   const step = 'flex flex-col gap-3';
   return (
     <section data-testid="onboarding" className="flex flex-col gap-6">
-      <h1 className="text-3xl font-black md:text-4xl">{t('title')}</h1>
+      <h1 className="text-3xl font-semibold md:text-4xl">{t('title')}</h1>
       <ol className="flex list-decimal flex-col gap-8 pl-6 marker:font-bold">
         <li className={step}>
           <h2 className="font-display text-lg font-bold">{t('stepCv')}</h2>

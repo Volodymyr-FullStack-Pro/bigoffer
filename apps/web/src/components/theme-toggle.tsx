@@ -26,7 +26,7 @@ export function ThemeToggle({ labels }: { labels: Record<ThemeName, string> }) {
       aria-label={labels[current]}
       title={labels[current]}
       onClick={() => setTheme(next)}
-      className="brutal brutal-press grid size-10 place-items-center"
+      className="brutal-press grid size-9 place-items-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground"
     >
       <Icon className="size-5" aria-hidden />
     </button>

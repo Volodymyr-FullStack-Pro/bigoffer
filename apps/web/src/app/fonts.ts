@@ -1,15 +1,6 @@
-import { JetBrains_Mono, Onest, Unbounded } from 'next/font/google';
+import { Inter } from 'next/font/google';
 
-const unbounded = Unbounded({
-  subsets: ['latin', 'cyrillic'],
-  variable: '--font-unbounded',
-  display: 'swap',
-});
-const onest = Onest({ subsets: ['latin', 'cyrillic'], variable: '--font-onest', display: 'swap' });
-const jetbrains = JetBrains_Mono({
-  subsets: ['latin', 'cyrillic'],
-  variable: '--font-jetbrains',
-  display: 'swap',
-});
+// Fallback for non-Apple devices; Apple devices render SF Pro via the system stack (see globals.css).
+const inter = Inter({ subsets: ['latin', 'cyrillic'], variable: '--font-inter', display: 'swap' });
 
-export const fontVariables = `${unbounded.variable} ${onest.variable} ${jetbrains.variable}`;
+export const fontVariables = inter.variable;

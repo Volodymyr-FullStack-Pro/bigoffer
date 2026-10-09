@@ -28,7 +28,7 @@ const input = 'brutal bg-card px-3 py-2 outline-none focus:ring-2 focus:ring-bra
 function TextField({ name, label, hint, defaultValue, invalid }: { name: string; label: string; hint?: string; defaultValue: string; invalid: boolean }) {
   return (
     <label className="flex flex-col gap-1">
-      <span className="font-mono text-xs uppercase">{label}</span>
+      <span className="font-mono text-xs">{label}</span>
       <input name={name} defaultValue={defaultValue} aria-invalid={invalid} className={`${input} ${invalid ? 'border-danger' : ''}`} />
       {hint && <span className="text-xs text-muted-foreground">{hint}</span>}
     </label>
@@ -49,7 +49,7 @@ function SourceCheckbox({ source, checked }: { source: SourceInfo; checked: bool
           aria-describedby={source.id === 'linkedin' ? 'source-linkedin-warning' : undefined}
         />
         {source.name}
-        {source.beta && <span className="brutal px-1 font-mono text-[10px] uppercase">{t('beta')}</span>}
+        {source.beta && <span className="brutal px-1 font-mono text-[10px]">{t('beta')}</span>}
         {source.lowYield && <span data-testid={`low-yield-${source.id}`} className="text-xs text-muted-foreground">({t('lowYield')})</span>}
         {source.requiresKey && <span className="text-xs text-muted-foreground">({t('needsKey')})</span>}
       </label>
@@ -71,7 +71,7 @@ export function SearchProfileForm({ values }: { values: SearchProfileValues }) {
         <TextField name="name" label={t('name')} defaultValue={values.name} invalid={invalid.has('name')} />
         <TextField name="keywords" label={t('keywords')} hint={t('keywordsHint')} defaultValue={values.keywords.join(', ')} invalid={invalid.has('keywords')} />
         <fieldset className="flex flex-col gap-2" data-testid="target-roles">
-          <legend className="mb-1 font-mono text-xs uppercase">{t('targetRoles')}</legend>
+          <legend className="mb-1 font-mono text-xs">{t('targetRoles')}</legend>
           <div className="flex flex-wrap gap-2">
             {ROLE_FAMILIES.map((role) => (
               <label key={role} className="mono-label flex cursor-pointer items-center gap-2 rounded-full border border-border px-3 py-1 has-checked:border-brand has-checked:bg-brand has-checked:text-brand-foreground">
@@ -86,7 +86,7 @@ export function SearchProfileForm({ values }: { values: SearchProfileValues }) {
         <TextField name="excludeKeywords" label={t('exclude')} hint={t('excludeHint')} defaultValue={values.excludeKeywords.join(', ')} invalid={invalid.has('excludeKeywords')} />
 
         <fieldset className="flex flex-wrap gap-3">
-          <legend className="mb-1 font-mono text-xs uppercase">{t('seniority')}</legend>
+          <legend className="mb-1 font-mono text-xs">{t('seniority')}</legend>
           {SENIORITIES.map((level) => (
             <label key={level} className="flex items-center gap-2">
               <input type="checkbox" name="seniority" value={level} defaultChecked={values.seniority.includes(level)} />
@@ -97,7 +97,7 @@ export function SearchProfileForm({ values }: { values: SearchProfileValues }) {
 
         <div className="grid gap-4 md:grid-cols-3">
           <label className="flex flex-col gap-1">
-            <span className="font-mono text-xs uppercase">{t('remoteType')}</span>
+            <span className="font-mono text-xs">{t('remoteType')}</span>
             <select name="remoteType" defaultValue={values.remoteType} className={input}>
               {SEARCH_REMOTE_TYPES.map((r) => (
                 <option key={r} value={r}>
@@ -108,14 +108,14 @@ export function SearchProfileForm({ values }: { values: SearchProfileValues }) {
           </label>
           <TextField name="locations" label={t('locations')} defaultValue={values.locations.join(', ')} invalid={invalid.has('locations')} />
           <label className="flex flex-col gap-1">
-            <span className="font-mono text-xs uppercase">{t('salaryMin')}</span>
+            <span className="font-mono text-xs">{t('salaryMin')}</span>
             <input name="salaryMinUsd" type="number" min={0} defaultValue={values.salaryMinUsd ?? ''} className={input} />
           </label>
         </div>
 
         <div className="flex flex-col gap-3">
           <div>
-            <span className="font-mono text-xs uppercase">{t('sources')}</span>
+            <span className="font-mono text-xs">{t('sources')}</span>
             <p className="text-xs text-muted-foreground">{t('sourcesHint')}</p>
           </div>
           {MARKETS.map((market) => (

@@ -17,7 +17,7 @@ export function LocaleSwitcher({
   const [pending, startTransition] = useTransition();
 
   return (
-    <div role="group" aria-label={t('label')} className="brutal flex overflow-hidden p-0">
+    <div role="group" aria-label={t('label')} className="flex rounded-full bg-muted p-0.5">
       {LOCALES.map((locale) => (
         <button
           key={locale}
@@ -31,8 +31,8 @@ export function LocaleSwitcher({
               router.replace(pathname, { locale });
             })
           }
-          className={`px-2.5 py-1.5 font-mono text-xs uppercase ${
-            current === locale ? 'bg-brand text-brand-foreground' : 'hover:bg-muted'
+          className={`rounded-full px-2.5 py-1 text-xs font-medium uppercase transition-colors ${
+            current === locale ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
           }`}
         >
           {locale}

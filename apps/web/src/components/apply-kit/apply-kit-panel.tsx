@@ -101,13 +101,13 @@ export function ApplyKitPanel({ jobId, locale, onApplied, hidePeopleSearch }: { 
 
   return (
     <section data-testid="apply-kit" aria-label={t('title')} className="flex flex-col gap-4 border-t border-border pt-4">
-      <h3 className="font-display text-lg font-black">{t('title')}</h3>
+      <h3 className="font-display text-lg font-semibold">{t('title')}</h3>
       {!data.aiAvailable && <p data-testid="kit-error" className="text-sm text-warning">{t('err_ai_unavailable')}</p>}
       {data.aiAvailable && !data.hasCv && <p data-testid="kit-error" className="text-sm text-warning">{t('err_no_cv')}</p>}
       {error && <p data-testid="kit-error" role="alert" className="text-sm text-danger">{t(`err_${error}`)}</p>}
 
       <div className="flex flex-wrap items-end gap-2">
-        <label className="flex flex-col gap-1 font-mono text-xs uppercase">
+        <label className="flex flex-col gap-1 font-mono text-xs">
           {t('language')}
           <select value={lang} onChange={(e) => { const v = e.target.value as Lang; setLang(v); saveUiPrefs({ kitLang: v }); }} className={field}>
             {(['auto', 'en', 'uk', 'ru'] as const).map((l) => <option key={l} value={l}>{t(`lang_${l}`)}</option>)}
@@ -126,9 +126,9 @@ export function ApplyKitPanel({ jobId, locale, onApplied, hidePeopleSearch }: { 
 
       {kit && (
         <>
-          <label className="flex flex-col gap-1 font-mono text-xs uppercase">
+          <label className="flex flex-col gap-1 font-mono text-xs">
             {t('letter')}
-            <textarea data-testid="kit-letter" value={letter} maxLength={6000} onChange={(e) => setLetter(e.target.value)} className={`${field} min-h-40 font-sans normal-case`} />
+            <textarea data-testid="kit-letter" value={letter} maxLength={6000} onChange={(e) => setLetter(e.target.value)} className={`${field} min-h-40 font-sans`} />
           </label>
           {/* Copy, then go straight to the posting to paste it. */}
           <div className="flex flex-wrap gap-2">
@@ -142,7 +142,7 @@ export function ApplyKitPanel({ jobId, locale, onApplied, hidePeopleSearch }: { 
             )}
           </div>
           <div>
-            <h4 className="font-mono text-xs uppercase">{t('requirements')}</h4>
+            <h4 className="font-mono text-xs">{t('requirements')}</h4>
             <ul className="flex flex-col gap-1 text-sm">
               {kit.requirements.map((r, i) => (
                 <li key={`${i}-${r.text}`} data-testid="kit-requirement" data-status={r.status}>
@@ -157,7 +157,7 @@ export function ApplyKitPanel({ jobId, locale, onApplied, hidePeopleSearch }: { 
             )}
           </div>
           <div className="flex flex-col gap-1">
-            <h4 className="font-mono text-xs uppercase">{t('short')}</h4>
+            <h4 className="font-mono text-xs">{t('short')}</h4>
             <p data-testid="kit-short" className="brutal p-2 text-sm">{kit.shortMessage}</p>
             <button type="button" data-testid="kit-copy-short" onClick={() => void copy('short', kit.shortMessage)} className="brutal brutal-press self-start px-3 py-1 text-sm font-semibold">
               {copied === 'short' ? `✓ ${t('copied')}` : t('copyShort')}
@@ -168,16 +168,16 @@ export function ApplyKitPanel({ jobId, locale, onApplied, hidePeopleSearch }: { 
       )}
 
       <div className="flex flex-col gap-1">
-        <h4 className="font-mono text-xs uppercase">{t('contacts')}</h4>
+        <h4 className="font-mono text-xs">{t('contacts')}</h4>
         <ContactChips contacts={data.contacts} cvLink={data.cvLink} />
       </div>
 
       {!hidePeopleSearch && <PeopleSearch company={data.company} isPlaceholder={data.companyIsPlaceholder} />}
 
       <div className="flex flex-col gap-2">
-        <label className="flex flex-col gap-1 font-mono text-xs uppercase">
+        <label className="flex flex-col gap-1 font-mono text-xs">
           {t('formQuestions')}
-          <textarea data-testid="kit-form-input" value={formText} maxLength={10000} onChange={(e) => setFormText(e.target.value)} placeholder={t('formPlaceholder')} className={`${field} min-h-20 font-sans normal-case`} />
+          <textarea data-testid="kit-form-input" value={formText} maxLength={10000} onChange={(e) => setFormText(e.target.value)} placeholder={t('formPlaceholder')} className={`${field} min-h-20 font-sans`} />
         </label>
         <button
           type="button"
@@ -202,7 +202,7 @@ export function ApplyKitPanel({ jobId, locale, onApplied, hidePeopleSearch }: { 
         </button>
         {answers.map((a, i) => (
           <div key={`${i}-${a.question}`} data-testid="kit-answer" data-from-bank={a.fromBank} className="flex flex-col gap-1 border-l-4 border-border pl-3">
-            <p className="text-sm font-semibold">{a.question}{a.fromBank && <span className="ml-2 font-mono text-[10px] uppercase text-muted-foreground">{t('fromBank')}</span>}</p>
+            <p className="text-sm font-semibold">{a.question}{a.fromBank && <span className="ml-2 font-mono text-[10px] text-muted-foreground">{t('fromBank')}</span>}</p>
             <textarea value={a.answer} onChange={(e) => setAnswers((list) => list.map((x, j) => (j === i ? { ...x, answer: e.target.value } : x)))} className={`${field} min-h-14`} aria-label={a.question} />
             <div className="flex gap-2">
               <button type="button" onClick={() => void copy(`a${i}`, a.answer)} className="text-xs underline">{copied === `a${i}` ? `✓ ${t('copied')}` : t('copy')}</button>

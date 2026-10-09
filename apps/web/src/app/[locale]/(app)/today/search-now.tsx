@@ -70,7 +70,7 @@ export function SearchNow({ initialStatus, autopilot: initialAutopilot }: { init
   return (
     <section data-testid="search-now" aria-label={t('title')} className="brutal flex flex-col gap-3 p-4 md:flex-row md:items-center md:justify-between">
       <div className="flex flex-col gap-1">
-        <h2 className="font-display text-lg font-black">{t('title')}</h2>
+        <h2 className="font-display text-lg font-semibold">{t('title')}</h2>
         {running ? (
           <p role="status" data-testid="search-now-progress" className="font-mono text-sm text-muted-foreground">
             {t('progress', { done, total, found: status?.newMatches ?? 0 })}

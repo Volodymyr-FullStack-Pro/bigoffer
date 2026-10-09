@@ -48,6 +48,10 @@ describe('detectRoleFamily', () => {
 });
 
 describe('detectRoleFamilies / roleOffTarget', () => {
+  it('ignores a family the title rules out', () => {
+    expect(detectRoleFamilies('Product Engineer (Product Manager role, not a Full-stack role)')).toEqual(['management']);
+    expect(detectRoleFamilies('Frontend Engineer (no backend position)')).toEqual(['frontend']);
+  });
   it('keeps every family a mixed title names', () => {
     expect(detectRoleFamilies('Senior React / React Native Developer')).toEqual(['mobile', 'frontend']);
   });

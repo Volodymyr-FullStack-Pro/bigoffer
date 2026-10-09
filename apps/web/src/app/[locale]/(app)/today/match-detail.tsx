@@ -59,9 +59,9 @@ export function MatchDetail({ match, onAction, onApplied, showDescription = true
     <article data-testid="match-detail" className="flex flex-col gap-4">
       <div className="flex flex-col gap-2">
         <ScoreMeter score={match.score} label={t('match')} />
-        <h2 className="font-display text-2xl font-black leading-tight">{match.title}</h2>
+        <h2 className="font-display text-2xl font-semibold leading-tight">{match.title}</h2>
         <p className="text-muted-foreground">{match.company}</p>
-        <p className="flex flex-wrap gap-x-4 gap-y-1 font-mono text-xs uppercase text-muted-foreground">
+        <p className="flex flex-wrap gap-x-4 gap-y-1 font-mono text-xs text-muted-foreground">
           <span>{t(`remote_${match.remoteType}`)}</span>
           {match.location && <span>{match.location}</span>}
           {match.seniority && <span>{t(`seniority_${match.seniority}`)}</span>}
@@ -94,7 +94,7 @@ export function MatchDetail({ match, onAction, onApplied, showDescription = true
         <dl className="grid grid-cols-5 gap-2 font-mono text-xs" aria-label={tf('breakdown')}>
           {(['skills', 'role', 'seniority', 'location', 'salary'] as const).map((k) => (
             <div key={k} className="flex flex-col">
-              <dt className="uppercase text-muted-foreground">{tf(`part_${k}`)}</dt>
+              <dt className="text-muted-foreground">{tf(`part_${k}`)}</dt>
               <dd className="font-bold">{match.breakdown![k]}</dd>
             </div>
           ))}

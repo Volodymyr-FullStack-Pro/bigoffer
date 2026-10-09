@@ -144,9 +144,9 @@ export function Feed({
   const savedCount = done.filter((d) => d.action !== 'hide').length;
 
   const select = (testId: string, label: string, value: string, onChange: (v: string) => void, options: { value: string; label: string }[]) => (
-    <label className="flex flex-col gap-1 font-mono text-xs uppercase">
+    <label className="flex flex-col gap-1 font-mono text-xs">
       {label}
-      <select data-testid={testId} value={value} onChange={(e) => onChange(e.target.value)} className="brutal bg-card px-2 py-1 font-sans text-sm normal-case">
+      <select data-testid={testId} value={value} onChange={(e) => onChange(e.target.value)} className="brutal bg-card px-2 py-1 font-sans text-sm">
         {options.map((o) => (
           <option key={o.value} value={o.value}>{o.label}</option>
         ))}
@@ -184,7 +184,7 @@ export function Feed({
 
       {visible.length === 0 ? (
         <div data-testid="feed-empty" className="brutal flex max-w-xl flex-col gap-3 p-6">
-          <p className="font-display text-xl font-black">{t('empty')}</p>
+          <p className="font-display text-xl font-semibold">{t('empty')}</p>
           <p className="text-muted-foreground">{t('emptyStats', { saved: savedCount, hidden: processed - savedCount })}</p>
           <Link href="/board" className="brutal brutal-press self-start bg-brand px-4 py-2 font-semibold text-brand-foreground">{t('toBoard')}</Link>
         </div>
