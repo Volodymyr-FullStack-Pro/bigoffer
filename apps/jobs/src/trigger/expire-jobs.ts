@@ -1,7 +1,7 @@
 import { logger, schedules } from '@trigger.dev/sdk';
 import { getDb } from '../db';
 import { discoverBoards } from '../pipeline/boards';
-import { expireJobs, failStaleRuns } from '../pipeline/expire';
+import { expireJobs, failStaleRuns, purgeExpiredJobs } from '../pipeline/expire';
 import { pipelineDeps } from '../runtime';
 
 export const expireJobsTask = schedules.task({
@@ -13,13 +13,14 @@ export const expireJobsTask = schedules.task({
     const now = new Date();
     const expired = await expireJobs(db, now);
     const timedOut = await failStaleRuns(db, now);
+    const purged = await purgeExpiredJobs(db, now);
     let discovered: { checked: number; added: number } | null = null;
     try {
       discovered = await discoverBoards(db, pipelineDeps());
     } catch (err) {
       logger.error('board discovery failed', { error: err instanceof Error ? err.message : String(err) });
     }
-    logger.info('expired jobs', { expired, timedOut, discovered });
-    return { expired, timedOut, discovered };
+    logger.info('expired jobs', { expired, purged, timedOut, discovered });
+    return { expired, purged, timedOut, discovered };
   },
 });

@@ -428,13 +428,13 @@ isOneToOne: false
                   ]
                 },"search_profiles": {
                   Row: {
-                    "created_at": string,"exclude_keywords": (string)[],"id": string,"is_active": boolean,"keywords": (string)[],"locations": (string)[],"name": string,"remote_type": string,"role_id": string | null,"salary_min_usd": number | null,"seniority": (string)[],"skills": (string)[],"sources": (string)[] | null,"updated_at": string,"user_id": string
+                    "created_at": string,"exclude_keywords": (string)[],"id": string,"is_active": boolean,"keywords": (string)[],"locations": (string)[],"name": string,"remote_type": string,"role_id": string | null,"salary_min_usd": number | null,"seniority": (string)[],"skills": (string)[],"sources": (string)[] | null,"target_roles": (string)[],"updated_at": string,"user_id": string
                   }
                   Insert: {
-                    "created_at"?: string,"exclude_keywords"?: (string)[],"id"?: string,"is_active"?: boolean,"keywords"?: (string)[],"locations"?: (string)[],"name": string,"remote_type"?: string,"role_id"?: string | null,"salary_min_usd"?: number | null,"seniority"?: (string)[],"skills"?: (string)[],"sources"?: (string)[] | null,"updated_at"?: string,"user_id": string
+                    "created_at"?: string,"exclude_keywords"?: (string)[],"id"?: string,"is_active"?: boolean,"keywords"?: (string)[],"locations"?: (string)[],"name": string,"remote_type"?: string,"role_id"?: string | null,"salary_min_usd"?: number | null,"seniority"?: (string)[],"skills"?: (string)[],"sources"?: (string)[] | null,"target_roles"?: (string)[],"updated_at"?: string,"user_id": string
                   }
                   Update: {
-                    "created_at"?: string,"exclude_keywords"?: (string)[],"id"?: string,"is_active"?: boolean,"keywords"?: (string)[],"locations"?: (string)[],"name"?: string,"remote_type"?: string,"role_id"?: string | null,"salary_min_usd"?: number | null,"seniority"?: (string)[],"skills"?: (string)[],"sources"?: (string)[] | null,"updated_at"?: string,"user_id"?: string
+                    "created_at"?: string,"exclude_keywords"?: (string)[],"id"?: string,"is_active"?: boolean,"keywords"?: (string)[],"locations"?: (string)[],"name"?: string,"remote_type"?: string,"role_id"?: string | null,"salary_min_usd"?: number | null,"seniority"?: (string)[],"skills"?: (string)[],"sources"?: (string)[] | null,"target_roles"?: (string)[],"updated_at"?: string,"user_id"?: string
                   }
                   Relationships: [
                     {
@@ -587,6 +587,9 @@ isOneToOne: false
                            },
 "ping_application":
 { Args: { "p_id": string }; Returns: undefined
+                           },
+"purge_expired_jobs":
+{ Args: { "p_cutoff": string,"p_limit"?: number }; Returns: number
                            },
 "record_ai_usage":
 { Args: { "p_day": string,"p_input": number,"p_model": string,"p_output": number,"p_requests": number,"p_sensitivity": string }; Returns: undefined

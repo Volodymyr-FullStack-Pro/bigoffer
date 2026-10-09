@@ -1,5 +1,7 @@
 import {
   type NormalizedJob,
+  ROLE_FAMILIES,
+  type RoleFamily,
   type ScorableJob,
   type SearchProfile,
   SENIORITIES,
@@ -21,18 +23,20 @@ type ProfileRow = {
   remote_type: string;
   salary_min_usd: number | null;
   sources: string[] | null;
+  target_roles?: string[];
   is_active?: boolean;
   profiles?: { country: string | null } | null;
 };
 
 const PROFILE_COLUMNS =
-  'id, user_id, keywords, skills, exclude_keywords, seniority, locations, remote_type, salary_min_usd, sources, is_active, profiles(country)';
+  'id, user_id, keywords, target_roles, skills, exclude_keywords, seniority, locations, remote_type, salary_min_usd, sources, is_active, profiles(country)';
 
 export function toSearchProfile(row: ProfileRow): SearchProfile {
   return {
     id: row.id,
     userId: row.user_id,
     keywords: row.keywords,
+    targetRoles: (row.target_roles ?? []).filter((r): r is RoleFamily => (ROLE_FAMILIES as readonly string[]).includes(r)),
     skills: row.skills,
     excludeKeywords: row.exclude_keywords,
     seniority: row.seniority.filter((s): s is Seniority => (SENIORITIES as readonly string[]).includes(s)),
@@ -307,7 +311,7 @@ export async function getDueQueryIds(
 }
 
 const SCORABLE_COLUMNS =
-  'id, title, description_text, tags, remote_type, seniority, location, salary_min_usd, salary_max_usd, skills, is_job, remote_regions';
+  'id, title, description_text, tags, remote_type, seniority, location, salary_min_usd, salary_max_usd, skills, is_job, remote_regions, role';
 
 type ScorableRow = {
   id: string;
@@ -322,6 +326,7 @@ type ScorableRow = {
   skills: string[];
   is_job: boolean | null;
   remote_regions: string[];
+  role: string | null;
 };
 
 function toScorableJob(j: ScorableRow): ScorableJob {
@@ -337,6 +342,7 @@ function toScorableJob(j: ScorableRow): ScorableJob {
     skills: j.skills,
     isJob: j.is_job,
     remoteRegions: j.remote_regions,
+    role: j.role,
   };
 }
 

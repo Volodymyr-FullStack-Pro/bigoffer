@@ -10,7 +10,6 @@ const KEY = /^[a-z0-9_]{1,40}$/;
 
 const bankInput = z.object({ key: z.string().regex(KEY).nullable(), question: z.string(), answer: z.string(), locale: z.string() });
 const keyInput = z.string().regex(KEY);
-const templateInput = z.object({ locale: z.string(), body: z.string() });
 
 function revalidate() {
   revalidatePath('/[locale]/profile', 'page');
@@ -48,15 +47,3 @@ export async function deleteBankAnswer(key: string): Promise<boolean> {
   return !error && (data?.length ?? 0) > 0;
 }
 
-export async function saveLetterTemplate(locale: Locale, body: string): Promise<boolean> {
-  const parsed = templateInput.safeParse({ locale, body });
-  const userId = await getUserId();
-  if (!parsed.success || !userId || !isLocale(parsed.data.locale)) return false;
-  const text = parsed.data.body.trim().slice(0, 5000);
-  if (!text) return false;
-  const tplLocale: Locale = parsed.data.locale;
-  const supabase = await createClient();
-  const { error } = await supabase.from('letter_templates').upsert({ user_id: userId, locale: tplLocale, body: text }, { onConflict: 'user_id,locale' });
-  revalidate();
-  return !error;
-}

@@ -71,14 +71,3 @@ test('answer bank: per-row save feedback and presets', async ({ page }) => {
   await expect(format.getByRole('textbox')).toHaveValue('Remote, EU time zones');
 });
 
-test('letter template: recommended template fills the editor', async ({ page }) => {
-  await page.goto('/en/profile');
-  const section = page.getByTestId('letter-template');
-  await section.getByRole('button', { name: 'Use recommended template' }).click();
-  await expect(page.getByTestId('template-body')).toHaveValue(/^Hi \[Hiring manager name or team\],/);
-  await expect(page.getByTestId('template-body')).toHaveValue(/\[Phone\] · \[LinkedIn\] · \[GitHub\]$/);
-  await page.getByTestId('template-save').click();
-  await expect(section.getByRole('status')).toHaveText('Saved.');
-  await page.reload();
-  await expect(page.getByTestId('template-body')).toHaveValue(/I can start immediately/);
-});

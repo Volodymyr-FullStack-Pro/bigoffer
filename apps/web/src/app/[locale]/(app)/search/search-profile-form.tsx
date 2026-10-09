@@ -1,6 +1,6 @@
 'use client';
 
-import { SEARCH_REMOTE_TYPES, SENIORITIES, SOURCE_CATALOG, type SourceInfo } from '@jp/core';
+import { ROLE_FAMILIES, SEARCH_REMOTE_TYPES, SENIORITIES, SOURCE_CATALOG, type SourceInfo } from '@jp/core';
 import { useTranslations } from 'next-intl';
 import { useActionState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -10,6 +10,7 @@ export type SearchProfileValues = {
   id?: string;
   name: string;
   keywords: string[];
+  targetRoles: string[];
   skills: string[];
   excludeKeywords: string[];
   seniority: string[];
@@ -69,6 +70,18 @@ export function SearchProfileForm({ values }: { values: SearchProfileValues }) {
         {values.id && <input type="hidden" name="id" value={values.id} />}
         <TextField name="name" label={t('name')} defaultValue={values.name} invalid={invalid.has('name')} />
         <TextField name="keywords" label={t('keywords')} hint={t('keywordsHint')} defaultValue={values.keywords.join(', ')} invalid={invalid.has('keywords')} />
+        <fieldset className="flex flex-col gap-2" data-testid="target-roles">
+          <legend className="mb-1 font-mono text-xs uppercase">{t('targetRoles')}</legend>
+          <div className="flex flex-wrap gap-2">
+            {ROLE_FAMILIES.map((role) => (
+              <label key={role} className="mono-label flex cursor-pointer items-center gap-2 rounded-full border border-border px-3 py-1 has-checked:border-brand has-checked:bg-brand has-checked:text-brand-foreground">
+                <input type="checkbox" name="targetRoles" value={role} defaultChecked={values.targetRoles.includes(role)} data-testid={`role-${role}`} className="sr-only" />
+                {t(`role_${role}`)}
+              </label>
+            ))}
+          </div>
+          <span className="text-xs text-muted-foreground">{t('targetRolesHint')}</span>
+        </fieldset>
         <TextField name="skills" label={t('skills')} hint={t('skillsHint')} defaultValue={values.skills.join(', ')} invalid={invalid.has('skills')} />
         <TextField name="excludeKeywords" label={t('exclude')} hint={t('excludeHint')} defaultValue={values.excludeKeywords.join(', ')} invalid={invalid.has('excludeKeywords')} />
 

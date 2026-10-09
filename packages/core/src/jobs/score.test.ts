@@ -6,6 +6,7 @@ const profile: SearchProfile = {
   id: 'p1',
   userId: 'u1',
   keywords: ['full stack', 'react developer'],
+  targetRoles: [],
   skills: ['React', 'Node.js', 'PostgreSQL', 'Go'],
   excludeKeywords: ['1C', 'gambling'],
   seniority: ['middle', 'senior'],
@@ -142,3 +143,34 @@ describe('scoreJob', () => {
     expect(r.breakdown.excludedBy).toBe('gambling');
   });
 });
+
+describe('scoreJob role families', () => {
+  const owner: SearchProfile = { ...profile, keywords: ['full stack', 'react', 'node.js', 'next.js', 'frontend'], skills: ['React', 'TypeScript', 'Node.js', 'NestJS'] };
+  const backend: ScorableJob = { ...job, title: 'Senior Backend Developer (Node.js + TypeScript)', descriptionText: 'Node.js, NestJS, TypeScript, PostgreSQL' };
+
+  it('hides a backend job for a frontend/fullstack search (keywords imply the targets)', () => {
+    const r = scoreJob(owner, backend)!;
+    expect(r.hidden).toBe(true);
+    expect(r.breakdown.excludedBy).toBe('role');
+  });
+
+  it('hides by the AI role when the title is generic', () => {
+    const r = scoreJob(owner, { ...backend, title: 'Software Engineer II', role: 'Backend Developer' })!;
+    expect(r.breakdown.excludedBy).toBe('role');
+  });
+
+  it('keeps a generic title but gives less role credit than a matching family', () => {
+    const generic = scoreJob(owner, { ...backend, title: 'Software Engineer (Node.js/React)' })!;
+    const full = scoreJob(owner, { ...backend, title: 'Full Stack Engineer (Node.js/React)' })!;
+    expect(generic.hidden).toBe(false);
+    expect(generic.breakdown.role).toBe(18);
+    expect(full.breakdown.role).toBe(25);
+  });
+
+  it('explicit target roles override the keywords', () => {
+    const r = scoreJob({ ...owner, targetRoles: ['backend'] }, backend)!;
+    expect(r.hidden).toBe(false);
+    expect(r.breakdown.role).toBe(25);
+  });
+});
+

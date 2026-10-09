@@ -7,7 +7,6 @@ import { createClient } from '@/lib/supabase/server';
 import { AnswerBank } from '../profile/answer-bank';
 import { CvSection } from '../profile/cv-section';
 import { loadProfileExtras } from '../profile/extras-data';
-import { LetterTemplate } from '../profile/letter-template';
 import { finishOnboarding } from './onboarding-actions';
 
 // Server Actions on this page inherit it: the CV read (registerCv) may take up to 2 min per attempt (PARSE_CV_TIMEOUT_MS)
@@ -20,7 +19,7 @@ export default async function OnboardingPage() {
   const rawLocale = await getLocale();
   const locale = isLocale(rawLocale) ? rawLocale : 'en';
   const supabase = await createClient();
-  const { cv, cvLink, answers, template } = await loadProfileExtras(supabase, userId, locale);
+  const { cv, cvLink, answers } = await loadProfileExtras(supabase, userId, locale);
   const step = 'flex flex-col gap-3';
   return (
     <section data-testid="onboarding" className="flex flex-col gap-6">
@@ -33,10 +32,6 @@ export default async function OnboardingPage() {
         <li className={step}>
           <h2 className="font-display text-lg font-bold">{t('stepSearch')}</h2>
           <Link href="/search" className="brutal brutal-press self-start px-4 py-2 font-semibold">{t('manualSearch')}</Link>
-        </li>
-        <li className={step}>
-          <h2 className="font-display text-lg font-bold">{t('stepTemplate')}</h2>
-          <LetterTemplate body={template} locale={locale} />
         </li>
         <li className={step}>
           <h2 className="font-display text-lg font-bold">{t('stepAnswers')}</h2>
