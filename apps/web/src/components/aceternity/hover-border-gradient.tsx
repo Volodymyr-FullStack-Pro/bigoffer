@@ -14,7 +14,7 @@ const MOVING: Record<Direction, string> = {
   BOTTOM: 'radial-gradient(20.7% 50% at 50% 100%, hsl(0, 0%, 100%) 0%, rgba(255, 255, 255, 0) 100%)',
   RIGHT: 'radial-gradient(16.2% 41.2% at 100% 50%, hsl(0, 0%, 100%) 0%, rgba(255, 255, 255, 0) 100%)',
 };
-const HIGHLIGHT = 'radial-gradient(75% 181% at 50% 50%, #2997ff 0%, rgba(255, 255, 255, 0) 100%)';
+const HIGHLIGHT = 'radial-gradient(75% 181% at 50% 50%, #ffffff 0%, rgba(255, 255, 255, 0) 100%)';
 
 /** A pill button whose border carries a light that travels around it; brand-filled inside. */
 export function HoverBorderGradient({
@@ -39,7 +39,7 @@ export function HoverBorderGradient({
       type="button"
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      className={cn('group relative flex w-fit items-center justify-center overflow-visible rounded-full bg-brand/40 p-px transition disabled:opacity-60', containerClassName)}
+      className={cn('group relative flex w-fit items-center justify-center overflow-visible rounded-full bg-brand-gradient p-[1.5px] transition disabled:opacity-60', containerClassName)}
       {...props}
     >
       <span className={cn('relative z-10 rounded-[inherit] bg-brand px-5 py-2 text-[15px] font-medium text-brand-foreground', className)}>{children}</span>

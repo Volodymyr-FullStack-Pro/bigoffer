@@ -2,7 +2,8 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* Apple-inspired system (apple.com tokens): SF Pro type, #f5f5f7 / #000 canvases, #0071e3 actions, glass chrome. */
+/* Apple-inspired canvas (SF Pro, #f5f5f7 / #000, glass chrome) with monochrome actions; colour comes only from the
+   brand gradient (logo) and semantic states. */
 :root {
   --background: #f5f5f7;
   --foreground: #1d1d1f;
@@ -11,9 +12,10 @@
   --muted-foreground: #6e6e73;
   --border: #d2d2d7;
   --border-strong: #1d1d1f;
-  --brand: #0071e3;
+  --brand: #1d1d1f;
   --brand-foreground: #ffffff;
-  --link: #0066cc;
+  --link: #1d1d1f;
+  --brand-gradient: linear-gradient(120deg, #2997ff 0%, #7d5cf0 55%, #ff375f 100%);
   --ai: #8944ab;
   --ai-foreground: #ffffff;
   --success: #1f7a37;
@@ -34,7 +36,9 @@
   --muted-foreground: #98989d;
   --border: #38383a;
   --border-strong: #f5f5f7;
-  --link: #2997ff;
+  --brand: #f5f5f7;
+  --brand-foreground: #000000;
+  --link: #f5f5f7;
   --ai: #bf5af2;
   --ai-foreground: #000000;
   --success: #30d158;
@@ -160,6 +164,10 @@
     border: 1px solid var(--glass-border);
     -webkit-backdrop-filter: saturate(180%) blur(20px);
     backdrop-filter: saturate(180%) blur(20px);
+  }
+  /* The one place colour lives: brand moments (CTA ring, selection bar, progress, hero word). */
+  .bg-brand-gradient {
+    background-image: var(--brand-gradient);
   }
   .mono-label {
     font-size: 14px;
