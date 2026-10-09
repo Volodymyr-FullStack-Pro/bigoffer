@@ -3,6 +3,7 @@
 import { isLocale, type Locale, sourceInfo } from '@jp/core';
 import { useFormatter, useLocale, useNow, useTranslations } from 'next-intl';
 import { useState } from 'react';
+import { TextGenerateEffect } from '@/components/aceternity/text-generate-effect';
 import { ApplyKitPanel } from '@/components/apply-kit/apply-kit-panel';
 import { PeopleSearch } from '@/components/apply-kit/people-search';
 import { ScoreMeter } from '@/components/ui/score-meter';
@@ -69,7 +70,7 @@ export function MatchDetail({ match, onAction, onApplied, showDescription = true
           <span suppressHydrationWarning>{format.relativeTime(new Date(match.createdAt), now)}</span>
         </p>
       </div>
-      {match.summary && <p data-testid="match-summary" className="text-sm">{match.summary}</p>}
+      {match.summary && <TextGenerateEffect key={`summary-${match.id}`} testId="match-summary" words={match.summary} className="text-[15px] leading-relaxed" />}
       {match.why && (
         <p data-testid="match-why" className="border-l-4 border-ai pl-3 text-sm">
           <span className="font-semibold">{t('why')}: </span>
@@ -79,12 +80,12 @@ export function MatchDetail({ match, onAction, onApplied, showDescription = true
       {(match.skills.length > 0 || match.missingSkills.length > 0) && (
         <ul className="flex flex-wrap gap-1.5" aria-label={tf('skills')}>
           {match.skills.map((s) => (
-            <li key={s.name} data-testid="match-skill" data-matched={s.matched} className={`rounded-sm border-[1.5px] border-border px-1.5 py-0.5 font-mono text-xs ${s.matched ? 'bg-brand text-brand-foreground' : ''}`}>
+            <li key={s.name} data-testid="match-skill" data-matched={s.matched} className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${s.matched ? 'bg-brand/15 text-link' : 'bg-muted text-muted-foreground'}`}>
               {s.matched ? '✓ ' : ''}{s.name}
             </li>
           ))}
           {match.missingSkills.map((name) => (
-            <li key={`missing-${name}`} className="rounded-sm border-[1.5px] border-dashed border-border px-1.5 py-0.5 font-mono text-xs text-muted-foreground">
+            <li key={`missing-${name}`} className="rounded-full border border-dashed border-border px-2.5 py-0.5 text-xs text-muted-foreground">
               ✗ {name}
             </li>
           ))}

@@ -84,7 +84,8 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
       breakdown: b ? { skills: num(b.skills), role: num(b.role), seniority: num(b.seniority), location: num(b.location), salary: num(b.salary) } : null,
       profileId: m.search_profile_id,
       createdAt: m.created_at,
-      postedAt: m.jobs.posted_at,
+      // Older rows may hold a zone-shifted stamp in the future; never show "in 2 hours".
+      postedAt: m.jobs.posted_at && m.jobs.posted_at > new Date().toISOString() ? new Date().toISOString() : m.jobs.posted_at,
       firstSeenAt: m.jobs.first_seen_at,
       postings: m.jobs.job_postings.map((p) => ({ sourceId: p.source_id, url: p.url })),
     };

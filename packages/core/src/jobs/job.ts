@@ -52,7 +52,9 @@ export const rawJobSchema = z.object({
       if (typeof numeric === 'number' && !(numeric > 0)) return null;
       const d =
         typeof numeric === 'number' ? new Date(numeric < 1e12 ? numeric * 1000 : numeric) : new Date(numeric);
-      return Number.isNaN(d.getTime()) ? null : d;
+      if (Number.isNaN(d.getTime())) return null;
+      // A posting is never newer than "now": a future stamp is a zone mix-up on the board's side.
+      return d.getTime() > Date.now() ? new Date() : d;
     }),
   remoteHint: z.enum(REMOTE_TYPES).optional(),
   /** Where a remote hire may live, as the board states it (region codes or ISO countries). */

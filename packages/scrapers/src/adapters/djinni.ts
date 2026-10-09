@@ -1,4 +1,4 @@
-import type { RawJob } from '@jp/core';
+import { kyivLocalDate, type RawJob } from '@jp/core';
 import { extractJobPostings, type JobPostingLd, ldLocation } from '../jsonld';
 import type { SourceAdapter } from '../types';
 
@@ -17,7 +17,7 @@ function toRawJob(p: JobPostingLd): RawJob | null {
     companyIsPlaceholder: !company,
     description: p.description ?? '',
     location: ldLocation(p),
-    postedAt: p.datePosted ?? null,
+    postedAt: p.datePosted ? kyivLocalDate(p.datePosted) : null,
     remoteHint: p.jobLocationType === 'TELECOMMUTE' ? 'remote' : undefined,
   };
 }
