@@ -241,7 +241,19 @@
     "level_junior": "Junior",
     "level_middle": "Middle",
     "level_senior": "Senior",
-    "level_lead": "Lead"
+    "level_lead": "Lead",
+    "targetRoles": "Ролі",
+    "targetRolesHint": "У стрічку потрапляють лише вакансії цих ролей. Загальні назви на кшталт «Software Engineer» лишаються завжди. Нічого не обрано — визначаємо за ключовими словами.",
+    "role_frontend": "Frontend",
+    "role_fullstack": "Fullstack",
+    "role_backend": "Backend",
+    "role_mobile": "Мобільна розробка",
+    "role_devops": "DevOps",
+    "role_qa": "QA",
+    "role_data": "Data / ML",
+    "role_design": "Дизайн",
+    "role_management": "Менеджмент",
+    "role_support": "Підтримка"
   },
   "board": {
     "title": "Дошка відгуків",
@@ -378,22 +390,12 @@
     "ph_salary": "Напр.: $2,500–3,500/month, negotiable",
     "ph_why_looking": "Напр.: Looking for a product team where I can own features end-to-end and grow with a modern stack"
   },
-  "template": {
-    "title": "Шаблон супровідного листа",
-    "hint": "AI замінює лише частини [...]: рядки про конкретну вакансію, а [Full name], [Phone], [LinkedIn] і [GitHub] — даними з вашого профілю. Решта тексту надсилається як є.",
-    "save": "Зберегти шаблон",
-    "saved": "Збережено.",
-    "error": "Не вдалося зберегти. Спробуйте ще раз.",
-    "useRecommended": "Використати рекомендований шаблон",
-    "recommendedFilled": "Рекомендований шаблон вставлено — перевірте й натисніть «Зберегти шаблон»."
-  },
   "onboarding": {
     "profilesTip": "Рекрутери теж шукають: тримайте профіль на Djinni активним, а в LinkedIn — «Open to work».",
     "title": "Налаштуймо все",
     "stepCv": "Завантажте CV",
     "stepSearch": "Що ви шукаєте",
     "manualSearch": "Налаштувати пошук вручну",
-    "stepTemplate": "Шаблон супровідного листа",
     "stepAnswers": "Відповіді на типові питання",
     "finish": "Готово — покажіть вакансії"
   },
@@ -412,8 +414,8 @@
     "lang_en": "Англійська",
     "lang_uk": "Українська",
     "lang_ru": "Російська",
-    "generate": "Згенерувати",
-    "regenerate": "Згенерувати знову",
+    "generate": "Згенерувати cover letter",
+    "regenerate": "Згенерувати ще раз",
     "generating": "Пишу…",
     "shorter": "Коротше",
     "formal": "Формальніше",

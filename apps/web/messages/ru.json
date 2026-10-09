@@ -241,7 +241,19 @@
     "level_junior": "Junior",
     "level_middle": "Middle",
     "level_senior": "Senior",
-    "level_lead": "Lead"
+    "level_lead": "Lead",
+    "targetRoles": "Роли",
+    "targetRolesHint": "В ленту попадают только вакансии этих ролей. Общие названия вроде «Software Engineer» остаются всегда. Ничего не выбрано — определяем по ключевым словам.",
+    "role_frontend": "Frontend",
+    "role_fullstack": "Fullstack",
+    "role_backend": "Backend",
+    "role_mobile": "Мобильная разработка",
+    "role_devops": "DevOps",
+    "role_qa": "QA",
+    "role_data": "Data / ML",
+    "role_design": "Дизайн",
+    "role_management": "Менеджмент",
+    "role_support": "Поддержка"
   },
   "board": {
     "title": "Доска откликов",
@@ -378,22 +390,12 @@
     "ph_salary": "Напр.: $2,500–3,500/month, negotiable",
     "ph_why_looking": "Напр.: Looking for a product team where I can own features end-to-end and grow with a modern stack"
   },
-  "template": {
-    "title": "Шаблон сопроводительного письма",
-    "hint": "AI заменяет только части [...]: строки о конкретной вакансии, а [Full name], [Phone], [LinkedIn] и [GitHub] — данными из вашего профиля. Остальной текст отправляется как есть.",
-    "save": "Сохранить шаблон",
-    "saved": "Сохранено.",
-    "error": "Не удалось сохранить. Попробуйте ещё раз.",
-    "useRecommended": "Использовать рекомендованный шаблон",
-    "recommendedFilled": "Рекомендованный шаблон вставлен — проверьте и нажмите «Сохранить шаблон»."
-  },
   "onboarding": {
     "profilesTip": "Рекрутеры тоже ищут: держите профиль на Djinni активным, а в LinkedIn — «Open to work».",
     "title": "Давайте всё настроим",
     "stepCv": "Загрузите CV",
     "stepSearch": "Что вы ищете",
     "manualSearch": "Настроить поиск вручную",
-    "stepTemplate": "Шаблон сопроводительного письма",
     "stepAnswers": "Ответы на типовые вопросы",
     "finish": "Готово — покажите вакансии"
   },
@@ -412,7 +414,7 @@
     "lang_en": "Английский",
     "lang_uk": "Украинский",
     "lang_ru": "Русский",
-    "generate": "Сгенерировать",
+    "generate": "Сгенерировать cover letter",
     "regenerate": "Сгенерировать заново",
     "generating": "Пишу…",
     "shorter": "Короче",

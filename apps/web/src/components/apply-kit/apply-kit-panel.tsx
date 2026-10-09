@@ -123,6 +123,21 @@ export function ApplyKitPanel({ jobId, locale, onApplied, hidePeopleSearch }: { 
 
       {kit && (
         <>
+          <label className="flex flex-col gap-1 font-mono text-xs uppercase">
+            {t('letter')}
+            <textarea data-testid="kit-letter" value={letter} maxLength={6000} onChange={(e) => setLetter(e.target.value)} className={`${field} min-h-40 font-sans normal-case`} />
+          </label>
+          {/* Copy, then go straight to the posting to paste it. */}
+          <div className="flex flex-wrap gap-2">
+            <button type="button" data-testid="kit-copy-letter" onClick={() => void copy('letter', letter)} className="brutal brutal-press border-brand bg-brand px-3 py-1 text-sm font-semibold text-brand-foreground">
+              {copied === 'letter' ? `✓ ${t('copied')}` : t('copyLetter')}
+            </button>
+            {data.jobUrl && (
+              <a href={data.jobUrl} target="_blank" rel="noopener" data-testid="kit-open-job" onClick={() => setAwaitingReturn('click')} className="brutal brutal-press px-3 py-1 text-sm font-semibold">
+                {t('apply')} ↗
+              </a>
+            )}
+          </div>
           <div>
             <h4 className="font-mono text-xs uppercase">{t('requirements')}</h4>
             <ul className="flex flex-col gap-1 text-sm">
@@ -138,13 +153,6 @@ export function ApplyKitPanel({ jobId, locale, onApplied, hidePeopleSearch }: { 
               </ul>
             )}
           </div>
-          <label className="flex flex-col gap-1 font-mono text-xs uppercase">
-            {t('letter')}
-            <textarea data-testid="kit-letter" value={letter} maxLength={6000} onChange={(e) => setLetter(e.target.value)} className={`${field} min-h-40 font-sans normal-case`} />
-          </label>
-          <button type="button" data-testid="kit-copy-letter" onClick={() => void copy('letter', letter)} className="brutal brutal-press self-start px-3 py-1 text-sm font-semibold">
-            {copied === 'letter' ? `✓ ${t('copied')}` : t('copyLetter')}
-          </button>
           <div className="flex flex-col gap-1">
             <h4 className="font-mono text-xs uppercase">{t('short')}</h4>
             <p data-testid="kit-short" className="brutal p-2 text-sm">{kit.shortMessage}</p>

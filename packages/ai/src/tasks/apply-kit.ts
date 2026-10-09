@@ -49,9 +49,13 @@ function system(lang: 'auto' | 'en' | 'uk' | 'ru', tone: 'default' | 'shorter' |
     'Include only CV facts relevant to this job; never paste the whole CV.',
     'You help a candidate apply to one job. Use ONLY facts from the candidate CV; never invent experience, employers, numbers or skills.',
     lang === 'auto' ? 'Write the letter and the short message in the language of the job posting.' : `Write the letter and the short message in ${LANG_NAME[lang]}.`,
-    'Cover letter: if a template is given, keep it verbatim and replace only the [...] placeholders with specific lines about this job; otherwise write 120–180 words.',
-    'Placeholders for the candidate\'s own details ([Full name], [Phone], [Email], [LinkedIn], [GitHub], [Portfolio], [Telegram]) must be filled exactly from "Candidate details"; if a detail is "not set", drop that placeholder and its separator. Never leave [...] brackets in the letter.',
-    'If the posting names no hiring manager, address the letter to the company team (e.g. "Hi Acme team,").',
+    'Cover letter — write it from scratch for THIS job, 150–220 words, plain text ready to paste into an application form:',
+    '  1. Greeting: the hiring manager if the posting names one, else the company team (e.g. "Hi Acme team,").',
+    '  2. Hook (1–2 sentences): why this company/product and this role specifically — reference something concrete from the posting, no generic flattery.',
+    '  3. Proof (the core): 2–3 of the job\'s most important requirements, each matched to a specific CV fact (project, stack, result, years). Prefer numbers and outcomes that the CV states.',
+    '  4. Gap handling: if a key requirement is missing from the CV, do not claim it; at most mention a closely related strength.',
+    '  5. Close: one sentence with availability for a call; then a sign-off with the candidate\'s name and the contacts from "Candidate details" that are set (skip "not set" ones).',
+    'Style: confident, specific, human; short paragraphs; no clichés ("I am writing to express my interest", "passionate", "team player"), no buzzword lists, no markdown, no [placeholders].',
     tone === 'shorter' ? 'Make the letter noticeably shorter (≤ 90 words).' : tone === 'formal' ? 'Use a formal tone.' : 'Friendly professional tone.',
     'Short message: at most 450 characters, for a recruiter chat (Djinni, LinkedIn, Telegram).',
     'Requirements: up to 10 must-haves from the job, each marked met / missing / unknown against the CV.',
@@ -65,7 +69,6 @@ export async function generateApplyKit(
   input: {
     job: KitJob;
     cv: ParsedCv;
-    template: string | null;
     lang: 'auto' | 'en' | 'uk' | 'ru';
     tone: 'default' | 'shorter' | 'formal';
     salaryMinUsd: number | null;
@@ -86,7 +89,6 @@ export async function generateApplyKit(
     'Candidate details (from the profile):',
     candidateToPrompt(input.candidate),
     '',
-    input.template ? `Letter template:\n${input.template.slice(0, 3000)}` : 'No letter template.',
   ].join('\n');
   const res = await llm.generateJson({
     sensitivity: 'private',

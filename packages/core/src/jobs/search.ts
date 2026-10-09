@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { SENIORITIES, SOURCE_IDS, type SourceId } from './job';
+import { ROLE_FAMILIES } from './roles';
 import { BROWSER_SOURCE_IDS, defaultSources } from './sources';
 
 export function parseList(text: string, max = 30): string[] {
@@ -24,6 +25,8 @@ export const searchProfileInputSchema = z.object({
   id: z.uuid().optional(),
   name: z.string().trim().min(1).max(80),
   keywords: z.array(term).min(1).max(5),
+  /** Job families to show; empty = derived from the keywords (see targetRoleFamilies). */
+  targetRoles: z.array(z.enum(ROLE_FAMILIES)).max(ROLE_FAMILIES.length).default([]),
   skills: z.array(term).max(30),
   excludeKeywords: z.array(term).max(30),
   seniority: z.array(z.enum(SENIORITIES)),

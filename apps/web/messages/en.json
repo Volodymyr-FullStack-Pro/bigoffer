@@ -241,7 +241,19 @@
     "level_junior": "Junior",
     "level_middle": "Middle",
     "level_senior": "Senior",
-    "level_lead": "Lead"
+    "level_lead": "Lead",
+    "targetRoles": "Roles",
+    "targetRolesHint": "Only jobs of these roles get into the feed. Generic titles like \"Software Engineer\" are always kept. Nothing selected = guessed from the keywords.",
+    "role_frontend": "Frontend",
+    "role_fullstack": "Fullstack",
+    "role_backend": "Backend",
+    "role_mobile": "Mobile",
+    "role_devops": "DevOps",
+    "role_qa": "QA",
+    "role_data": "Data / ML",
+    "role_design": "Design",
+    "role_management": "Management",
+    "role_support": "Support"
   },
   "board": {
     "title": "Application board",
@@ -378,22 +390,12 @@
     "ph_salary": "e.g. $2,500–3,500/month, negotiable",
     "ph_why_looking": "e.g. Looking for a product team where I can own features end-to-end and grow with a modern stack"
   },
-  "template": {
-    "title": "Cover letter template",
-    "hint": "AI replaces only the [...] parts: lines about each job, plus [Full name], [Phone], [LinkedIn] and [GitHub] from your profile. Everything else is sent as written.",
-    "save": "Save template",
-    "saved": "Saved.",
-    "error": "Couldn't save. Try again.",
-    "useRecommended": "Use recommended template",
-    "recommendedFilled": "Recommended template inserted — review it and click Save."
-  },
   "onboarding": {
     "profilesTip": "Recruiters search too: keep your Djinni profile active and LinkedIn set to “Open to work”.",
     "title": "Let's set you up",
     "stepCv": "Upload your CV",
     "stepSearch": "Set up what you're looking for",
     "manualSearch": "Set up the search manually",
-    "stepTemplate": "Your cover letter template",
     "stepAnswers": "Answers to typical questions",
     "finish": "Done — show me jobs"
   },
@@ -412,8 +414,8 @@
     "lang_en": "English",
     "lang_uk": "Ukrainian",
     "lang_ru": "Russian",
-    "generate": "Generate",
-    "regenerate": "Regenerate",
+    "generate": "Generate cover letter",
+    "regenerate": "Regenerate letter",
     "generating": "Writing…",
     "shorter": "Shorter",
     "formal": "More formal",

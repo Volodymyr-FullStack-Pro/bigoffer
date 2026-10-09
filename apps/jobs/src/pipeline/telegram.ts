@@ -1,4 +1,4 @@
-import { alertMessage, digestMessage, overflowMessage, toTgLocale, type AlertJob, type BotApi, type BotResult } from '@jp/core';
+import { alertMessage, digestMessage, overflowMessage, sourceInfo, toTgLocale, type AlertJob, type BotApi, type BotResult } from '@jp/core';
 import type { Db } from '../db';
 
 /** `onlyUserIds` restricts the run to those users (tests; never set in production). */
@@ -29,11 +29,12 @@ type JobRow = {
   salary_raw: string | null;
   enriched_at: string | null;
   companies: { name: string } | null;
+  job_postings?: { source_id: string; url: string; seen_at: string }[];
 };
 type MatchRow = { id: string; score: number; explanation: unknown; created_at: string; jobs: JobRow | null };
 
 const MATCH_SELECT =
-  'id, score, explanation, created_at, jobs!inner(title, location, remote_type, salary_raw, is_job, enriched_at, companies(name))';
+  'id, score, explanation, created_at, jobs!inner(title, location, remote_type, salary_raw, is_job, enriched_at, companies(name), job_postings(source_id, url, seen_at))';
 
 const PROFILE_SELECT = 'id, locale, timezone, digest_hour, digest_last_sent_on, telegram_chat_id, telegram_min_score';
 
@@ -49,6 +50,8 @@ async function linkedProfiles(db: Db, onlyUserIds: string[] | undefined, alertsO
 
 function toAlertJob(m: MatchRow, locale: string): AlertJob {
   const job = m.jobs!;
+  // The most recently seen posting is the one most likely still open.
+  const posting = [...(job.job_postings ?? [])].sort((a, b) => (a.seen_at < b.seen_at ? 1 : -1))[0];
   const expl = m.explanation && typeof m.explanation === 'object' ? (m.explanation as Record<string, unknown>)[locale] : null;
   return {
     matchId: m.id,
@@ -59,6 +62,8 @@ function toAlertJob(m: MatchRow, locale: string): AlertJob {
     location: job.location,
     remote: job.remote_type === 'unknown' ? null : job.remote_type,
     why: typeof expl === 'string' && expl.trim() ? expl : null,
+    source: posting ? (sourceInfo(posting.source_id)?.name ?? posting.source_id) : null,
+    jobUrl: posting?.url ?? null,
   };
 }
 

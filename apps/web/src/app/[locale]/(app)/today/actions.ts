@@ -35,11 +35,21 @@ export async function saveMatch(matchId: string, target: 'saved' | 'applied'): P
   return { ok: true, applicationId: row.application_id, created: row.created };
 }
 
+/** A hidden job's apply kit is dead weight — unless the job is on the board, where the kit is still used. */
+async function dropKitUnlessOnBoard(supabase: Awaited<ReturnType<typeof createClient>>, jobId: string): Promise<void> {
+  const { data: app } = await supabase.from('applications').select('id').eq('job_id', jobId).limit(1).maybeSingle();
+  if (app) return;
+  const { error } = await supabase.from('apply_kits').delete().eq('job_id', jobId);
+  if (error) console.error('drop kit failed', error.message);
+}
+
 export async function hideMatch(matchId: string): Promise<boolean> {
   if (!UUID.test(matchId) || !(await getUserId())) return false;
   const supabase = await createClient();
-  const { data, error } = await supabase.from('job_matches').update({ state: 'hidden' }).eq('id', matchId).select('id');
+  const { data, error } = await supabase.from('job_matches').update({ state: 'hidden' }).eq('id', matchId).select('job_id');
   if (error) console.error('hideMatch failed', error.message);
+  const jobId = data?.[0]?.job_id;
+  if (jobId) await dropKitUnlessOnBoard(supabase, jobId);
   return !error && (data?.length ?? 0) > 0;
 }
 

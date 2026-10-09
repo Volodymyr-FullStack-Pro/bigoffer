@@ -3,7 +3,7 @@ import type { Database } from '@jp/db';
 import type { AdapterContext, SourceAdapter } from '@jp/scrapers';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { getDb } from '../src/db';
-import { failStaleRuns } from '../src/pipeline/expire';
+import { failStaleRuns, purgeExpiredJobs } from '../src/pipeline/expire';
 import { getDueQueryIds, getProfile, saveJob } from '../src/pipeline/repository';
 import { runQuery } from '../src/pipeline/run-query';
 import { syncProfile } from '../src/pipeline/sync-profiles';
@@ -267,3 +267,37 @@ describe('failStaleRuns (M2)', () => {
     expect(runs![0]!.finished_at).not.toBeNull();
   });
 });
+
+describe('purgeExpiredJobs', () => {
+  async function job(key: string, status: 'active' | 'expired', lastSeenDaysAgo: number): Promise<string> {
+    const { data: company, error: cErr } = await db.from('companies').insert({ name: `Purge ${key} ${tag}`, normalized_name: `purge ${key} ${tag}` }).select('id').single();
+    if (cErr) throw cErr;
+    const { data, error } = await db
+      .from('jobs')
+      .insert({ fingerprint: `purge-${key}-${tag}`, title: `Purge ${key}`, company_id: company.id, status, last_seen_at: new Date(now.getTime() - lastSeenDaysAgo * 86_400_000).toISOString() })
+      .select('id')
+      .single();
+    if (error) throw error;
+    return data.id;
+  }
+
+  it('deletes long-expired jobs with their matches, but keeps fresh, active and on-board ones', async () => {
+    const userId = await createUser('purge');
+    const old = await job('old', 'expired', 40);
+    const recent = await job('recent', 'expired', 5);
+    const active = await job('active', 'active', 40);
+    const onBoard = await job('board', 'expired', 40);
+    const { error: mErr } = await db.from('job_matches').insert({ user_id: userId, job_id: old, score: 50, state: 'hidden', breakdown: {} });
+    if (mErr) throw mErr;
+    const { data: col } = await db.from('board_columns').select('id').eq('user_id', userId).limit(1).single();
+    const { error: aErr } = await db.from('applications').insert({ user_id: userId, job_id: onBoard, column_id: col!.id, rank: 'a0', title: 'Purge board', company: 'Acme' });
+    if (aErr) throw aErr;
+
+    expect(await purgeExpiredJobs(db, now)).toBeGreaterThanOrEqual(1);
+    const { data: left } = await db.from('jobs').select('id').in('id', [old, recent, active, onBoard]);
+    expect(new Set(left!.map((j) => j.id))).toEqual(new Set([recent, active, onBoard]));
+    const { count } = await db.from('job_matches').select('id', { count: 'exact', head: true }).eq('job_id', old);
+    expect(count).toBe(0);
+  });
+});
+

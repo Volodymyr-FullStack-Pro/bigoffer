@@ -143,8 +143,14 @@ export function supabaseWebhookStore(admin: Admin): WebhookStore {
       return Boolean(data);
     },
     async hideMatch(userId, matchId) {
-      const { error } = await admin.from('job_matches').update({ state: 'hidden' }).eq('id', matchId).eq('user_id', userId);
+      const { data, error } = await admin.from('job_matches').update({ state: 'hidden' }).eq('id', matchId).eq('user_id', userId).select('job_id');
       if (error) fail('hide', error);
+      // Same cleanup as the web Hide: drop the apply kit unless the job is on the user's board.
+      const jobId = data?.[0]?.job_id;
+      if (jobId) {
+        const { data: app } = await admin.from('applications').select('id').eq('user_id', userId).eq('job_id', jobId).maybeSingle();
+        if (!app) await admin.from('apply_kits').delete().eq('user_id', userId).eq('job_id', jobId);
+      }
     },
     async saveApplied(userId, matchId) {
       // Top of the user's Applied column — the same rank the web "Applied" action uses.

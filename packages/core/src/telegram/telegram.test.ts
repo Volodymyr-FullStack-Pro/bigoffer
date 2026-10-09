@@ -37,9 +37,17 @@ describe('format', () => {
     expect(text.startsWith('🔥 <b>87%</b> · Senior &lt;b&gt;Dev&lt;/b&gt; &amp; Co')).toBe(true);
     expect(text).toContain('Acme &quot;Inc&quot;');
     const flat = replyMarkup.inline_keyboard.flat();
-    expect(flat).toContainEqual({ text: 'Відкрити', url: `https://x.test/uk/today?match=${ID}` });
+    expect(flat).toContainEqual({ text: 'Відкрити в BigOffer', url: `https://x.test/uk/today?match=${ID}` });
     expect(flat).toContainEqual({ text: 'Сховати', callback_data: `h:${ID}` });
     expect(flat).toContainEqual({ text: 'Подано', callback_data: `a:${ID}` });
+  });
+
+  it('shows the board and links the original posting (http(s) only)', () => {
+    const { text, replyMarkup } = alertMessage({ ...job, source: 'Djinni', jobUrl: 'https://djinni.co/jobs/1' }, 'ru', 'https://x.test');
+    expect(text).toContain('Acme &quot;Inc&quot; · Djinni');
+    expect(replyMarkup.inline_keyboard[0]).toContainEqual({ text: 'Вакансия ↗', url: 'https://djinni.co/jobs/1' });
+    const bad = alertMessage({ ...job, jobUrl: 'javascript:alert(1)' }, 'en', 'https://x.test');
+    expect(bad.replyMarkup.inline_keyboard[0]).toHaveLength(1);
   });
 
   it('truncates long why without cutting entities', () => {
@@ -61,7 +69,7 @@ describe('format', () => {
     expect(d.text).toContain('Дайджест: 12 нових вакансій за добу');
     expect(d.text).toContain('Час нагадати про себе');
     expect(d.text).toContain('A&lt;B');
-    expect(d.replyMarkup.inline_keyboard[0]?.[0]).toEqual({ text: 'Відкрити', url: 'https://x.test/uk/today' });
+    expect(d.replyMarkup.inline_keyboard[0]?.[0]).toEqual({ text: 'Відкрити в BigOffer', url: 'https://x.test/uk/today' });
     expect(digestMessage({ total: 0, top: [], followUps: [] }, 'ru', 'https://x.test').text).toContain('За сутки новых вакансий нет');
     expect(digestMessage({ total: 0, top: [], followUps: [] }, 'en', 'https://x.test').text).toContain('in the last 24 hours');
   });
