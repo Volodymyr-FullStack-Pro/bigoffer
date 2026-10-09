@@ -1,5 +1,6 @@
 import { hasLocale } from 'next-intl';
 import type { ReactNode } from 'react';
+import { LegalLinks } from '@/components/legal-links';
 import { BottomNav } from '@/components/shell/bottom-nav';
 import { Header } from '@/components/shell/header';
 import { Sidebar } from '@/components/shell/sidebar';
@@ -24,6 +25,9 @@ export default async function AppLayout({
         <Sidebar />
         <main className="min-w-0 flex-1">{children}</main>
       </div>
+      <footer className="mx-auto hidden max-w-7xl px-4 pb-6 md:block">
+        <LegalLinks className="text-xs text-muted-foreground" />
+      </footer>
       <BottomNav />
     </>
   );
