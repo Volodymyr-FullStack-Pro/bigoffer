@@ -8,6 +8,7 @@ import { ThemeToggle } from '@/components/theme-toggle';
 import { publicEnv } from '@/env';
 import { GoogleButton } from './google-button';
 import { LoginForm } from './login-form';
+import { Logo } from '@/components/brand/logo';
 
 export default async function LoginPage({
   searchParams,
@@ -26,9 +27,8 @@ export default async function LoginPage({
       <Spotlight />
       <header className="glass sticky top-0 z-20 rounded-none border-x-0 border-t-0">
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
-          <span className="flex items-baseline gap-0.5 font-display text-xl font-semibold tracking-tight">
-            {tApp('name')}
-            <span aria-hidden className="inline-block size-2 rounded-full bg-brand" />
+          <span>
+            <Logo name={tApp('name')} />
           </span>
           <div className="flex items-center gap-2">
             <LocaleSwitcher />
