@@ -19,7 +19,7 @@ export function FeedListItem({ match, selected, onSelect }: { match: FeedMatch; 
       aria-current={selected}
       onClick={onSelect}
       className={`relative flex w-full flex-col gap-1.5 border-b border-border px-4 py-3 text-left transition-colors ${
-        selected ? 'bg-muted before:absolute before:inset-y-0 before:left-0 before:w-0.75 before:bg-brand' : 'hover:bg-muted/60'
+        selected ? 'bg-muted before:absolute before:inset-y-0 before:left-0 before:w-0.75 before:bg-[image:var(--brand-gradient)]' : 'hover:bg-muted/60'
       }`}
     >
       <ScoreMeter score={match.score} label={t('match')} />
