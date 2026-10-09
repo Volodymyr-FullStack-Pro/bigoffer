@@ -1,4 +1,4 @@
-import { ApiError, GoogleGenAI, type GenerateContentParameters, type Part } from '@google/genai';
+import { ApiError, GoogleGenAI, type GenerateContentParameters, type Part, ThinkingLevel, type ThinkingConfig } from '@google/genai';
 import type { z } from 'zod';
 import { LlmError, LlmInvalidOutputError, LlmRateLimitError, LlmUnavailableError } from './errors';
 import { toResponseJsonSchema } from './json-schema';
@@ -20,6 +20,22 @@ export type GeminiOptions = {
 };
 
 const ATTEMPTS = 2;
+
+/** Small enough to stay fast, and within every Flash/Flash-Lite/Pro budget range (Flash-Lite's minimum is 512). */
+const LOW_THINKING_BUDGET = 512;
+
+/**
+ * Maps the request's thinking effort to the model family's config: Gemini 3 uses thinkingLevel; 2.5 uses thinkingBudget
+ * (0 = off is only valid for 2.5 Flash / Flash-Lite). Aliases like `gemini-flash-latest` get a budget, which every
+ * current Flash model accepts.
+ */
+export function thinkingConfigFor(model: string, thinking: 'off' | 'low' | undefined): ThinkingConfig | undefined {
+  if (!thinking) return undefined;
+  const m = model.toLowerCase().replace(/^models\//, '');
+  if (m.startsWith('gemini-3')) return { thinkingLevel: thinking === 'off' ? ThinkingLevel.MINIMAL : ThinkingLevel.LOW };
+  if (thinking === 'off' && /^gemini-2\.5-flash/.test(m)) return { thinkingBudget: 0 };
+  return { thinkingBudget: LOW_THINKING_BUDGET };
+}
 
 function defaultConnect(apiKey: string): GenerateContent {
   // Retries are ours: a blind SDK retry on 429 would burn the free daily quota.
@@ -86,6 +102,8 @@ export function createGeminiClient(opts: GeminiOptions): LlmClient {
           responseJsonSchema: toResponseJsonSchema(req.schema),
           temperature: 0.2,
           maxOutputTokens: req.maxOutputTokens ?? 2048,
+          ...(req.thinking ? { thinkingConfig: thinkingConfigFor(model, req.thinking) } : {}),
+          ...(req.timeoutMs ? { httpOptions: { timeout: req.timeoutMs } } : {}),
         },
       };
 

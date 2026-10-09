@@ -82,6 +82,7 @@ export async function explainMatches(
     system: system(args.locale),
     prompt: prompt(args.criteria, args.jobs),
     maxOutputTokens: 1200,
+    thinking: 'low',
   });
   const explanations = new Map<string, string>();
   for (const item of res.data.items) {

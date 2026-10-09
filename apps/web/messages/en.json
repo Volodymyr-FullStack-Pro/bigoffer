@@ -139,7 +139,7 @@
     "intro": "Tell us what you are looking for — we'll collect matching jobs from DOU, Djinni, robota.ua, remote boards and more every hour.",
     "name": "Profile name",
     "keywords": "Role keywords",
-    "keywordsHint": "Comma-separated, up to 5; the first 3 are used for searching. Example: full stack, react developer",
+    "keywordsHint": "Comma-separated, up to 5; all are searched, plus common job-title variants (up to 6 search terms). Example: full stack, react developer",
     "skills": "Your skills",
     "skillsHint": "Comma-separated. Used for scoring. Example: React, Node.js, PostgreSQL",
     "exclude": "Exclude jobs mentioning",
@@ -281,7 +281,9 @@
     "years": "{count, plural, one {# year} other {# years}}",
     "createSearch": "Create a job search from my CV",
     "fillContacts": "Fill empty contacts from CV",
-    "contactsFilled": "Contacts updated."
+    "contactsFilled": "Contacts updated.",
+    "providerLimit": "CV saved, but the AI provider's rate limit was reached. Try again in a minute.",
+    "keyMisconfigured": "CV saved, but the AI key is misconfigured (invalid key or no access). Check the private Gemini key."
   },
   "bank": {
     "title": "Answer bank",
@@ -298,14 +300,22 @@
     "add": "Add to bank",
     "saved": "Saved.",
     "error": "Couldn't save. Try again.",
-    "deleted": "Deleted."
+    "deleted": "Deleted.",
+    "saving": "Saving…",
+    "choose": "Choose…",
+    "other": "Other…",
+    "otherPlaceholder": "Type your answer",
+    "ph_salary": "e.g. $2,500–3,500/month, negotiable",
+    "ph_why_looking": "e.g. Looking for a product team where I can own features end-to-end and grow with a modern stack"
   },
   "template": {
     "title": "Cover letter template",
-    "hint": "AI replaces only the [...] parts with lines about each job.",
+    "hint": "AI replaces only the [...] parts: lines about each job, plus [Full name], [Phone], [LinkedIn] and [GitHub] from your profile. Everything else is sent as written.",
     "save": "Save template",
     "saved": "Saved.",
-    "error": "Couldn't save. Try again."
+    "error": "Couldn't save. Try again.",
+    "useRecommended": "Use recommended template",
+    "recommendedFilled": "Recommended template inserted — review it and click Save."
   },
   "onboarding": {
     "profilesTip": "Recruiters search too: keep your Djinni profile active and LinkedIn set to “Open to work”.",

@@ -20,6 +20,13 @@ export type GenerateJsonRequest<S extends z.ZodType> = {
   /** Task label for logs and the fake provider. */
   task?: string;
   maxOutputTokens?: number;
+  /**
+   * Thinking effort. Omitted = the model's default (best for writing). 'low' = a small budget for extraction tasks,
+   * 'off' = none where the model allows it. Thinking models can otherwise exceed the request timeout on large inputs.
+   */
+  thinking?: 'off' | 'low';
+  /** Per-request HTTP timeout; defaults to the client's 60 s. */
+  timeoutMs?: number;
 };
 
 export type GenerateJsonResult<T> = { data: T; usage: LlmUsage; model: string };

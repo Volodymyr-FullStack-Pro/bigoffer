@@ -10,6 +10,10 @@ import { LetterTemplate } from './letter-template';
 import { ProfileForm } from './profile-form';
 import { TelegramSection } from './telegram-section';
 
+// Server Actions on this page inherit it: the CV read (registerCv) may take up to 2 min per attempt (PARSE_CV_TIMEOUT_MS)
+// plus one retry on invalid output; 300 s is the Vercel ceiling with Fluid compute.
+export const maxDuration = 300;
+
 export default async function ProfilePage() {
   const t = await getTranslations('profile');
   const userId = await requireUserId();

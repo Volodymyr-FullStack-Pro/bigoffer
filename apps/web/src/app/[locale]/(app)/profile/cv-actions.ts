@@ -5,12 +5,13 @@ import { revalidatePath } from 'next/cache';
 import { getLocale } from 'next-intl/server';
 import { redirect } from '@/i18n/navigation';
 import { consumePrivateAi, getLlm, privateAiAvailable } from '@/lib/ai';
+import { type AiFailure, classifyAiFailure, describeAiFailure } from '@/lib/ai-failure';
 import { getUserId } from '@/lib/auth';
 import { loadPrimaryCv } from '@/lib/cv';
 import { createClient } from '@/lib/supabase/server';
 import { requestProfileSync } from '@/lib/trigger';
 
-export type CvState = { status: 'idle' | 'parsed' | 'stored' | 'invalid' | 'error'; message?: 'not_pdf' | 'too_big' | 'ai_unavailable' | 'ai_limit' | 'parse_failed' };
+export type CvState = { status: 'idle' | 'parsed' | 'stored' | 'invalid' | 'error'; message?: 'not_pdf' | 'too_big' | 'ai_limit' | AiFailure };
 
 const MAX_BYTES = 5 * 1024 * 1024;
 
@@ -79,10 +80,12 @@ export async function registerCv(path: string, originalName: string): Promise<Cv
     }
     return { status: 'parsed' };
   } catch (err) {
-    console.error('parseCv failed', err instanceof Error ? err.name : 'unknown');
-    const { error: flagError } = await supabase.from('resumes').update({ parse_error: 'parse_failed' }).eq('id', row.id);
-    if (flagError) console.error('cv: could not flag parse_failed', flagError.code ?? 'unknown');
-    return { status: 'stored', message: 'parse_failed' };
+    // Sanitized: name, HTTP status and a truncated provider message, never the CV text or keys.
+    console.error('parseCv failed', describeAiFailure(err));
+    const failure = classifyAiFailure(err);
+    const { error: flagError } = await supabase.from('resumes').update({ parse_error: failure }).eq('id', row.id);
+    if (flagError) console.error(`cv: could not flag ${failure}`, flagError.code ?? 'unknown');
+    return { status: 'stored', message: failure };
   }
 }
 
