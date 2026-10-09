@@ -3,8 +3,8 @@ create extension if not exists pgtap with schema extensions;
 select plan(3);
 
 select results_eq(
-  $$ select id from public.sources where id = any(array['dou','djinni','robotaua','jooble','remoteok','remotive','himalayas','wwr','hn','workua','olx','linkedin','arbeitnow','jobicy','workingnomads','justjoin','jobico','greenhouse','lever','ashby','workable','telegram','adzuna']) order by id $$,
-  $$ select unnest(array['adzuna','arbeitnow','ashby','djinni','dou','greenhouse','himalayas','hn','jobico','jobicy','jooble','justjoin','lever','linkedin','olx','remoteok','remotive','robotaua','telegram','workable','workingnomads','workua','wwr']) $$,
+  $$ select id from public.sources where id = any(array['dou','djinni','robotaua','jooble','remoteok','remotive','himalayas','wwr','hn','workua','olx','linkedin','arbeitnow','jobicy','workingnomads','justjoin','jobico','greenhouse','lever','ashby','workable','telegram','adzuna','itlead']) order by id $$,
+  $$ select unnest(array['adzuna','arbeitnow','ashby','djinni','dou','greenhouse','himalayas','hn','itlead','jobico','jobicy','jooble','justjoin','lever','linkedin','olx','remoteok','remotive','robotaua','telegram','workable','workingnomads','workua','wwr']) $$,
   'every SOURCE_IDS source exists'
 );
 select cmp_ok((select count(*) from public.roles), '>=', 10::bigint, 'roles are seeded by migrations');
