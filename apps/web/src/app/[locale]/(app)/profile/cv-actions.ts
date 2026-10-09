@@ -80,7 +80,7 @@ async function parseAndStore(supabase: Supabase, rowId: string, bytes: Buffer): 
   }
   try {
     const parsed = await parseCv(getLlm(), { pdfBase64: bytes.toString('base64') });
-    const { error: parsedError } = await supabase.from('resumes').update({ parsed, parse_error: null }).eq('id', rowId);
+    const { error: parsedError } = await supabase.from('resumes').update({ parsed, parse_error: null, parse_error_detail: null }).eq('id', rowId);
     if (parsedError) {
       console.error('cv: could not store parsed CV', parsedError.code ?? 'unknown');
       return { status: 'stored', message: 'parse_failed' };
@@ -88,9 +88,11 @@ async function parseAndStore(supabase: Supabase, rowId: string, bytes: Buffer): 
     return { status: 'parsed' };
   } catch (err) {
     // Sanitized: name, HTTP status and a truncated provider message, never the CV text or keys.
-    console.error('parseCv failed', describeAiFailure(err));
+    const detail = describeAiFailure(err);
+    console.error('parseCv failed', detail);
     const failure = classifyAiFailure(err);
-    const { error: flagError } = await supabase.from('resumes').update({ parse_error: failure }).eq('id', rowId);
+    // The detail is kept on the row (sanitized, no CV text or keys): Hobby runtime logs vanish within the hour.
+    const { error: flagError } = await supabase.from('resumes').update({ parse_error: failure, parse_error_detail: detail.slice(0, 400) }).eq('id', rowId);
     if (flagError) console.error(`cv: could not flag ${failure}`, flagError.code ?? 'unknown');
     return { status: 'stored', message: failure };
   }
