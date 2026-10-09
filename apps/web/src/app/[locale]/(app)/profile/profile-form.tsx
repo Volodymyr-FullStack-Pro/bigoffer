@@ -61,7 +61,8 @@ export function ProfileForm({ fullName, timezone, contacts, country, countries, 
   });
   const invalid = new Set(state.fields ?? []);
   const v = state.values;
-  const formKey = v ? JSON.stringify(v) : 'initial';
+  // Remount after every submit so the uncontrolled fields show what was submitted/saved, not the stale initial props.
+  const formKey = state.rev ?? 0;
 
   return (
     <form key={formKey} action={action} noValidate className="flex max-w-2xl flex-col gap-6">

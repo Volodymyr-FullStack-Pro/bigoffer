@@ -10,6 +10,10 @@ import { loadProfileExtras } from '../profile/extras-data';
 import { LetterTemplate } from '../profile/letter-template';
 import { finishOnboarding } from './onboarding-actions';
 
+// Server Actions on this page inherit it: the CV read (registerCv) may take up to 2 min per attempt (PARSE_CV_TIMEOUT_MS)
+// plus one retry on invalid output; 300 s is the Vercel ceiling with Fluid compute.
+export const maxDuration = 300;
+
 export default async function OnboardingPage() {
   const t = await getTranslations('onboarding');
   const userId = await requireUserId();

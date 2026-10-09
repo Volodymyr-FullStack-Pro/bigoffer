@@ -7,6 +7,8 @@ describe('parseCv', () => {
     const llm = new FakeLlmClient(fakeResponder, ['private']);
     const cv = await parseCv(llm, { pdfBase64: 'JVBERi0=' });
     expect(llm.calls[0]).toMatchObject({ sensitivity: 'private', task: 'parse_cv', files: [{ mimeType: 'application/pdf', dataBase64: 'JVBERi0=' }] });
+    // Low thinking, a 2-minute timeout and room for a long CV's JSON (a thinking model timed out at 60 s).
+    expect(llm.calls[0]).toMatchObject({ thinking: 'low', timeoutMs: 120_000, maxOutputTokens: 8000 });
     expect(cv.headline).toBe('Full Stack Developer');
     expect(cv.contacts.linkedin).toBe('https://www.linkedin.com/in/test-user');
   });

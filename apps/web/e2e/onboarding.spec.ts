@@ -12,7 +12,7 @@ test('answer bank: long custom question can be added, edited and deleted', async
   await expect(row.getByRole('textbox')).toHaveValue('Async first');
   await row.getByRole('textbox').fill('Async first, calls when needed');
   await row.getByTestId('bank-save').click();
-  await expect(bank.getByRole('status')).toHaveText('Saved.');
+  await expect(row.getByTestId('bank-row-status')).toHaveText('✓ Saved.');
   await page.reload();
   await expect(row.getByRole('textbox')).toHaveValue('Async first, calls when needed');
   await row.getByRole('button', { name: 'Delete' }).click();
@@ -28,7 +28,7 @@ test('onboarding: answer bank, letter template, finish', async ({ context, page 
   const salary = page.locator('[data-testid="bank-answer"][data-key="salary"]');
   await salary.getByRole('textbox').fill('$4000–4500 per month');
   await salary.getByTestId('bank-save').click();
-  await expect(page.getByTestId('answer-bank').getByRole('status')).toHaveText('Saved.');
+  await expect(salary.getByTestId('bank-row-status')).toHaveText('✓ Saved.');
   await page.getByTestId('bank-add-question').fill('Notice period');
   await page.getByTestId('bank-add-answer').fill('Two weeks');
   await page.getByTestId('bank-add').click();

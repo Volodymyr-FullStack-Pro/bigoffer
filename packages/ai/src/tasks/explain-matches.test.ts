@@ -33,6 +33,7 @@ describe('explainMatches', () => {
       ['a', 'Підходить за React.'],
     ]);
     expect(llm.calls[0]!.sensitivity).toBe('public');
+    expect(llm.calls[0]!.thinking).toBe('low');
     expect(llm.calls[0]!.system).toContain('Ukrainian');
     expect(llm.calls[0]!.prompt).toMatch(/^#1 Frontend a/m);
     expect(llm.calls[0]!.prompt).toMatch(/^#3 Frontend c/m);

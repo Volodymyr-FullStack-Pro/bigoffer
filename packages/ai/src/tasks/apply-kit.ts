@@ -20,6 +20,26 @@ export type ApplyKit = {
   salaryHint: string | null;
 };
 export type KitJob = { title: string; company: string; description: string; salary: string | null };
+/** The candidate's own name and contacts from the profile, used to fill [Full name], [Phone], [LinkedIn]… placeholders. */
+export type KitCandidate = { fullName: string | null; contacts: Partial<Record<'email' | 'phone' | 'linkedin' | 'github' | 'portfolio' | 'telegram', string>> };
+
+const CONTACT_LABELS = [
+  ['email', 'Email'],
+  ['phone', 'Phone'],
+  ['linkedin', 'LinkedIn'],
+  ['github', 'GitHub'],
+  ['portfolio', 'Portfolio'],
+  ['telegram', 'Telegram'],
+] as const;
+
+function candidateToPrompt(candidate: KitCandidate | null | undefined): string {
+  const lines = [`Full name: ${candidate?.fullName?.trim().slice(0, 120) || 'not set'}`];
+  for (const [key, label] of CONTACT_LABELS) {
+    const value = candidate?.contacts[key]?.trim().slice(0, 200);
+    lines.push(`${label}: ${value || 'not set'}`);
+  }
+  return lines.join('\n');
+}
 
 const LANG_NAME: Record<string, string> = { en: 'English', uk: 'Ukrainian', ru: 'Russian' };
 
@@ -30,6 +50,8 @@ function system(lang: 'auto' | 'en' | 'uk' | 'ru', tone: 'default' | 'shorter' |
     'You help a candidate apply to one job. Use ONLY facts from the candidate CV; never invent experience, employers, numbers or skills.',
     lang === 'auto' ? 'Write the letter and the short message in the language of the job posting.' : `Write the letter and the short message in ${LANG_NAME[lang]}.`,
     'Cover letter: if a template is given, keep it verbatim and replace only the [...] placeholders with specific lines about this job; otherwise write 120–180 words.',
+    'Placeholders for the candidate\'s own details ([Full name], [Phone], [Email], [LinkedIn], [GitHub], [Portfolio], [Telegram]) must be filled exactly from "Candidate details"; if a detail is "not set", drop that placeholder and its separator. Never leave [...] brackets in the letter.',
+    'If the posting names no hiring manager, address the letter to the company team (e.g. "Hi Acme team,").',
     tone === 'shorter' ? 'Make the letter noticeably shorter (≤ 90 words).' : tone === 'formal' ? 'Use a formal tone.' : 'Friendly professional tone.',
     'Short message: at most 450 characters, for a recruiter chat (Djinni, LinkedIn, Telegram).',
     'Requirements: up to 10 must-haves from the job, each marked met / missing / unknown against the CV.',
@@ -40,7 +62,15 @@ function system(lang: 'auto' | 'en' | 'uk' | 'ru', tone: 'default' | 'shorter' |
 
 export async function generateApplyKit(
   llm: LlmClient,
-  input: { job: KitJob; cv: ParsedCv; template: string | null; lang: 'auto' | 'en' | 'uk' | 'ru'; tone: 'default' | 'shorter' | 'formal'; salaryMinUsd: number | null },
+  input: {
+    job: KitJob;
+    cv: ParsedCv;
+    template: string | null;
+    lang: 'auto' | 'en' | 'uk' | 'ru';
+    tone: 'default' | 'shorter' | 'formal';
+    salaryMinUsd: number | null;
+    candidate?: KitCandidate | null;
+  },
 ): Promise<ApplyKit> {
   const prompt = [
     `Job: ${input.job.title} at ${input.job.company}`,
@@ -52,6 +82,9 @@ export async function generateApplyKit(
     '',
     'Candidate CV:',
     cvToPrompt(input.cv),
+    '',
+    'Candidate details (from the profile):',
+    candidateToPrompt(input.candidate),
     '',
     input.template ? `Letter template:\n${input.template.slice(0, 3000)}` : 'No letter template.',
   ].join('\n');
