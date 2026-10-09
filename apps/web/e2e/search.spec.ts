@@ -76,7 +76,8 @@ test('an office profile with no stored sources shows office defaults', async ({ 
   await seedProfileWithNullSources(email, 'office');
   await page.goto('/en/search');
   await expect(page.getByTestId('source-remoteok').first()).not.toBeChecked();
-  await expect(page.getByTestId('source-workua').first()).toBeChecked();
+  await expect(page.getByTestId('source-robotaua').first()).toBeChecked();
+  await expect(page.getByTestId('source-workua').first()).not.toBeChecked();
 });
 
 test('rejects a profile with no job boards selected', async ({ context, page }) => {
