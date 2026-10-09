@@ -138,4 +138,39 @@ describe('source boards', () => {
       await db.from('sources').update({ paused_until: before!.paused_until }).eq('id', 'lever');
     }
   });
+
+  it('stores only the board jobs some active profile wants', async () => {
+    const now = new Date();
+    const { data: user, error: uErr } = await db.auth.admin.createUser({ email: `boards-${uniq}@e2e.test`, email_confirm: true });
+    if (uErr) throw uErr;
+    const { data: sp, error: spErr } = await db
+      .from('search_profiles')
+      .insert({ user_id: user.user.id, name: 'FE', keywords: ['frontend', 'full stack'], skills: ['React', 'TypeScript'], remote_type: 'any', sources: ['ashby'] })
+      .select('id')
+      .single();
+    if (spErr) throw spErr;
+    const board = `filter${uniq}`;
+    const { data: q, error } = await db
+      .from('search_queries')
+      .insert({ source_id: 'ashby', query_key: `ashby:{"board":"${board}"}`, params: { board }, next_run_at: now.toISOString() })
+      .select('id')
+      .single();
+    if (error) throw error;
+    await db.from('search_profile_queries').insert({ search_profile_id: sp.id, search_query_id: q.id });
+    const raw = (id: string, title: string, description: string) => ({ externalId: `boards-${uniq}-${id}`, url: `https://jobs.ashbyhq.com/${board}/${id}`, title, company: `Boards ${uniq}`, description });
+    const adapter: SourceAdapter = {
+      id: 'ashby',
+      search: async () => [
+        raw('fe', 'Senior Frontend Engineer', 'React and TypeScript, remote.'),
+        raw('be', 'Senior Backend Engineer (Node.js)', 'Node.js, TypeScript, React admin panel.'),
+        raw('ae', 'Account Executive', 'Sell our product.'),
+      ],
+    };
+    const result = await runQuery({ db, adapters: { ashby: adapter }, createContext: () => ({}) as never, now: () => now }, q.id);
+    expect(result).toMatchObject({ status: 'ok', found: 3, inserted: 1 });
+    const { data: saved } = await db.from('job_postings').select('external_id, job_id').like('external_id', `boards-${uniq}-%`);
+    expect(saved!.map((r) => r.external_id)).toEqual([`boards-${uniq}-fe`]);
+    await db.from('jobs').delete().in('id', saved!.map((r) => r.job_id));
+  });
 });
+

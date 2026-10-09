@@ -266,6 +266,12 @@ export async function getActiveProfiles(db: Db): Promise<SearchProfile[]> {
   return data.map(toSearchProfile);
 }
 
+export async function getActiveProfilesOfUser(db: Db, userId: string): Promise<SearchProfile[]> {
+  const { data, error } = await db.from('search_profiles').select(PROFILE_COLUMNS).eq('user_id', userId).eq('is_active', true);
+  if (error) throw error;
+  return data.map(toSearchProfile);
+}
+
 export async function getProfile(db: Db, id: string): Promise<(SearchProfile & { isActive: boolean }) | null> {
   const { data, error } = await db.from('search_profiles').select(PROFILE_COLUMNS).eq('id', id).maybeSingle();
   if (error) throw error;

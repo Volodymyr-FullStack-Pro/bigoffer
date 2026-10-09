@@ -10,3 +10,15 @@ export async function requestProfileSync(profileId: string): Promise<void> {
     console.error('sync-profile trigger failed', err);
   }
 }
+
+/** "Find jobs now": scrape every query of the user's active profiles right away (rate-limited by the caller). */
+export async function requestSearchNow(userId: string): Promise<boolean> {
+  if (!process.env.TRIGGER_SECRET_KEY) return false;
+  try {
+    await tasks.trigger('search-now', { userId });
+    return true;
+  } catch (err) {
+    console.error('search-now trigger failed', err);
+    return false;
+  }
+}

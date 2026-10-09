@@ -2,6 +2,7 @@ import { DEFAULT_FOLLOW_UP, isLocale, type LocalizedText, localized } from '@jp/
 import { getLocale, getTimeZone, getTranslations } from 'next-intl/server';
 import { requireUserId } from '@/lib/auth';
 import { createClient } from '@/lib/supabase/server';
+import { parseUiPrefs } from '@/lib/ui-prefs';
 import { Board } from './board';
 import type { BoardCard, BoardColumn, BoardLabel } from './board-types';
 
@@ -20,7 +21,7 @@ export default async function BoardPage() {
       )
       .order('rank'),
     supabase.from('labels').select('id, key, name, color').order('key', { nullsFirst: false }),
-    supabase.from('profiles').select('follow_up_days, ghost_after_days').eq('id', userId).single(),
+    supabase.from('profiles').select('follow_up_days, ghost_after_days, ui_prefs').eq('id', userId).single(),
   ]);
 
   const boardColumns: BoardColumn[] = (columns ?? []).map((c) => ({
@@ -64,6 +65,7 @@ export default async function BoardPage() {
         rules={{ followUpDays: profile?.follow_up_days ?? DEFAULT_FOLLOW_UP.followUpDays, ghostAfterDays: profile?.ghost_after_days ?? DEFAULT_FOLLOW_UP.ghostAfterDays }}
         now={new Date().toISOString()}
         timeZone={await getTimeZone()}
+        savedSort={parseUiPrefs(profile?.ui_prefs).boardSort}
       />
     </section>
   );

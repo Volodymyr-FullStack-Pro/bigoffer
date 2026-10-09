@@ -8,13 +8,14 @@ import { consumePrivateAi, getLlm, privateAiAvailable } from '@/lib/ai';
 import { getUserId } from '@/lib/auth';
 import { cvSignedUrl, loadPrimaryCv } from '@/lib/cv';
 import { createClient } from '@/lib/supabase/server';
+import { parseUiPrefs } from '@/lib/ui-prefs';
 import { kitCandidate } from './template';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export type KitError = 'ai_unavailable' | 'ai_limit' | 'no_cv' | 'not_found' | 'failed';
 export type FormAnswer = { question: string; answer: string; fromBank: boolean };
 export type StoredKit = ApplyKit & { formAnswers: FormAnswer[] };
-export type KitData = { kit: StoredKit | null; formAnswers: FormAnswer[]; aiAvailable: boolean; hasCv: boolean; contacts: Record<string, string>; cvLink: string | null; jobUrl: string | null; company: string; companyIsPlaceholder: boolean };
+export type KitData = { kit: StoredKit | null; formAnswers: FormAnswer[]; aiAvailable: boolean; hasCv: boolean; contacts: Record<string, string>; cvLink: string | null; jobUrl: string | null; company: string; companyIsPlaceholder: boolean; kitLang: 'auto' | 'en' | 'uk' | 'ru' };
 
 type Supabase = Awaited<ReturnType<typeof createClient>>;
 
@@ -60,7 +61,7 @@ export async function getApplyKitData(jobId: string): Promise<KitData | null> {
   const [{ data: kit }, cv, { data: profile }, job] = await Promise.all([
     supabase.from('apply_kits').select('lang, requirements, red_flags, cover_letter, short_message, salary_hint, form_answers').eq('job_id', jobId).maybeSingle(),
     loadPrimaryCv(supabase),
-    supabase.from('profiles').select('contacts').eq('id', userId).single(),
+    supabase.from('profiles').select('contacts, ui_prefs').eq('id', userId).single(),
     loadJob(supabase, jobId),
   ]);
   const contacts = Object.fromEntries(Object.entries((profile?.contacts ?? {}) as Record<string, unknown>).filter((e): e is [string, string] => typeof e[1] === 'string' && e[1] !== ''));
@@ -76,6 +77,7 @@ export async function getApplyKitData(jobId: string): Promise<KitData | null> {
     jobUrl: job?.url ?? null,
     company: job?.company ?? '',
     companyIsPlaceholder: job?.companyIsPlaceholder ?? false,
+    kitLang: parseUiPrefs(profile?.ui_prefs).kitLang ?? 'auto',
   };
 }
 

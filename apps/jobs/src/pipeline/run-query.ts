@@ -1,4 +1,4 @@
-import { BOARD_SOURCE_IDS, normalizeJob, type NormalizedJob, type SourceId } from '@jp/core';
+import { BOARD_SOURCE_IDS, normalizeJob, type NormalizedJob, PREFILTERED_SOURCE_IDS, type ScorableJob, type SourceId, wantedByAnyProfile } from '@jp/core';
 import { type AdapterContext, SourceBlockedError, type SourceAdapter } from '@jp/scrapers';
 import type { Db } from '../db';
 import { recordBoardRun } from './boards';
@@ -53,6 +53,21 @@ async function trackBoard(db: Db, sourceId: string, params: unknown, ok: boolean
   }
 }
 
+/** The scorer's view of a freshly scraped job (before AI enrichment: no skills, role or is_job yet). */
+export function scorableFromNormalized(job: NormalizedJob): ScorableJob {
+  return {
+    title: job.title,
+    descriptionText: job.descriptionText,
+    tags: job.tags,
+    remoteType: job.remoteType,
+    seniority: job.seniority,
+    location: job.location,
+    salaryMinUsd: job.salaryMinUsd,
+    salaryMaxUsd: job.salaryMaxUsd,
+    remoteRegions: job.remoteRegions,
+  };
+}
+
 export async function runQuery(deps: RunQueryDeps, queryId: string): Promise<RunQueryResult> {
   const { db } = deps;
   const now = deps.now?.() ?? new Date();
@@ -82,16 +97,21 @@ export async function runQuery(deps: RunQueryDeps, queryId: string): Promise<Run
     try {
       const raw = await adapter.search(query.params as Record<string, string>, ctx);
       const normalized = (await Promise.all(raw.map(normalizeJob))).filter((j): j is NormalizedJob => j !== null);
+      const profiles = await getProfilesForQuery(db, queryId);
+      // Whole-board feeds are mostly other roles: store only what some profile would actually show.
+      const toSave = PREFILTERED_SOURCE_IDS.has(source.id as SourceId)
+        ? normalized.filter((job) => wantedByAnyProfile(profiles, scorableFromNormalized(job)))
+        : normalized;
 
       const savedIds: string[] = [];
-      for (const job of normalized) {
+      for (const job of toSave) {
         const result = await saveJob(db, source.id, job, now);
         if (result.isNew) inserted++;
         savedIds.push(result.jobId);
       }
 
       // Match on what is stored (AI skills, is_job, remote_regions), not on the raw source data.
-      matched = await matchJobs(db, await getProfilesForQuery(db, queryId), await getScorableJobs(db, savedIds));
+      matched = await matchJobs(db, profiles, await getScorableJobs(db, savedIds));
       found = raw.length;
     } catch (err) {
       const board = boardOf(source.id, query.params);
