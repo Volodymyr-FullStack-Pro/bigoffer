@@ -4,7 +4,7 @@ import type { ParsedCv } from '@jp/ai';
 import { useTranslations } from 'next-intl';
 import { useState, useTransition } from 'react';
 import { createBrowserSupabase } from '@/lib/supabase/browser';
-import { createSearchProfileFromCv, fillContactsFromCv, registerCv, type CvState } from './cv-actions';
+import { createSearchProfileFromCv, deleteCv, fillContactsFromCv, registerCv, type CvState } from './cv-actions';
 
 const MAX_BYTES = 5 * 1024 * 1024;
 
@@ -24,6 +24,19 @@ export function CvSection({ cv, aiAvailable, cvLink }: { cv: { fileName: string;
   const pending = uploading || registering;
   const [filled, setFilled] = useState<boolean | null>(null);
   const parsed = cv?.parsed ?? null;
+  const [deleteResult, setDeleteResult] = useState<'deleted' | 'error' | null>(null);
+  const [deleting, startDelete] = useTransition();
+
+  function onDelete() {
+    if (!window.confirm(t('deleteConfirm'))) return;
+    startDelete(async () => {
+      try {
+        setDeleteResult((await deleteCv()).ok ? 'deleted' : 'error');
+      } catch {
+        setDeleteResult('error');
+      }
+    });
+  }
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -31,6 +44,7 @@ export function CvSection({ cv, aiAvailable, cvLink }: { cv: { fileName: string;
     if (!(file instanceof File) || file.size === 0 || (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf'))) return setState({ status: 'invalid', message: 'not_pdf' });
     if (file.size > MAX_BYTES) return setState({ status: 'invalid', message: 'too_big' });
     setUploading(true);
+    setDeleteResult(null);
     try {
       const supabase = createBrowserSupabase();
       const { data: { user } } = await supabase.auth.getUser();
@@ -70,12 +84,18 @@ export function CvSection({ cv, aiAvailable, cvLink }: { cv: { fileName: string;
         {state.status === 'stored' && t(STORED_MESSAGE[state.message ?? 'parse_failed'] ?? 'storedParseFailed')}
         {state.status === 'invalid' && t(state.message === 'too_big' ? 'tooBig' : 'notPdf')}
         {state.status === 'error' && t('error')}
+        {deleteResult && t(deleteResult === 'deleted' ? 'deleted' : 'deleteError')}
       </p>
       {cv && (
         <div className="flex flex-col gap-3">
           <p className="font-mono text-xs uppercase text-muted-foreground">
             {cv.fileName} {cvLink && <a data-testid="cv-link" href={cvLink} target="_blank" rel="noopener" className="underline">{t('open')}</a>}
           </p>
+          <div>
+            <button type="button" data-testid="cv-delete" disabled={deleting} onClick={onDelete} className="brutal brutal-press px-3 py-1.5 text-sm font-semibold text-danger disabled:opacity-50">
+              {t('delete')}
+            </button>
+          </div>
           {parsed && (
             <>
               <p data-testid="cv-headline" className="font-display text-xl font-black">
