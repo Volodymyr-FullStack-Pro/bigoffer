@@ -371,13 +371,13 @@ isOneToOne: false
                   ]
                 },"resumes": {
                   Row: {
-                    "created_at": string,"file_name": string,"id": string,"is_primary": boolean,"parse_error": string | null,"parsed": Json | null,"storage_path": string,"user_id": string
+                    "created_at": string,"file_name": string,"id": string,"is_primary": boolean,"parse_error": string | null,"parse_error_detail": string | null,"parsed": Json | null,"storage_path": string,"user_id": string
                   }
                   Insert: {
-                    "created_at"?: string,"file_name": string,"id"?: string,"is_primary"?: boolean,"parse_error"?: string | null,"parsed"?: Json | null,"storage_path": string,"user_id": string
+                    "created_at"?: string,"file_name": string,"id"?: string,"is_primary"?: boolean,"parse_error"?: string | null,"parse_error_detail"?: string | null,"parsed"?: Json | null,"storage_path": string,"user_id": string
                   }
                   Update: {
-                    "created_at"?: string,"file_name"?: string,"id"?: string,"is_primary"?: boolean,"parse_error"?: string | null,"parsed"?: Json | null,"storage_path"?: string,"user_id"?: string
+                    "created_at"?: string,"file_name"?: string,"id"?: string,"is_primary"?: boolean,"parse_error"?: string | null,"parse_error_detail"?: string | null,"parsed"?: Json | null,"storage_path"?: string,"user_id"?: string
                   }
                   Relationships: [
                     {
