@@ -79,12 +79,12 @@ export function MatchDetail({ match, onAction, onApplied, showDescription = true
       {(match.skills.length > 0 || match.missingSkills.length > 0) && (
         <ul className="flex flex-wrap gap-1.5" aria-label={tf('skills')}>
           {match.skills.map((s) => (
-            <li key={s.name} data-testid="match-skill" data-matched={s.matched} className={`rounded-sm border-2 border-border px-1.5 py-0.5 font-mono text-xs ${s.matched ? 'bg-brand text-brand-foreground' : ''}`}>
+            <li key={s.name} data-testid="match-skill" data-matched={s.matched} className={`rounded-sm border-[1.5px] border-border px-1.5 py-0.5 font-mono text-xs ${s.matched ? 'bg-brand text-brand-foreground' : ''}`}>
               {s.matched ? '✓ ' : ''}{s.name}
             </li>
           ))}
           {match.missingSkills.map((name) => (
-            <li key={`missing-${name}`} className="rounded-sm border-2 border-dashed border-border px-1.5 py-0.5 font-mono text-xs text-muted-foreground">
+            <li key={`missing-${name}`} className="rounded-sm border-[1.5px] border-dashed border-border px-1.5 py-0.5 font-mono text-xs text-muted-foreground">
               ✗ {name}
             </li>
           ))}
@@ -121,7 +121,7 @@ export function MatchDetail({ match, onAction, onApplied, showDescription = true
       <PeopleSearch company={match.company} isPlaceholder={match.companyIsPlaceholder} />
       <ApplyKitToggle key={match.id} jobId={match.jobId} onApplied={onApplied} />
       {showDescription && match.description && (
-        <div className="max-h-[50vh] overflow-y-auto whitespace-pre-line border-t-2 border-border pt-3 text-sm">{match.description}</div>
+        <div className="max-h-[50vh] overflow-y-auto whitespace-pre-line border-t border-border pt-3 text-sm">{match.description}</div>
       )}
     </article>
   );

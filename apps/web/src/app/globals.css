@@ -4,31 +4,37 @@
 
 :root {
   --background: #f4f1e8;
-  --foreground: oklch(18% 0 0);
+  --foreground: #131516;
   --card: #fffdf7;
-  --muted: oklch(92% 0.01 90);
+  --muted: #ebe6d8;
   --muted-foreground: oklch(42% 0 0);
-  --border: oklch(18% 0 0);
-  --shadow-color: oklch(18% 0 0);
-  --brand: #c6f432;
-  --brand-foreground: oklch(16% 0 0);
-  --ai: #7b5cff;
-  --success: oklch(62% 0.17 150);
-  --danger: oklch(64% 0.19 25);
-  --warning: oklch(78% 0.16 75);
-  --radius: 6px;
+  --border: #d9d4c5;
+  --border-strong: #131516;
+  --brand: #ffcb05;
+  --brand-foreground: #131516;
+  --ai: #6d28d9;
+  --ai-foreground: #ffffff;
+  --success: #15803d;
+  --danger: #b91c1c;
+  --warning: #c2410c;
+  --radius: 5px;
   --noise-opacity: 0.06;
 }
 
 .dark {
-  --background: oklch(16% 0 0);
-  --foreground: oklch(96% 0 0);
-  --card: oklch(21% 0 0);
-  --muted: oklch(26% 0 0);
-  --muted-foreground: oklch(72% 0 0);
-  --border: oklch(88% 0 0);
-  --shadow-color: oklch(88% 0 0);
-  --noise-opacity: 0.08;
+  --background: #131516;
+  --foreground: #f2f0e9;
+  --card: #1b1d1f;
+  --muted: #24272a;
+  --muted-foreground: #9a9da1;
+  --border: #2e3236;
+  --border-strong: #f2f0e9;
+  --ai: #a78bfa;
+  --ai-foreground: #131516;
+  --success: #4ade80;
+  --danger: #f87171;
+  --warning: #fb923c;
+  --noise-opacity: 0.07;
 }
 
 @theme inline {
@@ -38,9 +44,11 @@
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
   --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
   --color-brand: var(--brand);
   --color-brand-foreground: var(--brand-foreground);
   --color-ai: var(--ai);
+  --color-ai-foreground: var(--ai-foreground);
   --color-success: var(--success);
   --color-danger: var(--danger);
   --color-warning: var(--warning);
@@ -76,25 +84,42 @@
   h2,
   h3 {
     font-family: var(--font-display);
-    letter-spacing: -0.01em;
+    letter-spacing: -0.02em;
+  }
+  :focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 2px;
+  }
+  ::selection {
+    background-color: var(--brand);
+    color: var(--brand-foreground);
   }
 }
 
 @layer components {
+  /* Terminal Zine surface: hairline border, no offset shadow (class name kept from the zine era). */
   .brutal {
-    border: 2px solid var(--border);
+    border: 1.5px solid var(--border);
     border-radius: var(--radius);
-    box-shadow: 4px 4px 0 var(--shadow-color);
     background-color: var(--card);
   }
   .brutal-press {
     transition:
       transform 80ms ease-out,
-      box-shadow 80ms ease-out;
+      border-color 120ms ease-out,
+      background-color 120ms ease-out;
+  }
+  .brutal-press:hover {
+    border-color: var(--border-strong);
   }
   .brutal-press:active {
-    transform: translate(4px, 4px);
-    box-shadow: 0 0 0 var(--shadow-color);
+    transform: translateY(1px);
+  }
+  /* The "terminal voice": monospace labels for buttons, badges, nav, scores, dates. */
+  .mono-label {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    letter-spacing: 0.01em;
   }
 }
 

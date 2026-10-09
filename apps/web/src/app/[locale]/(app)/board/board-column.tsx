@@ -32,7 +32,7 @@ export function BoardColumnView({ column, cards, sort, onToggleSort, labels, lab
         </button>
       </header>
       <SortableContext items={cards.map((c) => c.id)} strategy={verticalListSortingStrategy}>
-        <div ref={setNodeRef} className={`flex min-h-24 flex-col gap-2 rounded-brutal border-2 border-dashed p-2 ${isOver ? 'border-brand bg-brand/10' : 'border-transparent'}`}>
+        <div ref={setNodeRef} className={`flex min-h-24 flex-col gap-2 rounded-brutal border-[1.5px] border-dashed p-2 ${isOver ? 'border-brand bg-brand/10' : 'border-transparent'}`}>
           {cards.map((c) => (
             <BoardCardItem key={c.id} card={c} labels={labels} labelName={labelName} now={now} onOpen={() => onOpen(c.id)} />
           ))}

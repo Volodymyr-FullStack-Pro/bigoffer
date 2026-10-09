@@ -97,7 +97,7 @@ export function ApplyKitPanel({ jobId, locale, onApplied, hidePeopleSearch }: { 
   const field = 'brutal bg-card px-2 py-1 text-sm';
 
   return (
-    <section data-testid="apply-kit" aria-label={t('title')} className="flex flex-col gap-4 border-t-2 border-border pt-4">
+    <section data-testid="apply-kit" aria-label={t('title')} className="flex flex-col gap-4 border-t border-border pt-4">
       <h3 className="font-display text-lg font-black">{t('title')}</h3>
       {!data.aiAvailable && <p data-testid="kit-error" className="text-sm text-warning">{t('err_ai_unavailable')}</p>}
       {data.aiAvailable && !data.hasCv && <p data-testid="kit-error" className="text-sm text-warning">{t('err_no_cv')}</p>}
@@ -110,7 +110,7 @@ export function ApplyKitPanel({ jobId, locale, onApplied, hidePeopleSearch }: { 
             {(['auto', 'en', 'uk', 'ru'] as const).map((l) => <option key={l} value={l}>{t(`lang_${l}`)}</option>)}
           </select>
         </label>
-        <button type="button" data-testid="kit-generate" disabled={loading || !data.aiAvailable || !data.hasCv} onClick={() => void run('default')} className="brutal brutal-press bg-ai px-4 py-2 font-semibold text-white disabled:opacity-50">
+        <button type="button" data-testid="kit-generate" disabled={loading || !data.aiAvailable || !data.hasCv} onClick={() => void run('default')} className="brutal brutal-press bg-ai px-4 py-2 font-semibold text-ai-foreground disabled:opacity-50">
           {loading ? t('generating') : kit ? t('regenerate') : t('generate')}
         </button>
         {kit && (
