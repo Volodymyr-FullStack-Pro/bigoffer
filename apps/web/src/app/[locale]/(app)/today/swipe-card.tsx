@@ -36,20 +36,20 @@ export function SwipeCard({ match, onAction, onApplied }: { match: FeedMatch; on
           else if (info.offset.x < -THRESHOLD) onAction('hide');
         }}
       >
-        <motion.span aria-hidden style={{ opacity: saveOpacity }} className="absolute right-4 top-4 rotate-12 border-[1.5px] border-border bg-brand px-2 font-display font-black uppercase text-brand-foreground">
+        <motion.span aria-hidden style={{ opacity: saveOpacity }} className="absolute right-4 top-4 rotate-12 border-[1.5px] border-border bg-brand px-2 font-display font-semibold text-brand-foreground">
           {tf('save')}
         </motion.span>
-        <motion.span aria-hidden style={{ opacity: hideOpacity }} className="absolute left-4 top-4 -rotate-12 border-[1.5px] border-border bg-card px-2 font-display font-black uppercase">
+        <motion.span aria-hidden style={{ opacity: hideOpacity }} className="absolute left-4 top-4 -rotate-12 border-[1.5px] border-border bg-card px-2 font-display font-semibold">
           {tf('hide')}
         </motion.span>
         <ScoreMeter score={match.score} label={t('match')} />
-        <h2 className="font-display text-xl font-black leading-tight">{match.title}</h2>
+        <h2 className="font-display text-xl font-semibold leading-tight">{match.title}</h2>
         <p className="flex flex-wrap items-center gap-2 text-muted-foreground">
           {match.company}
           {match.postings[0] && <SourceBadge sourceId={match.postings[0].sourceId} />}
         </p>
         {match.summary && <p data-testid="match-summary" className="line-clamp-2 text-sm">{match.summary}</p>}
-        <button type="button" className="self-start font-mono text-xs uppercase underline" onClick={() => setOpen((v) => !v)} aria-expanded={open}>
+        <button type="button" className="self-start font-mono text-xs underline" onClick={() => setOpen((v) => !v)} aria-expanded={open}>
           {open ? tf('lessDetails') : tf('moreDetails')}
         </button>
       </motion.article>

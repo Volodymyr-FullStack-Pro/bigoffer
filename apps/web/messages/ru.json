@@ -139,7 +139,7 @@
     "seniority_middle": "Middle",
     "seniority_senior": "Senior",
     "seniority_lead": "Lead",
-    "onboardingBanner": "Завершите настройку: CV, шаблон письма и типовые ответы"
+    "onboardingBanner": "Завершите настройку: CV и типовые ответы"
   },
   "feed": {
     "progress": "{done} / {total}",

@@ -94,10 +94,14 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
 
   return (
     <section className="flex flex-col gap-6">
-      <h1 className="text-3xl font-black md:text-4xl">{t('title')}</h1>
+      <h1 className="text-3xl font-semibold md:text-4xl">{t('title')}</h1>
       {me && !me.onboarded_at && (
-        <Link href="/onboarding" data-testid="onboarding-banner" className="brutal brutal-press flex items-center justify-between gap-3 bg-ai p-4 font-semibold text-ai-foreground">
-          {t('onboardingBanner')} →
+        <Link href="/onboarding" data-testid="onboarding-banner" className="brutal brutal-press flex items-center justify-between gap-3 p-4 font-medium">
+          <span className="flex items-center gap-3">
+            <span aria-hidden className="size-2 shrink-0 rounded-full bg-ai" />
+            {t('onboardingBanner')}
+          </span>
+          <span aria-hidden className="text-ai">→</span>
         </Link>
       )}
       {(profiles ?? []).length > 0 && <SearchNow initialStatus={searchStatus} autopilot={(profiles ?? []).some((p) => p.is_active)} />}

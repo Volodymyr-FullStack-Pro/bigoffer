@@ -41,7 +41,7 @@ export function Toast({ toast, onClose }: { toast: ToastState; onClose: () => vo
         <button
           type="button"
           data-testid="toast-undo"
-          className="font-mono text-sm font-bold uppercase underline"
+          className="font-mono text-sm font-bold underline"
           onClick={() => {
             toast.onUndo?.();
             onClose();

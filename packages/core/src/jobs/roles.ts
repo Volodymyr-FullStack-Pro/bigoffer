@@ -36,8 +36,12 @@ const PATTERNS: [RoleFamily, RegExp][] = [
   ['support', W(String.raw`(technical\s+)?support|customer\s+success|help\s*desk|підтримк\p{L}*|поддержк\p{L}*`)],
 ];
 
+/** "…, not a Full-stack role" / "no backend position" name a family only to rule it out. */
+const NEGATED = /(^|[^\p{L}])(not|no|non)[\s-]+(an?\s+)?[\p{L}\p{N}\s/+.#-]{1,30}?\s(role|position|job)(?=$|[^\p{L}])/giu;
+
 function familiesOf(text: string): RoleFamily[] {
-  return PATTERNS.filter(([, re]) => re.test(text)).map(([family]) => family);
+  const t = text.replace(NEGATED, ' ');
+  return PATTERNS.filter(([, re]) => re.test(t)).map(([family]) => family);
 }
 
 /**

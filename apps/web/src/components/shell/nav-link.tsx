@@ -24,12 +24,10 @@ export function NavLink({
       aria-current={active ? 'page' : undefined}
       className={
         compact
-          ? `relative flex flex-1 flex-col items-center gap-0.5 py-2 font-mono text-[11px] ${
-              active ? 'font-bold text-foreground before:absolute before:inset-x-4 before:top-0 before:h-0.5 before:bg-brand' : 'text-muted-foreground'
-            }`
-          : `mono-label relative flex items-center gap-3 rounded-brutal px-3 py-2 transition-colors ${
+          ? `flex flex-1 flex-col items-center gap-0.5 py-2 text-[11px] font-medium ${active ? 'text-link' : 'text-muted-foreground'}`
+          : `mono-label flex items-center gap-3 rounded-xl px-3 py-2 transition-colors ${
               active
-                ? 'bg-muted font-bold text-foreground before:absolute before:inset-y-1.5 before:left-0 before:w-0.75 before:rounded-full before:bg-brand'
+                ? 'bg-muted font-semibold text-foreground'
                 : 'text-muted-foreground hover:bg-muted hover:text-foreground'
             }`
       }
@@ -37,7 +35,7 @@ export function NavLink({
       <Icon className={compact ? 'size-5' : 'size-4'} aria-hidden />
       <span>{label}</span>
       {badge && !compact && (
-        <span className="ml-auto rounded-sm bg-ai px-1.5 font-mono text-[10px] uppercase text-ai-foreground">
+        <span className="ml-auto rounded-full bg-ai/15 px-2 py-0.5 text-[11px] font-medium text-ai">
           {badge}
         </span>
       )}

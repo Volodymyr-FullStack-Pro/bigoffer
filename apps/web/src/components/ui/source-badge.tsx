@@ -32,7 +32,7 @@ export function SourceBadge({ sourceId }: { sourceId: string }) {
   return (
     <span
       data-testid="source-badge"
-      className="inline-flex items-center gap-1.5 rounded-full border border-border px-2 py-0.5 font-mono text-[11px] leading-none text-muted-foreground"
+      className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2 py-0.5 text-xs leading-5 text-muted-foreground"
     >
       <span aria-hidden className="size-1.5 rounded-full" style={{ backgroundColor: SOURCE_COLORS[sourceId] ?? 'currentColor' }} />
       {sourceInfo(sourceId)?.name ?? sourceId}

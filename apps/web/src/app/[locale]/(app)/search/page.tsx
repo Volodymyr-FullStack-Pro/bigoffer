@@ -52,7 +52,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
   return (
     <section className="flex max-w-3xl flex-col gap-6">
       <div>
-        <h1 className="text-3xl font-black md:text-4xl">{t('title')}</h1>
+        <h1 className="text-3xl font-semibold md:text-4xl">{t('title')}</h1>
         <p className="mt-2 text-muted-foreground">{t('intro')}</p>
       </div>
       {profiles.map((p) => (

@@ -48,7 +48,7 @@ export function BoardCardItem({ card, labels, labelName, now, onOpen }: {
       {own.length > 0 && (
         <span className="flex flex-wrap gap-1">
           {own.map((l) => (
-            <span key={l.id} className="rounded-sm border border-border px-1 font-mono text-[10px] uppercase" style={{ background: l.color }}>
+            <span key={l.id} className="rounded-sm border border-border px-1 font-mono text-[10px]" style={{ background: l.color }}>
               {labelName(l)}
             </span>
           ))}
@@ -57,7 +57,7 @@ export function BoardCardItem({ card, labels, labelName, now, onOpen }: {
       <span className="flex flex-wrap items-center gap-2 font-mono text-xs text-muted-foreground">
         {card.appliedAt && <span suppressHydrationWarning>{t('appliedAgo', { ago: format.relativeTime(new Date(card.appliedAt), now) })}</span>}
         {card.urgency in URGENCY_STYLE && (
-          <span data-testid="card-urgency" data-urgency={card.urgency} className={`rounded-sm border border-border px-1 font-bold uppercase ${URGENCY_STYLE[card.urgency]}`}>
+          <span data-testid="card-urgency" data-urgency={card.urgency} className={`rounded-sm border border-border px-1 font-bold ${URGENCY_STYLE[card.urgency]}`}>
             {t(`urgency_${card.urgency}` as never)}
           </span>
         )}

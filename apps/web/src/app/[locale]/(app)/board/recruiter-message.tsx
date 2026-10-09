@@ -33,7 +33,7 @@ export function RecruiterMessage({ applicationId, defaultLang, onSent }: { appli
 
   return (
     <section data-testid="recruiter-message" className="flex flex-col gap-3 border-t border-border pt-3">
-      <h3 className="font-mono text-xs uppercase">{t('title')}</h3>
+      <h3 className="font-mono text-xs">{t('title')}</h3>
       <div className="flex flex-wrap gap-2">
         <select data-testid="msg-format" aria-label={t('format')} value={fmt} onChange={(e) => setFmt(e.target.value as MessageFormat)} className={field}>
           {MESSAGE_FORMATS.map((f) => <option key={f} value={f}>{t(`format_${f}`)}</option>)}
@@ -101,7 +101,7 @@ export function RecruiterMessage({ applicationId, defaultLang, onSent }: { appli
         <ul className="flex flex-col gap-2 text-sm">
           {history.map((m, i) => (
             <li key={i} data-testid="msg-item" className="border-l-4 border-border pl-2">
-              <span className="font-mono text-xs uppercase text-muted-foreground">{t(m.direction === 'out' ? 'outgoing' : 'incoming')} · {m.channel} · <span suppressHydrationWarning>{format.relativeTime(new Date(m.sentAt), now)}</span></span>
+              <span className="font-mono text-xs text-muted-foreground">{t(m.direction === 'out' ? 'outgoing' : 'incoming')} · {m.channel} · <span suppressHydrationWarning>{format.relativeTime(new Date(m.sentAt), now)}</span></span>
               <p className="line-clamp-3 whitespace-pre-line">{m.body}</p>
             </li>
           ))}
