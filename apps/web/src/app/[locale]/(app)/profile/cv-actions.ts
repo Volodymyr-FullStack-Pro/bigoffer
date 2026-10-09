@@ -89,6 +89,26 @@ export async function registerCv(path: string, originalName: string): Promise<Cv
   }
 }
 
+export async function deleteCv(): Promise<{ ok: boolean }> {
+  const userId = await getUserId();
+  if (!userId) return { ok: false };
+  const supabase = await createClient();
+  const cv = await loadPrimaryCv(supabase);
+  if (!cv) return { ok: true };
+  const { error: removeError } = await supabase.storage.from('resumes').remove([cv.path]);
+  if (removeError) {
+    console.error('cv: could not remove file', removeError.message);
+    return { ok: false };
+  }
+  const { error: deleteError } = await supabase.from('resumes').delete().eq('id', cv.id);
+  if (deleteError) {
+    console.error('cv: could not delete row', deleteError.code ?? 'unknown');
+    return { ok: false };
+  }
+  revalidatePath('/[locale]/profile', 'page');
+  return { ok: true };
+}
+
 export async function createSearchProfileFromCv(): Promise<void> {
   const userId = await getUserId();
   if (!userId) return;

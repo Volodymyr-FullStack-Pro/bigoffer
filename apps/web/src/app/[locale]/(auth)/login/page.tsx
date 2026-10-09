@@ -1,5 +1,6 @@
 import { safeRedirectPath } from '@jp/core';
 import { getTranslations } from 'next-intl/server';
+import { LegalLinks } from '@/components/legal-links';
 import { LocaleSwitcher } from '@/components/locale-switcher';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { publicEnv } from '@/env';
@@ -46,6 +47,7 @@ export default async function LoginPage({
         )}
       </section>
       <p className="text-center text-sm text-muted-foreground">{tApp('tagline')}</p>
+      <LegalLinks className="text-center text-xs text-muted-foreground" />
     </main>
   );
 }

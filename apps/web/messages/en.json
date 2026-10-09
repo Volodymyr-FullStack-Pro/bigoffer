@@ -3,6 +3,72 @@
     "name": "BigOffer",
     "tagline": "Fresh jobs. Fast applications. Zero chaos."
   },
+  "legal": {
+    "updated": "Last updated: {date}",
+    "back": "Back to sign in",
+    "footerPrivacy": "Privacy",
+    "footerTerms": "Terms",
+    "privacy": {
+      "title": "Privacy Policy",
+      "intro": "BigOffer helps you find jobs and apply faster. This policy explains what data we handle and why. Questions or requests: see the contact email at the end.",
+      "s1": {
+        "title": "What the service does",
+        "body": "BigOffer collects public job postings from job boards, company career pages and public Telegram channels, scores them against your search profile, helps you prepare applications (cover letters, form answers, recruiter messages), tracks your applications on a board and can send optional Telegram notifications."
+      },
+      "s2": {
+        "title": "Data we collect",
+        "body": "Your Google account email and name when you sign in; your profile (name, timezone, country and the contacts you enter); the CV PDF you upload and the facts parsed from it; your search profiles; your application board; your cover-letter template and answer bank; and your Telegram chat id if you connect the bot."
+      },
+      "s3": {
+        "title": "How your CV is stored",
+        "body": "Your CV is stored in a private file storage bucket and is accessible only to your account. You can delete it at any time in the app."
+      },
+      "s4": {
+        "title": "Service providers",
+        "body": "We use Supabase (database, authentication and file storage; EU, Frankfurt), Vercel (hosting; EU functions), Trigger.dev (background jobs), Google Gemini API (AI features) and Telegram (only if you connect the bot). Personal data such as your CV is sent to Google Gemini only when you trigger an action such as parsing your CV or generating a letter."
+      },
+      "s5": {
+        "title": "What we do not do",
+        "body": "We do not sell your data, show ads or track you for advertising purposes."
+      },
+      "s6": {
+        "title": "Your controls and rights",
+        "body": "You can delete your CV, disconnect Telegram, and edit or delete your search profiles in the app. To delete your account or export your data, email us at the address below and we will do it on request."
+      },
+      "s7": {
+        "title": "Changes and contact",
+        "body": "We may update this policy; the date at the top shows the latest version. For any privacy question, contact us at the email below."
+      }
+    },
+    "terms": {
+      "title": "Terms of Service",
+      "intro": "By using BigOffer you agree to these terms. If you do not agree, please do not use the service.",
+      "s1": {
+        "title": "The service",
+        "body": "BigOffer is a tool that helps you find job postings and prepare applications. The service is provided \"as is\", without warranties of any kind."
+      },
+      "s2": {
+        "title": "No guarantees",
+        "body": "We do not guarantee that you will get a job, an interview or a reply. Job postings come from third-party sources and we do not guarantee that they are accurate, complete or still open. AI-generated text may contain mistakes."
+      },
+      "s3": {
+        "title": "Your responsibility",
+        "body": "You are responsible for everything you send to employers and recruiters, including letters and answers generated with the help of the service. Review them before sending."
+      },
+      "s4": {
+        "title": "Third-party content",
+        "body": "Job postings belong to their original sources and owners. BigOffer only links to them and shows a preview for your convenience."
+      },
+      "s5": {
+        "title": "Acceptable use",
+        "body": "Do not scrape or abuse BigOffer, try to break or overload it, access other users' data, or upload illegal content."
+      },
+      "s6": {
+        "title": "Changes, termination and governing law",
+        "body": "We may change or terminate the service, or restrict access in case of abuse. These terms are governed by the laws of Ukraine. Questions: contact us at the email below."
+      }
+    }
+  },
   "nav": {
     "today": "Today",
     "board": "Board",
@@ -278,6 +344,10 @@
     "error": "Something went wrong. Try again.",
     "aiUnavailable": "AI for personal data is off: add a paid private Gemini key to enable CV reading, letters and messages.",
     "open": "Open",
+    "delete": "Delete CV",
+    "deleteConfirm": "Delete your CV and everything parsed from it? This cannot be undone.",
+    "deleted": "CV deleted.",
+    "deleteError": "Could not delete the CV. Try again.",
     "years": "{count, plural, one {# year} other {# years}}",
     "createSearch": "Create a job search from my CV",
     "fillContacts": "Fill empty contacts from CV",

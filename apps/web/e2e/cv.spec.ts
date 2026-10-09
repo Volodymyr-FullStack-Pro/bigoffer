@@ -22,6 +22,26 @@ test('uploads a CV, reads it with AI and creates a search from it', async ({ con
   await expect(page.getByLabel('Profile name')).toHaveValue('Full Stack Developer');
 });
 
+test('deletes the CV: the block empties and the stored file is gone', async ({ context, page }) => {
+  await loginAs(context, uniqueEmail('cv-del'));
+  await page.goto('/en/profile');
+  await page.getByTestId('cv-file').setInputFiles(path.join(__dirname, 'fixtures', 'cv.pdf'));
+  await page.getByTestId('cv-upload').click();
+  await expect(page.getByTestId('cv-status')).toContainText('CV read');
+  await page.reload();
+  const href = await page.getByTestId('cv-link').getAttribute('href');
+  expect(href).toBeTruthy();
+  expect((await page.request.get(href!)).status()).toBe(200);
+  page.once('dialog', (d) => void d.accept());
+  await page.getByTestId('cv-delete').click();
+  await expect(page.getByTestId('cv-status')).toHaveText('CV deleted.');
+  await expect(page.getByTestId('cv-link')).toHaveCount(0);
+  await expect(page.getByTestId('cv-delete')).toHaveCount(0);
+  await page.reload();
+  await expect(page.getByTestId('cv-headline')).toHaveCount(0);
+  expect((await page.request.get(href!)).ok()).toBe(false);
+});
+
 test('rejects a non-PDF file', async ({ context, page }) => {
   await loginAs(context, uniqueEmail('cv-bad'));
   await page.goto('/en/profile');

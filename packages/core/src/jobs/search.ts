@@ -212,6 +212,7 @@ export function buildSourceQueries(
   add('workingnomads', {});
   add('justjoin', {});
   add('jobico', {});
+  add('itlead', {});
 
   const unique = new Map(specs.map((s) => [s.queryKey, s]));
   return [...unique.values()];
