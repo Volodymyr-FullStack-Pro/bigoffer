@@ -3,8 +3,15 @@
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { HoverBorderGradient } from '@/components/aceternity/hover-border-gradient';
+import { GlowCard } from '@/components/ui/glow-card';
 import { Link } from '@/i18n/navigation';
-import { getSearchNowStatus, type SearchNowStatus, setAutopilot, startSearchNow } from './search-now-actions';
+import {
+  getSearchNowStatus,
+  type SearchNowStatus,
+  setAutopilot,
+  startSearchNow,
+} from './search-now-actions';
 
 /** A search counts as running for at most this long after the request (queues may hold slow sources). */
 const RUNNING_WINDOW_MS = 15 * 60 * 1000;
@@ -15,7 +22,13 @@ function isRunning(s: SearchNowStatus | null, now: number): boolean {
   return s.done < s.total && now - Date.parse(s.requestedAt) < RUNNING_WINDOW_MS;
 }
 
-export function SearchNow({ initialStatus, autopilot: initialAutopilot }: { initialStatus: SearchNowStatus | null; autopilot: boolean }) {
+export function SearchNow({
+  initialStatus,
+  autopilot: initialAutopilot,
+}: {
+  initialStatus: SearchNowStatus | null;
+  autopilot: boolean;
+}) {
   const t = useTranslations('searchNow');
   const router = useRouter();
   const [status, setStatus] = useState(initialStatus);
@@ -68,36 +81,72 @@ export function SearchNow({ initialStatus, autopilot: initialAutopilot }: { init
   const done = Math.min(status?.done ?? 0, total);
 
   return (
-    <section data-testid="search-now" aria-label={t('title')} className="brutal flex flex-col gap-3 p-4 md:flex-row md:items-center md:justify-between">
-      <div className="flex flex-col gap-1">
-        <h2 className="font-display text-lg font-semibold">{t('title')}</h2>
-        {running ? (
-          <p role="status" data-testid="search-now-progress" className="font-mono text-sm text-muted-foreground">
-            {t('progress', { done, total, found: status?.newMatches ?? 0 })}
-          </p>
-        ) : (
-          <p className="text-sm text-muted-foreground">
-            {message === 'cooldown' ? t('cooldown') : message === 'failed' ? t('failed') : status?.requestedAt && total > 0 ? t('lastDone', { found: status.newMatches }) : t('hint')}
-          </p>
-        )}
-        {running && (
-          <span aria-hidden className="mt-1 h-1 w-full max-w-xs overflow-hidden rounded-full bg-muted">
-            <span className="block h-full bg-brand transition-[width]" style={{ width: `${total ? Math.round((done / total) * 100) : 5}%` }} />
-          </span>
-        )}
-      </div>
-      <div className="flex flex-wrap items-center gap-3">
-        <button type="button" data-testid="search-now-start" disabled={pending || running} onClick={() => void start()} className="brutal brutal-press border-brand bg-brand px-4 py-2 font-mono text-sm font-semibold text-brand-foreground disabled:opacity-60">
-          {running ? t('searching') : t('start')}
-        </button>
-        <label className="mono-label flex cursor-pointer items-center gap-2">
-          <input type="checkbox" role="switch" data-testid="autopilot" checked={autopilot} onChange={() => void toggleAutopilot()} className="size-4 accent-[var(--brand)]" />
-          {t('autopilot')}
-        </label>
-        <Link href="/search" className="mono-label text-muted-foreground underline hover:text-foreground">
-          {t('settings')}
-        </Link>
-      </div>
-    </section>
+    <GlowCard>
+      <section
+        data-testid="search-now"
+        aria-label={t('title')}
+        className="brutal flex flex-col gap-4 p-5 md:flex-row md:items-center md:justify-between"
+      >
+        <div className="flex flex-col gap-1">
+          <h2 className="font-display text-lg font-semibold">{t('title')}</h2>
+          {running ? (
+            <p
+              role="status"
+              data-testid="search-now-progress"
+              className="font-mono text-sm text-muted-foreground"
+            >
+              {t('progress', { done, total, found: status?.newMatches ?? 0 })}
+            </p>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              {message === 'cooldown'
+                ? t('cooldown')
+                : message === 'failed'
+                  ? t('failed')
+                  : status?.requestedAt && total > 0
+                    ? t('lastDone', { found: status.newMatches })
+                    : t('hint')}
+            </p>
+          )}
+          {running && (
+            <span
+              aria-hidden
+              className="mt-1 h-1 w-full max-w-xs overflow-hidden rounded-full bg-muted"
+            >
+              <span
+                className="block h-full bg-brand transition-[width]"
+                style={{ width: `${total ? Math.round((done / total) * 100) : 5}%` }}
+              />
+            </span>
+          )}
+        </div>
+        <div className="flex flex-wrap items-center gap-3">
+          <HoverBorderGradient
+            data-testid="search-now-start"
+            disabled={pending || running}
+            onClick={() => void start()}
+          >
+            {running ? t('searching') : t('start')}
+          </HoverBorderGradient>
+          <label className="mono-label flex cursor-pointer items-center gap-2">
+            <input
+              type="checkbox"
+              role="switch"
+              data-testid="autopilot"
+              checked={autopilot}
+              onChange={() => void toggleAutopilot()}
+              className="size-4 accent-[var(--brand)]"
+            />
+            {t('autopilot')}
+          </label>
+          <Link
+            href="/search"
+            className="mono-label text-muted-foreground underline hover:text-foreground"
+          >
+            {t('settings')}
+          </Link>
+        </div>
+      </section>
+    </GlowCard>
   );
 }

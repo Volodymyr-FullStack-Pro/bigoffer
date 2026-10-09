@@ -13,7 +13,7 @@ export async function Header() {
   return (
     <header className="glass sticky top-0 z-20 rounded-none border-x-0 border-t-0">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-4">
-        <Link href="/today" className="flex items-baseline gap-0.5 font-display text-xl font-semibold tracking-tight">
+        <Link href="/today" className="flex items-baseline gap-0.5 rounded-lg font-display text-xl font-semibold tracking-tight focus-visible:outline-offset-4">
           {tApp('name')}
           <span aria-hidden className="inline-block size-2 rounded-full bg-brand" />
         </Link>
