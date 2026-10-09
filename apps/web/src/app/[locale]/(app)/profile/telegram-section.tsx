@@ -87,11 +87,15 @@ function Connected({ settings }: { settings: TelegramSettings }) {
       </label>
       <label className="flex flex-col gap-1 text-sm font-semibold">
         {t('minScore')}
-        <input data-testid="telegram-min-score" type="number" min={0} max={100} step={1} value={minScore} onChange={(e) => setMinScore(e.target.value)} aria-invalid={!scoreValid} className="brutal w-28 bg-card px-2 py-1 font-normal" />
+        <select data-testid="telegram-min-score" value={minScore} onChange={(e) => setMinScore(e.target.value)} className="w-28 rounded-xl border border-border bg-card px-3 py-2 font-normal">
+          {[...new Set([50, 60, 70, 75, 80, 85, 90, 95, score])].filter((n) => Number.isInteger(n)).sort((a, b) => a - b).map((n) => (
+            <option key={n} value={n}>≥ {n}%</option>
+          ))}
+        </select>
       </label>
       <label className="flex flex-col gap-1 text-sm font-semibold">
         {t('digestHour')}
-        <select data-testid="digest-hour" value={digestHour} onChange={(e) => setDigestHour(Number(e.target.value))} className="brutal w-28 bg-card px-2 py-1 font-normal">
+        <select data-testid="digest-hour" value={digestHour} onChange={(e) => setDigestHour(Number(e.target.value))} className="w-28 rounded-xl border border-border bg-card px-3 py-2 font-normal">
           {Array.from({ length: 24 }, (_, h) => (
             <option key={h} value={h}>{`${String(h).padStart(2, '0')}:00`}</option>
           ))}

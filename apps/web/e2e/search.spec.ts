@@ -14,7 +14,9 @@ test('creates a search profile and keeps it after reload', async ({ context, pag
   // the "new profile" form is replaced by the saved profile's form + an "add" link
   await expect(page.getByTestId('search-add')).toBeVisible();
   await page.reload();
-  await expect(page.getByLabel('Role keywords').first()).toHaveValue('full stack, react developer');
+  // Keywords are chips now: a comma list typed into the field becomes one chip per term.
+  await expect(page.getByTestId('tag-chip').filter({ hasText: /^full stack$/ }).first()).toBeVisible();
+  await expect(page.getByTestId('tag-chip').filter({ hasText: /^react developer$/ }).first()).toBeVisible();
   await page.getByLabel('Your skills').first().fill('React, Node.js');
   await page.getByTestId('search-save').first().click();
   await expect(page.getByRole('status').first()).toContainText('Saved');
@@ -100,3 +102,24 @@ test('a new profile leaves rarely relevant sources off and flags them', async ({
   await expect(page.getByTestId('source-djinni')).toBeChecked();
   await expect(page.getByTestId('low-yield-djinni')).toHaveCount(0);
 });
+
+test('chips: suggestions add a term, × removes it, salary is picked from a list', async ({ context, page }) => {
+  await loginAs(context, uniqueEmail('search-chips'));
+  await page.goto('/en/search');
+  await page.getByTestId('role-frontend').check();
+  await page.getByTestId('suggest-keywords').getByRole('button', { name: '+ react developer' }).click();
+  await page.getByTestId('suggest-skills').getByRole('button', { name: '+ TypeScript' }).click();
+  await page.getByLabel('Your skills').fill('Redux');
+  await page.getByLabel('Your skills').press('Enter');
+  await page.getByRole('button', { name: '× Redux' }).click();
+  await page.getByTestId('salary-select').selectOption('2000');
+  await page.getByTestId('search-save').click();
+  await expect(page.getByTestId('search-add')).toBeVisible();
+  await page.reload();
+  const chips = page.getByTestId('tag-chip');
+  await expect(chips.filter({ hasText: /^react developer$/ })).toHaveCount(1);
+  await expect(chips.filter({ hasText: /^TypeScript$/ })).toHaveCount(1);
+  await expect(chips.filter({ hasText: /^Redux$/ })).toHaveCount(0);
+  await expect(page.getByTestId('salary-select')).toHaveValue('2000');
+});
+

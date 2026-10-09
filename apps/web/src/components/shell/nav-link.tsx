@@ -22,6 +22,8 @@ export function NavLink({
     <Link
       href={href}
       aria-current={active ? 'page' : undefined}
+      // A mouse/touch click must not leave a focus ring on the item after navigation; keyboard focus stays.
+      onPointerUp={(e) => e.currentTarget.blur()}
       className={
         compact
           ? `flex flex-1 flex-col items-center gap-0.5 py-2 text-[11px] font-medium ${active ? 'text-link' : 'text-muted-foreground'}`

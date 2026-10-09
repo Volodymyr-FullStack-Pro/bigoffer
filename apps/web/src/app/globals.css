@@ -102,8 +102,12 @@
     font-variant-numeric: tabular-nums;
   }
   :focus-visible {
-    outline: 2px solid var(--brand);
+    outline: 2px solid color-mix(in srgb, var(--brand) 70%, transparent);
     outline-offset: 2px;
+  }
+  /* Clicked links keep focus after client navigation; only keyboard focus should draw a ring there. */
+  a:focus:not(:focus-visible) {
+    outline: none;
   }
   ::selection {
     background-color: var(--brand);
