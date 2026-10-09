@@ -19,7 +19,8 @@ export type SourceInfo = {
 export const SOURCE_CATALOG: readonly SourceInfo[] = [
   { id: 'dou', name: 'DOU', market: 'ua', url: 'https://jobs.dou.ua' },
   { id: 'djinni', name: 'Djinni', market: 'ua', url: 'https://djinni.co' },
-  { id: 'workua', name: 'Work.ua', market: 'ua', url: 'https://www.work.ua', browser: true },
+  // Answers HTTP 403 to every non-browser-fingerprinted client (incl. our cloud workers), so it never yields.
+  { id: 'workua', name: 'Work.ua', market: 'ua', url: 'https://www.work.ua', browser: true, lowYield: true },
   { id: 'robotaua', name: 'robota.ua', market: 'ua', url: 'https://robota.ua' },
   { id: 'jobico', name: 'Jobico', market: 'ua', url: 'https://www.jobico.io', lowYield: true },
   { id: 'itlead', name: 'ITLead', market: 'ua', url: 'https://itlead.org/vacancies' },

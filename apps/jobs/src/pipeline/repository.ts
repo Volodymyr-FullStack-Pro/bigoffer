@@ -90,6 +90,8 @@ export async function finishRun(
   if (error) throw error;
 }
 
+export const BLOCKED_PAUSE_MS = 6 * 60 * 60 * 1000;
+
 export async function updateSourceHealth(
   db: Db,
   source: SourceRow,
@@ -97,7 +99,8 @@ export async function updateSourceHealth(
   now: Date,
 ): Promise<{ alert: string | null }> {
   if (outcome === 'blocked') {
-    const until = new Date(now.getTime() + 60 * 60 * 1000).toISOString();
+    // Blocks (403/captcha) rarely lift within the hour; a long pause stops paying for doomed browser runs.
+    const until = new Date(now.getTime() + BLOCKED_PAUSE_MS).toISOString();
     const { error } = await db.from('sources').update({ paused_until: until }).eq('id', source.id);
     if (error) throw error;
     return { alert: `Source ${source.id} blocked us; paused until ${until}` };
