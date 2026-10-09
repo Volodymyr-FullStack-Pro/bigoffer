@@ -7,6 +7,10 @@ describe('SOURCE_CATALOG', () => {
     expect(sourceInfo('jobico')).toMatchObject({ name: 'Jobico', market: 'ua' });
     expect(defaultSources('office')).not.toContain('jobico');
   });
+  it('lists ITLead as a Ukrainian board polled by default', () => {
+    expect(sourceInfo('itlead')).toMatchObject({ name: 'ITLead', market: 'ua', url: 'https://itlead.org/vacancies' });
+    expect(defaultSources('office')).toContain('itlead');
+  });
   it('has exactly one entry per source id', () => {
     expect(SOURCE_CATALOG.map((s) => s.id).sort()).toEqual([...SOURCE_IDS].sort());
   });

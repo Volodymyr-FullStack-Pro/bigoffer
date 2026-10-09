@@ -85,7 +85,7 @@ describe('buildSourceQueries with source selection', () => {
   it('builds params for new sources', () => {
     const specs = buildSourceQueries({
       ...base,
-      sources: ['workua', 'olx', 'linkedin', 'jobicy', 'arbeitnow', 'workingnomads', 'justjoin', 'jobico'],
+      sources: ['workua', 'olx', 'linkedin', 'jobicy', 'arbeitnow', 'workingnomads', 'justjoin', 'jobico', 'itlead'],
     });
     const p = (id: string) => specs.filter((s) => s.sourceId === id).map((s) => s.params);
     expect(p('workua')[0]).toEqual({ search: 'full stack', remote: '1' });
@@ -96,6 +96,7 @@ describe('buildSourceQueries with source selection', () => {
     expect(p('workingnomads')).toEqual([{}]);
     expect(p('justjoin')).toEqual([{}]);
     expect(p('jobico')).toEqual([{}]);
+    expect(p('itlead')).toEqual([{}]);
   });
 
   it('targets Ukraine on LinkedIn and office Work.ua for office profiles', () => {

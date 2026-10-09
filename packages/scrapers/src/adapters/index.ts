@@ -6,6 +6,7 @@ import { djinniAdapter } from './djinni';
 import { douAdapter } from './dou';
 import { himalayasAdapter } from './himalayas';
 import { hnAdapter } from './hn';
+import { itleadAdapter } from './itlead';
 import { jobicoAdapter } from './jobico';
 import { jobicyAdapter } from './jobicy';
 import { joobleAdapter } from './jooble';
@@ -48,4 +49,5 @@ export const ADAPTERS: Record<SourceId, SourceAdapter> = {
   workable: workableAdapter,
   telegram: telegramAdapter,
   adzuna: adzunaAdapter,
+  itlead: itleadAdapter,
 };
