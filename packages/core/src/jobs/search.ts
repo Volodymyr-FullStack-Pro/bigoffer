@@ -197,8 +197,20 @@ export function buildSourceQueries(
     has(/front|react|vue|angular|\bnext\b|full ?stack|javascript|typescript/) ? 'Front End' : null,
     has(/node|nest|express|full ?stack|back ?end/) ? 'Node.js' : null,
     has(/javascript|typescript|full ?stack/) ? 'JavaScript' : null,
+    has(/\bqa\b|\baqa\b|tester|testing|test automation|sdet|тестувальник|тестировщик/) ? 'QA' : null,
+    has(/python|django|fastapi/) ? 'Python' : null,
+    has(/\bjava\b|spring|kotlin/) ? 'Java' : null,
+    has(/\.net|c#|asp\.net/) ? '.NET' : null,
+    has(/devops|\bsre\b|kubernetes|terraform/) ? 'DevOps' : null,
+    has(/\bios\b|swift/) ? 'iOS/macOS' : null,
+    has(/android/) ? 'Android' : null,
+    has(/designer|ui\/ux|\bux\b|figma/) ? 'Design' : null,
+    has(/project manager/) ? 'Project Manager' : null,
+    has(/product manager/) ? 'Product Manager' : null,
+    has(/data (scientist|engineer|analyst)|machine learning/) ? 'Data Science' : null,
   ].filter((c): c is string => c !== null);
   for (const category of categories) add('dou', { category });
+
 
   const djinni = [
     ...new Set([...profile.keywords, ...profile.skills].flatMap((t) => djinniCategories(t))),
