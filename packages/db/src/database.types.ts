@@ -371,13 +371,13 @@ isOneToOne: false
                   ]
                 },"recruiter_lookups": {
                   Row: {
-                    "company_key": string,"fetched_at": string,"people": Json
+                    "company_key": string,"fetched_at": string,"people": NonNullable<Json>
                   }
                   Insert: {
-                    "company_key": string,"fetched_at"?: string,"people"?: Json
+                    "company_key": string,"fetched_at"?: string,"people"?: NonNullable<Json>
                   }
                   Update: {
-                    "company_key"?: string,"fetched_at"?: string,"people"?: Json
+                    "company_key"?: string,"fetched_at"?: string,"people"?: NonNullable<Json>
                   }
                   Relationships: [
                     
