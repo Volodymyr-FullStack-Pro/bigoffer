@@ -23,6 +23,8 @@ const m = (id: string, over: Partial<FeedMatch> = {}): FeedMatch => ({
   profileId: 'p1',
   createdAt: '2026-10-05T10:00:00.000Z',
   postedAt: null,
+  requiredYears: null,
+  candidateYears: null,
   firstSeenAt: '2026-10-05T10:00:00.000Z',
   postings: [{ sourceId: 'dou', url: 'https://jobs.dou.ua/v/1' }],
   ...over,
