@@ -217,3 +217,14 @@ describe('remote-only filter', () => {
   });
 });
 
+describe('non-technical titles in a tech search', () => {
+  const fe: SearchProfile = { ...profile, keywords: ['frontend', 'react'], skills: ['React', 'Figma', 'Google Sheets'], targetRoles: ['frontend', 'fullstack'] };
+  it('hides a non-technical job even when generic skills and a keyword match', () => {
+    const r = scoreJob(fe, { ...job, title: 'Jr Creative Strategist', descriptionText: 'React quickly to trends. Figma, Google Sheets.' });
+    expect(r?.breakdown.excludedBy ?? 'role').toBe('role');
+  });
+  it('keeps a generic technical title', () => {
+    expect(scoreJob(fe, { ...job, title: 'Software Engineer', descriptionText: 'React and TypeScript' })!.hidden).toBe(false);
+  });
+});
+

@@ -143,7 +143,8 @@
     "seniority_senior": "Senior",
     "seniority_lead": "Lead",
     "onboardingBanner": "Finish setting up: your CV and typical answers",
-    "onBoardShort": "Already on board"
+    "onBoardShort": "Already on board",
+    "eyebrow": "Matched for you"
   },
   "feed": {
     "progress": "{done} / {total}",

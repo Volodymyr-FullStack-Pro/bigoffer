@@ -3,7 +3,10 @@ import { SENIORITIES } from './job';
 import { regionBucket } from './normalize';
 import type { SearchProfile } from './search';
 import { remoteBlockedFor } from './regions';
-import { detectRoleFamilies, roleOffTarget, targetRoleFamilies } from './roles';
+import { isTechTitle } from './boards';
+import { detectRoleFamilies, type RoleFamily, roleOffTarget, targetRoleFamilies } from './roles';
+
+const TECH_FAMILIES: ReadonlySet<RoleFamily> = new Set<RoleFamily>(['frontend', 'fullstack', 'backend', 'mobile', 'devops', 'qa', 'data']);
 
 export type ScorableJob = {
   title: string;
@@ -150,7 +153,10 @@ export function scoreJob(
   const families = detectRoleFamilies(job.title, job.role);
   const familyMatch = targets.length > 0 && families.some((f) => targets.includes(f));
   const role = familyMatch ? 25 : families.length === 0 && inTitle ? 18 : inText ? 12 : 0;
-  const offTarget = roleOffTarget(families, targets);
+  // A tech search (frontend, backend, QA, …) never wants a job whose title is not technical at all ("Creative
+  // Strategist"): generic CV skills (Figma, AI tools) and a stray keyword in the text must not pull it in.
+  const techSearch = targets.length > 0 && targets.every((t) => TECH_FAMILIES.has(t));
+  const offTarget = roleOffTarget(families, targets) || (techSearch && families.length === 0 && !isTechTitle(job.title));
   // Skill credit saturates at SKILLS_FOR_FULL_CREDIT matches: a long profile list (e.g. 30 skills imported from a CV)
   // must not dilute a job that uses 8 of them down to 9/35. Short lists keep their plain share.
   const skillDenominator = Math.min(profile.skills.length, SKILLS_FOR_FULL_CREDIT);

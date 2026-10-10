@@ -55,7 +55,7 @@ function system(lang: 'auto' | 'en' | 'uk' | 'ru', tone: 'default' | 'shorter' |
     '  3. Proof (the core): open with the CURRENT or most recent role (the first one under Experience) — what the candidate does there and the result; add an older role only when it covers a requirement the current one does not.',
     '     Then name the job\'s 2–3 most important requirements in the job\'s own words, each answered by one specific CV fact (project, stack, result, years) in one sentence. Prefer numbers and outcomes the CV states; mention years of experience only if the job asks for them and the CV meets it.',
     '  4. Gap handling: if a key requirement is missing from the CV, do not claim it; at most mention a closely related strength.',
-    '  5. Close: one sentence with availability for a call; then a sign-off with the candidate\'s name and the contacts from "Candidate details" that are set (skip "not set" ones).',
+    '  5. Close: one sentence that the candidate is available to start right away and welcomes them to get in touch (never propose a call, a date or "next week"); then a sign-off with the candidate\'s name and the contacts from "Candidate details" that are set (skip "not set" ones).',
     'Format: separate paragraphs with one empty line; greeting, sign-off name and each contact on their own lines; plain text only, so it pastes cleanly into any form or email.',
     'Style: confident, specific, human; short paragraphs; no clichés ("I am writing to express my interest", "passionate", "team player"), no buzzword lists, no markdown, no [placeholders].',
     tone === 'shorter' ? 'Make the letter noticeably shorter (≤ 90 words).' : tone === 'formal' ? 'Use a formal tone.' : 'Friendly professional tone.',

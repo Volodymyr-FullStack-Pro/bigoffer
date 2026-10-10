@@ -19,6 +19,11 @@ function since24h(): string {
   return new Date(Date.now() - 24 * 3600 * 1000).toISOString();
 }
 
+/** Postings older than this are not shown in Today, however recent the match. */
+function staleSince(): string {
+  return new Date(Date.now() - 30 * 24 * 3600 * 1000).toISOString();
+}
+
 function windowStart(): string {
   return new Date(Date.now() - 3 * 24 * 3600 * 1000).toISOString();
 }
@@ -33,6 +38,7 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
   const locale = isLocale(rawLocale) ? rawLocale : 'en';
   const supabase = await createClient();
   const since = windowStart();
+  const staleCutoff = staleSince();
   const baseQuery = () =>
     supabase
       .from('job_matches')
@@ -42,6 +48,8 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
       .in('state', ['new', 'seen'])
       .eq('jobs.status', 'active')
       .not('jobs.is_job', 'is', false)
+      // Board feeds re-surface months-old postings; a "Today" feed only shows jobs posted in the last 30 days.
+      .or(`posted_at.is.null,posted_at.gte.${staleCutoff}`, { referencedTable: 'jobs' })
       .gte('created_at', since);
   const cutoff = since24h();
   const [{ data: bestRows }, { data: freshRows, error: freshError }, { data: profiles }, { data: me }, searchStatus, cv, { data: apps }] = await Promise.all([
@@ -110,7 +118,10 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
 
   return (
     <section className="flex flex-col gap-6">
-      <h1 className="text-3xl font-semibold md:text-4xl">{t('title')}</h1>
+      <div className="flex flex-col gap-3">
+        <span className="eyebrow">{t('eyebrow')}</span>
+        <h1 className="text-4xl md:text-5xl">{t('title')}</h1>
+      </div>
       {me && !me.onboarded_at && (
         <Link href="/onboarding" data-testid="onboarding-banner" className="brutal brutal-press flex items-center justify-between gap-3 p-4 font-medium">
           <span className="flex items-center gap-3">
