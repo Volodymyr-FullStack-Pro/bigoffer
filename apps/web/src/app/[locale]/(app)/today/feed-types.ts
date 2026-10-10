@@ -25,4 +25,8 @@ export type FeedMatch = {
   postedAt: string | null;
   firstSeenAt: string;
   postings: { sourceId: string; url: string }[];
+  /** Years of experience the posting asks for (null when it states none). */
+  requiredYears: number | null;
+  /** The user's years of experience from their CV, to compare with requiredYears. */
+  candidateYears: number | null;
 };

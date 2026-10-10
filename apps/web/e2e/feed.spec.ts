@@ -107,3 +107,20 @@ test('fresh filter keeps only jobs from the last 24h and newest sort puts them f
   await expect(page.getByText(fresh.title).filter({ visible: true }).first()).toBeVisible();
   await expect(page.getByText(old.title).filter({ visible: true })).toHaveCount(0);
 });
+
+test('details: required experience badge and copy description', async ({ context, page, isMobile }) => {
+  test.skip(isMobile, 'the details panel is the desktop layout');
+  const email = uniqueEmail('feed-details');
+  await loginAs(context, email);
+  await seedMatch(email, {
+    score: 80,
+    description: 'We build payments. Requirements: 3+ years of commercial experience with React and TypeScript.',
+    matchedSkills: ['React'],
+  });
+  await page.goto('/en/today');
+  const detail = page.getByTestId('match-detail').filter({ visible: true });
+  await expect(detail.getByTestId('required-years')).toHaveText('Experience: 3+ yrs');
+  await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+  await detail.getByTestId('copy-description').click();
+  await expect(detail.getByTestId('copy-description')).toContainText('Copied');
+});
