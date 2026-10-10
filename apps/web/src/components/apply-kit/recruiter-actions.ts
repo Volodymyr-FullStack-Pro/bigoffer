@@ -9,26 +9,50 @@ import { createClient } from '@/lib/supabase/server';
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const CACHE_MS = 30 * 24 * 3600 * 1000;
 
-/** Public LinkedIn profiles of the company's recruiters via Brave Search; cached per company for every user. */
+/** Web results for a query from Serper (Google results) or Brave Search, whichever key is configured. */
+async function webSearch(q: string): Promise<SearchResult[] | null> {
+  const serper = process.env.SERPER_API_KEY;
+  const brave = process.env.BRAVE_SEARCH_API_KEY;
+  const signal = AbortSignal.timeout(8000);
+  if (serper) {
+    const res = await fetch('https://google.serper.dev/search', {
+      method: 'POST',
+      headers: { 'X-API-KEY': serper, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ q, num: 20 }),
+      signal,
+    });
+    if (!res.ok) return null;
+    const body = (await res.json()) as { organic?: { title: string; link: string; snippet?: string }[] };
+    return (body.organic ?? []).map((r) => ({ title: r.title, url: r.link, description: r.snippet }));
+  }
+  if (brave) {
+    const res = await fetch(`https://api.search.brave.com/res/v1/web/search?${new URLSearchParams({ q, count: '20' })}`, {
+      headers: { Accept: 'application/json', 'X-Subscription-Token': brave },
+      signal,
+    });
+    if (!res.ok) return null;
+    const body = (await res.json()) as { web?: { results?: SearchResult[] } };
+    return body.web?.results ?? [];
+  }
+  return null;
+}
+
+/** Public LinkedIn profiles of the company's recruiters; cached per company for every user. */
 async function searchRecruiters(company: string): Promise<RecruiterContact[]> {
-  const token = process.env.BRAVE_SEARCH_API_KEY;
   const key = companyKey(company);
-  if (!token || !key || !process.env.SUPABASE_SECRET_KEY) return [];
+  if (!(process.env.SERPER_API_KEY || process.env.BRAVE_SEARCH_API_KEY) || !key || !process.env.SUPABASE_SECRET_KEY) return [];
   const admin = createAdminSupabase();
   const { data: cached } = await admin.from('recruiter_lookups').select('people, fetched_at').eq('company_key', key).maybeSingle();
-  if (cached && Date.now() - new Date(cached.fetched_at).getTime() < CACHE_MS) return cached.people as RecruiterContact[];
+  const previous = (cached?.people as RecruiterContact[] | undefined) ?? [];
+  if (cached && Date.now() - new Date(cached.fetched_at).getTime() < CACHE_MS) return previous;
   try {
-    const res = await fetch(`https://api.search.brave.com/res/v1/web/search?${new URLSearchParams({ q: recruiterQuery(company), count: '20' })}`, {
-      headers: { Accept: 'application/json', 'X-Subscription-Token': token },
-      signal: AbortSignal.timeout(8000),
-    });
-    if (!res.ok) return (cached?.people as RecruiterContact[] | undefined) ?? [];
-    const body = (await res.json()) as { web?: { results?: SearchResult[] } };
-    const people = recruitersFromResults(body.web?.results ?? [], company);
+    const results = await webSearch(recruiterQuery(company));
+    if (!results) return previous;
+    const people = recruitersFromResults(results, company);
     await admin.from('recruiter_lookups').upsert({ company_key: key, people: people as unknown as Json, fetched_at: new Date().toISOString() });
     return people;
   } catch {
-    return (cached?.people as RecruiterContact[] | undefined) ?? [];
+    return previous;
   }
 }
 
