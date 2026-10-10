@@ -25,6 +25,7 @@ const m = (id: string, over: Partial<FeedMatch> = {}): FeedMatch => ({
   postedAt: null,
   requiredYears: null,
   candidateYears: null,
+  onBoard: null,
   firstSeenAt: '2026-10-05T10:00:00.000Z',
   postings: [{ sourceId: 'dou', url: 'https://jobs.dou.ua/v/1' }],
   ...over,
@@ -89,3 +90,16 @@ describe('mergeMatches', () => {
     expect(mergeMatches(base, fresh).map((x) => x.id)).toEqual(['top', 'hi', 'mid-new', 'mid-old', 'low']);
   });
 });
+
+describe('experience filter', () => {
+  const at = (requiredYears: number | null) => m(`y${requiredYears}`, { requiredYears, candidateYears: 3 });
+  const items = [at(null), at(1), at(3), at(5)];
+  it("'fit' keeps jobs asking for no more than the CV's years, and jobs that state none", () => {
+    expect(filterMatches(items, { ...DEFAULT_FILTERS, experience: 'fit' }).map((x) => x.requiredYears)).toEqual([null, 1, 3]);
+  });
+  it('a number caps the required years', () => {
+    expect(filterMatches(items, { ...DEFAULT_FILTERS, experience: 1 }).map((x) => x.requiredYears)).toEqual([null, 1]);
+    expect(filterMatches(items, DEFAULT_FILTERS)).toHaveLength(4);
+  });
+});
+

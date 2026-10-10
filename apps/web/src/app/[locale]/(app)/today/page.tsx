@@ -1,4 +1,4 @@
-import { isLocale, type LocalizedText, localized, requiredYears, SENIORITIES, type Seniority, sourceInfo } from '@jp/core';
+import { isLocale, type LocalizedText, localized, normalizeCompany, normalizeTitle, requiredYears, SENIORITIES, type Seniority, sourceInfo } from '@jp/core';
 import { getLocale, getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
 import { requireUserId } from '@/lib/auth';
@@ -19,6 +19,11 @@ function since24h(): string {
   return new Date(Date.now() - 24 * 3600 * 1000).toISOString();
 }
 
+/** Postings older than this are not shown in Today, however recent the match. */
+function staleSince(): string {
+  return new Date(Date.now() - 30 * 24 * 3600 * 1000).toISOString();
+}
+
 function windowStart(): string {
   return new Date(Date.now() - 3 * 24 * 3600 * 1000).toISOString();
 }
@@ -33,6 +38,7 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
   const locale = isLocale(rawLocale) ? rawLocale : 'en';
   const supabase = await createClient();
   const since = windowStart();
+  const staleCutoff = staleSince();
   const baseQuery = () =>
     supabase
       .from('job_matches')
@@ -42,9 +48,11 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
       .in('state', ['new', 'seen'])
       .eq('jobs.status', 'active')
       .not('jobs.is_job', 'is', false)
+      // Board feeds re-surface months-old postings; a "Today" feed only shows jobs posted in the last 30 days.
+      .or(`posted_at.is.null,posted_at.gte.${staleCutoff}`, { referencedTable: 'jobs' })
       .gte('created_at', since);
   const cutoff = since24h();
-  const [{ data: bestRows }, { data: freshRows, error: freshError }, { data: profiles }, { data: me }, searchStatus, cv] = await Promise.all([
+  const [{ data: bestRows }, { data: freshRows, error: freshError }, { data: profiles }, { data: me }, searchStatus, cv, { data: apps }] = await Promise.all([
     baseQuery().order('score', { ascending: false }).order('created_at', { ascending: false }).limit(200),
     // Fresh jobs can score below the top 200, so fetch them separately for the "New in 24h" filter and "Newest" sort.
     // Same rule as the client filter: posted within 24h, or no posted_at and first seen within 24h.
@@ -56,11 +64,21 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
     supabase.from('profiles').select('onboarded_at, ui_prefs').eq('id', userId).maybeSingle(),
     getSearchNowStatus(),
     loadPrimaryCv(supabase),
+    supabase.from('applications').select('job_id, title, company, board_columns(key, title)'),
   ]);
 
   if (freshError) console.error('today: fresh matches query failed', { code: freshError.code, message: freshError.message });
 
   const profileSkills = new Map((profiles ?? []).map((p) => [p.id, p.skills]));
+  // Jobs already on the board: by job id, or by company + title (the same vacancy found on another board or added by hand).
+  const nameKey = (company: string, title: string) => `${normalizeCompany(company)}|${normalizeTitle(title)}`;
+  const boardByJob = new Map<string, string>();
+  const boardByName = new Map<string, string>();
+  for (const a of apps ?? []) {
+    const column = a.board_columns ? localized(a.board_columns.title as LocalizedText, locale) || a.board_columns.key : '';
+    if (a.job_id) boardByJob.set(a.job_id, column);
+    if (a.company && a.title) boardByName.set(nameKey(a.company, a.title), column);
+  }
   const toMatch = (m: NonNullable<typeof bestRows>[number]): FeedMatch => {
     const matched = matchedSkillsOf(m.breakdown);
     const wanted = m.search_profile_id ? (profileSkills.get(m.search_profile_id) ?? []) : [];
@@ -83,6 +101,7 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
       description: m.jobs.description_text.slice(0, 8000),
       requiredYears: requiredYears(m.jobs.description_text),
       candidateYears: cv?.parsed?.yearsExperience ?? null,
+      onBoard: boardByJob.get(m.job_id) ?? boardByName.get(nameKey(m.jobs.companies?.name ?? '', m.jobs.title)) ?? null,
       skills: cardSkills(m.jobs.skills, matched, 8),
       missingSkills: wanted.filter((s) => !matched.some((x) => x.toLowerCase() === s.toLowerCase())),
       breakdown: b ? { skills: num(b.skills), role: num(b.role), seniority: num(b.seniority), location: num(b.location), salary: num(b.salary) } : null,
@@ -99,7 +118,10 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
 
   return (
     <section className="flex flex-col gap-6">
-      <h1 className="text-3xl font-semibold md:text-4xl">{t('title')}</h1>
+      <div className="flex flex-col gap-3">
+        <span className="eyebrow">{t('eyebrow')}</span>
+        <h1 className="text-4xl md:text-5xl">{t('title')}</h1>
+      </div>
       {me && !me.onboarded_at && (
         <Link href="/onboarding" data-testid="onboarding-banner" className="brutal brutal-press flex items-center justify-between gap-3 p-4 font-medium">
           <span className="flex items-center gap-3">

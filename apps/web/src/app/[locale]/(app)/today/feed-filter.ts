@@ -8,14 +8,22 @@ export type FeedFilters = {
   /** Only jobs posted (or first seen) within the last 24 hours. */
   fresh: boolean;
   sort: 'best' | 'newest';
+  /** Required experience: 'fit' = no more than the CV's years; a number = at most that many; jobs stating none always pass. */
+  experience: 'any' | 'fit' | number;
 };
 
-export const DEFAULT_FILTERS: FeedFilters = { profileId: 'all', minScore: 0, remote: 'any', source: 'all', fresh: false, sort: 'best' };
+export const DEFAULT_FILTERS: FeedFilters = { profileId: 'all', minScore: 0, remote: 'any', source: 'all', fresh: false, sort: 'best', experience: 'any' };
 
 const DAY_MS = 24 * 3600 * 1000;
 
 /** postedAt ?? firstSeenAt; a date in the future (bad source data) counts as now. */
 const freshness = (m: FeedMatch, now: Date) => Math.min(Date.parse(m.postedAt ?? m.firstSeenAt), now.getTime());
+
+function experienceFits(m: FeedMatch, want: FeedFilters['experience']): boolean {
+  if (want === 'any' || m.requiredYears === null) return true;
+  const limit = want === 'fit' ? m.candidateYears : want;
+  return limit === null || m.requiredYears <= limit;
+}
 
 export function filterMatches(items: FeedMatch[], f: FeedFilters, now: Date = new Date()): FeedMatch[] {
   const cutoff = now.getTime() - DAY_MS;
@@ -25,7 +33,8 @@ export function filterMatches(items: FeedMatch[], f: FeedFilters, now: Date = ne
       (f.remote === 'any' || m.remoteType === f.remote) &&
       (f.source === 'all' || m.postings.some((p) => p.sourceId === f.source)) &&
       (f.profileId === 'all' || m.profileId === f.profileId) &&
-      (!f.fresh || freshness(m, now) >= cutoff),
+      (!f.fresh || freshness(m, now) >= cutoff) &&
+      experienceFits(m, f.experience),
   );
 }
 

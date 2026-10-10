@@ -7,6 +7,7 @@ import { TextGenerateEffect } from '@/components/aceternity/text-generate-effect
 import { ApplyKitPanel } from '@/components/apply-kit/apply-kit-panel';
 import { PeopleSearch } from '@/components/apply-kit/people-search';
 import { ScoreMeter } from '@/components/ui/score-meter';
+import { LevelBadge, TechChip, techColor } from '@/components/ui/tech-chip';
 import type { FeedMatch } from './feed-types';
 
 export type MatchAction = 'saved' | 'applied' | 'hide';
@@ -216,18 +217,30 @@ export function MatchDetail({
     <article data-testid="match-detail" className="flex flex-col gap-4">
       <div className="flex flex-col gap-2">
         <ScoreMeter score={match.score} label={t('match')} />
-        <h2 className="font-display text-2xl font-semibold leading-tight">{match.title}</h2>
+        <h2 className="font-display text-3xl leading-tight font-extrabold tracking-tight">
+          {match.title}
+        </h2>
+        {match.onBoard !== null && (
+          <p
+            data-testid="on-board"
+            className="self-start rounded-full bg-brand/15 px-2.5 py-0.5 text-xs font-medium text-link"
+          >
+            ✓ {tf('onBoard', { column: match.onBoard || '—' })}
+          </p>
+        )}
         <p className="text-muted-foreground">{match.company}</p>
-        <p className="flex flex-wrap gap-x-4 gap-y-1 font-mono text-xs text-muted-foreground">
+        <p className="flex flex-wrap items-center gap-x-4 gap-y-1.5 font-mono text-xs text-muted-foreground">
           <span>{t(`remote_${match.remoteType}`)}</span>
           {match.location && <span>{match.location}</span>}
-          {match.seniority && <span>{t(`seniority_${match.seniority}`)}</span>}
-          {salary && <span>{salary}</span>}
+          {match.seniority && (
+            <LevelBadge level={match.seniority} label={t(`seniority_${match.seniority}`)} />
+          )}
+          {salary && <span className="font-bold text-link">{salary}</span>}
           {match.requiredYears !== null && (
             <ExperienceBadge required={match.requiredYears} candidate={match.candidateYears} />
           )}
           <span suppressHydrationWarning>
-            {format.relativeTime(new Date(match.createdAt), now)}
+            {format.relativeTime(new Date(match.postedAt ?? match.firstSeenAt), now)}
           </span>
         </p>
       </div>
@@ -248,14 +261,18 @@ export function MatchDetail({
       {(match.skills.length > 0 || match.missingSkills.length > 0) && (
         <ul className="flex flex-wrap gap-1.5" aria-label={tf('skills')}>
           {match.skills.map((s) => (
-            <li
-              key={s.name}
-              data-testid="match-skill"
-              data-matched={s.matched}
-              className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${s.matched ? 'bg-brand/15 text-link' : 'bg-muted text-muted-foreground'}`}
-            >
-              {s.matched ? '✓ ' : ''}
-              {s.name}
+            <li key={s.name} data-testid="match-skill" data-matched={s.matched}>
+              <TechChip
+                name={`${s.matched ? '✓ ' : ''}${s.name}`}
+                dim={!s.matched}
+                className={
+                  techColor(s.name)
+                    ? undefined
+                    : s.matched
+                      ? 'border-brand/40 bg-brand/10 text-link'
+                      : 'border-border text-muted-foreground'
+                }
+              />
             </li>
           ))}
           {showMissing &&

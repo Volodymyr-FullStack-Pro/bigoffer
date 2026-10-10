@@ -196,3 +196,35 @@ describe('skill credit saturation', () => {
   });
 });
 
+describe('seniority filter', () => {
+  const jm: SearchProfile = { ...profile, seniority: ['junior', 'middle'] };
+  it('hides a job whose stated level is not chosen', () => {
+    expect(scoreJob(jm, { ...job, seniority: 'senior' })!.breakdown.excludedBy).toBe('seniority');
+  });
+  it('keeps chosen levels and jobs without a level', () => {
+    expect(scoreJob(jm, { ...job, seniority: 'middle' })!.hidden).toBe(false);
+    expect(scoreJob(jm, { ...job, title: 'Full Stack Engineer', seniority: null })!.hidden).toBe(false);
+  });
+});
+
+describe('remote-only filter', () => {
+  it('hides hybrid and office jobs, keeps remote and unknown', () => {
+    const remote: SearchProfile = { ...profile, remoteType: 'remote' };
+    expect(scoreJob(remote, { ...job, remoteType: 'hybrid' })!.breakdown.excludedBy).toBe('format');
+    expect(scoreJob(remote, { ...job, remoteType: 'office' })!.breakdown.excludedBy).toBe('format');
+    expect(scoreJob(remote, { ...job, remoteType: 'unknown' })!.hidden).toBe(false);
+    expect(scoreJob({ ...profile, remoteType: 'any' }, { ...job, remoteType: 'office' })!.hidden).toBe(false);
+  });
+});
+
+describe('non-technical titles in a tech search', () => {
+  const fe: SearchProfile = { ...profile, keywords: ['frontend', 'react'], skills: ['React', 'Figma', 'Google Sheets'], targetRoles: ['frontend', 'fullstack'] };
+  it('hides a non-technical job even when generic skills and a keyword match', () => {
+    const r = scoreJob(fe, { ...job, title: 'Jr Creative Strategist', descriptionText: 'React quickly to trends. Figma, Google Sheets.' });
+    expect(r?.breakdown.excludedBy ?? 'role').toBe('role');
+  });
+  it('keeps a generic technical title', () => {
+    expect(scoreJob(fe, { ...job, title: 'Software Engineer', descriptionText: 'React and TypeScript' })!.hidden).toBe(false);
+  });
+});
+

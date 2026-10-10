@@ -142,7 +142,9 @@
     "seniority_middle": "Middle",
     "seniority_senior": "Senior",
     "seniority_lead": "Lead",
-    "onboardingBanner": "Завершите настройку: CV и типовые ответы"
+    "onboardingBanner": "Завершите настройку: CV и типовые ответы",
+    "onBoardShort": "Уже на доске",
+    "eyebrow": "Подобрано для вас"
   },
   "feed": {
     "progress": "{done} / {total}",
@@ -200,7 +202,11 @@
     "why_location_none": "Не подходит формат или страна",
     "why_salary_ok": "Не ниже вашего минимума (или минимум не задан)",
     "why_salary_unknown": "Зарплата не указана",
-    "why_salary_low": "Ниже вашего минимума"
+    "why_salary_low": "Ниже вашего минимума",
+    "onBoard": "Уже на вашей доске: {column}",
+    "filterExperience": "Опыт",
+    "expFit": "Подходит мне",
+    "expUpTo": "до {years} л."
   },
   "comingSoon": {
     "badge": "Скоро",
@@ -491,7 +497,9 @@
     "err_no_cv": "Загрузите CV в профиле, чтобы генерировать письма.",
     "err_not_found": "Эта вакансия уже недоступна.",
     "err_failed": "Не удалось сгенерировать. Попробуйте ещё раз.",
-    "savedToBank": "Сохранено в банк ответов."
+    "savedToBank": "Сохранено в банк ответов.",
+    "downloadDocx": "Скачать .docx",
+    "fileName": "Сопроводительное письмо"
   },
   "recruiter": {
     "title": "Написать рекрутеру",
