@@ -1,6 +1,5 @@
-import { Inter } from 'next/font/google';
+import { JetBrains_Mono } from 'next/font/google';
 
-// Fallback for non-Apple devices; Apple devices render SF Pro via the system stack (see globals.css).
-const inter = Inter({ subsets: ['latin', 'cyrillic'], variable: '--font-inter', display: 'swap' });
+const jetbrains = JetBrains_Mono({ subsets: ['latin', 'cyrillic'], weight: ['400', '500', '700'], variable: '--font-jetbrains', display: 'swap' });
 
-export const fontVariables = inter.variable;
+export const fontVariables = jetbrains.variable;
