@@ -74,7 +74,7 @@ function ApplyKitToggle({ jobId, onApplied }: { jobId: string; onApplied?: () =>
         data-testid="apply-kit-open"
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
-        className="brutal-press inline-flex items-center gap-2 self-start rounded-full bg-brand px-6 py-3 text-base font-bold text-brand-foreground shadow-[0_0_24px_rgb(115_247_178/0.25)]"
+        className="brutal-press inline-flex items-center gap-2 self-start rounded-full bg-brand px-5 py-2.5 text-[15px] font-bold text-brand-foreground shadow-[0_0_20px_rgb(115_247_178/0.22)]"
       >
         <Sparkles className="size-5" aria-hidden />
         {tk('open')}
@@ -277,7 +277,7 @@ export function MatchDetail({
       </div>
       <ApplyKitToggle key={match.id} jobId={match.jobId} onApplied={onApplied} />
       {onAction && <MatchActions onAction={onAction} />}
-      <PeopleSearch company={match.company} isPlaceholder={match.companyIsPlaceholder} />
+      <PeopleSearch jobId={match.jobId} />
       {showDescription && match.description && (
         <div className="flex flex-col gap-2 border-t border-border pt-3">
           <div className="flex items-center justify-between gap-2">

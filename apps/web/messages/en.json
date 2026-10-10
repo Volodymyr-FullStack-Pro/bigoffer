@@ -426,10 +426,8 @@
     "finish": "Done — show me jobs"
   },
   "people": {
-    "title": "Find a person at the company",
-    "recruiters": "Recruiters",
-    "engineers": "Engineering managers",
-    "hint": "A referral is the #1 way people get hired: write a short note before or right after applying."
+    "title": "Contact the recruiter",
+    "contact": "Message"
   },
   "kit": {
     "title": "Apply kit",
