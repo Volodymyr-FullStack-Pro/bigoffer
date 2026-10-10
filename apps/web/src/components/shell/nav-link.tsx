@@ -29,7 +29,7 @@ export function NavLink({
           ? `flex flex-1 flex-col items-center gap-0.5 py-2 text-[11px] font-medium ${active ? 'text-link' : 'text-muted-foreground'}`
           : `mono-label flex items-center gap-3 rounded-xl px-3 py-2 transition-colors ${
               active
-                ? 'bg-muted font-semibold text-foreground'
+                ? 'font-semibold text-link underline decoration-2 underline-offset-8'
                 : 'text-muted-foreground hover:bg-muted hover:text-foreground'
             }`
       }

@@ -108,7 +108,7 @@ describe('buildSourceQueries with source selection', () => {
 
 describe('DOU categories', () => {
   it('adds category feeds from keywords and skills', () => {
-    const specs = buildSourceQueries({ keywords: ['full stack'], skills: ['React', 'Node.js'], remoteType: 'remote', sources: ['dou'] });
+    const specs = buildSourceQueries({ keywords: ['full stack'], skills: ['React', 'Node.js'], remoteType: 'remote', sources: ['dou' as SourceId] });
     expect(specs.filter((s) => s.params.category).map((s) => s.params.category)).toEqual(['Front End', 'Node.js', 'JavaScript']);
   });
   it('matches next as a word only, not inside context', () => {
@@ -117,7 +117,7 @@ describe('DOU categories', () => {
     expect(cat('next.js')).toEqual(['Front End']);
   });
   it('adds none for unrelated profiles', () => {
-    const specs = buildSourceQueries({ keywords: ['accountant'], skills: ['Excel'], remoteType: 'office', sources: ['dou'] });
+    const specs = buildSourceQueries({ keywords: ['accountant'], skills: ['Excel'], remoteType: 'office', sources: ['dou' as SourceId] });
     expect(specs.some((s) => s.params.category)).toBe(false);
   });
 });
@@ -186,5 +186,16 @@ describe('djinni categories from multi-word keywords', () => {
     expect(djinni(['context engineer'])).toEqual([undefined]);
     expect(djinni(['nodejs-free helper'])).toEqual([undefined]);
     expect(djinni(['gopher'])).toEqual([undefined]);
+  });
+});
+
+const BASE_FOR_DOU = { remoteType: 'any' as const };
+
+describe('DOU queries for non-JavaScript roles', () => {
+  it('a QA profile also queries the DOU QA category (not only JavaScript ones)', () => {
+    const qa = buildSourceQueries({ ...BASE_FOR_DOU, keywords: ['qa engineer', 'manual qa'], skills: ['Postman', 'Jira'], sources: ['dou' as SourceId] });
+    const params = qa.filter((q) => q.sourceId === 'dou').map((q) => q.params);
+    expect(params).toContainEqual({ category: 'QA' });
+    expect(params).not.toContainEqual({ category: 'Front End' });
   });
 });
