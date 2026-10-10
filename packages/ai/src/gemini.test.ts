@@ -16,6 +16,7 @@ function setup(responses: (GeminiResponse | Error)[], keys: { publicKey?: string
     ...keys,
     publicModel: 'model-public',
     privateModel: 'model-private',
+    privateFastModel: 'model-private-fast',
     connect: (apiKey) => async (params) => {
       calls.push({ apiKey, params: params as unknown as Record<string, unknown> });
       const next = responses.shift();
@@ -28,6 +29,14 @@ function setup(responses: (GeminiResponse | Error)[], keys: { publicKey?: string
 }
 
 describe('createGeminiClient', () => {
+  it("sends tier 'fast' private requests to the fast model, others to the regular one", async () => {
+    const { client, calls } = setup([ok('{"answer":"a"}'), ok('{"answer":"b"}'), ok('{"answer":"c"}')], { publicKey: 'pub', privateKey: 'priv' });
+    await client.generateJson({ sensitivity: 'private', tier: 'fast', schema, system: 's', prompt: 'p' });
+    await client.generateJson({ sensitivity: 'private', schema, system: 's', prompt: 'p' });
+    await client.generateJson({ sensitivity: 'public', tier: 'fast', schema, system: 's', prompt: 'p' });
+    expect(calls.map((c) => c.params.model)).toEqual(['model-private-fast', 'model-private', 'model-public']);
+  });
+
   it('asks for JSON by schema and returns parsed data with usage', async () => {
     const { client, calls } = setup([ok('{"answer":"42"}')]);
     const res = await client.generateJson({ sensitivity: 'public', schema, system: 'Be terse.', prompt: 'Q?' });

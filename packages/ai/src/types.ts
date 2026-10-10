@@ -27,6 +27,11 @@ export type GenerateJsonRequest<S extends z.ZodType> = {
   thinking?: 'off' | 'low';
   /** Per-request HTTP timeout; defaults to the client's 60 s. */
   timeoutMs?: number;
+  /**
+   * 'fast' = the provider's quick model, for text the user waits for on screen (cover letters, form answers):
+   * the full Flash model took 2+ minutes (504 deadline) on a letter brief that Flash-Lite answers in seconds.
+   */
+  tier?: 'fast';
 };
 
 export type GenerateJsonResult<T> = { data: T; usage: LlmUsage; model: string };
