@@ -260,10 +260,17 @@ export async function saveJob(
   return { jobId, isNew };
 }
 
+/** PostgREST caps a response at 1000 rows by default; bulk reads page through instead of silently truncating. */
+const PAGE = 1000;
+
 export async function getActiveProfiles(db: Db): Promise<SearchProfile[]> {
-  const { data, error } = await db.from('search_profiles').select(PROFILE_COLUMNS).eq('is_active', true);
-  if (error) throw error;
-  return data.map(toSearchProfile);
+  const out: SearchProfile[] = [];
+  for (let from = 0; ; from += PAGE) {
+    const { data, error } = await db.from('search_profiles').select(PROFILE_COLUMNS).eq('is_active', true).order('id').range(from, from + PAGE - 1);
+    if (error) throw error;
+    out.push(...data.map(toSearchProfile));
+    if (data.length < PAGE) return out;
+  }
 }
 
 export async function getActiveProfilesOfUser(db: Db, userId: string): Promise<SearchProfile[]> {
