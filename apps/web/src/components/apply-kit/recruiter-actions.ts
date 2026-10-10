@@ -65,7 +65,7 @@ async function searchRecruiters(company: string): Promise<RecruiterContact[]> {
     const results = await webSearch(company);
     if (!results) return previous;
     const people = recruitersFromResults(results, company);
-    await admin.from('recruiter_lookups').upsert({ company_key: key, people: people as unknown as Json, fetched_at: new Date().toISOString() });
+    await admin.from('recruiter_lookups').upsert({ company_key: key, people: people as unknown as NonNullable<Json>, fetched_at: new Date().toISOString() });
     return people;
   } catch {
     return previous;
