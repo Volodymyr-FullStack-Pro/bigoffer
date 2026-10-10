@@ -20,6 +20,16 @@ export interface SourceAdapter {
   /** Sources that need credentials report false when they are missing; the pipeline then skips them. */
   isConfigured?(env: Record<string, string | undefined>): boolean;
   search(params: Record<string, string>, ctx: AdapterContext): Promise<RawJob[]>;
+  /**
+   * Whether a stored posting is still open: false = closed or removed, null = could not tell (blocked, network).
+   * Only boards that clearly mark closed vacancies implement it.
+   */
+  isOpen?(url: string, ctx: AdapterContext): Promise<boolean | null>;
+}
+
+/** A 404/410 from fetchText/fetchJson: the page (posting) no longer exists. */
+export function isGoneError(err: unknown): boolean {
+  return err instanceof Error && /HTTP (404|410) /.test(err.message);
 }
 
 export class SourceBlockedError extends Error {
