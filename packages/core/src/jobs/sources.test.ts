@@ -30,7 +30,7 @@ describe('defaultSources', () => {
     const office = defaultSources('office');
     expect(office).toContain('robotaua');
     expect(office).not.toContain('workua');
-    expect(office).toContain('jooble');
+    expect(office).not.toContain('jooble');
     expect(office).not.toContain('remoteok');
     expect(office).not.toContain('linkedin');
     expect(defaultSources('hybrid')).toEqual(office);

@@ -39,7 +39,7 @@ describe('searchProfileInputSchema', () => {
 describe('buildSourceQueries', () => {
   const specs = buildSourceQueries({ keywords: ['Full Stack', 'React Developer'], skills: ['React', 'Node.js'], remoteType: 'any', sources: null });
   const bySource = (id: string) => specs.filter((s) => s.sourceId === id);
-  const withLowYield = buildSourceQueries({ keywords: ['Full Stack', 'React Developer'], skills: ['React', 'Node.js'], remoteType: 'any', sources: ['wwr', 'hn'] });
+  const withLowYield = buildSourceQueries({ keywords: ['Full Stack', 'React Developer'], skills: ['React', 'Node.js'], remoteType: 'any', sources: ['wwr', 'hn', 'remoteok'] });
 
   it('creates one query per keyword for search sources', () => {
     expect(bySource('dou').map((s) => s.params).filter((p) => p.search)).toEqual(
@@ -57,7 +57,7 @@ describe('buildSourceQueries', () => {
     ]);
   });
   it('uses a slug tag for remoteok and no params for feeds', () => {
-    expect(bySource('remoteok')[0]!.params).toEqual({ tag: 'react' });
+    expect(withLowYield.find((s) => s.sourceId === 'remoteok')!.params).toEqual({ tag: 'react' });
     expect(withLowYield.find((s) => s.sourceId === 'wwr')!.params).toEqual({});
     expect(bySource('hn')[0]!.params).toEqual({});
   });
