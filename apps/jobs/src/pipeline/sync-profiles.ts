@@ -86,8 +86,14 @@ export async function syncProfile(
 }
 
 export async function syncAllProfiles(db: Db, _now: Date): Promise<number> {
-  const { data: inactive, error } = await db.from('search_profiles').select('id').eq('is_active', false);
-  if (error) throw error;
+  // Paged: PostgREST returns at most 1000 rows per request.
+  const inactive: { id: string }[] = [];
+  for (let from = 0; ; from += 1000) {
+    const { data, error } = await db.from('search_profiles').select('id').eq('is_active', false).order('id').range(from, from + 999);
+    if (error) throw error;
+    inactive.push(...data);
+    if (data.length < 1000) break;
+  }
   for (let i = 0; i < inactive.length; i += 200) {
     const { error: unlinkError } = await db
       .from('search_profile_queries')

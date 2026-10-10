@@ -15,12 +15,26 @@ const fixture = (name: string) => readFileSync(new URL(`../fixtures/${name}`, im
 
 describe('robotauaAdapter', () => {
   it('maps documents to robota.ua vacancy URLs', async () => {
-    const { ctx, calls } = fakeContext({ 'api.rabota.ua': fixture('robotaua.json') });
+    const { ctx, calls } = fakeContext({
+      'api.rabota.ua/vacancy/search': fixture('robotaua.json'),
+      'api.rabota.ua/vacancy?id=': { description: '<p>We use <b>React</b>, TypeScript and Node.js every day.</p>' },
+    });
     const jobs = await robotauaAdapter.search({ keyWords: 'react' }, ctx);
     expect(calls[0]!.url).toBe('https://api.rabota.ua/vacancy/search?keyWords=react&count=40&page=0');
     expect(jobs).toHaveLength(3);
+    // The full description replaces the search teaser (one detail call per vacancy).
+    expect(calls.filter((c) => c.url.includes('/vacancy?id=')).length).toBe(3);
+    expect(jobs[0]!.description).toContain('TypeScript and Node.js');
     expect(jobs[0]!.url).toMatch(/^https:\/\/robota\.ua\/company\d+\/vacancy\d+$/);
     for (const raw of jobs) expect(await normalizeJob(raw)).not.toBeNull();
+  });
+});
+
+describe('robotauaAdapter detail fallback', () => {
+  it('keeps the teaser when a detail fetch fails', async () => {
+    const { ctx } = fakeContext({ 'api.rabota.ua/vacancy/search': fixture('robotaua.json') });
+    const jobs = await robotauaAdapter.search({ keyWords: 'react' }, ctx);
+    expect(jobs).toHaveLength(3);
   });
 });
 
