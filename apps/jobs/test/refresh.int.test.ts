@@ -92,10 +92,11 @@ describe('match refresh (F1)', () => {
       const job = await normalizeJob({
         ...raws[key],
         externalId: `refresh-${key}-${tag}`,
-        url: `https://remotive.com/jobs/${key}-${tag}`,
+        url: `https://djinni.co/jobs/${key}-${tag}`,
         company: `Refresh Co ${key} ${tag}`,
       });
-      jobIds[key] = (await saveJob(db, 'remotive', job!, now)).jobId;
+      // a main board: the profile stores no sources, so it falls back to the main ones
+      jobIds[key] = (await saveJob(db, 'djinni', job!, now)).jobId;
     }
   });
 
