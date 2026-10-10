@@ -28,7 +28,7 @@ export const SOURCE_CATALOG: readonly SourceInfo[] = [
   // Aggregator: many listings are already closed on the employer side (its pages block checks), short snippets.
   { id: 'jooble', name: 'Jooble', market: 'global', url: 'https://jooble.org', requiresKey: 'JOOBLE_API_KEY', lowYield: true },
   { id: 'adzuna', name: 'Adzuna', market: 'europe', url: 'https://www.adzuna.com', requiresKey: 'ADZUNA_APP_ID' },
-  { id: 'linkedin', name: 'LinkedIn', market: 'global', url: 'https://www.linkedin.com/jobs', beta: true },
+  { id: 'linkedin', name: 'LinkedIn', market: 'global', url: 'https://www.linkedin.com/jobs' },
   // Applying needs a paid Remote OK membership.
   { id: 'remoteok', name: 'Remote OK', market: 'remote', url: 'https://remoteok.com', applyPaywall: true, lowYield: true },
   { id: 'remotive', name: 'Remotive', market: 'remote', url: 'https://remotive.com' },
@@ -56,10 +56,15 @@ export const BROWSER_SOURCE_IDS: ReadonlySet<SourceId> = new Set(
   SOURCE_CATALOG.filter((s) => s.browser).map((s) => s.id),
 );
 
-export function defaultSources(remoteType: 'any' | 'remote' | 'hybrid' | 'office'): SourceId[] {
-  const markets: SourceMarket[] =
-    remoteType === 'office' || remoteType === 'hybrid' ? ['ua', 'global'] : ['ua', 'remote', 'europe', 'global'];
-  return SOURCE_CATALOG.filter((s) => !s.beta && !s.lowYield && markets.includes(s.market)).map((s) => s.id);
+/** The boards most good matches come from; shown first and picked by "Use recommended". */
+export const MAIN_SOURCE_IDS: readonly SourceId[] = ['dou', 'djinni', 'robotaua', 'linkedin'];
+
+/**
+ * Fallback for profiles saved before sources were chosen explicitly (new profiles start with none checked). The
+ * argument is kept for callers; the main boards cover office, hybrid and remote searches alike.
+ */
+export function defaultSources(_remoteType?: 'any' | 'remote' | 'hybrid' | 'office'): SourceId[] {
+  return [...MAIN_SOURCE_IDS];
 }
 
 /** Sources polled per board/channel from source_boards rather than per search keyword. */
@@ -75,5 +80,5 @@ export const PREFILTERED_SOURCE_IDS: ReadonlySet<SourceId> = new Set<SourceId>([
  * Where most good matches come from (measured): polled on their own interval, never slowed by the cost multiplier,
  * so the feed is fresh where it matters.
  */
-export const PRIORITY_SOURCE_IDS: ReadonlySet<SourceId> = new Set<SourceId>(['dou', 'djinni', 'robotaua']);
+export const PRIORITY_SOURCE_IDS: ReadonlySet<SourceId> = new Set<SourceId>(MAIN_SOURCE_IDS);
 

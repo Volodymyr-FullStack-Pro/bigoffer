@@ -239,13 +239,14 @@
     "newProfile": "New search",
     "sources": "Where to search",
     "sourcesHint": "Pick the job boards for this search",
+    "market_main": "Main boards",
     "market_ua": "Ukraine",
     "market_remote": "Remote worldwide",
     "market_europe": "Europe",
     "market_global": "Aggregators",
     "beta": "beta",
     "lowYield": "rarely relevant",
-    "linkedinWarning": "LinkedIn public listings, collected rarely and without your account. Off by default.",
+    "linkedinWarning": "LinkedIn public listings, no account needed: full descriptions, closed ones removed.",
     "needsKey": "needs API key",
     "sourcesRequired": "Pick at least one job board",
     "level_intern": "Intern",
@@ -274,7 +275,7 @@
     "skillsPlaceholder": "Type a skill and press Enter",
     "salaryAny": "No minimum",
     "salaryFrom": "from {amount}",
-    "sourcesRecommended": "Use recommended"
+    "sourcesRecommended": "Use main boards"
   },
   "board": {
     "title": "Application board",

@@ -15,7 +15,8 @@ const EMPTY: SearchProfileValues = {
   seniority: [],
   locations: [],
   remoteType: 'any',
-  sources: defaultSources('any'),
+  // The user picks the boards; "Use recommended" checks the main ones.
+  sources: [],
   salaryMinUsd: null,
   isActive: true,
 };
