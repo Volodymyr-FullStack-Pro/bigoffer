@@ -129,3 +129,26 @@ describe('malformed responses', () => {
     expect(await remoteokAdapter.search({}, fakeContext({ '': {} }).ctx)).toEqual([]);
   });
 });
+
+describe('isOpen (closed-posting checks)', () => {
+  const gone = { fetchText: async () => { throw new Error('HTTP 404 for x'); }, fetchJson: async () => { throw new Error('HTTP 404 for x'); }, env: {} };
+  const blocked = { fetchText: async () => { throw new Error('Blocked'); }, fetchJson: async () => { throw new Error('Blocked'); }, env: {} };
+  it('Djinni: the inactive banner means closed; a 404 too; other errors are unknown', async () => {
+    const { djinniAdapter } = await import('../src/adapters/djinni');
+    const page = (html: string) => ({ fetchText: async () => html, fetchJson: async () => ({}) as never, env: {} });
+    expect(await djinniAdapter.isOpen!('u', page('<div class="alert">Ця вакансія зараз неактивна.</div>'))).toBe(false);
+    expect(await djinniAdapter.isOpen!('u', page('<button>Відгукнутися</button>'))).toBe(true);
+    expect(await djinniAdapter.isOpen!('u', gone)).toBe(false);
+    expect(await djinniAdapter.isOpen!('u', blocked)).toBeNull();
+  });
+  it('DOU: a 404 means removed', async () => {
+    const { douAdapter } = await import('../src/adapters/dou');
+    expect(await douAdapter.isOpen!('u', { fetchText: async () => '<html/>', fetchJson: async () => ({}) as never, env: {} })).toBe(true);
+    expect(await douAdapter.isOpen!('u', gone)).toBe(false);
+  });
+  it('robota.ua: isActive from the vacancy API', async () => {
+    const url = 'https://robota.ua/company1/vacancy123';
+    expect(await robotauaAdapter.isOpen!(url, { fetchText: async () => '', fetchJson: async () => ({ isActive: false }) as never, env: {} })).toBe(false);
+    expect(await robotauaAdapter.isOpen!(url, { fetchText: async () => '', fetchJson: async () => ({ isActive: true }) as never, env: {} })).toBe(true);
+  });
+});

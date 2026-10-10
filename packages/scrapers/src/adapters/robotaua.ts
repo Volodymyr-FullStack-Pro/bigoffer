@@ -1,5 +1,5 @@
 import { kyivLocalDate, type RawJob } from '@jp/core';
-import type { SourceAdapter } from '../types';
+import { isGoneError, type SourceAdapter } from '../types';
 
 type RabotaResponse = {
   documents: {
@@ -69,4 +69,15 @@ export const robotauaAdapter: SourceAdapter = {
       };
     });
   },
+  async isOpen(url, ctx) {
+    const id = url.match(/vacancy(\d+)/)?.[1];
+    if (!id) return null;
+    try {
+      const detail = await ctx.fetchJson<{ isActive?: boolean }>(`https://api.rabota.ua/vacancy?id=${id}`);
+      return detail.isActive !== false;
+    } catch (err) {
+      return isGoneError(err) ? false : null;
+    }
+  },
 };
+
