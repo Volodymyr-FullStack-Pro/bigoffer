@@ -105,14 +105,25 @@ test('applying from the board card panel moves the card to Applied without reloa
   await expect.poll(() => applicationLetter(email, jobId)).toMatchObject({ kind: 'full' });
 });
 
-test('offers LinkedIn people searches for the job company', async ({ context, page, isMobile }) => {
+test('offers the contact the posting names', async ({ context, page, isMobile }) => {
   const email = uniqueEmail('kit-people');
   await loginAs(context, email);
-  await seedMatch(email, { score: 90 });
+  await seedMatch(email, { score: 90, description: 'React role. Send your CV to anna.hr@acme.io or Telegram: @anna_recruits' });
   await page.goto('/en/today');
-  await openKit(page, isMobile);
-  const link = visible(page, 'people-recruiters');
-  await expect(link).toHaveAttribute('href', /linkedin\.com\/search\/results\/people\/\?keywords=Acme%20/);
-  await expect(link).toHaveAttribute('target', '_blank');
-  await expect(visible(page, 'people-engineers')).toHaveAttribute('href', /engineering%20manager$/);
+  if (isMobile) await page.getByRole('button', { name: 'Details' }).click();
+  const contacts = visible(page, 'contact-recruiter');
+  await expect(contacts).toHaveCount(2);
+  await expect(contacts.first()).toHaveAttribute('href', 'mailto:anna.hr@acme.io');
+  await expect(contacts.last()).toHaveAttribute('href', 'https://t.me/anna_recruits');
+  await expect(contacts.last()).toHaveAttribute('target', '_blank');
+});
+
+test('no recruiter found: no contact block', async ({ context, page, isMobile }) => {
+  const email = uniqueEmail('kit-people-none');
+  await loginAs(context, email);
+  await seedMatch(email, { score: 90, description: 'React, TypeScript, 3+ years' });
+  await page.goto('/en/today');
+  if (isMobile) await page.getByRole('button', { name: 'Details' }).click();
+  await expect(visible(page, 'match-detail')).toBeVisible();
+  await expect(page.getByTestId('people-search')).toHaveCount(0);
 });

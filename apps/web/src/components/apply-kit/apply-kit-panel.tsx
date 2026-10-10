@@ -1,7 +1,8 @@
 'use client';
 
+import { Check, Copy, Sparkles } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { saveBankAnswer } from '@/app/[locale]/(app)/profile/profile-extras-actions';
 import { downloadLetter } from '@/lib/letter-file';
 import { useSaveUiPrefs } from '@/lib/use-save-ui-prefs';
@@ -11,6 +12,10 @@ import { PeopleSearch } from './people-search';
 
 type Lang = 'auto' | 'en' | 'uk' | 'ru';
 type Tone = 'default' | 'shorter' | 'formal';
+
+function CopyIcon({ done }: { done: boolean }) {
+  return done ? <Check className="size-4" aria-hidden /> : <Copy className="size-4" aria-hidden />;
+}
 
 export function ApplyKitPanel({ jobId, locale, onApplied, hidePeopleSearch }: { jobId: string; locale: 'en' | 'uk' | 'ru'; hidePeopleSearch?: boolean; onApplied?: (r: { columnId: string; rank: string }) => void }) {
   const t = useTranslations('kit');
@@ -65,6 +70,7 @@ export function ApplyKitPanel({ jobId, locale, onApplied, hidePeopleSearch }: { 
       if (res.ok) {
         setKit(res.kit);
         setLetter(res.kit.coverLetter);
+        setCopied(null);
       } else setError(res.error);
     } catch {
       setError('failed');
@@ -73,9 +79,12 @@ export function ApplyKitPanel({ jobId, locale, onApplied, hidePeopleSearch }: { 
     }
   };
 
+  const copiedTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const copy = async (key: string, text: string) => {
     await navigator.clipboard.writeText(text).catch(() => undefined);
     setCopied(key);
+    clearTimeout(copiedTimer.current);
+    copiedTimer.current = setTimeout(() => setCopied(null), 2000);
     if (key === 'letter') {
       setLastCopied('full');
       // Keep the user's edits so they survive a reload.
@@ -99,6 +108,11 @@ export function ApplyKitPanel({ jobId, locale, onApplied, hidePeopleSearch }: { 
 
   if (!data) return <p className="text-sm text-muted-foreground">{t('loading')}</p>;
   const field = 'brutal bg-card px-2 py-1 text-sm';
+  // One compact button scale for the whole kit: primary (white), accent (mint) and quiet (outline).
+  const btn = 'brutal-press inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-semibold transition-colors disabled:opacity-50';
+  const primary = `${btn} bg-foreground text-background hover:bg-foreground/90`;
+  const accent = `${btn} bg-brand text-brand-foreground hover:bg-brand/90`;
+  const quiet = `${btn} border border-border font-medium hover:bg-muted`;
 
   return (
     <section data-testid="apply-kit" aria-label={t('title')} className="flex flex-col gap-4 border-t border-border pt-4">
@@ -114,13 +128,14 @@ export function ApplyKitPanel({ jobId, locale, onApplied, hidePeopleSearch }: { 
             {(['auto', 'en', 'uk', 'ru'] as const).map((l) => <option key={l} value={l}>{t(`lang_${l}`)}</option>)}
           </select>
         </label>
-        <button type="button" data-testid="kit-generate" disabled={loading || !data.aiAvailable || !data.hasCv} onClick={() => void run('default')} className="brutal brutal-press bg-ai px-4 py-2 font-semibold text-ai-foreground disabled:opacity-50">
+        <button type="button" data-testid="kit-generate" disabled={loading || !data.aiAvailable || !data.hasCv} onClick={() => void run('default')} className={primary}>
+          <Sparkles className="size-4" aria-hidden />
           {loading ? t('generating') : kit ? t('regenerate') : t('generate')}
         </button>
         {kit && (
           <>
-            <button type="button" disabled={loading} onClick={() => void run('shorter')} className="brutal brutal-press px-3 py-2 text-sm font-semibold">{t('shorter')}</button>
-            <button type="button" disabled={loading} onClick={() => void run('formal')} className="brutal brutal-press px-3 py-2 text-sm font-semibold">{t('formal')}</button>
+            <button type="button" disabled={loading} onClick={() => void run('shorter')} className={quiet}>{t('shorter')}</button>
+            <button type="button" disabled={loading} onClick={() => void run('formal')} className={quiet}>{t('formal')}</button>
           </>
         )}
       </div>
@@ -133,17 +148,18 @@ export function ApplyKitPanel({ jobId, locale, onApplied, hidePeopleSearch }: { 
           </label>
           {/* Copy, then go straight to the posting to paste it. */}
           <div className="flex flex-wrap gap-2">
-            <button type="button" data-testid="kit-copy-letter" onClick={() => void copy('letter', letter)} className="brutal brutal-press border-brand bg-brand px-3 py-1 text-sm font-semibold text-brand-foreground">
-              {copied === 'letter' ? `✓ ${t('copied')}` : t('copyLetter')}
+            <button type="button" data-testid="kit-copy-letter" onClick={() => void copy('letter', letter)} className={accent}>
+              <CopyIcon done={copied === 'letter'} />
+              {copied === 'letter' ? t('copied') : t('copyLetter')}
             </button>
-            <button type="button" data-testid="kit-download-docx" onClick={() => void downloadLetter(letter, `${t('fileName')} - ${data.company}`, 'docx')} className="brutal-press rounded-full border border-border px-3 py-1 text-sm font-medium hover:bg-muted">
+            <button type="button" data-testid="kit-download-docx" onClick={() => void downloadLetter(letter, `${t('fileName')} - ${data.company}`, 'docx')} className={quiet}>
               {t('downloadDocx')}
             </button>
-            <button type="button" data-testid="kit-download-txt" onClick={() => void downloadLetter(letter, `${t('fileName')} - ${data.company}`, 'txt')} className="brutal-press rounded-full border border-border px-3 py-1 text-sm font-medium hover:bg-muted">
+            <button type="button" data-testid="kit-download-txt" onClick={() => void downloadLetter(letter, `${t('fileName')} - ${data.company}`, 'txt')} className={quiet}>
               .txt
             </button>
             {data.jobUrl && (
-              <a href={data.jobUrl} target="_blank" rel="noopener" data-testid="kit-open-job" onClick={() => setAwaitingReturn('click')} className="brutal brutal-press px-3 py-1 text-sm font-semibold">
+              <a href={data.jobUrl} target="_blank" rel="noopener" data-testid="kit-open-job" onClick={() => setAwaitingReturn('click')} className={quiet}>
                 {t('apply')} ↗
               </a>
             )}
@@ -166,8 +182,9 @@ export function ApplyKitPanel({ jobId, locale, onApplied, hidePeopleSearch }: { 
           <div className="flex flex-col gap-1">
             <h4 className="font-mono text-xs">{t('short')}</h4>
             <p data-testid="kit-short" className="brutal p-2 text-sm">{kit.shortMessage}</p>
-            <button type="button" data-testid="kit-copy-short" onClick={() => void copy('short', kit.shortMessage)} className="brutal brutal-press self-start px-3 py-1 text-sm font-semibold">
-              {copied === 'short' ? `✓ ${t('copied')}` : t('copyShort')}
+            <button type="button" data-testid="kit-copy-short" onClick={() => void copy('short', kit.shortMessage)} className={`${quiet} self-start`}>
+              <CopyIcon done={copied === 'short'} />
+              {copied === 'short' ? t('copied') : t('copyShort')}
             </button>
           </div>
           {kit.salaryHint && <p data-testid="kit-salary" className="border-l-4 border-warning pl-3 text-sm">💰 {kit.salaryHint}</p>}
@@ -179,7 +196,7 @@ export function ApplyKitPanel({ jobId, locale, onApplied, hidePeopleSearch }: { 
         <ContactChips contacts={data.contacts} cvLink={data.cvLink} />
       </div>
 
-      {!hidePeopleSearch && <PeopleSearch company={data.company} isPlaceholder={data.companyIsPlaceholder} />}
+      {!hidePeopleSearch && <PeopleSearch jobId={jobId} />}
 
       <div className="flex flex-col gap-2">
         <label className="flex flex-col gap-1 font-mono text-xs">
@@ -195,7 +212,12 @@ export function ApplyKitPanel({ jobId, locale, onApplied, hidePeopleSearch }: { 
             setError(null);
             try {
               const res = await answerFormQuestions(jobId, formText);
-              if (res.ok) setAnswers(res.answers);
+              if (res.ok) {
+                // New answers: nothing of them has been copied or saved yet.
+                setAnswers(res.answers);
+                setCopied(null);
+                setSavedKey(null);
+              }
               else setError(res.error);
             } catch {
               setError('failed');
@@ -203,20 +225,24 @@ export function ApplyKitPanel({ jobId, locale, onApplied, hidePeopleSearch }: { 
               setLoading(false);
             }
           }}
-          className="brutal brutal-press self-start px-3 py-1 text-sm font-semibold disabled:opacity-50"
+          className={`${primary} self-start`}
         >
+          <Sparkles className="size-4" aria-hidden />
           {t('answerForm')}
         </button>
         {answers.map((a, i) => (
-          <div key={`${i}-${a.question}`} data-testid="kit-answer" data-from-bank={a.fromBank} className="flex flex-col gap-1 border-l-4 border-border pl-3">
+          <div key={`${i}-${a.question}`} data-testid="kit-answer" data-from-bank={a.fromBank} className="flex flex-col gap-2 rounded-xl border border-border bg-card/60 p-3">
             <p className="text-sm font-semibold">{a.question}{a.fromBank && <span className="ml-2 font-mono text-[10px] text-muted-foreground">{t('fromBank')}</span>}</p>
             <textarea value={a.answer} onChange={(e) => setAnswers((list) => list.map((x, j) => (j === i ? { ...x, answer: e.target.value } : x)))} className={`${field} min-h-14`} aria-label={a.question} />
-            <div className="flex gap-2">
-              <button type="button" onClick={() => void copy(`a${i}`, a.answer)} className="text-xs underline">{copied === `a${i}` ? `✓ ${t('copied')}` : t('copy')}</button>
+            <div className="flex flex-wrap items-center gap-2">
+              <button type="button" data-testid="kit-copy-answer" onClick={() => void copy(`a${i}`, a.answer)} className={`${btn} border border-border px-3 py-1 text-xs font-medium hover:bg-muted ${copied === `a${i}` ? 'border-brand/60 text-link' : ''}`}>
+                <CopyIcon done={copied === `a${i}`} />
+                {copied === `a${i}` ? t('copied') : t('copy')}
+              </button>
               <button type="button" data-testid="kit-save-answer" onClick={async () => {
                 const res = await saveBankAnswer({ key: null, question: a.question, answer: a.answer, locale }).catch(() => ({ ok: false }));
                 setSavedKey(res.ok ? i : null);
-              }} className="text-xs underline">{t('saveToBank')}</button>
+              }} className={`${btn} px-3 py-1 text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground`}>{t('saveToBank')}</button>
               {savedKey === i && <span role="status" className="text-xs text-success">{t('savedToBank')}</span>}
             </div>
           </div>
@@ -230,7 +256,7 @@ export function ApplyKitPanel({ jobId, locale, onApplied, hidePeopleSearch }: { 
           rel="noopener"
           data-testid="kit-apply"
           onClick={() => setAwaitingReturn('click')}
-          className="brutal brutal-press self-start bg-brand px-4 py-2 font-semibold text-brand-foreground"
+          className={`${accent} self-start`}
         >
           {t('apply')} ↗
         </a>
@@ -238,7 +264,7 @@ export function ApplyKitPanel({ jobId, locale, onApplied, hidePeopleSearch }: { 
       {askApplied && (
         <div role="alertdialog" aria-label={t('didApply')} className="brutal flex items-center gap-3 p-3">
           <span className="font-semibold">{t('didApply')}</span>
-          <button type="button" data-testid="kit-applied-yes" onClick={() => void confirmApplied(true)} className="brutal brutal-press bg-brand px-3 py-1 text-sm font-semibold text-brand-foreground">{t('yes')}</button>
+          <button type="button" data-testid="kit-applied-yes" onClick={() => void confirmApplied(true)} className={accent}>{t('yes')}</button>
           <button type="button" data-testid="kit-applied-no" onClick={() => void confirmApplied(false)} className="px-3 py-1 text-sm">{t('no')}</button>
         </div>
       )}
