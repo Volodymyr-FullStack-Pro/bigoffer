@@ -174,6 +174,11 @@ export function Feed({
           {profiles.length > 1 && select('filter-profile', t('filterProfile'), filters.profileId, (v) => setFilters((f) => ({ ...f, profileId: v })), [{ value: 'all', label: t('all') }, ...profiles.map((p) => ({ value: p.id, label: p.name }))])}
           {select('filter-min-score', t('filterScore'), String(filters.minScore), (v) => setFilters((f) => ({ ...f, minScore: Number(v) })), [0, 50, 70, 90].map((n) => ({ value: String(n), label: n === 0 ? t('all') : `≥ ${n}%` })))}
           {select('filter-remote', t('filterRemote'), filters.remote, (v) => setFilters((f) => ({ ...f, remote: v as FeedFilters['remote'] })), (['any', 'remote', 'hybrid', 'office'] as const).map((r) => ({ value: r, label: t(`remote_${r}`) })))}
+          {select('filter-experience', t('filterExperience'), String(filters.experience), (v) => setFilters((f) => ({ ...f, experience: v === 'any' || v === 'fit' ? v : Number(v) })), [
+            { value: 'any', label: t('all') },
+            { value: 'fit', label: t('expFit') },
+            ...[1, 2, 3, 5].map((n) => ({ value: String(n), label: t('expUpTo', { years: n }) })),
+          ])}
           {select('sort-select', tt('sortLabel'), filters.sort, (v) => setFilters((f) => ({ ...f, sort: v as FeedFilters['sort'] })), [{ value: 'best', label: tt('sortBest') }, { value: 'newest', label: tt('sortNewest') }])}
           <label className="flex items-end gap-2 pb-1 text-sm font-semibold">
             <input data-testid="filter-fresh" type="checkbox" checked={filters.fresh} onChange={(e) => setFilters((f) => ({ ...f, fresh: e.target.checked }))} className="size-5" />

@@ -69,3 +69,9 @@ export const BOARD_SOURCE_IDS: ReadonlySet<SourceId> = new Set<SourceId>(['green
  */
 export const PREFILTERED_SOURCE_IDS: ReadonlySet<SourceId> = new Set<SourceId>([...BOARD_SOURCE_IDS, 'hn']);
 
+/**
+ * Where most good matches come from (measured): polled on their own interval, never slowed by the cost multiplier,
+ * so the feed is fresh where it matters.
+ */
+export const PRIORITY_SOURCE_IDS: ReadonlySet<SourceId> = new Set<SourceId>(['dou', 'djinni', 'robotaua']);
+

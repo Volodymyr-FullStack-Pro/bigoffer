@@ -11,6 +11,7 @@ export const uiPrefsSchema = z
         source: z.string().max(40),
         fresh: z.boolean(),
         sort: z.enum(['best', 'newest']),
+        experience: z.union([z.enum(['any', 'fit']), z.number().int().min(0).max(20)]),
       })
       .partial(),
     /** Board column id -> sort mode. */

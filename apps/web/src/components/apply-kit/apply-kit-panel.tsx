@@ -3,6 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { saveBankAnswer } from '@/app/[locale]/(app)/profile/profile-extras-actions';
+import { downloadLetter } from '@/lib/letter-file';
 import { useSaveUiPrefs } from '@/lib/use-save-ui-prefs';
 import { answerFormQuestions, type FormAnswer, generateKit, getApplyKitData, type KitData, type KitError, markAppliedFromKit, saveKitLetter, type StoredKit } from './actions';
 import { ContactChips } from './contact-chips';
@@ -134,6 +135,12 @@ export function ApplyKitPanel({ jobId, locale, onApplied, hidePeopleSearch }: { 
           <div className="flex flex-wrap gap-2">
             <button type="button" data-testid="kit-copy-letter" onClick={() => void copy('letter', letter)} className="brutal brutal-press border-brand bg-brand px-3 py-1 text-sm font-semibold text-brand-foreground">
               {copied === 'letter' ? `✓ ${t('copied')}` : t('copyLetter')}
+            </button>
+            <button type="button" data-testid="kit-download-docx" onClick={() => void downloadLetter(letter, `${t('fileName')} - ${data.company}`, 'docx')} className="brutal-press rounded-full border border-border px-3 py-1 text-sm font-medium hover:bg-muted">
+              {t('downloadDocx')}
+            </button>
+            <button type="button" data-testid="kit-download-txt" onClick={() => void downloadLetter(letter, `${t('fileName')} - ${data.company}`, 'txt')} className="brutal-press rounded-full border border-border px-3 py-1 text-sm font-medium hover:bg-muted">
+              .txt
             </button>
             {data.jobUrl && (
               <a href={data.jobUrl} target="_blank" rel="noopener" data-testid="kit-open-job" onClick={() => setAwaitingReturn('click')} className="brutal brutal-press px-3 py-1 text-sm font-semibold">
