@@ -7,6 +7,7 @@ const aiEnvSchema = z.object({
   AI_PROVIDER: z.enum(['gemini', 'fake']).default('gemini'),
   AI_MODEL_PUBLIC: z.string().min(1).default('gemini-flash-lite-latest'),
   AI_MODEL_PRIVATE: z.string().min(1).default('gemini-flash-latest'),
+  AI_MODEL_PRIVATE_FAST: z.string().min(1).default('gemini-flash-lite-latest'),
   GEMINI_API_KEY_PUBLIC: z.string().min(1).optional(),
   GEMINI_API_KEY_PRIVATE: z.string().min(1).optional(),
   ALLOW_FAKE_AI: z.string().optional(),
@@ -27,6 +28,7 @@ export function readAiEnv(env: Record<string, string | undefined> = process.env)
     AI_PROVIDER: pick('AI_PROVIDER'),
     AI_MODEL_PUBLIC: pick('AI_MODEL_PUBLIC'),
     AI_MODEL_PRIVATE: pick('AI_MODEL_PRIVATE'),
+    AI_MODEL_PRIVATE_FAST: pick('AI_MODEL_PRIVATE_FAST'),
     GEMINI_API_KEY_PUBLIC: pick('GEMINI_API_KEY_PUBLIC'),
     GEMINI_API_KEY_PRIVATE: pick('GEMINI_API_KEY_PRIVATE'),
     ALLOW_FAKE_AI: pick('ALLOW_FAKE_AI'),
@@ -46,6 +48,7 @@ export function createLlmClient(env: AiEnv): LlmClient {
         privateKey: env.GEMINI_API_KEY_PRIVATE,
         publicModel: env.AI_MODEL_PUBLIC,
         privateModel: env.AI_MODEL_PRIVATE,
+        privateFastModel: env.AI_MODEL_PRIVATE_FAST,
       });
   }
 }

@@ -11,7 +11,7 @@ describe('generateApplyKit', () => {
     const llm = new FakeLlmClient(fakeResponder, ['private']);
     const kit = await generateApplyKit(llm, { job, cv, lang: 'auto', tone: 'default', salaryMinUsd: 4000 });
     const req = llm.calls[0]!;
-    expect(req).toMatchObject({ sensitivity: 'private', task: 'apply_kit' });
+    expect(req).toMatchObject({ sensitivity: 'private', task: 'apply_kit', tier: 'fast' });
     // Writing keeps the model's default thinking.
     expect(req.thinking).toBeUndefined();
     expect(req.prompt).toContain('Senior Developer at Acme');

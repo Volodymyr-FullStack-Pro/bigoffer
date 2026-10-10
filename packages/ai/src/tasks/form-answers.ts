@@ -13,6 +13,8 @@ export async function answerForm(
   if (input.questions.length === 0) return [];
   const res = await llm.generateJson({
     sensitivity: 'private',
+    // Written while the user waits on screen: the fast model (see GenerateJsonRequest.tier).
+    tier: 'fast',
     task: 'form_answers',
     schema: wire,
     system: [
