@@ -1,6 +1,6 @@
 'use client';
 
-import { defaultSources, ROLE_FAMILIES, type RoleFamily, SEARCH_REMOTE_TYPES, SENIORITIES, SOURCE_CATALOG, type SourceInfo } from '@jp/core';
+import { defaultSources, MAIN_SOURCE_IDS, ROLE_FAMILIES, type RoleFamily, SEARCH_REMOTE_TYPES, SENIORITIES, SOURCE_CATALOG, type SourceInfo } from '@jp/core';
 import { useTranslations } from 'next-intl';
 import { type ReactNode, useActionState, useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -24,7 +24,8 @@ export type SearchProfileValues = {
   isActive: boolean;
 };
 
-const MARKETS = ['ua', 'remote', 'europe', 'global'] as const;
+const MARKETS = ['main', 'ua', 'remote', 'europe', 'global'] as const;
+const MAIN = new Set<string>(MAIN_SOURCE_IDS);
 const field = 'rounded-xl border border-border bg-card px-3 py-2.5 outline-none focus:ring-2 focus:ring-brand';
 
 /** A checkbox drawn as a pill; the (transparent) input covers the pill, so it stays clickable and labelled. */
@@ -201,7 +202,10 @@ export function SearchProfileForm({ values, cvSkills = [] }: { values: SearchPro
             <fieldset key={market} className="flex flex-col gap-2">
               <legend className="mb-1.5 text-sm font-medium">{t(`market_${market}`)}</legend>
               <div className="flex flex-wrap gap-2">
-                {SOURCE_CATALOG.filter((s) => s.market === market).map((s) => (
+                {(market === 'main'
+                  ? MAIN_SOURCE_IDS.map((id) => SOURCE_CATALOG.find((s) => s.id === id)!)
+                  : SOURCE_CATALOG.filter((s) => s.market === market && !MAIN.has(s.id))
+                ).map((s) => (
                   <Pill
                     key={s.id}
                     name="sources"
@@ -216,7 +220,7 @@ export function SearchProfileForm({ values, cvSkills = [] }: { values: SearchPro
                   />
                 ))}
               </div>
-              {market === 'global' && <span id="source-linkedin-warning" className="text-xs text-muted-foreground">{t('linkedinWarning')}</span>}
+              {market === 'main' && <span id="source-linkedin-warning" className="text-xs text-muted-foreground">{t('linkedinWarning')}</span>}
             </fieldset>
           ))}
           {invalid.has('sources') && <p className="text-sm text-danger">{t('sourcesRequired')}</p>}
