@@ -15,6 +15,8 @@ export type GeminiOptions = {
   privateKey?: string;
   publicModel: string;
   privateModel: string;
+  /** Private model for `tier: 'fast'` requests; defaults to privateModel. */
+  privateFastModel?: string;
   /** Test seam: builds the generateContent call for one API key. */
   connect?: (apiKey: string) => GenerateContent;
 };
@@ -88,7 +90,7 @@ export function createGeminiClient(opts: GeminiOptions): LlmClient {
         call = connect(key);
         connections.set(req.sensitivity, call);
       }
-      const model = modelFor(req.sensitivity);
+      const model = req.tier === 'fast' && req.sensitivity === 'private' && opts.privateFastModel ? opts.privateFastModel : modelFor(req.sensitivity);
       const parts: Part[] = [
         ...[...(req.files ?? []), ...(req.images ?? [])].map((i) => ({ inlineData: { mimeType: i.mimeType, data: i.dataBase64 } })),
         { text: req.prompt },

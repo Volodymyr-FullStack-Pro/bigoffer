@@ -92,6 +92,8 @@ export async function generateApplyKit(
   ].join('\n');
   const res = await llm.generateJson({
     sensitivity: 'private',
+    // Written while the user waits on screen: the fast model (see GenerateJsonRequest.tier).
+    tier: 'fast',
     task: 'apply_kit',
     schema: applyKitWireSchema,
     system: system(input.lang, input.tone),

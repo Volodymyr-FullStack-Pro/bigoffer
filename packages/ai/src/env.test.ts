@@ -8,6 +8,7 @@ describe('readAiEnv', () => {
       AI_PROVIDER: 'gemini',
       AI_MODEL_PUBLIC: 'gemini-flash-lite-latest',
       AI_MODEL_PRIVATE: 'gemini-flash-latest',
+      AI_MODEL_PRIVATE_FAST: 'gemini-flash-lite-latest',
       GEMINI_API_KEY_PUBLIC: 'k',
       GEMINI_API_KEY_PRIVATE: undefined,
     });
