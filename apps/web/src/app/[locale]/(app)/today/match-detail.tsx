@@ -2,6 +2,7 @@
 
 import { isLocale, type Locale, sourceInfo } from '@jp/core';
 import { useFormatter, useLocale, useNow, useTranslations } from 'next-intl';
+import { Sparkles } from 'lucide-react';
 import { useState } from 'react';
 import { TextGenerateEffect } from '@/components/aceternity/text-generate-effect';
 import { ApplyKitPanel } from '@/components/apply-kit/apply-kit-panel';
@@ -73,73 +74,18 @@ function ApplyKitToggle({ jobId, onApplied }: { jobId: string; onApplied?: () =>
         data-testid="apply-kit-open"
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
-        className="brutal brutal-press self-start px-4 py-2 font-semibold"
+        className="brutal-press inline-flex items-center gap-2 self-start rounded-full bg-brand px-6 py-3 text-base font-bold text-brand-foreground shadow-[0_0_24px_rgb(115_247_178/0.25)]"
       >
+        <Sparkles className="size-5" aria-hidden />
         {tk('open')}
+        <span aria-hidden className="text-sm opacity-70">
+          {open ? '▴' : '▾'}
+        </span>
       </button>
       {open && (
         <ApplyKitPanel jobId={jobId} locale={locale} hidePeopleSearch onApplied={onApplied} />
       )}
     </div>
-  );
-}
-
-const PART_MAX = { skills: 35, role: 25, seniority: 15, location: 15, salary: 10 } as const;
-type Part = keyof typeof PART_MAX;
-
-/** Which explanation fits a factor's points (keys under feed.why_<part>_<key>). */
-function partHint(part: Part, v: number): string {
-  if (part === 'skills') return v >= 35 ? 'full' : v > 0 ? 'some' : 'none';
-  if (part === 'role') return v >= 25 ? 'match' : v >= 18 ? 'generic' : v > 0 ? 'text' : 'none';
-  if (part === 'seniority') return v >= 15 ? 'match' : v > 0 ? 'near' : 'none';
-  if (part === 'location') return v >= 15 ? 'match' : v > 0 ? 'partial' : 'none';
-  return v >= 10 ? 'ok' : v > 0 ? 'unknown' : 'low';
-}
-
-/** The score as five factors: points out of the maximum, a bar, and what it means in words. */
-function ScoreBreakdown({
-  breakdown,
-  matchedCount,
-}: {
-  breakdown: NonNullable<FeedMatch['breakdown']>;
-  matchedCount: number;
-}) {
-  const tf = useTranslations('feed');
-  return (
-    <section
-      aria-label={tf('breakdown')}
-      className="flex flex-col gap-2.5 rounded-2xl bg-muted/50 p-4"
-    >
-      <h3 className="text-sm font-semibold">{tf('breakdown')}</h3>
-      <dl className="grid gap-2.5 sm:grid-cols-2">
-        {(Object.keys(PART_MAX) as Part[]).map((part) => {
-          const v = breakdown[part];
-          const max = PART_MAX[part];
-          return (
-            <div key={part} className="flex flex-col gap-1">
-              <div className="flex items-baseline justify-between gap-2 text-xs">
-                <dt className="font-medium">{tf(`part_${part}`)}</dt>
-                <dd className="font-mono text-muted-foreground">
-                  {v}/{max}
-                </dd>
-              </div>
-              <span aria-hidden className="h-1.5 overflow-hidden rounded-full bg-muted">
-                <span
-                  className={`block h-full rounded-full ${v >= max ? 'bg-success' : v > 0 ? 'bg-warning' : 'bg-muted-foreground/40'}`}
-                  style={{ width: `${Math.round((v / max) * 100)}%` }}
-                />
-              </span>
-              <p className="text-xs text-muted-foreground">
-                {(tf as (key: string, values?: Record<string, number>) => string)(
-                  `why_${part}_${partHint(part, v)}`,
-                  { count: matchedCount },
-                )}
-              </p>
-            </div>
-          );
-        })}
-      </dl>
-    </section>
   );
 }
 
@@ -300,13 +246,6 @@ export function MatchDetail({
           )}
         </ul>
       )}
-      {/* Old rows may carry only matchedSkills: no factor points, nothing to explain. */}
-      {match.breakdown && typeof match.breakdown.skills === 'number' && (
-        <ScoreBreakdown
-          breakdown={match.breakdown}
-          matchedCount={match.skills.filter((x) => x.matched).length}
-        />
-      )}
       <div className="flex flex-wrap gap-2">
         {match.postings
           .filter((p) => /^https?:\/\//i.test(p.url))
@@ -336,9 +275,9 @@ export function MatchDetail({
             </div>
           ))}
       </div>
+      <ApplyKitToggle key={match.id} jobId={match.jobId} onApplied={onApplied} />
       {onAction && <MatchActions onAction={onAction} />}
       <PeopleSearch company={match.company} isPlaceholder={match.companyIsPlaceholder} />
-      <ApplyKitToggle key={match.id} jobId={match.jobId} onApplied={onApplied} />
       {showDescription && match.description && (
         <div className="flex flex-col gap-2 border-t border-border pt-3">
           <div className="flex items-center justify-between gap-2">
