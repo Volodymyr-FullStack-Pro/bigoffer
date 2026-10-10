@@ -184,3 +184,15 @@ describe('wantedByAnyProfile', () => {
   });
 });
 
+describe('skill credit saturation', () => {
+  const many: SearchProfile = { ...profile, skills: Array.from({ length: 30 }, (_, i) => `Skill${i}`).concat(['React', 'Node.js', 'PostgreSQL', 'TypeScript', 'Docker', 'AWS']) };
+  it('a long profile list does not dilute a job that matches six of its skills', () => {
+    const r = scoreJob(many, { ...job, descriptionText: 'React, Node.js, PostgreSQL, TypeScript, Docker and AWS.' })!;
+    expect(r.breakdown.skills).toBe(35);
+  });
+  it('fewer matches earn a share of the saturation point', () => {
+    const r = scoreJob(many, { ...job, descriptionText: 'React and Node.js, PostgreSQL.' })!;
+    expect(r.breakdown.skills).toBe(Math.round((35 * 3) / 6));
+  });
+});
+

@@ -122,6 +122,9 @@ function salaryPoints(min: number | null, job: ScorableJob): number {
   return best >= min ? 10 : 0;
 }
 
+/** This many matched skills earn the full skill score, whatever the length of the profile's list. */
+export const SKILLS_FOR_FULL_CREDIT = 6;
+
 export function scoreJob(
   profile: SearchProfile,
   job: ScorableJob,
@@ -148,8 +151,15 @@ export function scoreJob(
   const familyMatch = targets.length > 0 && families.some((f) => targets.includes(f));
   const role = familyMatch ? 25 : families.length === 0 && inTitle ? 18 : inText ? 12 : 0;
   const offTarget = roleOffTarget(families, targets);
+  // Skill credit saturates at SKILLS_FOR_FULL_CREDIT matches: a long profile list (e.g. 30 skills imported from a CV)
+  // must not dilute a job that uses 8 of them down to 9/35. Short lists keep their plain share.
+  const skillDenominator = Math.min(profile.skills.length, SKILLS_FOR_FULL_CREDIT);
   const skills =
-    profile.skills.length === 0 ? (inText ? 35 : 0) : Math.round((35 * matchedSkills.length) / profile.skills.length);
+    profile.skills.length === 0
+      ? inText
+        ? 35
+        : 0
+      : Math.round((35 * Math.min(matchedSkills.length, skillDenominator)) / skillDenominator);
   const regions = job.remoteRegions ?? [];
   const blockedRegions =
     job.remoteType === 'remote' && remoteBlockedFor(regions, profile.candidateCountry) ? regions : null;
