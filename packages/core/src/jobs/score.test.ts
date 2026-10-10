@@ -196,3 +196,24 @@ describe('skill credit saturation', () => {
   });
 });
 
+describe('seniority filter', () => {
+  const jm: SearchProfile = { ...profile, seniority: ['junior', 'middle'] };
+  it('hides a job whose stated level is not chosen', () => {
+    expect(scoreJob(jm, { ...job, seniority: 'senior' })!.breakdown.excludedBy).toBe('seniority');
+  });
+  it('keeps chosen levels and jobs without a level', () => {
+    expect(scoreJob(jm, { ...job, seniority: 'middle' })!.hidden).toBe(false);
+    expect(scoreJob(jm, { ...job, title: 'Full Stack Engineer', seniority: null })!.hidden).toBe(false);
+  });
+});
+
+describe('remote-only filter', () => {
+  it('hides hybrid and office jobs, keeps remote and unknown', () => {
+    const remote: SearchProfile = { ...profile, remoteType: 'remote' };
+    expect(scoreJob(remote, { ...job, remoteType: 'hybrid' })!.breakdown.excludedBy).toBe('format');
+    expect(scoreJob(remote, { ...job, remoteType: 'office' })!.breakdown.excludedBy).toBe('format');
+    expect(scoreJob(remote, { ...job, remoteType: 'unknown' })!.hidden).toBe(false);
+    expect(scoreJob({ ...profile, remoteType: 'any' }, { ...job, remoteType: 'office' })!.hidden).toBe(false);
+  });
+});
+

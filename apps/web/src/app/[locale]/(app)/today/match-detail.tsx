@@ -217,6 +217,11 @@ export function MatchDetail({
       <div className="flex flex-col gap-2">
         <ScoreMeter score={match.score} label={t('match')} />
         <h2 className="font-display text-2xl font-semibold leading-tight">{match.title}</h2>
+        {match.onBoard !== null && (
+          <p data-testid="on-board" className="self-start rounded-full bg-brand/15 px-2.5 py-0.5 text-xs font-medium text-link">
+            ✓ {tf('onBoard', { column: match.onBoard || '—' })}
+          </p>
+        )}
         <p className="text-muted-foreground">{match.company}</p>
         <p className="flex flex-wrap gap-x-4 gap-y-1 font-mono text-xs text-muted-foreground">
           <span>{t(`remote_${match.remoteType}`)}</span>
@@ -227,7 +232,7 @@ export function MatchDetail({
             <ExperienceBadge required={match.requiredYears} candidate={match.candidateYears} />
           )}
           <span suppressHydrationWarning>
-            {format.relativeTime(new Date(match.createdAt), now)}
+            {format.relativeTime(new Date(match.postedAt ?? match.firstSeenAt), now)}
           </span>
         </p>
       </div>

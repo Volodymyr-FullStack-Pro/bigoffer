@@ -163,6 +163,9 @@ export function scoreJob(
   const regions = job.remoteRegions ?? [];
   const blockedRegions =
     job.remoteType === 'remote' && remoteBlockedFor(regions, profile.candidateCountry) ? regions : null;
+  // "Remote only" hides jobs that say they are hybrid or office; jobs that state no format stay.
+  const formatOff = profile.remoteType === 'remote' && (job.remoteType === 'hybrid' || job.remoteType === 'office');
+  const levelOff = profile.seniority.length > 0 && job.seniority !== null && !profile.seniority.includes(job.seniority);
   const keywordExclusion = profile.excludeKeywords.find((e) => containsTerm(text, e))?.toLowerCase() ?? null;
   const breakdown: MatchBreakdown = {
     skills,
@@ -172,7 +175,9 @@ export function scoreJob(
     salary: salaryPoints(profile.salaryMinUsd, job),
     matchedSkills,
     // 'role' / 'region' hide the row like an exclude keyword, so upsert_job_matches keeps rescoring it.
-    excludedBy: keywordExclusion ?? (offTarget ? 'role' : blockedRegions ? 'region' : null),
+    // A stated level outside the profile's chosen levels is hidden, not just scored lower: unchecking "Senior"
+    // must take senior jobs out of the feed. Jobs that state no level stay.
+    excludedBy: keywordExclusion ?? (offTarget ? 'role' : levelOff ? 'seniority' : formatOff ? 'format' : blockedRegions ? 'region' : null),
     blockedRegions,
   };
   const score = Math.min(

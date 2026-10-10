@@ -1,4 +1,4 @@
-import { isLocale, type LocalizedText, localized, requiredYears, SENIORITIES, type Seniority, sourceInfo } from '@jp/core';
+import { isLocale, type LocalizedText, localized, normalizeCompany, normalizeTitle, requiredYears, SENIORITIES, type Seniority, sourceInfo } from '@jp/core';
 import { getLocale, getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
 import { requireUserId } from '@/lib/auth';
@@ -44,7 +44,7 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
       .not('jobs.is_job', 'is', false)
       .gte('created_at', since);
   const cutoff = since24h();
-  const [{ data: bestRows }, { data: freshRows, error: freshError }, { data: profiles }, { data: me }, searchStatus, cv] = await Promise.all([
+  const [{ data: bestRows }, { data: freshRows, error: freshError }, { data: profiles }, { data: me }, searchStatus, cv, { data: apps }] = await Promise.all([
     baseQuery().order('score', { ascending: false }).order('created_at', { ascending: false }).limit(200),
     // Fresh jobs can score below the top 200, so fetch them separately for the "New in 24h" filter and "Newest" sort.
     // Same rule as the client filter: posted within 24h, or no posted_at and first seen within 24h.
@@ -56,11 +56,21 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
     supabase.from('profiles').select('onboarded_at, ui_prefs').eq('id', userId).maybeSingle(),
     getSearchNowStatus(),
     loadPrimaryCv(supabase),
+    supabase.from('applications').select('job_id, title, company, board_columns(key, title)'),
   ]);
 
   if (freshError) console.error('today: fresh matches query failed', { code: freshError.code, message: freshError.message });
 
   const profileSkills = new Map((profiles ?? []).map((p) => [p.id, p.skills]));
+  // Jobs already on the board: by job id, or by company + title (the same vacancy found on another board or added by hand).
+  const nameKey = (company: string, title: string) => `${normalizeCompany(company)}|${normalizeTitle(title)}`;
+  const boardByJob = new Map<string, string>();
+  const boardByName = new Map<string, string>();
+  for (const a of apps ?? []) {
+    const column = a.board_columns ? localized(a.board_columns.title as LocalizedText, locale) || a.board_columns.key : '';
+    if (a.job_id) boardByJob.set(a.job_id, column);
+    if (a.company && a.title) boardByName.set(nameKey(a.company, a.title), column);
+  }
   const toMatch = (m: NonNullable<typeof bestRows>[number]): FeedMatch => {
     const matched = matchedSkillsOf(m.breakdown);
     const wanted = m.search_profile_id ? (profileSkills.get(m.search_profile_id) ?? []) : [];
@@ -83,6 +93,7 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
       description: m.jobs.description_text.slice(0, 8000),
       requiredYears: requiredYears(m.jobs.description_text),
       candidateYears: cv?.parsed?.yearsExperience ?? null,
+      onBoard: boardByJob.get(m.job_id) ?? boardByName.get(nameKey(m.jobs.companies?.name ?? '', m.jobs.title)) ?? null,
       skills: cardSkills(m.jobs.skills, matched, 8),
       missingSkills: wanted.filter((s) => !matched.some((x) => x.toLowerCase() === s.toLowerCase())),
       breakdown: b ? { skills: num(b.skills), role: num(b.role), seniority: num(b.seniority), location: num(b.location), salary: num(b.salary) } : null,

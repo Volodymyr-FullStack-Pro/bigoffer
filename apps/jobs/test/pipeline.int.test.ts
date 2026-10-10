@@ -170,8 +170,32 @@ describe('runQuery', () => {
       const { data: q } = await db.from('search_queries').select('next_run_at').eq('id', douQueryId).single();
       return new Date(q!.next_run_at).getTime();
     };
+    // DOU is a priority source: its cadence ignores the cost multiplier (see PRIORITY_SOURCE_IDS).
     expect(await nextRun(1)).toBe(now.getTime() + base);
-    expect(await nextRun(2)).toBe(now.getTime() + 2 * base);
+    expect(await nextRun(2)).toBe(now.getTime() + base);
+  });
+
+  it('scales the next run of a non-priority source by the interval multiplier', async () => {
+    const now2 = new Date();
+    const { data: q, error } = await db
+      .from('search_queries')
+      .insert({ source_id: 'remotive', query_key: `remotive:mult-${Date.now()}`, params: {}, next_run_at: now2.toISOString() })
+      .select('id')
+      .single();
+    if (error) throw error;
+    const { data: source } = await db.from('sources').select('min_interval_minutes').eq('id', 'remotive').single();
+    const base = Math.max(source!.min_interval_minutes, 15) * 60 * 1000;
+    const { data: before } = await db.from('sources').select('enabled, paused_until').eq('id', 'remotive').single();
+    await db.from('sources').update({ enabled: true, paused_until: null }).eq('id', 'remotive');
+    try {
+      const deps = { db, adapters: { remotive: fakeAdapter([]) }, createContext: () => ctx, now: () => now2, intervalMultiplier: 2 };
+      await runQuery(deps, q.id);
+      const { data: after } = await db.from('search_queries').select('next_run_at').eq('id', q.id).single();
+      expect(new Date(after!.next_run_at).getTime()).toBe(now2.getTime() + 2 * base);
+    } finally {
+      await db.from('sources').update(before!).eq('id', 'remotive');
+      await db.from('search_queries').delete().eq('id', q.id);
+    }
   });
 
   it('skips an unconfigured adapter and moves the query forward', async () => {

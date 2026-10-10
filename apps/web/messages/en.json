@@ -142,7 +142,8 @@
     "seniority_middle": "Middle",
     "seniority_senior": "Senior",
     "seniority_lead": "Lead",
-    "onboardingBanner": "Finish setting up: your CV and typical answers"
+    "onboardingBanner": "Finish setting up: your CV and typical answers",
+    "onBoardShort": "Already on board"
   },
   "feed": {
     "progress": "{done} / {total}",
@@ -200,7 +201,11 @@
     "why_location_none": "Does not fit your format or country",
     "why_salary_ok": "At or above your minimum (or no minimum set)",
     "why_salary_unknown": "Salary not stated",
-    "why_salary_low": "Below your minimum"
+    "why_salary_low": "Below your minimum",
+    "onBoard": "Already on your board: {column}",
+    "filterExperience": "Experience",
+    "expFit": "Fits my CV",
+    "expUpTo": "up to {years} yrs"
   },
   "comingSoon": {
     "badge": "Soon",
@@ -491,7 +496,9 @@
     "err_no_cv": "Upload your CV in Profile to generate letters.",
     "err_not_found": "This job is no longer available.",
     "err_failed": "Couldn't generate. Try again.",
-    "savedToBank": "Saved to answer bank."
+    "savedToBank": "Saved to answer bank.",
+    "downloadDocx": "Download .docx",
+    "fileName": "Cover letter"
   },
   "recruiter": {
     "title": "Write to the recruiter",

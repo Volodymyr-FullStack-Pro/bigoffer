@@ -24,6 +24,7 @@ export function FeedListItem({ match, selected, onSelect }: { match: FeedMatch; 
     >
       <ScoreMeter score={match.score} label={t('match')} />
       <span className="font-display font-bold leading-tight">{match.title}</span>
+      {match.onBoard !== null && <span data-testid="on-board-badge" className="self-start rounded-full bg-brand/15 px-2 py-0.5 text-[11px] font-medium text-link">✓ {t('onBoardShort')}</span>}
       <span className="flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-xs text-muted-foreground">
         <span className="truncate">{match.company}</span>
         {sourceId && <SourceBadge sourceId={sourceId} />}

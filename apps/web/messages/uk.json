@@ -142,7 +142,8 @@
     "seniority_middle": "Middle",
     "seniority_senior": "Senior",
     "seniority_lead": "Lead",
-    "onboardingBanner": "Завершіть налаштування: CV і типові відповіді"
+    "onboardingBanner": "Завершіть налаштування: CV і типові відповіді",
+    "onBoardShort": "Вже на дошці"
   },
   "feed": {
     "progress": "{done} / {total}",
@@ -200,7 +201,11 @@
     "why_location_none": "Не підходить формат або країна",
     "why_salary_ok": "Не нижче вашого мінімуму (або мінімум не задано)",
     "why_salary_unknown": "Зарплату не вказано",
-    "why_salary_low": "Нижче вашого мінімуму"
+    "why_salary_low": "Нижче вашого мінімуму",
+    "onBoard": "Вже на вашій дошці: {column}",
+    "filterExperience": "Досвід",
+    "expFit": "Підходить мені",
+    "expUpTo": "до {years} р."
   },
   "comingSoon": {
     "badge": "Скоро",
@@ -491,7 +496,9 @@
     "err_no_cv": "Завантажте CV у профілі, щоб генерувати листи.",
     "err_not_found": "Ця вакансія вже недоступна.",
     "err_failed": "Не вдалося згенерувати. Спробуйте ще раз.",
-    "savedToBank": "Збережено в банк відповідей."
+    "savedToBank": "Збережено в банк відповідей.",
+    "downloadDocx": "Завантажити .docx",
+    "fileName": "Супровідний лист"
   },
   "recruiter": {
     "title": "Написати рекрутеру",
