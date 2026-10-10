@@ -1,6 +1,6 @@
 import type { RawJob } from '@jp/core';
 import { parseRss } from '../rss';
-import type { SourceAdapter } from '../types';
+import { isGoneError, type SourceAdapter } from '../types';
 
 const FEED = 'https://jobs.dou.ua/vacancies/feeds/';
 
@@ -43,4 +43,14 @@ export const douAdapter: SourceAdapter = {
       ];
     });
   },
+  async isOpen(url, ctx) {
+    try {
+      // DOU removes closed vacancies (404); a live page carries the apply button.
+      await ctx.fetchText(url);
+      return true;
+    } catch (err) {
+      return isGoneError(err) ? false : null;
+    }
+  },
 };
+

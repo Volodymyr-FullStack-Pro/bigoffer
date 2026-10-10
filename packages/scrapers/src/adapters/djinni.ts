@@ -1,6 +1,6 @@
 import { kyivLocalDate, type RawJob } from '@jp/core';
 import { extractJobPostings, type JobPostingLd, ldLocation } from '../jsonld';
-import type { SourceAdapter } from '../types';
+import { isGoneError, type SourceAdapter } from '../types';
 
 const BASE = 'https://djinni.co/jobs/';
 const MAX_PAGES = 2;
@@ -22,6 +22,8 @@ function toRawJob(p: JobPostingLd): RawJob | null {
   };
 }
 
+const CLOSED = /вакансі[яи] зараз неактивна|вакансия сейчас неактивна|job is (?:currently )?(?:inactive|not active)/i;
+
 export const djinniAdapter: SourceAdapter = {
   id: 'djinni',
   async search(params, ctx) {
@@ -38,5 +40,13 @@ export const djinniAdapter: SourceAdapter = {
       }
     }
     return out;
+  },
+  async isOpen(url, ctx) {
+    try {
+      // A closed job keeps its page but shows "Ця вакансія зараз неактивна" (ru/en variants too).
+      return !CLOSED.test(await ctx.fetchText(url));
+    } catch (err) {
+      return isGoneError(err) ? false : null;
+    }
   },
 };
