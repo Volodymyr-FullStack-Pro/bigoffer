@@ -239,13 +239,14 @@
     "newProfile": "Новий пошук",
     "sources": "Де шукати",
     "sourcesHint": "Оберіть сайти вакансій для цього пошуку",
+    "market_main": "Основні",
     "market_ua": "Україна",
     "market_remote": "Віддалено по всьому світу",
     "market_europe": "Європа",
     "market_global": "Агрегатори",
     "beta": "бета",
     "lowYield": "рідко релевантне",
-    "linkedinWarning": "Публічні вакансії LinkedIn: збираємо рідко й без вашого акаунта. Типово вимкнено.",
+    "linkedinWarning": "Публічні вакансії LinkedIn без вашого акаунта: повний опис, закриті прибираємо.",
     "needsKey": "потрібен ключ API",
     "sourcesRequired": "Оберіть хоча б один сайт вакансій",
     "level_intern": "Стажер",
@@ -274,7 +275,7 @@
     "skillsPlaceholder": "Введіть навичку й натисніть Enter",
     "salaryAny": "Без мінімуму",
     "salaryFrom": "від {amount}",
-    "sourcesRecommended": "Обрати рекомендовані"
+    "sourcesRecommended": "Обрати основні"
   },
   "board": {
     "title": "Дошка відгуків",

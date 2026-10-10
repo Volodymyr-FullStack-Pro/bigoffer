@@ -239,13 +239,14 @@
     "newProfile": "Новый поиск",
     "sources": "Где искать",
     "sourcesHint": "Выберите сайты вакансий для этого поиска",
+    "market_main": "Основные",
     "market_ua": "Украина",
     "market_remote": "Удалённо по всему миру",
     "market_europe": "Европа",
     "market_global": "Агрегаторы",
     "beta": "бета",
     "lowYield": "редко релевантно",
-    "linkedinWarning": "Публичные вакансии LinkedIn: собираем редко и без вашего аккаунта. По умолчанию выключено.",
+    "linkedinWarning": "Публичные вакансии LinkedIn без вашего аккаунта: полное описание, закрытые убираем.",
     "needsKey": "нужен ключ API",
     "sourcesRequired": "Выберите хотя бы один сайт вакансий",
     "level_intern": "Стажёр",
@@ -274,7 +275,7 @@
     "skillsPlaceholder": "Введите навык и нажмите Enter",
     "salaryAny": "Без минимума",
     "salaryFrom": "от {amount}",
-    "sourcesRecommended": "Выбрать рекомендуемые"
+    "sourcesRecommended": "Выбрать основные"
   },
   "board": {
     "title": "Доска откликов",

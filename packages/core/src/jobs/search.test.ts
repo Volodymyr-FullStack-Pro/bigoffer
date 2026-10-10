@@ -37,7 +37,7 @@ describe('searchProfileInputSchema', () => {
 });
 
 describe('buildSourceQueries', () => {
-  const specs = buildSourceQueries({ keywords: ['Full Stack', 'React Developer'], skills: ['React', 'Node.js'], remoteType: 'any', sources: null });
+  const specs = buildSourceQueries({ keywords: ['Full Stack', 'React Developer'], skills: ['React', 'Node.js'], remoteType: 'any', sources: ['dou', 'djinni', 'robotaua', 'himalayas', 'hn'] });
   const bySource = (id: string) => specs.filter((s) => s.sourceId === id);
   const withLowYield = buildSourceQueries({ keywords: ['Full Stack', 'React Developer'], skills: ['React', 'Node.js'], remoteType: 'any', sources: ['wwr', 'hn', 'remoteok'] });
 
@@ -77,9 +77,7 @@ describe('buildSourceQueries with source selection', () => {
 
   it('falls back to defaults when sources is null', () => {
     const ids = new Set(buildSourceQueries({ ...base, sources: null }).map((s) => s.sourceId));
-    expect(ids.has('linkedin')).toBe(false);
-    expect(ids.has('justjoin')).toBe(false);
-    expect(ids.has('djinni')).toBe(true);
+    expect([...ids].sort()).toEqual(['djinni', 'dou', 'linkedin', 'robotaua']);
   });
 
   it('builds params for new sources', () => {

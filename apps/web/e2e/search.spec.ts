@@ -10,6 +10,7 @@ test('creates a search profile and keeps it after reload', async ({ context, pag
   await page.getByLabel('Your skills').fill('React, Node.js, PostgreSQL');
   await page.getByLabel('Senior').check();
   await page.getByLabel('Work format').selectOption('remote');
+  await page.getByTestId('sources-recommended').click();
   await page.getByTestId('search-save').click();
   // the "new profile" form is replaced by the saved profile's form + an "add" link
   await expect(page.getByTestId('search-add')).toBeVisible();
@@ -26,11 +27,13 @@ test('adding a second profile returns to the plain search URL', async ({ context
   await loginAs(context, uniqueEmail('search-second'));
   await page.goto('/en/search');
   await page.getByLabel('Role keywords').fill('full stack');
+  await page.getByTestId('source-dou').check();
   await page.getByTestId('search-save').click();
   await expect(page.getByTestId('search-add')).toBeVisible();
   await page.getByTestId('search-add').click();
   await expect(page).toHaveURL(/\/en\/search\?new=1$/);
   await page.getByLabel('Role keywords').last().fill('react developer');
+  await page.getByTestId('source-djinni').last().check();
   await page.getByTestId('search-save').last().click();
   // a new profile redirects to /search, so a reload or a second click cannot create a duplicate
   await expect(page).toHaveURL(/\/en\/search$/);
@@ -51,10 +54,7 @@ test('saves a chosen subset of job boards', async ({ context, page }) => {
   await page.goto('/en/search');
   await page.getByLabel('Role keywords').fill('react');
   await page.getByLabel('Work format').selectOption('remote');
-  for (const id of ['remoteok', 'remotive', 'himalayas', 'wwr', 'jobicy', 'workingnomads', 'hn', 'arbeitnow', 'justjoin', 'jooble', 'robotaua', 'olx', 'jobico', 'greenhouse', 'lever', 'ashby', 'workable', 'telegram']) {
-    const box = page.getByTestId(`source-${id}`);
-    if (await box.isChecked()) await box.uncheck();
-  }
+  await page.getByTestId('source-dou').check();
   await page.getByTestId('source-linkedin').check();
   await page.getByTestId('search-save').click();
   await expect(page.getByTestId('search-add')).toBeVisible();
@@ -94,13 +94,15 @@ test('rejects a profile with no job boards selected', async ({ context, page }) 
   await expect(page.getByText('Pick at least one job board')).toBeVisible();
 });
 
-test('a new profile leaves rarely relevant sources off and flags them', async ({ context, page }) => {
+test('a new profile starts with no boards; "main boards" picks DOU, Djinni, robota.ua and LinkedIn', async ({ context, page }) => {
   await loginAs(context, uniqueEmail('search-low-yield'));
   await page.goto('/en/search');
-  await expect(page.getByTestId('source-arbeitnow')).not.toBeChecked();
+  await expect(page.locator('input[name="sources"]:checked')).toHaveCount(0);
   await expect(page.getByTestId('low-yield-arbeitnow')).toHaveText('(rarely relevant)');
-  await expect(page.getByTestId('source-djinni')).toBeChecked();
   await expect(page.getByTestId('low-yield-djinni')).toHaveCount(0);
+  await page.getByTestId('sources-recommended').click();
+  for (const id of ['dou', 'djinni', 'robotaua', 'linkedin']) await expect(page.getByTestId(`source-${id}`)).toBeChecked();
+  await expect(page.locator('input[name="sources"]:checked')).toHaveCount(4);
 });
 
 test('chips: suggestions add a term, × removes it, salary is picked from a list', async ({ context, page }) => {
@@ -113,6 +115,7 @@ test('chips: suggestions add a term, × removes it, salary is picked from a list
   await page.getByLabel('Your skills').press('Enter');
   await page.getByRole('button', { name: '× Redux' }).click();
   await page.getByTestId('salary-select').selectOption('2000');
+  await page.getByTestId('source-dou').check();
   await page.getByTestId('search-save').click();
   await expect(page.getByTestId('search-add')).toBeVisible();
   await page.reload();
