@@ -67,7 +67,7 @@ describe('fresh filter and sorting', () => {
   });
   it('newest sorts by postedAt ?? firstSeenAt descending; best keeps the order', () => {
     expect(sortMatches(items, 'newest').map((x) => x.id)).toEqual(['new', 'unposted', 'stale-seen', 'old']);
-    expect(sortMatches(items, 'best').map((x) => x.id)).toEqual(['old', 'new', 'unposted', 'stale-seen']);
+    expect(sortMatches(items, 'best', now).map((x) => x.id)).toEqual(['old', 'new', 'unposted', 'stale-seen']);
   });
 });
 
@@ -130,5 +130,15 @@ describe('field and reservation filters', () => {
   });
   it('keeps only jobs offering reservation', () => {
     expect(filterMatches(items, { ...DEFAULT_FILTERS, reservation: true }).map((x) => x.id)).toEqual(['fin']);
+  });
+});
+
+describe('best sort and age', () => {
+  it('lets a fresh 90% overtake a four-week-old 95%', () => {
+    const now = new Date('2026-10-12T12:00:00.000Z');
+    const old = m('old95', { score: 95, postedAt: '2026-09-14T12:00:00.000Z' });
+    const fresh = m('fresh90', { score: 90, postedAt: '2026-10-12T08:00:00.000Z' });
+    const week = m('week95', { score: 95, postedAt: '2026-10-07T12:00:00.000Z' });
+    expect(sortMatches([old, week, fresh], 'best', now).map((x) => x.id)).toEqual(['week95', 'fresh90', 'old95']);
   });
 });
