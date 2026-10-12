@@ -45,8 +45,8 @@ describe('buildSourceQueries', () => {
     expect(bySource('dou').map((s) => s.params).filter((p) => p.search)).toEqual(
       searchTerms({ keywords: ['Full Stack', 'React Developer'], skills: ['React', 'Node.js'] }).map((search) => ({ search })),
     );
-    expect(bySource('dou').filter((s) => s.params.search)).toHaveLength(6);
-    expect(bySource('robotaua')).toHaveLength(6);
+    expect(bySource('dou').filter((s) => s.params.search)).toHaveLength(8);
+    expect(bySource('robotaua')).toHaveLength(8);
     expect(bySource('himalayas')[0]!.params).toEqual({ q: 'full stack' });
   });
   it('maps skills to djinni primary keywords', () => {
@@ -121,14 +121,16 @@ describe('DOU categories', () => {
 });
 
 describe('searchTerms', () => {
-  it('uses all keywords plus job-title variants and spellings, capped at 8', () => {
+  it('uses all keywords, their other spellings, then job-title variants, capped at 14', () => {
     expect(searchTerms({ keywords: ['full stack', 'react', 'node.js', 'next.js', 'frontend'], skills: ['TypeScript'] })).toEqual([
-      'full stack', 'react', 'node.js', 'next.js', 'frontend', 'full stack developer', 'fullstack', 'react developer',
+      'full stack', 'react', 'node.js', 'next.js', 'frontend',
+      'fullstack', 'full-stack', 'фулстек', 'front-end', 'front end', 'фронтенд',
+      'full stack developer', 'react developer', 'frontend developer',
     ]);
   });
   it('brings the other spellings of full stack and front end', () => {
     expect(searchTerms({ keywords: ['full stack engineer', 'frontend'], skills: [] })).toEqual([
-      'full stack engineer', 'frontend', 'full stack developer', 'fullstack', 'frontend developer', 'front-end',
+      'full stack engineer', 'frontend', 'fullstack engineer', 'full-stack engineer', 'фулстек', 'front-end', 'front end', 'фронтенд', 'frontend developer',
     ]);
   });
   it('adds title variants for short profiles', () => {
@@ -167,7 +169,7 @@ describe('djinni categories', () => {
     expect(specs.map((s) => s.params.primary_keyword)).toEqual(['Fullstack', 'JavaScript', 'React.js', 'Node.js']);
   });
   it('never emits an unknown category', () => {
-    const valid = new Set(['Fullstack', 'React.js', 'Node.js', 'JavaScript', 'Vue.js', 'Angular', 'Python', 'Java', 'PHP', 'Golang', 'Ruby', 'React Native', 'iOS', 'Android', 'Flutter', 'DevOps', 'QA', 'Project Manager', 'Product Manager', 'Design', 'Marketing', 'Sales', 'HR']);
+    const valid = new Set(['Fullstack', 'React.js', 'Node.js', 'JavaScript', 'Vue.js', 'Angular', 'Python', 'Java', 'PHP', 'Golang', 'Ruby', 'Markup', 'React Native', 'iOS', 'Android', 'Flutter', 'DevOps', 'QA', 'Project Manager', 'Product Manager', 'Design', 'Marketing', 'Sales', 'HR']);
     for (const v of Object.values(DJINNI_PRIMARY_KEYWORDS)) expect(valid.has(v), v).toBe(true);
   });
 });
@@ -178,7 +180,7 @@ describe('djinni categories from multi-word keywords', () => {
 
   it('maps headlines by contained known term', () => {
     expect(djinni(['senior full stack developer'])).toEqual(['Fullstack']);
-    expect(djinni(['frontend react engineer'])).toEqual(['JavaScript', 'React.js']);
+    expect(djinni(['frontend react engineer'])).toEqual(['JavaScript', 'React.js', 'Markup']);
   });
 
   it('keeps keywords first, dedupes and caps at 4', () => {

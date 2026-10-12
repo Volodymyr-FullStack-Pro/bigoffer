@@ -15,7 +15,7 @@ export async function saveSearchProfile(_prev: SearchFormState, formData: FormDa
   const parsed = searchProfileInputSchema.safeParse({
     id: String(formData.get('id') ?? '') || undefined,
     name: String(formData.get('name') ?? ''),
-    keywords: parseList(String(formData.get('keywords') ?? ''), 5),
+    keywords: parseList(String(formData.get('keywords') ?? ''), 10),
     targetRoles: formData.getAll('targetRoles').map(String),
     skills: parseList(String(formData.get('skills') ?? '')),
     excludeKeywords: parseList(String(formData.get('excludeKeywords') ?? '')),
