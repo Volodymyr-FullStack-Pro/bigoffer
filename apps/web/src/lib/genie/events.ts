@@ -1,7 +1,7 @@
 /** Window events other components send to the Offer Genie. */
 export type GenieEvent =
   | { type: 'applied' | 'saved' | 'offer' }
-  | { type: 'hint'; key: string; params?: Record<string, string | number> }
+  | { type: 'hint'; key: string; params?: Record<string, string | number>; action?: { href: string; labelKey: string } }
   | { type: 'clearHint' };
 
 export const GENIE_EVENT = 'bigoffer:genie';

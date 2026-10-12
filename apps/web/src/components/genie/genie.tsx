@@ -7,6 +7,7 @@ import { Link, usePathname } from '@/i18n/navigation';
 import { type GenieMemory, type GenieMessage, type GeniePageHint, type GenieState, MOTIVATION_COUNT, pickMessage, routeOf } from '@/lib/genie/brain';
 import { GENIE_EVENT, type GenieEvent } from '@/lib/genie/events';
 import { getGenieState } from './actions';
+import { Confetti } from '@/app/[locale]/(app)/board/confetti';
 import { GenieAvatar, GenieLamp } from './genie-avatar';
 
 const MEMORY_KEY = 'bigoffer:genie:memory';
@@ -91,6 +92,9 @@ export function Genie() {
   });
   const [hint, setHint] = useState<GeniePageHint>(null);
   const memory = useRef<GenieMemory>({ shown: {}, lastMotivationAt: 0 });
+  const [confetti, setConfetti] = useState(false);
+  // Something important waits while the genie sits in its lamp: the lamp glows with a dot.
+  const [pending, setPending] = useState(false);
   const hideTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   const show = useCallback((m: GenieMessage | null) => {
@@ -127,6 +131,13 @@ export function Genie() {
     };
   }, [refresh]);
 
+  useEffect(() => {
+    if (!state || !folded) return;
+    const next = pickMessage(state, route, memory.current, Date.now(), hint);
+    const id = setTimeout(() => setPending(Boolean(next && next.kind !== 'motivation')), 0);
+    return () => clearTimeout(id);
+  }, [state, folded, route, hint]);
+
   // Speak at most once per page visit, a moment after the page settles.
   useEffect(() => {
     if (!state || folded) return;
@@ -139,18 +150,21 @@ export function Genie() {
   useEffect(() => {
     const onEvent = (e: Event) => {
       const ev = (e as CustomEvent<GenieEvent>).detail;
-      if (ev.type === 'hint') setHint({ key: ev.key, params: ev.params });
+      if (ev.type === 'hint') setHint({ key: ev.key, params: ev.params, action: ev.action });
       else if (ev.type === 'clearHint') setHint(null);
       else {
         void refresh().then((s) => {
           if (!s || s.mode === 'off') return;
           const done = s.appliedToday;
+          const goalNow = ev.type === 'applied' && done === s.goal;
+          if (goalNow || ev.type === 'offer') setConfetti(true);
           show({
             id: `celebrate:${ev.type}:${Date.now()}`,
             kind: 'celebrate',
             mood: 'excited',
             key: ev.type === 'offer' ? 'cheerOffer' : ev.type === 'applied' ? (done >= s.goal ? 'cheerGoal' : 'cheerApplied') : 'cheerSaved',
             params: { done, goal: s.goal, left: Math.max(0, s.goal - done) },
+            action: ev.type === 'saved' ? { href: '/board', labelKey: 'actBoard' } : undefined,
           });
         });
       }
@@ -159,7 +173,25 @@ export function Genie() {
     return () => window.removeEventListener(GENIE_EVENT, onEvent);
   }, [refresh, show]);
 
-  if (!state || state.mode === 'off') return null;
+  // Follow a tip: close the bubble; for "#section" links scroll there and glow once the page has it.
+  const go = (href: string) => {
+    setMessage(null);
+    const hash = href.split('#')[1];
+    if (!hash) return;
+    let tries = 0;
+    const find = () => {
+      const el = document.getElementById(hash);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        el.classList.remove('genie-flash');
+        void el.offsetWidth;
+        el.classList.add('genie-flash');
+      } else if (tries++ < 30) setTimeout(find, 100);
+    };
+    setTimeout(find, 150);
+  };
+
+  if (!state || state.mode === 'off') return (confetti ? <Confetti onDone={() => setConfetti(false)} /> : null);
 
   const fold = (v: boolean) => {
     setFolded(v);
@@ -186,8 +218,10 @@ export function Genie() {
         onClick={() => fold(false)}
         aria-label={t('open')}
         className="brutal-press fixed right-3 bottom-[8.5rem] z-40 grid size-11 place-items-center rounded-full border border-border bg-card shadow-lg md:right-auto md:bottom-5 md:left-5"
+        style={pending ? { boxShadow: '0 0 0 2px var(--brand), 0 0 18px rgb(115 247 178 / 0.5)' } : undefined}
       >
         <GenieLamp size={30} />
+        {pending && <span data-testid="genie-lamp-dot" aria-hidden className="absolute top-1 right-1 size-2.5 animate-pulse rounded-full bg-brand" />}
       </button>
     );
   }
@@ -204,6 +238,12 @@ export function Genie() {
         <span data-testid="genie-goal" className="absolute -bottom-1 left-1/2 -translate-x-1/2 rounded-full border border-border bg-card px-1.5 font-mono text-[10px] font-bold text-link">
           {Math.min(state.appliedToday, 99)}/{state.goal}
         </span>
+        {state.streak >= 2 && (
+          <span data-testid="genie-streak" title={t('streak', { days: state.streak })} className="absolute -top-1 -right-1 rounded-full border border-warning/50 bg-card px-1 font-mono text-[10px] font-bold text-warning">
+            🔥{state.streak}
+          </span>
+        )}
+        {confetti && <Confetti onDone={() => setConfetti(false)} />}
       </div>
       <AnimatePresence>
         {message && (
@@ -220,10 +260,9 @@ export function Genie() {
               message.mood === 'worried' ? 'border-warning/60' : 'border-brand/40'
             }`}
           >
-            <p className="mb-1 font-mono text-[10px] font-bold tracking-widest text-link uppercase">{t('name')}</p>
             <p className="leading-snug">{t(message.key as 'motto0', message.params as never)}</p>
             {message.action && (
-              <Link href={message.action.href} onClick={() => setMessage(null)} className="mt-2 inline-block rounded-full bg-brand px-3 py-1 text-xs font-semibold text-brand-foreground">
+              <Link href={message.action.href} onClick={() => go(message.action!.href)} className="mt-2 inline-block rounded-full bg-brand px-3 py-1 text-xs font-semibold text-brand-foreground">
                 {t(message.action.labelKey as 'actFeed')} →
               </Link>
             )}
