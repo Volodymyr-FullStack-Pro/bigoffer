@@ -24,17 +24,17 @@ pnpm db:env                        # writes apps/web/.env.local and apps/jobs/.e
 
 Personal-data AI (CV, letters, recruiter messages) needs a **paid** Gemini key in `apps/web/.env.local` as `GEMINI_API_KEY_PRIVATE`; E2E uses `AI_PROVIDER=fake` (with `ALLOW_FAKE_AI=1`).
 
-Optional keys go into `apps/jobs/.env.local` (see `apps/jobs/.env.example`), e.g. `JOOBLE_API_KEY`.
+Optional settings go into `apps/jobs/.env.local` (see `apps/jobs/.env.example`).
 
 ### Running the pipeline once (no Trigger.dev needed)
 
 ```bash
 pnpm --filter @jp/jobs run-once                         # sync profiles, run queries that are due
 pnpm --filter @jp/jobs run-once --force                 # run every query now
-pnpm --filter @jp/jobs run-once --force --source=olx    # only one source
+pnpm --filter @jp/jobs run-once --force --source=dou    # only one source
 ```
 
-Company ATS boards (Greenhouse, Lever, Ashby, Workable) and Telegram channels are polled from the `source_boards` table (seeded, plus boards discovered from links in collected jobs; a board is disabled after 3 failed runs in a row). `pnpm --filter @jp/jobs run-once --discover` runs board discovery on demand.
+Jobs come from three Ukrainian boards: DOU (every 30 min), Djinni and robota.ua (hourly).
 
 ### AI enrichment (optional)
 
