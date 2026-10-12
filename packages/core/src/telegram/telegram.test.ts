@@ -256,3 +256,15 @@ describe('genie in the digest', () => {
     expect(msg.text.startsWith('🧞 Вчора: 5/5')).toBe(true);
   });
 });
+
+describe('command menu', () => {
+  it('registers the commands once per process, per language', async () => {
+    const { ensureBotCommands, BOT_COMMANDS } = await import('./format');
+    const calls: (string | undefined)[] = [];
+    const bot = { setCommands: async (_c: unknown, lang?: string) => { calls.push(lang); return { ok: true }; } };
+    await ensureBotCommands(bot);
+    await ensureBotCommands(bot);
+    expect(calls).toEqual([undefined, 'uk', 'ru']);
+    expect(BOT_COMMANDS.uk.map((c) => c.command)).toEqual(['top', 'goal', 'pause', 'resume', 'help', 'stop']);
+  });
+});
