@@ -122,12 +122,14 @@ const SEARCH_SOURCES: [SourceId, string][] = [
   ['jobicy', 'tag'],
 ];
 
-const MAX_TERMS = 6;
+const MAX_TERMS = 8;
 /** Job-title variants that job boards match better than bare technology names. */
+// Titles spell these several ways ("Fullstack Engineer", "Full-Stack Developer", "Front-end Developer"); boards'
+// text search does not always join them, so a keyword brings its common spellings along.
 const TITLE_VARIANTS: [RegExp, string[]][] = [
-  [/^full ?-?stack$/, ['full stack developer']],
+  [/^full ?-?stack( developer| engineer)?$/, ['full stack developer', 'fullstack']],
   [/^react(\.js)?$/, ['react developer', 'frontend developer']],
-  [/^front ?-?end$/, ['frontend developer']],
+  [/^front ?-?end( developer| engineer)?$/, ['frontend developer', 'front-end']],
   [/^node(\.js)?$/, ['node.js developer']],
   [/^next(\.js)?$/, ['next.js developer']],
   [/^(javascript|js)$/, ['javascript developer']],
