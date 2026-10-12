@@ -52,6 +52,33 @@ describe('withRoutes', () => {
   });
 });
 
+describe('letter route', () => {
+  it('sends only the cover letter to the letter model', async () => {
+    const base = new FakeLlmClient(() => ({ a: 'base' }), ['private']);
+    const client = withRoutes(base, { writer: new FakeLlmClient(() => ({ a: 'writer' }), ['private']), letter: new FakeLlmClient(() => ({ a: 'letter' }), ['private']) });
+    expect((await client.generateJson(req)).data).toEqual({ a: 'letter' });
+    expect((await client.generateJson({ ...req, task: 'form_answers' })).data).toEqual({ a: 'writer' });
+  });
+});
+
+describe('withRoutes errors', () => {
+  it('does not fall back on a broken answer, and reports the routed error when the fallback fails too', async () => {
+    const quota = new FakeLlmClient(() => {
+      throw new LlmError('quota', 429);
+    }, ['public']);
+    const broken = new FakeLlmClient(() => {
+      throw new LlmInvalidOutputError('bad', '{}', { requests: 1, inputTokens: 0, outputTokens: 0 });
+    }, ['public']);
+    const down = new FakeLlmClient(() => {
+      throw new LlmError('down', 502);
+    }, ['public']);
+    const pub = { ...req, tier: undefined, sensitivity: 'public' as const };
+    await expect(withRoutes(quota, { public: broken }).generateJson(pub)).rejects.toBeInstanceOf(LlmInvalidOutputError);
+    expect(quota.calls).toHaveLength(0);
+    await expect(withRoutes(quota, { public: down }).generateJson(pub)).rejects.toMatchObject({ status: 502 });
+  });
+});
+
 describe('schema retry', () => {
   it('asks once more when the answer breaks the schema', async () => {
     const replies = [{ choices: [{ message: { content: '{"b":1}' } }] }, { choices: [{ message: { content: '{"a":"ok"}' } }] }];

@@ -105,6 +105,8 @@ export function createOpenRouterClient(opts: OpenRouterOptions): LlmClient {
 export type Routes = {
   /** Text sent to companies (`tier: 'writer'`): cover letters, form answers, recruiter messages. */
   writer?: LlmClient | null;
+  /** The cover letter alone (task "apply_kit"), when it should get a stronger model than the other writing; else the writer. */
+  letter?: LlmClient | null;
   /** Public data (job enrichment, explanations): no daily free-tier quota. */
   public?: LlmClient | null;
 };
@@ -115,10 +117,16 @@ export type Routes = {
  * enrichment keeps going on the free tier.
  */
 export function withRoutes(base: LlmClient, routes: Routes): LlmClient {
-  const { writer, public: publicClient } = routes;
+  const { writer, letter, public: publicClient } = routes;
   if (!writer && !publicClient) return base;
   const pick = (req: GenerateJsonRequest<z.ZodType>): LlmClient | null | undefined =>
-    req.tier === 'writer' ? writer : req.sensitivity === 'public' ? publicClient : null;
+    req.tier === 'writer'
+      ? req.task === 'apply_kit'
+        ? (letter ?? writer)
+        : writer
+      : req.sensitivity === 'public'
+        ? publicClient
+        : null;
   return {
     isAvailable: (s) => (s === 'public' && publicClient ? true : base.isAvailable(s)),
     model: (s) => (s === 'public' && publicClient ? publicClient.model(s) : base.model(s)),
@@ -128,12 +136,20 @@ export function withRoutes(base: LlmClient, routes: Routes): LlmClient {
       try {
         return await routed.generateJson(req);
       } catch (err) {
+        // A broken answer is this request's problem (the caller records it and moves on), not an outage.
+        if (err instanceof LlmInvalidOutputError || !base.isAvailable(req.sensitivity)) throw err;
         console.error(
           'routed model failed, falling back',
-          err instanceof LlmError ? err.status : 'unknown',
+          err instanceof LlmError
+            ? `${err.status ?? 'network'}: ${err.message.slice(0, 120)}`
+            : 'unknown',
         );
-        if (!base.isAvailable(req.sensitivity)) throw err;
-        return base.generateJson(req);
+        try {
+          return await base.generateJson(req);
+        } catch {
+          // The fallback is best effort (e.g. the free tier is out of quota): report the routed model's error.
+          throw err;
+        }
       }
     },
   };
