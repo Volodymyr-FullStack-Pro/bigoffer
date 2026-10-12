@@ -26,6 +26,7 @@ const m = (id: string, over: Partial<FeedMatch> = {}): FeedMatch => ({
   requiredYears: null,
   candidateYears: null,
   onBoard: null,
+    excludedBy: null,
   firstSeenAt: '2026-10-05T10:00:00.000Z',
   postings: [{ sourceId: 'dou', url: 'https://jobs.dou.ua/v/1' }],
   ...over,

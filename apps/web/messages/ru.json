@@ -185,7 +185,16 @@
     "filterExperience": "Опыт",
     "filterLevel": "Уровень",
     "expFit": "Подходит мне",
-    "expUpTo": "до {years} л."
+    "expUpTo": "до {years} л.",
+    "ruleHiddenShow": "Скрытые правилами · {count}",
+    "ruleHiddenBack": "← Назад к ленте",
+    "ruleHiddenNote": "Эти вакансии скрыли правила вашего профиля поиска: уровень в названии, роль, формат работы, регион или слово-исключение. Любую можно сохранить или изменить правила.",
+    "ruleHiddenSettings": "Настройки поиска",
+    "reason_seniority": "Скрыто: уровень",
+    "reason_role": "Скрыто: роль",
+    "reason_format": "Скрыто: формат",
+    "reason_region": "Скрыто: регион",
+    "reason_keyword": "Скрыто: «{word}»"
   },
   "comingSoon": {
     "badge": "Скоро",

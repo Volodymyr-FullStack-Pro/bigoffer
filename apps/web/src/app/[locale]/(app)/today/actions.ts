@@ -46,11 +46,11 @@ async function dropKitUnlessOnBoard(supabase: Awaited<ReturnType<typeof createCl
 export async function hideMatch(matchId: string): Promise<boolean> {
   if (!UUID.test(matchId) || !(await getUserId())) return false;
   const supabase = await createClient();
-  const { data, error } = await supabase.from('job_matches').update({ state: 'hidden' }).eq('id', matchId).select('job_id');
+  // A manual hide is final: hide_match also drops the rule mark so a later rescore never brings it back.
+  const { data: jobId, error } = await supabase.rpc('hide_match', { p_match_id: matchId });
   if (error) console.error('hideMatch failed', error.message);
-  const jobId = data?.[0]?.job_id;
   if (jobId) await dropKitUnlessOnBoard(supabase, jobId);
-  return !error && (data?.length ?? 0) > 0;
+  return !error && Boolean(jobId);
 }
 
 export async function restoreMatch(matchId: string, applicationId: string | null): Promise<boolean> {
