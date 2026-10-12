@@ -1,5 +1,5 @@
 import { createHash, timingSafeEqual } from 'node:crypto';
-import { type AlertJob, alertLabels, type BotApi, botReplies, decodeCallback, detectDomains, detectPerks, isPrivateChat, parsePauseMs, parseStart, rankAtTop, sourceInfo, type TelegramUpdate, telegramUpdateSchema, type TgLocale, toTgLocale, topMessage } from '@jp/core';
+import { type AlertJob, alertLabels, type BotApi, botReplies, ensureBotCommands, decodeCallback, detectDomains, detectPerks, isPrivateChat, parsePauseMs, parseStart, rankAtTop, sourceInfo, type TelegramUpdate, telegramUpdateSchema, type TgLocale, toTgLocale, topMessage } from '@jp/core';
 import { streaks } from './genie/brain';
 import { parseUiPrefs } from './ui-prefs';
 import type { Database } from '@jp/db';
@@ -48,6 +48,7 @@ const BARE_START_RE = /^\/start(?:@\w+)?\s*$/;
 
 export async function handleTelegramWebhook(input: Input, { secret, store: makeStore, bot, siteUrl = '' }: Deps): Promise<{ status: 200 | 401 }> {
   if (!secretMatches(input.secretHeader, secret)) return { status: 401 };
+  await ensureBotCommands(bot);
   const store = makeStore();
   const parsed = telegramUpdateSchema.safeParse(await input.readBody().catch(() => null));
   // Garbage gets 200 too, so Telegram does not keep retrying it.
@@ -64,7 +65,8 @@ export async function handleTelegramWebhook(input: Input, { secret, store: makeS
       if (START_RE.test(text)) {
         const start = parseStart(text);
         if (!start && BARE_START_RE.test(text)) {
-          await bot.sendMessage(chatId, botReplies(fallback).howToLink);
+          const linked = await store.profileByChat(chatId);
+          await bot.sendMessage(chatId, linked ? botReplies(linked.locale).help : botReplies(fallback).howToLink);
         } else {
           const userId = start ? await store.linkChat(hashLinkToken(start.token), chatId) : null;
           const profile = userId ? await store.profileById(userId) : null;

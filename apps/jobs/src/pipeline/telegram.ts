@@ -1,4 +1,4 @@
-import { alertLabels, alertMessage, detectDomains, detectPerks, digestGenieLines, digestMessage, streaks, inQuietHours, overflowMessage, sourceInfo, toTgLocale, type AlertJob, type BotApi, type BotResult, type TgLocale } from '@jp/core';
+import { alertLabels, alertMessage, ensureBotCommands, detectDomains, detectPerks, digestGenieLines, digestMessage, streaks, inQuietHours, overflowMessage, sourceInfo, toTgLocale, type AlertJob, type BotApi, type BotResult, type TgLocale } from '@jp/core';
 import type { Db } from '../db';
 
 /** `onlyUserIds` restricts the run to those users (tests; never set in production). */
@@ -136,6 +136,8 @@ function logFailure(what: string, err: unknown): void {
 
 export async function sendAlerts(db: Db, deps: TelegramDeps): Promise<TelegramResult> {
   const result: TelegramResult = { users: 0, sent: 0, blocked: 0, failed: 0 };
+  // The command menu exists even for users who never message the bot.
+  await ensureBotCommands(deps.bot);
   const profiles = await linkedProfiles(db, deps.onlyUserIds, true);
   for (const p of profiles) {
     try {

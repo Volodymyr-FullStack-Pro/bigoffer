@@ -6,6 +6,8 @@ export type BotApi = {
   sendMessage(chatId: number, text: string, replyMarkup?: InlineKeyboard): Promise<BotResult>;
   answerCallback(id: string, text?: string): Promise<BotResult>;
   clearButtons(chatId: number, messageId: number): Promise<BotResult>;
+  /** Telegram's command menu ("/" and the Menu button), per user language; optional for test fakes. */
+  setCommands?(commands: { command: string; description: string }[], languageCode?: string): Promise<BotResult>;
 };
 
 /** A Bot API call that hangs is aborted after this long and reported as a network failure. */
@@ -21,7 +23,7 @@ export function createBotApi(token: string | undefined, fetchImpl?: typeof fetch
       }
       return { ok: true };
     };
-    return { sendMessage: noop, answerCallback: noop, clearButtons: noop };
+    return { sendMessage: noop, answerCallback: noop, clearButtons: noop, setCommands: noop };
   }
 
   async function call(method: string, body: Record<string, unknown>): Promise<BotResult> {
@@ -52,6 +54,8 @@ export function createBotApi(token: string | undefined, fetchImpl?: typeof fetch
       }),
     answerCallback: (id, text) =>
       call('answerCallbackQuery', { callback_query_id: id, ...(text ? { text } : {}) }),
+    setCommands: (commands, languageCode) =>
+      call('setMyCommands', { commands, ...(languageCode ? { language_code: languageCode } : {}) }),
     clearButtons: (chatId, messageId) =>
       call('editMessageReplyMarkup', {
         chat_id: chatId,

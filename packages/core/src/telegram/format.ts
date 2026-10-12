@@ -274,7 +274,7 @@ const REPLIES: Record<TgLocale, Replies> = {
     paused: (u) => `Alerts paused until ${u}. /resume to turn them back on.`,
     resumed: 'Alerts are back on.',
     badPause: 'Usage: /pause 3h, /pause 90m or /pause 1d',
-    welcome: (s, h) => `Done! New jobs with a match of ${s}% or more will arrive here, and a daily digest at ${hh(h)}.`,
+    welcome: (s, h) => `Done! New jobs with a match of ${s}% or more will arrive here, and a daily digest at ${hh(h)}.\n\n/top — best fresh jobs now · /goal — today’s progress · /pause 3h · /help`,
     howToLink: 'To link this chat, open BigOffer → Profile → Connect Telegram.',
     expired: 'This link has expired. Generate a new one in your BigOffer profile.',
     stopped: 'Notifications are off. Reconnect from your BigOffer profile at any time.',
@@ -291,7 +291,7 @@ const REPLIES: Record<TgLocale, Replies> = {
     paused: (u) => `Сповіщення на паузі до ${u}. /resume — увімкнути знову.`,
     resumed: 'Сповіщення знову увімкнено.',
     badPause: 'Приклад: /pause 3h, /pause 90m або /pause 1d',
-    welcome: (s, h) => `Готово! Сюди прийдуть нові вакансії від ${s}% і щоденний дайджест о ${hh(h)}.`,
+    welcome: (s, h) => `Готово! Сюди прийдуть нові вакансії від ${s}% і щоденний дайджест о ${hh(h)}.\n\n/top — найкращі зараз · /goal — прогрес · /pause 3h · /help`,
     howToLink: 'Щоб підключити цей чат, відкрийте BigOffer → Профіль → Підключити Telegram.',
     expired: 'Посилання застаріло — згенеруйте нове в профілі BigOffer.',
     stopped: 'Сповіщення вимкнено. Підключити знову можна в профілі BigOffer.',
@@ -308,7 +308,7 @@ const REPLIES: Record<TgLocale, Replies> = {
     paused: (u) => `Уведомления на паузе до ${u}. /resume — включить снова.`,
     resumed: 'Уведомления снова включены.',
     badPause: 'Пример: /pause 3h, /pause 90m или /pause 1d',
-    welcome: (s, h) => `Готово! Сюда придут новые вакансии от ${s}% и ежедневный дайджест в ${hh(h)}.`,
+    welcome: (s, h) => `Готово! Сюда придут новые вакансии от ${s}% и ежедневный дайджест в ${hh(h)}.\n\n/top — лучшие сейчас · /goal — прогресс · /pause 3h · /help`,
     howToLink: 'Чтобы подключить этот чат, откройте BigOffer → Профиль → Подключить Telegram.',
     expired: 'Ссылка устарела — создайте новую в профиле BigOffer.',
     stopped: 'Уведомления выключены. Подключить снова можно в профиле BigOffer.',
@@ -377,4 +377,47 @@ export function alertLabels(
 export function inQuietHours(hour: number, start: number, end: number): boolean {
   if (start === end) return false;
   return start < end ? hour >= start && hour < end : hour >= start || hour < end;
+}
+
+/** The bot's command menu per language (shown under "/" and the Menu button). */
+export const BOT_COMMANDS: Record<TgLocale, { command: string; description: string }[]> = {
+  en: [
+    { command: 'top', description: 'Best fresh jobs right now' },
+    { command: 'goal', description: 'Today’s applications and streak' },
+    { command: 'pause', description: 'Pause alerts: /pause 3h, 90m, 1d' },
+    { command: 'resume', description: 'Turn alerts back on' },
+    { command: 'help', description: 'What the bot can do' },
+    { command: 'stop', description: 'Unlink this chat' },
+  ],
+  uk: [
+    { command: 'top', description: 'Найкращі свіжі вакансії зараз' },
+    { command: 'goal', description: 'Відгуки за сьогодні та серія' },
+    { command: 'pause', description: 'Пауза сповіщень: /pause 3h, 90m, 1d' },
+    { command: 'resume', description: 'Увімкнути сповіщення' },
+    { command: 'help', description: 'Що вміє бот' },
+    { command: 'stop', description: 'Відключити цей чат' },
+  ],
+  ru: [
+    { command: 'top', description: 'Лучшие свежие вакансии сейчас' },
+    { command: 'goal', description: 'Отклики за сегодня и серия' },
+    { command: 'pause', description: 'Пауза уведомлений: /pause 3h, 90m, 1d' },
+    { command: 'resume', description: 'Включить уведомления' },
+    { command: 'help', description: 'Что умеет бот' },
+    { command: 'stop', description: 'Отключить этот чат' },
+  ],
+};
+
+let commandsSet = false;
+
+/** Registers the command menu once per process (idempotent on Telegram's side; cheap to repeat after a restart). */
+export async function ensureBotCommands(bot: { setCommands?: (c: { command: string; description: string }[], lang?: string) => Promise<unknown> }): Promise<void> {
+  if (commandsSet || !bot.setCommands) return;
+  commandsSet = true;
+  try {
+    await bot.setCommands(BOT_COMMANDS.en);
+    await bot.setCommands(BOT_COMMANDS.uk, 'uk');
+    await bot.setCommands(BOT_COMMANDS.ru, 'ru');
+  } catch {
+    commandsSet = false;
+  }
 }
