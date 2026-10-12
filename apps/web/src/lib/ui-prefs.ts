@@ -13,6 +13,7 @@ export const uiPrefsSchema = z
         sort: z.enum(['best', 'newest']),
         experience: z.union([z.enum(['any', 'fit']), z.number().int().min(0).max(20)]),
         level: z.enum(['all', 'intern', 'junior', 'middle', 'senior', 'lead']),
+        noArmy: z.boolean(),
       })
       .partial(),
     /** Board column id -> sort mode. */

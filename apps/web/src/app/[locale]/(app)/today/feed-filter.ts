@@ -12,9 +12,11 @@ export type FeedFilters = {
   experience: 'any' | 'fit' | number;
   /** Job level ('intern' … 'lead'); jobs that state no level always pass. */
   level: 'all' | NonNullable<FeedMatch['seniority']>;
+  /** Leave out vacancies for service in the armed forces. */
+  noArmy: boolean;
 };
 
-export const DEFAULT_FILTERS: FeedFilters = { profileId: 'all', minScore: 0, remote: 'any', source: 'all', fresh: false, sort: 'best', experience: 'any', level: 'all' };
+export const DEFAULT_FILTERS: FeedFilters = { profileId: 'all', minScore: 0, remote: 'any', source: 'all', fresh: false, sort: 'best', experience: 'any', level: 'all', noArmy: false };
 
 const DAY_MS = 24 * 3600 * 1000;
 
@@ -37,7 +39,8 @@ export function filterMatches(items: FeedMatch[], f: FeedFilters, now: Date = ne
       (f.profileId === 'all' || m.profileId === f.profileId) &&
       (!f.fresh || freshness(m, now) >= cutoff) &&
       experienceFits(m, f.experience) &&
-      (f.level === 'all' || m.seniority === null || m.seniority === f.level),
+      (f.level === 'all' || m.seniority === null || m.seniority === f.level) &&
+      !(f.noArmy && m.domains.includes('military')),
   );
 }
 

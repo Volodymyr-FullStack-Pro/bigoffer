@@ -1,4 +1,4 @@
-import { isLocale, type LocalizedText, localized, normalizeCompany, normalizeTitle, requiredYears, SENIORITIES, type Seniority, sourceInfo } from '@jp/core';
+import { detectDomains, isLocale, type LocalizedText, localized, normalizeCompany, normalizeTitle, requiredYears, SENIORITIES, type Seniority, sourceInfo } from '@jp/core';
 import { getLocale, getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
 import { requireUserId } from '@/lib/auth';
@@ -109,6 +109,7 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
       onBoard: boardByJob.get(m.job_id) ?? boardByName.get(nameKey(m.jobs.companies?.name ?? '', m.jobs.title)) ?? null,
       skills: cardSkills(m.jobs.skills, matched, 8),
       missingSkills: wanted.filter((s) => !matched.some((x) => x.toLowerCase() === s.toLowerCase())),
+      domains: detectDomains({ title: m.jobs.title, company: m.jobs.companies?.name ?? null, descriptionText: m.jobs.description_text }),
       excludedBy: typeof (m.breakdown as { excludedBy?: unknown } | null)?.excludedBy === 'string' ? ((m.breakdown as { excludedBy: string }).excludedBy) : null,
       breakdown: b ? { skills: num(b.skills), role: num(b.role), seniority: num(b.seniority), location: num(b.location), salary: num(b.salary) } : null,
       profileId: m.search_profile_id,

@@ -27,6 +27,7 @@ const m = (id: string, over: Partial<FeedMatch> = {}): FeedMatch => ({
   candidateYears: null,
   onBoard: null,
     excludedBy: null,
+    domains: [],
   firstSeenAt: '2026-10-05T10:00:00.000Z',
   postings: [{ sourceId: 'dou', url: 'https://jobs.dou.ua/v/1' }],
   ...over,
@@ -110,5 +111,13 @@ describe('level filter', () => {
   it('keeps the chosen level and jobs that state none', () => {
     expect(filterMatches(items, { ...DEFAULT_FILTERS, level: 'middle' }).map((x) => x.id)).toEqual(['none', 'mid']);
     expect(filterMatches(items, DEFAULT_FILTERS)).toHaveLength(4);
+  });
+});
+
+describe('army filter', () => {
+  it('leaves out army service only when asked', () => {
+    const items = [m('army', { domains: ['military'] }), m('fin', { domains: ['fintech'] })];
+    expect(filterMatches(items, DEFAULT_FILTERS)).toHaveLength(2);
+    expect(filterMatches(items, { ...DEFAULT_FILTERS, noArmy: true }).map((x) => x.id)).toEqual(['fin']);
   });
 });

@@ -10,6 +10,7 @@ import { PeopleSearch } from '@/components/apply-kit/people-search';
 import { ScoreMeter } from '@/components/ui/score-meter';
 import { LevelBadge, TechChip, techColor } from '@/components/ui/tech-chip';
 import type { FeedMatch } from './feed-types';
+import { DomainBadges } from './domain-badges';
 import { HiddenReason } from './hidden-reason';
 
 export type MatchAction = 'saved' | 'applied' | 'hide';
@@ -168,6 +169,7 @@ export function MatchDetail({
           {match.title}
         </h2>
         {match.excludedBy && <HiddenReason reason={match.excludedBy} />}
+        <DomainBadges domains={match.domains} detailed />
         {match.onBoard !== null && (
           <p
             data-testid="on-board"
