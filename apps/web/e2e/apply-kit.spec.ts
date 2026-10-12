@@ -108,6 +108,7 @@ test('applying from the board card panel moves the card to Applied without reloa
 test('offers the contact the posting names', async ({ context, page, isMobile }) => {
   const email = uniqueEmail('kit-people');
   await loginAs(context, email);
+  await seedCv(email);
   await seedMatch(email, { score: 90, description: 'React role. Send your CV to anna.hr@acme.io or Telegram: @anna_recruits' });
   await page.goto('/en/today');
   if (isMobile) await page.getByRole('button', { name: 'Details' }).click();
@@ -116,6 +117,11 @@ test('offers the contact the posting names', async ({ context, page, isMobile })
   await expect(contacts.first()).toHaveAttribute('href', 'mailto:anna.hr@acme.io');
   await expect(contacts.last()).toHaveAttribute('href', 'https://t.me/anna_recruits');
   await expect(contacts.last()).toHaveAttribute('target', '_blank');
+  // With a choice of contacts, one is marked best; each has a ready message ending with the CV link.
+  await expect(visible(page, 'recruiter-best')).toHaveCount(1);
+  await visible(page, 'recruiter-write').first().click();
+  await visible(page, 'recruiter-note-generate').click();
+  await expect(visible(page, 'recruiter-note-body')).not.toHaveValue('');
 });
 
 test('no recruiter found: no contact block', async ({ context, page, isMobile }) => {

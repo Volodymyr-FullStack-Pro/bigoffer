@@ -2,7 +2,11 @@
 
 import type { Json } from '@jp/db';
 import { getUserId } from '@/lib/auth';
-import { companyKey, contactsFromDescription, hrContactQuery, hrContactsFromResults, type RecruiterContact, recruiterQuery, recruitersFromResults, type SearchResult } from '@/lib/recruiters';
+import { recruiterMessage, type MessageFormat } from '@jp/ai';
+import { textLang } from '@jp/core';
+import { consumePrivateAi, getLlm, privateAiAvailable } from '@/lib/ai';
+import { cvSignedUrl, loadPrimaryCv } from '@/lib/cv';
+import { companyKey, contactsFromDescription, type RankedContact, rankRecruiters, hrContactQuery, hrContactsFromResults, type RecruiterContact, recruiterQuery, recruitersFromResults, type SearchResult } from '@/lib/recruiters';
 import { createAdminSupabase } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
 
@@ -82,7 +86,7 @@ async function searchRecruiters(company: string): Promise<RecruiterContact[]> {
 }
 
 /** Who to write to about this vacancy: contacts the posting names first, then the company's recruiters. */
-export async function findRecruiters(jobId: string): Promise<RecruiterContact[]> {
+export async function findRecruiters(jobId: string): Promise<RankedContact[]> {
   const userId = await getUserId();
   if (!userId || !UUID.test(jobId)) return [];
   const supabase = await createClient();
@@ -92,5 +96,64 @@ export async function findRecruiters(jobId: string): Promise<RecruiterContact[]>
   const company = job.companies?.name?.trim();
   const found = company && !job.company_is_placeholder ? await searchRecruiters(company) : [];
   const seen = new Set(own.map((c) => c.href));
-  return [...own, ...found.filter((c) => !seen.has(c.href))].slice(0, 4);
+  return rankRecruiters([...own, ...found.filter((c) => !seen.has(c.href))], company ?? '').slice(0, 4);
+}
+
+const FORMAT_FOR: Record<RecruiterContact['kind'], MessageFormat> = { linkedin: 'inmail', email: 'email', telegram: 'telegram' };
+const SIGN: Record<'en' | 'uk' | 'ru', { cv: string; contacts: string }> = {
+  en: { cv: 'CV', contacts: 'Contacts' },
+  uk: { cv: 'Резюме', contacts: 'Контакти' },
+  ru: { cv: 'Резюме', contacts: 'Контакты' },
+};
+
+/**
+ * A first message to one recruiter about this job: written by AI from the job and the CV, in the job's language
+ * unless one is chosen, ending with the candidate's CV link and contacts (added as is, never invented).
+ */
+export async function recruiterNote(
+  jobId: string,
+  to: { kind: RecruiterContact['kind']; label: string },
+  langChoice: 'auto' | 'en' | 'uk' | 'ru' = 'auto',
+): Promise<{ ok: true; subject: string | null; body: string } | { ok: false; error: 'ai_unavailable' | 'ai_limit' | 'no_cv' | 'not_found' | 'failed' }> {
+  const userId = await getUserId();
+  if (!userId || !UUID.test(jobId) || !FORMAT_FOR[to.kind] || typeof to.label !== 'string') return { ok: false, error: 'not_found' };
+  if (!privateAiAvailable()) return { ok: false, error: 'ai_unavailable' };
+  const supabase = await createClient();
+  const [{ data: job }, cv, { data: me }] = await Promise.all([
+    supabase.from('jobs').select('title, description_text, companies(name)').eq('id', jobId).maybeSingle(),
+    loadPrimaryCv(supabase),
+    supabase.from('profiles').select('contacts').eq('id', userId).single(),
+  ]);
+  if (!job) return { ok: false, error: 'not_found' };
+  if (!cv?.parsed) return { ok: false, error: 'no_cv' };
+  if (!(await consumePrivateAi(supabase))) return { ok: false, error: 'ai_limit' };
+  const lang = langChoice === 'auto' ? textLang(`${job.title}\n${(job.description_text ?? '').slice(0, 1500)}`) : langChoice;
+  // A person's first name; for an e-mail or Telegram handle there is no name to greet.
+  const name = to.kind === 'linkedin' ? to.label.trim().split(/\s+/)[0] ?? null : null;
+  try {
+    const res = await recruiterMessage(getLlm(), {
+      format: FORMAT_FOR[to.kind],
+      kind: 'intro',
+      job: { title: job.title, company: job.companies?.name ?? '', description: job.description_text },
+      cv: cv.parsed,
+      recruiterName: name,
+      lang,
+      tone: 'shorter',
+      previous: [],
+    });
+    const contacts = (me?.contacts ?? {}) as Record<string, unknown>;
+    const str = (k: string) => (typeof contacts[k] === 'string' && (contacts[k] as string).trim() ? (contacts[k] as string).trim() : null);
+    const cvLink = cv.path ? await cvSignedUrl(supabase, cv.path) : null;
+    const lines = [
+      cvLink ? `${SIGN[lang].cv}: ${cvLink}` : null,
+      ...[['Email', str('email')], ['Telegram', str('telegram')], ['LinkedIn', str('linkedin')], ['GitHub', str('github')], ['Phone', str('phone')]]
+        .filter(([, v]) => v)
+        .map(([k, v]) => `${k}: ${v}`),
+    ].filter((l): l is string => Boolean(l));
+    const body = lines.length > 0 ? `${res.body}\n\n${lines.join('\n')}` : res.body;
+    return { ok: true, subject: res.subject, body };
+  } catch (err) {
+    console.error('recruiterNote failed', err instanceof Error ? err.name : 'unknown');
+    return { ok: false, error: 'failed' };
+  }
 }
