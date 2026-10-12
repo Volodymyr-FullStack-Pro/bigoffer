@@ -39,9 +39,17 @@ const PATTERNS: [RoleFamily, RegExp][] = [
 /** "…, not a Full-stack role" / "no backend position" name a family only to rule it out. */
 const NEGATED = /(^|[^\p{L}])(not|no|non)[\s-]+(an?\s+)?[\p{L}\p{N}\s/+.#-]{1,30}?\s(role|position|job)(?=$|[^\p{L}])/giu;
 
+/** "JavaScript + Java Engineer", "PHP / JavaScript Developer": JS next to a non-JS stack also means front-end work. */
+const JS_MIX = W(String.raw`(java\s*script|typescript)\s*[+/&]|[+/&]\s*(java\s*script|typescript)`);
+const BACKEND_ONLY = W(String.raw`back[\s-]?end|бек[\s-]?енд|бэк[\s-]?енд|бэкенд|бекенд|server[\s-]side|node(\.?js)?|nest(\.?js)?|deno|bun`);
+
 function familiesOf(text: string): RoleFamily[] {
   const t = text.replace(NEGATED, ' ');
-  return PATTERNS.filter(([, re]) => re.test(t)).map(([family]) => family);
+  const families = PATTERNS.filter(([, re]) => re.test(t)).map(([family]) => family);
+  if (families.includes('backend') && !families.includes('frontend') && JS_MIX.test(t) && !BACKEND_ONLY.test(t)) {
+    families.push('frontend');
+  }
+  return families;
 }
 
 /**

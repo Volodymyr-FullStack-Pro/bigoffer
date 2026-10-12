@@ -154,9 +154,11 @@ describe('scoreJob role families', () => {
     expect(r.breakdown.excludedBy).toBe('role');
   });
 
-  it('hides by the AI role when the title is generic', () => {
+  it('keeps a generic title the AI calls backend, with fewer role points', () => {
     const r = scoreJob(owner, { ...backend, title: 'Software Engineer II', role: 'Backend Developer' })!;
-    expect(r.breakdown.excludedBy).toBe('role');
+    expect(r.hidden).toBe(false);
+    expect(r.breakdown.excludedBy).toBeNull();
+    expect(r.breakdown.role).toBeLessThan(25);
   });
 
   it('keeps a generic title but gives less role credit than a matching family', () => {
