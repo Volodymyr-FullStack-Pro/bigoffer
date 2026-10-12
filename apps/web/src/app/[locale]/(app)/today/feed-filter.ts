@@ -52,8 +52,19 @@ export function filterMatches(items: FeedMatch[], f: FeedFilters, now: Date = ne
 }
 
 /** 'best' keeps the server order (score, then recency); 'newest' puts the freshest job first. */
+/**
+ * 'Best' ranks by match, but a posting loses a point for every day past its third: replies go to the first
+ * applicants, so a four-week-old 95% (most likely filled) must not sit above a fresh 90%.
+ */
+const AGE_FREE_DAYS = 3;
+export function rankScore(m: FeedMatch, now: Date = new Date()): number {
+  const days = (now.getTime() - freshness(m, now)) / DAY_MS;
+  return m.score - Math.max(0, days - AGE_FREE_DAYS);
+}
+
 export function sortMatches(items: FeedMatch[], sort: FeedFilters['sort'], now: Date = new Date()): FeedMatch[] {
-  if (sort === 'best') return items;
+  // Array.prototype.sort is stable: equal ranks keep the server order (score, then recency).
+  if (sort === 'best') return [...items].sort((a, b) => rankScore(b, now) - rankScore(a, now));
   return [...items].sort((a, b) => freshness(b, now) - freshness(a, now));
 }
 
