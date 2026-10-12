@@ -3,6 +3,7 @@
 import { columnCounters } from '@jp/core';
 import { useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { ArrowDownUp } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { BoardCardItem } from './board-card';
 import type { BoardCardView as Card, BoardColumn, BoardLabel } from './board-types';
@@ -21,13 +22,23 @@ export function BoardColumnView({ column, cards, sort, onToggleSort, labels, lab
   const { setNodeRef, isOver } = useDroppable({ id: `column:${column.id}` });
   const { total, needsAction } = columnCounters(cards);
   return (
-    <section data-testid="board-column" data-column-key={column.key} aria-label={column.title} className="flex w-72 shrink-0 flex-col gap-3">
-      <header className="flex items-center justify-between gap-2">
-        <h2 className="font-display text-sm font-semibold">{column.title}</h2>
-        <span data-testid="column-count" className="font-mono text-xs font-bold">
-          {total}{needsAction > 0 && <span className="text-danger"> · ● {needsAction}</span>}
+    <section data-testid="board-column" data-column-key={column.key} aria-label={column.title} className="flex w-[85vw] max-w-80 shrink-0 snap-start flex-col gap-3 sm:w-72">
+      <header className="flex items-center justify-between gap-2 px-1">
+        <span className="flex min-w-0 items-center gap-2">
+          <h2 className="truncate font-display text-sm font-semibold">{column.title}</h2>
+          <span data-testid="column-count" className="rounded-full bg-muted px-2 py-0.5 font-mono text-xs font-bold">
+            {total}{needsAction > 0 && <span className="text-danger"> · ● {needsAction}</span>}
+          </span>
         </span>
-        <button type="button" data-testid="column-sort" onClick={onToggleSort} className="font-mono text-[10px] underline" aria-label={t('sortToggle')}>
+        <button
+          type="button"
+          data-testid="column-sort"
+          onClick={onToggleSort}
+          title={t('sortToggle')}
+          aria-label={t('sortToggle')}
+          className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium ${sort === 'smart' ? 'border-brand/50 bg-brand/10 text-link' : 'border-border text-muted-foreground hover:bg-muted'}`}
+        >
+          <ArrowDownUp className="size-3" aria-hidden />
           {t(sort === 'smart' ? 'sortSmart' : 'sortManual')}
         </button>
       </header>

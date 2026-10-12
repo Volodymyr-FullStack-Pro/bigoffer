@@ -87,7 +87,7 @@ export function SearchNow({
       <section
         data-testid="search-now"
         aria-label={t('title')}
-        className="brutal flex flex-col gap-4 p-5 md:flex-row md:items-center md:justify-between"
+        className="brutal flex flex-col gap-3 p-4 md:flex-row md:items-center md:justify-between md:gap-4 md:p-5"
       >
         <div className="flex flex-col gap-1">
           <h2 className="font-display text-lg font-semibold">{t('title')}</h2>

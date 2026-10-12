@@ -64,7 +64,7 @@ const SKILL_TITLES: [RegExp, string][] = [
  * The best keywords for this user: their CV headline, the most used titles of their roles (checked roles, else the
  * ones the headline names) and titles of their main frameworks. Spellings of one word count once.
  */
-export function recommendedKeywords(headline: string | null, roles: readonly RoleFamily[], cvSkills: readonly string[], max = 6): string[] {
+export function recommendedKeywords(headline: string | null, roles: readonly RoleFamily[], cvSkills: readonly string[], max = 6, chosen: readonly string[] = []): string[] {
   const families = roles.length > 0 ? roles : headline ? detectRoleFamilies(headline) : [];
   const out: string[] = [];
   const seen = new Set<string>();
@@ -76,11 +76,17 @@ export function recommendedKeywords(headline: string | null, roles: readonly Rol
     forms.forEach((f) => seen.add(f));
     out.push(v);
   };
-  if (headline) push(headline);
-  for (const f of families) KEYWORDS[f].slice(0, 3).forEach(push);
+  // Boards search by text: a chosen "full stack" already finds "Full Stack Engineer", so that is not recommended.
+  const words = (k: string) => ` ${k.toLowerCase().replace(/[^\p{L}\p{N}.+#]+/gu, ' ').trim()} `;
+  const coveredBy = chosen.flatMap(keywordForms).map(words);
+  const pushNew = (k: string) => {
+    if (!coveredBy.some((c) => words(k).includes(c))) push(k);
+  };
+  if (headline) pushNew(headline);
+  for (const f of families) KEYWORDS[f].slice(0, 4).forEach(pushNew);
   for (const skill of cvSkills.slice(0, 10)) {
     const title = SKILL_TITLES.find(([re]) => re.test(skill.trim()))?.[1];
-    if (title) push(title);
+    if (title) pushNew(title);
   }
   return out;
 }

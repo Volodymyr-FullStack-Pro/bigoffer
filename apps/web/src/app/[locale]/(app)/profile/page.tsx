@@ -47,6 +47,8 @@ export default async function ProfilePage() {
   return (
     <section className="flex flex-col gap-6">
       <h1 className="text-3xl font-semibold md:text-4xl">{t('title')}</h1>
+      {/* The CV drives matching, letters and form answers: it comes first. */}
+      <CvSection cv={cv ? { fileName: cv.fileName, parsed: cv.parsed, parseError: cv.parseError } : null} aiAvailable={privateAiAvailable()} cvLink={cvLink} />
       <ProfileForm
         fullName={profile.full_name ?? ''}
         timezone={profile.timezone ?? 'Europe/Kyiv'}
@@ -66,7 +68,6 @@ export default async function ProfilePage() {
           timezone: profile.timezone ?? 'Europe/Kyiv',
         }}
       />
-      <CvSection cv={cv ? { fileName: cv.fileName, parsed: cv.parsed, parseError: cv.parseError } : null} aiAvailable={privateAiAvailable()} cvLink={cvLink} />
       <AnswerBank answers={answers} locale={locale} />
     </section>
   );

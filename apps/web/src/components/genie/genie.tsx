@@ -185,7 +185,7 @@ export function Genie() {
         data-testid="genie-lamp"
         onClick={() => fold(false)}
         aria-label={t('open')}
-        className="brutal-press fixed bottom-20 left-3 z-40 grid size-12 place-items-center rounded-full border border-border bg-card shadow-lg md:bottom-5 md:left-5"
+        className="brutal-press fixed right-3 bottom-[8.5rem] z-40 grid size-11 place-items-center rounded-full border border-border bg-card shadow-lg md:right-auto md:bottom-5 md:left-5"
       >
         <GenieLamp size={30} />
       </button>
@@ -193,11 +193,13 @@ export function Genie() {
   }
 
   return (
-    <div data-testid="genie" className="pointer-events-none fixed bottom-20 left-3 z-40 flex max-w-[calc(100vw-1.5rem)] items-end gap-2 md:bottom-5 md:left-5">
+    // Phone: bottom-right above the nav and the card actions; desktop: bottom-left under the sidebar. The bubble opens
+    // above the genie, so on desktop it stays over the sidebar instead of covering the feed.
+    <div data-testid="genie" className="pointer-events-none fixed right-3 bottom-[8.5rem] z-40 flex max-w-[calc(100vw-1.5rem)] flex-col-reverse items-end gap-2 md:right-auto md:bottom-5 md:left-5 md:items-start">
       <div className="pointer-events-auto relative shrink-0">
-        <button type="button" data-testid="genie-avatar" onClick={poke} aria-label={t('name')} className="relative grid size-16 place-items-center rounded-full">
+        <button type="button" data-testid="genie-avatar" onClick={poke} aria-label={t('name')} className="relative grid size-12 place-items-center rounded-full bg-card/80 backdrop-blur md:size-16 md:bg-transparent">
           <GoalRing done={state.appliedToday} goal={state.goal} />
-          <GenieAvatar mood={message?.mood ?? (state.appliedToday >= state.goal ? 'happy' : 'neutral')} size={44} />
+          <GenieAvatar mood={message?.mood ?? (state.appliedToday >= state.goal ? "happy" : "neutral")} size={40} />
         </button>
         <span data-testid="genie-goal" className="absolute -bottom-1 left-1/2 -translate-x-1/2 rounded-full border border-border bg-card px-1.5 font-mono text-[10px] font-bold text-link">
           {Math.min(state.appliedToday, 99)}/{state.goal}
@@ -214,7 +216,7 @@ export function Genie() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 8, scale: 0.95 }}
             transition={{ type: 'spring', stiffness: 380, damping: 26 }}
-            className={`pointer-events-auto relative mb-6 w-72 max-w-full rounded-2xl rounded-bl-sm border bg-card/95 p-3.5 pr-8 text-sm shadow-xl backdrop-blur ${
+            className={`pointer-events-auto relative w-72 max-w-full rounded-2xl rounded-br-sm border bg-card/95 p-3.5 pr-8 text-sm shadow-xl backdrop-blur md:w-56 md:rounded-br-2xl md:rounded-bl-sm ${
               message.mood === 'worried' ? 'border-warning/60' : 'border-brand/40'
             }`}
           >
