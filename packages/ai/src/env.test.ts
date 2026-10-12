@@ -11,6 +11,9 @@ describe('readAiEnv', () => {
       AI_MODEL_PRIVATE_FAST: 'gemini-flash-lite-latest',
       GEMINI_API_KEY_PUBLIC: 'k',
       GEMINI_API_KEY_PRIVATE: undefined,
+      OPENROUTER_API_KEY: undefined,
+      AI_MODEL_WRITER: 'anthropic/claude-sonnet-5.5',
+      ALLOW_FAKE_AI: undefined,
     });
     const client = createLlmClient(env);
     expect(client.isAvailable('public')).toBe(true);

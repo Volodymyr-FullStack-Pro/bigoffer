@@ -55,9 +55,10 @@ export function fakeResponder(req: FakeRequest): unknown {
       return {
         lang: 'en',
         requirements: [
-          { text: 'React', status: 'met' },
-          { text: 'Kubernetes', status: 'missing' },
+          { text: 'React', status: 'met', evidence: 'Built React dashboards at Acme' },
+          { text: 'Kubernetes', status: 'missing', evidence: '' },
         ],
+        pitch: ['Built React dashboards at Acme'],
         red_flags: ['Unpaid trial period'],
         cover_letter: 'Hello! I am a full stack developer with six years of React and Node.js. [fake]',
         short_message: 'Hi! Senior full stack dev, React/Node, 6 years. Happy to talk. [fake]',

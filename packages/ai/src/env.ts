@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { createGeminiClient } from './gemini';
+import { createOpenRouterClient, withWriter } from './openrouter';
 import { FakeLlmClient, fakeResponder } from './testing';
 import type { LlmClient } from './types';
 
@@ -10,6 +11,8 @@ const aiEnvSchema = z.object({
   AI_MODEL_PRIVATE_FAST: z.string().min(1).default('gemini-flash-lite-latest'),
   GEMINI_API_KEY_PUBLIC: z.string().min(1).optional(),
   GEMINI_API_KEY_PRIVATE: z.string().min(1).optional(),
+  OPENROUTER_API_KEY: z.string().min(1).optional(),
+  AI_MODEL_WRITER: z.string().min(1).default('anthropic/claude-sonnet-5.5'),
   ALLOW_FAKE_AI: z.string().optional(),
 });
 export type AiEnv = z.infer<typeof aiEnvSchema>;
@@ -31,6 +34,8 @@ export function readAiEnv(env: Record<string, string | undefined> = process.env)
     AI_MODEL_PRIVATE_FAST: pick('AI_MODEL_PRIVATE_FAST'),
     GEMINI_API_KEY_PUBLIC: pick('GEMINI_API_KEY_PUBLIC'),
     GEMINI_API_KEY_PRIVATE: pick('GEMINI_API_KEY_PRIVATE'),
+    OPENROUTER_API_KEY: pick('OPENROUTER_API_KEY'),
+    AI_MODEL_WRITER: pick('AI_MODEL_WRITER'),
     ALLOW_FAKE_AI: pick('ALLOW_FAKE_AI'),
   });
   assertFakeAllowed(parsed, env.NODE_ENV || process.env.NODE_ENV);
@@ -43,12 +48,17 @@ export function createLlmClient(env: AiEnv): LlmClient {
       assertFakeAllowed(env);
       return new FakeLlmClient(fakeResponder, ['public', 'private']);
     case 'gemini':
-      return createGeminiClient({
-        publicKey: env.GEMINI_API_KEY_PUBLIC,
-        privateKey: env.GEMINI_API_KEY_PRIVATE,
-        publicModel: env.AI_MODEL_PUBLIC,
-        privateModel: env.AI_MODEL_PRIVATE,
-        privateFastModel: env.AI_MODEL_PRIVATE_FAST,
-      });
+      return withWriter(
+        createGeminiClient({
+          publicKey: env.GEMINI_API_KEY_PUBLIC,
+          privateKey: env.GEMINI_API_KEY_PRIVATE,
+          publicModel: env.AI_MODEL_PUBLIC,
+          privateModel: env.AI_MODEL_PRIVATE,
+          privateFastModel: env.AI_MODEL_PRIVATE_FAST,
+        }),
+        env.OPENROUTER_API_KEY
+          ? createOpenRouterClient({ apiKey: env.OPENROUTER_API_KEY, model: env.AI_MODEL_WRITER })
+          : null,
+      );
   }
 }

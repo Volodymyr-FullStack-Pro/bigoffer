@@ -33,8 +33,11 @@ export async function recruiterMessage(
   const limit = MESSAGE_LIMITS[input.format];
   const res = await llm.generateJson({
     sensitivity: 'private',
-    // Written while the user waits on screen: the fast model (see GenerateJsonRequest.tier).
-    tier: 'fast',
+    // Sent to a recruiter: the writing model, falling back to the quick one when the main model is overloaded.
+    tier: 'writer',
+    thinking: 'low',
+    timeoutMs: 45_000,
+    fallback: 'fast',
     task: 'recruiter_message',
     schema: wire,
     system: [
