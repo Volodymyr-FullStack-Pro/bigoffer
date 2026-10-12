@@ -1,4 +1,5 @@
 import { detectRoleFamilies, keywordForms, type RoleFamily } from '@jp/core';
+import { skillKey } from '../today/card-skills';
 
 /**
  * Search keywords per role family, most frequent job-title wording first (measured on 680 front-end / full-stack
@@ -18,18 +19,23 @@ const KEYWORDS: Record<RoleFamily, string[]> = {
   support: ['technical support', 'customer success'],
 };
 
-/** Popular skills per family; the user's CV skills are shown first. */
+/**
+ * Skills offered per role family, most asked first. Front-end, full-stack and back-end follow how often the skill
+ * appears in the jobs BigOffer scraped (Oct 2026: 579 postings, e.g. full-stack React 203, TypeScript 185, Node.js
+ * 112, PostgreSQL 103); the other families, with too few postings yet, follow their usual stacks. The user's CV
+ * skills are always shown first.
+ */
 const SKILLS: Record<RoleFamily, string[]> = {
-  frontend: ['React', 'Next.js', 'TypeScript', 'JavaScript', 'Vue', 'Angular', 'Redux', 'Tailwind', 'HTML', 'CSS', 'Vite', 'Jest', 'Playwright', 'GraphQL'],
-  fullstack: ['React', 'Next.js', 'TypeScript', 'Node.js', 'NestJS', 'Express', 'PostgreSQL', 'MongoDB', 'Prisma', 'Docker', 'AWS', 'GraphQL', 'Redis'],
-  backend: ['Node.js', 'NestJS', 'Python', 'Django', 'FastAPI', 'Java', 'Spring', 'Go', 'PostgreSQL', 'MySQL', 'MongoDB', 'Redis', 'Kafka', 'Docker', 'Kubernetes', 'AWS'],
-  mobile: ['React Native', 'Flutter', 'Swift', 'Kotlin', 'Expo', 'Firebase'],
-  devops: ['Docker', 'Kubernetes', 'Terraform', 'AWS', 'GCP', 'Azure', 'CI/CD', 'Linux', 'Prometheus'],
-  qa: ['Playwright', 'Cypress', 'Selenium', 'Postman', 'Jest', 'API testing'],
-  data: ['Python', 'SQL', 'Pandas', 'Spark', 'Airflow', 'dbt', 'PyTorch', 'Power BI'],
-  design: ['Figma', 'Design systems', 'Prototyping', 'UX research'],
-  management: ['Agile', 'Scrum', 'Jira', 'Roadmapping'],
-  support: ['Zendesk', 'Jira', 'SQL'],
+  frontend: ['React', 'TypeScript', 'JavaScript', 'Next.js', 'HTML', 'CSS', 'Redux', 'Redux Toolkit', 'Git', 'REST API', 'GraphQL', 'Angular', 'Vue.js', 'Node.js', 'Tailwind CSS', 'SCSS', 'Figma', 'Jest', 'Playwright', 'Cypress', 'Testing Library', 'Vite', 'Webpack', 'Zustand', 'MobX', 'React Query', 'Storybook', 'React Native', 'Material UI', 'Styled Components', 'Svelte', 'Nuxt', 'RxJS', 'Web Performance', 'Accessibility', 'PWA', 'WebSockets', 'i18n', 'SEO', 'CI/CD', 'Docker', 'AWS'],
+  fullstack: ['React', 'TypeScript', 'Node.js', 'PostgreSQL', 'JavaScript', 'Next.js', 'Docker', 'AWS', 'Python', 'NestJS', 'Express', 'REST API', 'GraphQL', 'SQL', 'MongoDB', 'Redis', 'Angular', 'Vue.js', 'Git', 'CI/CD', 'Kubernetes', 'Azure', 'GCP', 'Prisma', 'TypeORM', 'Tailwind CSS', 'Jest', 'Playwright', 'Microservices', 'Kafka', 'RabbitMQ', 'Django', 'FastAPI', 'Java', '.NET', 'C#', 'Go', 'Terraform', 'Supabase', 'Firebase', 'Vercel', 'Stripe', 'WebSockets'],
+  backend: ['Node.js', 'TypeScript', 'PostgreSQL', 'AWS', 'Docker', 'Python', 'Java', 'Go', 'C#', '.NET', 'Spring', 'NestJS', 'Express', 'Django', 'FastAPI', 'Redis', 'Kubernetes', 'SQL', 'MySQL', 'MongoDB', 'REST API', 'GraphQL', 'gRPC', 'Microservices', 'Kafka', 'RabbitMQ', 'Elasticsearch', 'CI/CD', 'Terraform', 'Azure', 'GCP', 'Linux', 'Prisma', 'TypeORM', 'PHP', 'Laravel', 'Ruby on Rails', 'Rust', 'Scala'],
+  mobile: ['React Native', 'Flutter', 'Dart', 'Swift', 'SwiftUI', 'Kotlin', 'Jetpack Compose', 'Java', 'Objective-C', 'Expo', 'TypeScript', 'Firebase', 'Redux', 'MobX', 'REST API', 'GraphQL', 'Xcode', 'Android SDK', 'iOS SDK', 'Core Data', 'Room', 'Fastlane', 'App Store', 'Google Play', 'Push Notifications', 'In-App Purchases', 'Detox', 'Appium', 'CI/CD', 'Git'],
+  devops: ['Docker', 'Kubernetes', 'Terraform', 'AWS', 'GCP', 'Azure', 'CI/CD', 'GitHub Actions', 'GitLab CI', 'Jenkins', 'ArgoCD', 'Helm', 'Ansible', 'Linux', 'Bash', 'Python', 'Go', 'Prometheus', 'Grafana', 'ELK', 'Datadog', 'Nginx', 'Istio', 'Vault', 'CloudFormation', 'Pulumi', 'Networking', 'SRE', 'PostgreSQL', 'Redis', 'Kafka'],
+  qa: ['Manual Testing', 'Test Automation', 'Playwright', 'Cypress', 'Selenium', 'WebdriverIO', 'Appium', 'Postman', 'API Testing', 'REST Assured', 'JavaScript', 'TypeScript', 'Java', 'Python', 'Jest', 'Mocha', 'Cucumber', 'BDD', 'TestRail', 'Jira', 'SQL', 'CI/CD', 'GitHub Actions', 'Jenkins', 'JMeter', 'k6', 'Load Testing', 'Charles Proxy', 'Mobile Testing', 'Regression Testing', 'Test Design', 'Allure', 'Docker', 'Git'],
+  data: ['Python', 'SQL', 'Pandas', 'NumPy', 'Spark', 'PySpark', 'Airflow', 'dbt', 'Kafka', 'Snowflake', 'BigQuery', 'Redshift', 'Databricks', 'PostgreSQL', 'Power BI', 'Tableau', 'Looker', 'Machine Learning', 'scikit-learn', 'PyTorch', 'TensorFlow', 'LLM', 'NLP', 'Statistics', 'A/B Testing', 'ETL', 'Data Modeling', 'Excel', 'R', 'Jupyter', 'MLflow', 'AWS', 'GCP'],
+  design: ['Figma', 'UI Design', 'UX Design', 'Prototyping', 'Design Systems', 'User Research', 'Wireframing', 'Usability Testing', 'Adobe XD', 'Sketch', 'Photoshop', 'Illustrator', 'After Effects', 'Motion Design', 'Web Design', 'Mobile Design', 'Interaction Design', 'Information Architecture', 'Accessibility', 'Typography', 'Framer', 'Webflow', 'Miro', 'Design Thinking', 'HTML', 'CSS'],
+  management: ['Agile', 'Scrum', 'Kanban', 'Jira', 'Confluence', 'Roadmapping', 'Stakeholder Management', 'Product Discovery', 'Analytics', 'A/B Testing', 'OKR', 'SQL', 'Risk Management', 'Budgeting', 'Team Leadership', 'People Management', 'Hiring', 'PRD', 'User Stories', 'Prioritization', 'SAFe', 'Notion', 'Miro', 'Amplitude', 'Mixpanel', 'Google Analytics'],
+  support: ['Zendesk', 'Jira', 'Intercom', 'Freshdesk', 'Salesforce', 'HubSpot', 'SQL', 'Customer Success', 'Technical Support', 'Troubleshooting', 'ITIL', 'Helpdesk', 'Linux', 'Networking', 'REST API', 'Postman', 'Confluence', 'CRM', 'Communication'],
 };
 
 export const EXCLUDE_SUGGESTIONS = ['php', 'wordpress', '1c', 'gambling', 'betting', 'casino', 'adult', 'crypto', 'unity', 'salesforce', 'sap', 'outstaff', 'unpaid', 'internship'];
@@ -47,9 +53,22 @@ export function keywordSuggestions(roles: readonly RoleFamily[]): string[] {
 }
 
 /** CV skills first (what the user actually has), then the families' popular ones. */
+/**
+ * CV skills first, then the families' skills interleaved by rank (the top of each role before the long tail), with
+ * spelling variants counted once (Tailwind = Tailwind CSS, React.js = React).
+ */
 export function skillSuggestions(roles: readonly RoleFamily[], cvSkills: readonly string[]): string[] {
   const families = roles.length > 0 ? roles : (['frontend', 'fullstack'] as const);
-  return uniq([...cvSkills, ...families.flatMap((f) => SKILLS[f])]);
+  const lists = families.map((f) => SKILLS[f]);
+  const interleaved: string[] = [];
+  for (let i = 0; i < Math.max(...lists.map((l) => l.length)); i++) for (const l of lists) if (l[i]) interleaved.push(l[i]!);
+  const seen = new Set<string>();
+  return [...cvSkills, ...interleaved].filter((s) => {
+    const k = skillKey(s);
+    if (!k || seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  });
 }
 
 /** Keywords from a skill the user has: a React developer is also searched as one. */
