@@ -5,6 +5,7 @@ import { ScoreMeter } from '@/components/ui/score-meter';
 import { LevelBadge, TechChip } from '@/components/ui/tech-chip';
 import { SourceBadge } from '@/components/ui/source-badge';
 import type { FeedMatch } from './feed-types';
+import { DomainBadges } from './domain-badges';
 import { HiddenReason } from './hidden-reason';
 
 /** One "episode row" of the feed: score, title, then company · board · age in the mono voice. */
@@ -38,6 +39,7 @@ export function FeedListItem({
       <ScoreMeter score={match.score} label={t('match')} />
       <span className="font-display text-[15px] leading-snug font-bold">{match.title}</span>
       {match.excludedBy && <HiddenReason reason={match.excludedBy} />}
+      <DomainBadges domains={match.domains} perks={match.perks} />
       {match.onBoard !== null && (
         <span
           data-testid="on-board-badge"

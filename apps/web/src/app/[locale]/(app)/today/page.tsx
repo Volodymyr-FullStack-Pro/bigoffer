@@ -1,4 +1,4 @@
-import { isLocale, type LocalizedText, localized, normalizeCompany, normalizeTitle, requiredYears, SENIORITIES, type Seniority, sourceInfo } from '@jp/core';
+import { detectDomains, detectPerks, isLocale, type LocalizedText, localized, normalizeCompany, normalizeTitle, requiredYears, SENIORITIES, type Seniority, sourceInfo } from '@jp/core';
 import { getLocale, getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
 import { requireUserId } from '@/lib/auth';
@@ -109,6 +109,8 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
       onBoard: boardByJob.get(m.job_id) ?? boardByName.get(nameKey(m.jobs.companies?.name ?? '', m.jobs.title)) ?? null,
       skills: cardSkills(m.jobs.skills, matched, 8, wanted),
       techs: cardSkills(m.jobs.skills, matched, 60, wanted),
+      perks: detectPerks({ title: m.jobs.title, descriptionText: m.jobs.description_text }),
+      domains: detectDomains({ title: m.jobs.title, company: m.jobs.companies?.name ?? null, descriptionText: m.jobs.description_text }),
       excludedBy: typeof (m.breakdown as { excludedBy?: unknown } | null)?.excludedBy === 'string' ? ((m.breakdown as { excludedBy: string }).excludedBy) : null,
       breakdown: b ? { skills: num(b.skills), role: num(b.role), seniority: num(b.seniority), location: num(b.location), salary: num(b.salary) } : null,
       profileId: m.search_profile_id,
@@ -145,6 +147,7 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
         sources={sourceIds.map((id) => ({ id, name: sourceInfo(id)?.name ?? id }))}
         savedFilters={parseUiPrefs(me?.ui_prefs).feed}
         ruleHidden={(ruleHiddenRows ?? []).map(toMatch)}
+        savedLabels={parseUiPrefs(me?.ui_prefs).cardLabels}
       />
     </section>
   );

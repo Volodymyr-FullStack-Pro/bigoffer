@@ -5,6 +5,7 @@ export * from './nav/safe-redirect';
 export * from './profile/profile-schema';
 export * from './jobs/text';
 export * from './jobs/keywords';
+export * from './jobs/domains';
 export * from './jobs/normalize';
 export * from './jobs/detect';
 export * from './jobs/job';

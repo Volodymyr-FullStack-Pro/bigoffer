@@ -7,6 +7,7 @@ import { type ReactNode, useActionState, useEffect, useMemo, useRef, useState } 
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { TagInput } from '@/components/ui/tag-input';
+import { tellGenie } from '@/lib/genie/events';
 import { cn } from '@/lib/utils';
 import { deleteSearchProfile, saveSearchProfile, type SearchFormState } from './actions';
 import { profileTips } from './profile-tips';
@@ -95,6 +96,11 @@ export function SearchProfileForm({ values, cvSkills = [], cvHeadline = null }: 
     () => profileTips({ keywords, recommended, skills, cvSkills, roles, remoteType, locations, sources }),
     [keywords, recommended, skills, cvSkills, roles, remoteType, locations, sources],
   );
+  // The Offer Genie mentions the tips when the user arrives here; cleared when leaving the page.
+  useEffect(() => {
+    tellGenie(tips.length > 0 ? { type: 'hint', key: 'searchTips', params: { count: tips.length } } : { type: 'clearHint' });
+  }, [tips.length]);
+  useEffect(() => () => tellGenie({ type: 'clearHint' }), []);
   // Pop-up feedback for every save; a tip follows when the profile could still find more.
   const lastStatus = useRef(state);
   useEffect(() => {

@@ -5,6 +5,7 @@ import { textLang } from '@jp/core';
 import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 import { saveBankAnswer } from '@/app/[locale]/(app)/profile/profile-extras-actions';
+import { tellGenie } from '@/lib/genie/events';
 import { downloadLetter } from '@/lib/letter-file';
 import { useSaveUiPrefs } from '@/lib/use-save-ui-prefs';
 import { answerFormQuestions, type FormAnswer, generateKit, getApplyKitData, type KitData, type KitError, markAppliedFromKit, saveKitLetter, type StoredKit } from './actions';
@@ -101,6 +102,7 @@ export function ApplyKitPanel({ jobId, onApplied, hidePeopleSearch }: { jobId: s
     try {
       const res = await markAppliedFromKit(jobId, kind, text);
       setAppliedState(res.ok ? 'done' : 'error');
+      if (res.ok) tellGenie({ type: 'applied' });
       if (res.ok) onApplied?.({ columnId: res.columnId, rank: res.rank });
     } catch {
       setAppliedState('error');
