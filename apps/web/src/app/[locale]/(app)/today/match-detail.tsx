@@ -8,7 +8,7 @@ import { TextGenerateEffect } from '@/components/aceternity/text-generate-effect
 import { ApplyKitPanel } from '@/components/apply-kit/apply-kit-panel';
 import { PeopleSearch } from '@/components/apply-kit/people-search';
 import { ScoreMeter } from '@/components/ui/score-meter';
-import { LevelBadge, TechChip, techColor } from '@/components/ui/tech-chip';
+import { LevelBadge } from '@/components/ui/tech-chip';
 import type { FeedMatch } from './feed-types';
 import { DomainBadges } from './domain-badges';
 import { HiddenReason } from './hidden-reason';
@@ -144,6 +144,59 @@ function CopyButton({
   );
 }
 
+/** What the job asks for, split into what the user has and what they lack; long lists fold. */
+function JobTechs({ techs }: { techs: FeedMatch['techs'] }) {
+  const tf = useTranslations('feed');
+  const [all, setAll] = useState(false);
+  if (techs.length === 0) return null;
+  const have = techs.filter((x) => x.matched);
+  const lack = techs.filter((x) => !x.matched);
+  const LIMIT = 10;
+  const folded = !all && techs.length > LIMIT + 2;
+  const shownLack = folded ? lack.slice(0, Math.max(0, LIMIT - have.length)) : lack;
+  const shownHave = folded ? have.slice(0, LIMIT) : have;
+  const rest = techs.length - shownHave.length - shownLack.length;
+  return (
+    <section data-testid="job-techs" aria-label={tf('techsTitle')} className="flex flex-col gap-2.5 rounded-xl border border-border bg-card/50 p-3.5">
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <h3 className="text-sm font-semibold">{tf('techsTitle')}</h3>
+        <span data-testid="job-techs-count" className="font-mono text-xs text-muted-foreground">
+          {tf('techsCount', { have: have.length, total: techs.length })}
+        </span>
+      </div>
+      {shownHave.length > 0 && (
+        <div className="flex flex-col gap-1.5">
+          <span className="text-xs text-muted-foreground">{tf('techsHave')}</span>
+          <ul className="flex flex-wrap gap-1.5">
+            {shownHave.map((x) => (
+              <li key={x.name} data-testid="match-skill" data-matched="true" className="rounded-full border border-brand/50 bg-brand/10 px-2.5 py-0.5 text-xs font-medium text-link">
+                ✓ {x.name}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {shownLack.length > 0 && (
+        <div className="flex flex-col gap-1.5">
+          <span className="text-xs text-muted-foreground">{tf('techsLack')}</span>
+          <ul className="flex flex-wrap gap-1.5">
+            {shownLack.map((x) => (
+              <li key={x.name} data-testid="match-skill" data-matched="false" className="rounded-full border border-dashed border-border px-2.5 py-0.5 text-xs text-muted-foreground">
+                {x.name}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {(folded || all) && techs.length > LIMIT + 2 && (
+        <button type="button" data-testid="job-techs-toggle" onClick={() => setAll((v) => !v)} className="self-start text-xs font-medium text-link underline">
+          {all ? tf('techsLess') : tf('techsMore', { count: rest })}
+        </button>
+      )}
+    </section>
+  );
+}
+
 export function MatchDetail({
   match,
   onAction,
@@ -160,7 +213,6 @@ export function MatchDetail({
   const format = useFormatter();
   const now = useNow();
   const salary = salaryText(t, match);
-  const [showMissing, setShowMissing] = useState(false);
   return (
     <article data-testid="match-detail" className="flex flex-col gap-4">
       <div className="flex flex-col gap-2">
@@ -208,48 +260,7 @@ export function MatchDetail({
           {match.why}
         </p>
       )}
-      {(match.skills.length > 0 || match.missingSkills.length > 0) && (
-        <ul className="flex flex-wrap gap-1.5" aria-label={tf('skills')}>
-          {match.skills.map((s) => (
-            <li key={s.name} data-testid="match-skill" data-matched={s.matched}>
-              <TechChip
-                name={`${s.matched ? '✓ ' : ''}${s.name}`}
-                dim={!s.matched}
-                className={
-                  techColor(s.name)
-                    ? undefined
-                    : s.matched
-                      ? 'border-brand/40 bg-brand/10 text-link'
-                      : 'border-border text-muted-foreground'
-                }
-              />
-            </li>
-          ))}
-          {showMissing &&
-            match.missingSkills.map((name) => (
-              <li
-                key={`missing-${name}`}
-                className="rounded-full border border-dashed border-border px-2.5 py-0.5 text-xs text-muted-foreground"
-              >
-                ✗ {name}
-              </li>
-            ))}
-          {match.missingSkills.length > 0 && (
-            <li>
-              <button
-                type="button"
-                data-testid="missing-skills-toggle"
-                onClick={() => setShowMissing((v) => !v)}
-                className="rounded-full px-2.5 py-0.5 text-xs text-muted-foreground underline hover:text-foreground"
-              >
-                {showMissing
-                  ? tf('missingHide')
-                  : tf('missingShow', { count: match.missingSkills.length })}
-              </button>
-            </li>
-          )}
-        </ul>
-      )}
+      <JobTechs techs={match.techs} />
       <div className="flex flex-wrap gap-2">
         {match.postings
           .filter((p) => /^https?:\/\//i.test(p.url))

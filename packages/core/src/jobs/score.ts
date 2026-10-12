@@ -5,6 +5,7 @@ import type { SearchProfile } from './search';
 import { remoteBlockedFor } from './regions';
 import { isTechTitle } from './boards';
 import { detectSeniority } from './detect';
+import { keywordForms } from './keywords';
 import { detectRoleFamilies, type RoleFamily, roleOffTarget, targetRoleFamilies } from './roles';
 
 const TECH_FAMILIES: ReadonlySet<RoleFamily> = new Set<RoleFamily>(['frontend', 'fullstack', 'backend', 'mobile', 'devops', 'qa', 'data']);
@@ -138,8 +139,10 @@ export function scoreJob(
   const raw = `${job.title}\n${job.tags.join(' ')}\n${job.descriptionText}`;
   const text = normalizeText(raw);
 
-  const inTitle = profile.keywords.some((k) => containsTerm(title, k));
-  const inText = inTitle || profile.keywords.some((k) => containsTerm(text, k));
+  // Every spelling counts: "frontend" also matches "Front-End", "Фронтенд" and markup postings.
+  const forms = profile.keywords.flatMap(keywordForms);
+  const inTitle = forms.some((k) => containsTerm(title, k));
+  const inText = inTitle || forms.some((k) => containsTerm(text, k));
   const jobSkills = (job.skills ?? []).map((s) => s.toLowerCase());
   const matchedSkills = profile.skills.filter(
     (s) => jobSkills.includes(s.toLowerCase()) || containsSkill(raw, text, s),

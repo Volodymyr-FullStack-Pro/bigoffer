@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { SENIORITIES, SOURCE_IDS, type SourceId } from './job';
+import { isFrontendKeyword, keywordSearchVariants } from './keywords';
 import { ROLE_FAMILIES } from './roles';
 import { BROWSER_SOURCE_IDS, defaultSources } from './sources';
 
@@ -24,7 +25,7 @@ const term = z.string().trim().min(1).max(60);
 export const searchProfileInputSchema = z.object({
   id: z.uuid().optional(),
   name: z.string().trim().min(1).max(80),
-  keywords: z.array(term).min(1).max(5),
+  keywords: z.array(term).min(1).max(10),
   /** Job families to show; empty = derived from the keywords (see targetRoleFamilies). */
   targetRoles: z.array(z.enum(ROLE_FAMILIES)).max(ROLE_FAMILIES.length).default([]),
   skills: z.array(term).max(30),
@@ -77,9 +78,16 @@ export const DJINNI_PRIMARY_KEYWORDS: Record<string, string> = {
   golang: 'Golang',
   go: 'Golang',
   ruby: 'Ruby',
+  'react native': 'React Native',
+  'react-native': 'React Native',
+  expo: 'React Native',
   ios: 'iOS',
   android: 'Android',
   flutter: 'Flutter',
+  dart: 'Flutter',
+  markup: 'Markup',
+  'html/css': 'Markup',
+  верстальник: 'Markup',
   devops: 'DevOps',
   qa: 'QA',
   'project manager': 'Project Manager',
@@ -122,8 +130,11 @@ const SEARCH_SOURCES: [SourceId, string][] = [
   ['jobicy', 'tag'],
 ];
 
-const MAX_TERMS = 6;
+const MAX_TERMS = 14;
+/** LinkedIn fetches every posting page, so it gets the first terms only. */
+const LINKEDIN_TERMS = 6;
 /** Job-title variants that job boards match better than bare technology names. */
+// Bare role words also search their usual job titles; other spellings come from keywordSearchVariants.
 const TITLE_VARIANTS: [RegExp, string[]][] = [
   [/^full ?-?stack$/, ['full stack developer']],
   [/^react(\.js)?$/, ['react developer', 'frontend developer']],
@@ -142,6 +153,8 @@ export function searchTerms(profile: Pick<SearchProfile, 'keywords' | 'skills'>)
     if (v && !out.includes(v)) out.push(v);
   };
   for (const k of profile.keywords) push(k);
+  // Other spellings next ("front-end", "фронтенд"): boards' text search does not treat them as the same word.
+  for (const k of profile.keywords) keywordSearchVariants(k).forEach(push);
   for (const t of [...profile.keywords, ...profile.skills]) {
     const key = t.trim().toLowerCase();
     for (const [re, variants] of TITLE_VARIANTS) if (re.test(key)) variants.forEach(push);
@@ -181,7 +194,7 @@ export function buildSourceQueries(
       add(sourceId, sourceId === 'workua' && remote ? { [param]: keyword, remote: '1' } : { [param]: keyword });
     }
   }
-  for (const keyword of keywords) {
+  for (const keyword of keywords.slice(0, LINKEDIN_TERMS)) {
     add(
       'linkedin',
       remote ? { keywords: keyword, location: 'Worldwide', remote: '1' } : { keywords: keyword, location: 'Ukraine' },
@@ -202,8 +215,9 @@ export function buildSourceQueries(
     has(/\bjava\b|spring|kotlin/) ? 'Java' : null,
     has(/\.net|c#|asp\.net/) ? '.NET' : null,
     has(/devops|\bsre\b|kubernetes|terraform/) ? 'DevOps' : null,
-    has(/\bios\b|swift/) ? 'iOS/macOS' : null,
-    has(/android/) ? 'Android' : null,
+    // DOU has no React Native / Flutter category: cross-platform jobs are filed under iOS and Android.
+    has(/\bios\b|swift|react[\s-]?native|flutter/) ? 'iOS/macOS' : null,
+    has(/android|kotlin|react[\s-]?native|flutter/) ? 'Android' : null,
     has(/designer|ui\/ux|\bux\b|figma/) ? 'Design' : null,
     has(/project manager/) ? 'Project Manager' : null,
     has(/product manager/) ? 'Product Manager' : null,
@@ -213,7 +227,11 @@ export function buildSourceQueries(
 
 
   const djinni = [
-    ...new Set([...profile.keywords, ...profile.skills].flatMap((t) => djinniCategories(t))),
+    ...new Set([
+      ...[...profile.keywords, ...profile.skills].flatMap((t) => djinniCategories(t)),
+      // Markup (HTML/CSS) postings are front-end work as well.
+      ...(profile.keywords.some(isFrontendKeyword) ? ['Markup'] : []),
+    ]),
   ].slice(0, MAX_DJINNI_CATEGORIES);
   if (djinni.length === 0) add('djinni', {});
   for (const primary of djinni) add('djinni', { primary_keyword: primary });

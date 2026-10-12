@@ -2,12 +2,16 @@
 
 import { defaultSources, MAIN_SOURCE_IDS, ROLE_FAMILIES, type RoleFamily, SEARCH_REMOTE_TYPES, SENIORITIES, SOURCE_CATALOG, type SourceInfo } from '@jp/core';
 import { useTranslations } from 'next-intl';
-import { type ReactNode, useActionState, useState } from 'react';
+import { Lightbulb } from 'lucide-react';
+import { type ReactNode, useActionState, useEffect, useMemo, useRef, useState } from 'react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { TagInput } from '@/components/ui/tag-input';
+import { tellGenie } from '@/lib/genie/events';
 import { cn } from '@/lib/utils';
 import { deleteSearchProfile, saveSearchProfile, type SearchFormState } from './actions';
-import { EXCLUDE_SUGGESTIONS, keywordSuggestions, LOCATION_SUGGESTIONS, SALARY_STEPS, skillSuggestions } from './suggestions';
+import { profileTips } from './profile-tips';
+import { EXCLUDE_SUGGESTIONS, keywordSuggestions, LOCATION_SUGGESTIONS, profileNameSuggestion, recommendedKeywords, SALARY_STEPS, skillSuggestions } from './suggestions';
 
 export type SearchProfileValues = {
   id?: string;
@@ -74,7 +78,7 @@ function sourceNote(s: SourceInfo, t: ReturnType<typeof useTranslations<'search'
   return undefined;
 }
 
-export function SearchProfileForm({ values, cvSkills = [] }: { values: SearchProfileValues; cvSkills?: string[] }) {
+export function SearchProfileForm({ values, cvSkills = [], cvHeadline = null }: { values: SearchProfileValues; cvSkills?: string[]; cvHeadline?: string | null }) {
   const t = useTranslations('search');
   const [state, action, pending] = useActionState<SearchFormState, FormData>(saveSearchProfile, { status: 'idle' });
   const invalid = new Set(state.fields ?? []);
@@ -82,6 +86,32 @@ export function SearchProfileForm({ values, cvSkills = [] }: { values: SearchPro
   const [remoteType, setRemoteType] = useState(values.remoteType);
   const [sources, setSources] = useState(new Set(values.sources));
   const salary = values.salaryMinUsd;
+  const [keywords, setKeywords] = useState(values.keywords);
+  const [skills, setSkills] = useState(values.skills);
+  const [locations, setLocations] = useState(values.locations);
+  const [name, setName] = useState(values.name);
+  const recommended = useMemo(() => recommendedKeywords(cvHeadline, roles, cvSkills), [cvHeadline, roles, cvSkills]);
+  const nameSuggestion = profileNameSuggestion(cvHeadline, t(`remote_${(SEARCH_REMOTE_TYPES.find((r) => r === remoteType) ?? 'any') as 'any'}`));
+  const tips = useMemo(
+    () => profileTips({ keywords, recommended, skills, cvSkills, roles, remoteType, locations, sources }),
+    [keywords, recommended, skills, cvSkills, roles, remoteType, locations, sources],
+  );
+  // The Offer Genie mentions the tips when the user arrives here; cleared when leaving the page.
+  useEffect(() => {
+    tellGenie(tips.length > 0 ? { type: 'hint', key: 'searchTips', params: { count: tips.length } } : { type: 'clearHint' });
+  }, [tips.length]);
+  useEffect(() => () => tellGenie({ type: 'clearHint' }), []);
+  // Pop-up feedback for every save; a tip follows when the profile could still find more.
+  const lastStatus = useRef(state);
+  useEffect(() => {
+    if (state === lastStatus.current) return;
+    lastStatus.current = state;
+    if (state.status === 'saved') {
+      toast.success(t('saved'));
+      if (tips.length > 0) toast(t('tipsToast', { count: tips.length }), { icon: '💡' });
+    } else if (state.status === 'invalid') toast.error(t('invalid', { fields: (state.fields ?? []).join(', ') }));
+    else if (state.status === 'error') toast.error(t('error'));
+  }, [state, tips.length, t]);
 
   const toggle = <T,>(set: (fn: (prev: T[]) => T[]) => void, v: T, on: boolean) => set((prev) => (on ? [...prev, v] : prev.filter((x) => x !== v)));
 
@@ -90,10 +120,33 @@ export function SearchProfileForm({ values, cvSkills = [] }: { values: SearchPro
       <form action={action} noValidate className="flex flex-col gap-6">
         {values.id && <input type="hidden" name="id" value={values.id} />}
 
+        {tips.length > 0 && (
+          <aside data-testid="profile-tips" className="flex flex-col gap-2 rounded-xl border border-brand/40 bg-brand/[0.07] p-4">
+            <p className="flex items-center gap-2 text-sm font-semibold">
+              <Lightbulb className="size-4 text-link" aria-hidden />
+              {t('tipsTitle')}
+            </p>
+            <ul className="flex flex-col gap-1.5 text-sm">
+              {tips.map((tip) => (
+                <li key={tip.id} data-testid={`tip-${tip.id}`} className="text-muted-foreground">
+                  • {'items' in tip ? t(`tip_${tip.id}`, { items: tip.items.join(', ') }) : t(`tip_${tip.id}`)}
+                </li>
+              ))}
+            </ul>
+          </aside>
+        )}
         <Section title={t('sectionWhat')}>
           <label className="flex flex-col gap-1.5">
             <span className="text-xs text-muted-foreground">{t('name')}</span>
-            <input name="name" defaultValue={values.name} aria-invalid={invalid.has('name')} className={cn(field, invalid.has('name') && 'border-danger')} />
+            <input name="name" value={name} onChange={(e) => setName(e.target.value)} aria-invalid={invalid.has('name')} className={cn(field, invalid.has('name') && 'border-danger')} />
+            <span className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+              {t('nameHint')}
+              {nameSuggestion && nameSuggestion !== name && (
+                <button type="button" data-testid="name-suggestion" onClick={() => setName(nameSuggestion)} className="rounded-full border border-brand/60 bg-brand/15 px-2.5 py-0.5 font-medium text-link hover:bg-brand/25">
+                  ★ {nameSuggestion}
+                </button>
+              )}
+            </span>
           </label>
           <fieldset className="flex flex-col gap-2" data-testid="target-roles">
             <legend className="mb-1.5 text-xs text-muted-foreground">{t('targetRoles')}</legend>
@@ -111,7 +164,10 @@ export function SearchProfileForm({ values, cvSkills = [] }: { values: SearchPro
             defaultValue={values.keywords}
             suggestions={keywordSuggestions(roles)}
             suggestionsLabel={t('suggested')}
-            max={5}
+            recommended={recommended}
+            recommendedLabel={t('recommended')}
+            onChange={setKeywords}
+            max={10}
             invalid={invalid.has('keywords')}
             placeholder={t('keywordsPlaceholder')}
           />
@@ -131,6 +187,7 @@ export function SearchProfileForm({ values, cvSkills = [] }: { values: SearchPro
             label={t('skills')}
             hint={t('skillsHint')}
             defaultValue={values.skills}
+            onChange={setSkills}
             suggestions={skillSuggestions(roles, cvSkills)}
             suggestionsLabel={cvSkills.length > 0 ? t('suggestedFromCv') : t('suggested')}
             invalid={invalid.has('skills')}
@@ -176,6 +233,7 @@ export function SearchProfileForm({ values, cvSkills = [] }: { values: SearchPro
           {remoteType !== 'remote' && (
             <TagInput
               name="locations"
+              onChange={setLocations}
               label={t('locations')}
               defaultValue={values.locations}
               suggestions={LOCATION_SUGGESTIONS}

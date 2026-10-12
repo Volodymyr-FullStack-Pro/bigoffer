@@ -18,8 +18,8 @@ export type FeedMatch = {
   why: string | null;
   description: string;
   skills: { name: string; matched: boolean }[];
-  /** Profile skills the job does not mention (shown as ✗ in details). */
-  missingSkills: string[];
+  /** Every technology the job asks for, the user's own first (matched = in their profile skills). */
+  techs: { name: string; matched: boolean }[];
   breakdown: { skills: number; role: number; seniority: number; location: number; salary: number } | null;
   profileId: string | null;
   createdAt: string;

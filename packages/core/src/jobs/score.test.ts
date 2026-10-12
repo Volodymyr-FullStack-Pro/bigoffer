@@ -241,3 +241,13 @@ describe('non-technical titles in a tech search', () => {
   });
 });
 
+
+describe('keyword spellings', () => {
+  const fe: SearchProfile = { ...profile, keywords: ['frontend'], skills: [], targetRoles: ['frontend'], seniority: [] };
+  const plain = { ...job, descriptionText: 'Команда продукту.', tags: [] };
+  it('matches the same role word however the title spells it', () => {
+    for (const title of ['Front-End Developer', 'Front end engineer', 'Фронтенд розробник', 'Верстальник (HTML/CSS)']) {
+      expect(scoreJob(fe, { ...plain, title }), title).not.toBeNull();
+    }
+  });
+});

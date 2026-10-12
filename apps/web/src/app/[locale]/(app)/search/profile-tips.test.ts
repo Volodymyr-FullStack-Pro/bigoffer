@@ -1,0 +1,30 @@
+import { describe, expect, it } from 'vitest';
+import { profileTips } from './profile-tips';
+
+const base = {
+  keywords: ['full stack', 'frontend'],
+  recommended: ['full-stack software engineer', 'full stack', 'react developer'],
+  skills: ['React'],
+  cvSkills: ['React', 'Docker'],
+  roles: ['frontend'],
+  remoteType: 'remote',
+  locations: [],
+  sources: new Set(['dou', 'djinni', 'robotaua', 'linkedin']),
+};
+
+describe('profileTips', () => {
+  it('suggests missing main boards, keywords, CV skills; spellings of a chosen word count as chosen', () => {
+    expect(profileTips({ ...base, sources: new Set(['dou']) })).toEqual([
+      { id: 'mainSources', items: ['Djinni', 'robota.ua', 'LinkedIn'] },
+      { id: 'keywords', items: ['full-stack software engineer', 'react developer'] },
+      { id: 'cvSkills', items: ['Docker'] },
+    ]);
+  });
+  it('asks for roles and cities when they matter', () => {
+    const tips = profileTips({ ...base, roles: [], remoteType: 'hybrid', recommended: [], cvSkills: [] }).map((t) => t.id);
+    expect(tips).toEqual(['roles', 'cities']);
+  });
+  it('is quiet for a complete profile', () => {
+    expect(profileTips({ ...base, keywords: ['full-stack software engineer', 'full stack', 'react developer'], skills: ['React', 'Docker'] })).toEqual([]);
+  });
+});

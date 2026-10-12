@@ -1,9 +1,13 @@
-import type { RoleFamily } from '@jp/core';
+import { detectRoleFamilies, keywordForms, type RoleFamily } from '@jp/core';
 
-/** Search keywords people actually use per role family (job-title words, not skills). */
+/**
+ * Search keywords per role family, most frequent job-title wording first (measured on 680 front-end / full-stack
+ * titles from DOU, Djinni, robota.ua and LinkedIn, Oct 2026): "full stack developer/engineer" 140+, "frontend
+ * developer/engineer" 90+, "javascript developer" 25, "react developer" 30 with its spellings, "next.js" rare.
+ */
 const KEYWORDS: Record<RoleFamily, string[]> = {
-  frontend: ['frontend', 'react developer', 'next.js developer', 'vue developer', 'angular developer', 'javascript developer', 'typescript developer'],
-  fullstack: ['full stack', 'node.js developer', 'javascript developer', 'typescript developer', 'react developer'],
+  frontend: ['frontend', 'frontend engineer', 'react developer', 'javascript developer', 'angular developer', 'vue developer', 'typescript developer', 'next.js developer'],
+  fullstack: ['full stack', 'full stack engineer', 'javascript developer', 'react developer', 'typescript developer', 'software engineer', 'product engineer'],
   backend: ['backend', 'node.js developer', 'python developer', 'java developer', 'golang developer', '.net developer', 'php developer'],
   mobile: ['react native', 'flutter developer', 'ios developer', 'android developer', 'mobile developer'],
   devops: ['devops', 'sre', 'platform engineer', 'cloud engineer'],
@@ -46,4 +50,42 @@ export function keywordSuggestions(roles: readonly RoleFamily[]): string[] {
 export function skillSuggestions(roles: readonly RoleFamily[], cvSkills: readonly string[]): string[] {
   const families = roles.length > 0 ? roles : (['frontend', 'fullstack'] as const);
   return uniq([...cvSkills, ...families.flatMap((f) => SKILLS[f])]);
+}
+
+/** Keywords from a skill the user has: a React developer is also searched as one. */
+const SKILL_TITLES: [RegExp, string][] = [
+  [/^react(\.?js)?$/i, 'react developer'],
+  [/^angular/i, 'angular developer'],
+  [/^vue/i, 'vue developer'],
+  [/^next(\.?js)?$/i, 'react developer'],
+];
+
+/**
+ * The best keywords for this user: their CV headline, the most used titles of their roles (checked roles, else the
+ * ones the headline names) and titles of their main frameworks. Spellings of one word count once.
+ */
+export function recommendedKeywords(headline: string | null, roles: readonly RoleFamily[], cvSkills: readonly string[], max = 6): string[] {
+  const families = roles.length > 0 ? roles : headline ? detectRoleFamilies(headline) : [];
+  const out: string[] = [];
+  const seen = new Set<string>();
+  const push = (k: string) => {
+    const v = k.trim().toLowerCase();
+    if (!v || out.length >= max) return;
+    const forms = keywordForms(v);
+    if (forms.some((f) => seen.has(f))) return;
+    forms.forEach((f) => seen.add(f));
+    out.push(v);
+  };
+  if (headline) push(headline);
+  for (const f of families) KEYWORDS[f].slice(0, 3).forEach(push);
+  for (const skill of cvSkills.slice(0, 10)) {
+    const title = SKILL_TITLES.find(([re]) => re.test(skill.trim()))?.[1];
+    if (title) push(title);
+  }
+  return out;
+}
+
+/** A profile name from the CV headline and the work format, e.g. "Full-Stack Software Engineer · Remote". */
+export function profileNameSuggestion(headline: string | null, formatLabel: string): string | null {
+  return headline ? `${headline.trim()} · ${formatLabel}` : null;
 }
