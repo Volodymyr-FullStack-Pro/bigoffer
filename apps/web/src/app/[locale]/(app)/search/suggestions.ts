@@ -1,4 +1,4 @@
-import type { RoleFamily } from '@jp/core';
+import { detectRoleFamilies, keywordForms, type RoleFamily } from '@jp/core';
 
 /**
  * Search keywords per role family, most frequent job-title wording first (measured on 680 front-end / full-stack
@@ -50,4 +50,42 @@ export function keywordSuggestions(roles: readonly RoleFamily[]): string[] {
 export function skillSuggestions(roles: readonly RoleFamily[], cvSkills: readonly string[]): string[] {
   const families = roles.length > 0 ? roles : (['frontend', 'fullstack'] as const);
   return uniq([...cvSkills, ...families.flatMap((f) => SKILLS[f])]);
+}
+
+/** Keywords from a skill the user has: a React developer is also searched as one. */
+const SKILL_TITLES: [RegExp, string][] = [
+  [/^react(\.?js)?$/i, 'react developer'],
+  [/^angular/i, 'angular developer'],
+  [/^vue/i, 'vue developer'],
+  [/^next(\.?js)?$/i, 'react developer'],
+];
+
+/**
+ * The best keywords for this user: their CV headline, the most used titles of their roles (checked roles, else the
+ * ones the headline names) and titles of their main frameworks. Spellings of one word count once.
+ */
+export function recommendedKeywords(headline: string | null, roles: readonly RoleFamily[], cvSkills: readonly string[], max = 6): string[] {
+  const families = roles.length > 0 ? roles : headline ? detectRoleFamilies(headline) : [];
+  const out: string[] = [];
+  const seen = new Set<string>();
+  const push = (k: string) => {
+    const v = k.trim().toLowerCase();
+    if (!v || out.length >= max) return;
+    const forms = keywordForms(v);
+    if (forms.some((f) => seen.has(f))) return;
+    forms.forEach((f) => seen.add(f));
+    out.push(v);
+  };
+  if (headline) push(headline);
+  for (const f of families) KEYWORDS[f].slice(0, 3).forEach(push);
+  for (const skill of cvSkills.slice(0, 10)) {
+    const title = SKILL_TITLES.find(([re]) => re.test(skill.trim()))?.[1];
+    if (title) push(title);
+  }
+  return out;
+}
+
+/** A profile name from the CV headline and the work format, e.g. "Full-Stack Software Engineer · Remote". */
+export function profileNameSuggestion(headline: string | null, formatLabel: string): string | null {
+  return headline ? `${headline.trim()} · ${formatLabel}` : null;
 }

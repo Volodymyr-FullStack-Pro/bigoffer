@@ -21,7 +21,7 @@ const W = (body: string) => new RegExp(String.raw`(^|[^\p{L}\p{N}])(${body})($|[
 const PATTERNS: [RoleFamily, RegExp][] = [
   ['fullstack', W(String.raw`full[\s-]?stack|фулл?[\s-]?стек|фул[\s-]?стек`)],
   ['mobile', W(String.raw`react[\s-]native|ios|android|flutter|mobile|swift(ui)?\s+${DEV}|мобільн\p{L}*|мобильн\p{L}*`)],
-  ['frontend', W(String.raw`front[\s-]?end|фронт[\s-]?енд|фронт[\s-]?энд|фронтенд|фронтэнд|(react(\.js)?|vue(\.js)?|angular|svelte|next\.js)\s+${DEV}|react(\.js)?\s*[/,&]`)],
+  ['frontend', W(String.raw`front[\s-]?end|фронт[\s-]?енд|фронт[\s-]?энд|фронтенд|фронтэнд|(react(\.js)?|vue(\.js)?|angular|svelte|next\.js)\s+${DEV}|react(\.js)?\s*[/,&]|markup|верстальник|верстальщик|html\s*/\s*css`)],
   ['data', W(String.raw`data\s+(scientist|engineer|analyst)|machine\s+learning|ml\s+engineer|analytics\s+engineer|дата[\s-]?сайєнтист`)],
   [
     'backend',

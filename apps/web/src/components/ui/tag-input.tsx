@@ -19,6 +19,8 @@ export function TagInput({
   defaultValue,
   suggestions = [],
   suggestionsLabel,
+  recommended = [],
+  recommendedLabel,
   max = 30,
   invalid = false,
   placeholder,
@@ -30,6 +32,9 @@ export function TagInput({
   defaultValue: string[];
   suggestions?: string[];
   suggestionsLabel?: string;
+  /** Best picks for this user (e.g. from their CV), shown first and highlighted. */
+  recommended?: string[];
+  recommendedLabel?: string;
   max?: number;
   invalid?: boolean;
   placeholder?: string;
@@ -53,11 +58,15 @@ export function TagInput({
     if (next.length !== tags.length) update(next);
   };
 
-  const open = useMemo(() => {
+  const picks = useMemo(() => {
     const taken = new Set(tags.map(norm));
+    return recommended.filter((s) => !taken.has(norm(s)));
+  }, [recommended, tags]);
+  const open = useMemo(() => {
+    const taken = new Set([...tags, ...recommended].map(norm));
     const q = norm(text);
     return suggestions.filter((s) => !taken.has(norm(s)) && (!q || norm(s).includes(q)));
-  }, [suggestions, tags, text]);
+  }, [suggestions, recommended, tags, text]);
   const shown = showAll || text ? open : open.slice(0, 12);
 
   return (
@@ -105,6 +114,21 @@ export function TagInput({
         />
       </div>
       {hint && <span className="text-xs text-muted-foreground">{hint}</span>}
+      {picks.length > 0 && tags.length < max && (
+        <div className="flex flex-wrap items-center gap-1.5" data-testid={`recommend-${name}`}>
+          {recommendedLabel && <span className="mr-1 text-xs font-medium text-link">{recommendedLabel}</span>}
+          {picks.map((s) => (
+            <button
+              key={s}
+              type="button"
+              onClick={() => add([s])}
+              className="rounded-full border border-brand/60 bg-brand/15 px-2.5 py-0.5 text-sm font-medium text-link transition-colors hover:bg-brand/25"
+            >
+              ★ {s}
+            </button>
+          ))}
+        </div>
+      )}
       {shown.length > 0 && tags.length < max && (
         <div className="flex flex-wrap items-center gap-1.5" data-testid={`suggest-${name}`}>
           {suggestionsLabel && <span className="mr-1 text-xs text-muted-foreground">{suggestionsLabel}</span>}

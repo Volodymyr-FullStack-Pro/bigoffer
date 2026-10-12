@@ -5,6 +5,7 @@ import { requireUserId } from '@/lib/auth';
 import { loadPrimaryCv } from '@/lib/cv';
 import { createClient } from '@/lib/supabase/server';
 import { SearchProfileForm, type SearchProfileValues } from './search-profile-form';
+import { profileNameSuggestion } from './suggestions';
 
 const EMPTY: SearchProfileValues = {
   name: '',
@@ -35,6 +36,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
   ]);
   // Skills the AI read from the CV are offered first in the skills field.
   const cvSkills = cv?.parsed?.skills ?? [];
+  const cvHeadline = cv?.parsed?.headline ?? null;
 
   const profiles: SearchProfileValues[] = (data ?? []).map((p) => ({
     id: p.id,
@@ -63,10 +65,10 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
         <p className="mt-2 text-muted-foreground">{t('intro')}</p>
       </div>
       {profiles.map((p) => (
-        <SearchProfileForm key={p.id} values={p} cvSkills={cvSkills} />
+        <SearchProfileForm key={p.id} values={p} cvSkills={cvSkills} cvHeadline={cvHeadline} />
       ))}
       {showNew ? (
-        <SearchProfileForm values={{ ...EMPTY, name: t('newProfile') }} cvSkills={cvSkills} />
+        <SearchProfileForm values={{ ...EMPTY, name: profileNameSuggestion(cvHeadline, t('remote_any')) ?? t('newProfile') }} cvSkills={cvSkills} cvHeadline={cvHeadline} />
       ) : (
         <Link href="/search?new=1" className="brutal brutal-press self-start px-4 py-2 font-semibold" data-testid="search-add">
           + {t('add')}

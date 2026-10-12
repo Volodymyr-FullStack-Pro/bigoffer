@@ -230,7 +230,7 @@
     "intro": "Tell us what you are looking for — we'll collect matching jobs from DOU, Djinni, robota.ua, remote boards and more every hour.",
     "name": "Profile name",
     "keywords": "Role keywords",
-    "keywordsHint": "Up to 5 job titles: pick a suggestion or type one and press Enter. We also search common variants.",
+    "keywordsHint": "Up to 10 job titles: pick a suggestion or type and press Enter. Other spellings (front-end, fullstack) are covered automatically.",
     "skills": "Your skills",
     "skillsHint": "Pick from suggestions or type a skill and press Enter; used for scoring.",
     "exclude": "Exclude jobs mentioning",
@@ -290,7 +290,15 @@
     "salaryAny": "No minimum",
     "salaryFrom": "from {amount}",
     "sourcesRecommended": "Use main boards",
-    "nameHint": "Just a label for you; it does not change the results."
+    "nameHint": "Just a label for you; it does not change the results.",
+    "recommended": "★ Recommended for you:",
+    "tipsTitle": "Tips for a better search",
+    "tipsToast": "{count, plural, one {# tip} other {# tips}} to find more — see the top of the form",
+    "tip_mainSources": "Turn on the main boards: {items} — most fresh jobs are there.",
+    "tip_keywords": "Add keywords: {items} — jobs like yours are often titled so.",
+    "tip_cvSkills": "Add skills from your CV: {items} — they raise the match.",
+    "tip_roles": "Pick roles so other professions stay out of the feed.",
+    "tip_cities": "For hybrid/office, add cities — or choose Remote or Any."
   },
   "board": {
     "title": "Application board",
