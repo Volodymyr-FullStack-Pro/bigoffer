@@ -10,9 +10,11 @@ export type FeedFilters = {
   sort: 'best' | 'newest';
   /** Required experience: 'fit' = no more than the CV's years; a number = at most that many; jobs stating none always pass. */
   experience: 'any' | 'fit' | number;
+  /** Job level ('intern' … 'lead'); jobs that state no level always pass. */
+  level: 'all' | NonNullable<FeedMatch['seniority']>;
 };
 
-export const DEFAULT_FILTERS: FeedFilters = { profileId: 'all', minScore: 0, remote: 'any', source: 'all', fresh: false, sort: 'best', experience: 'any' };
+export const DEFAULT_FILTERS: FeedFilters = { profileId: 'all', minScore: 0, remote: 'any', source: 'all', fresh: false, sort: 'best', experience: 'any', level: 'all' };
 
 const DAY_MS = 24 * 3600 * 1000;
 
@@ -34,7 +36,8 @@ export function filterMatches(items: FeedMatch[], f: FeedFilters, now: Date = ne
       (f.source === 'all' || m.postings.some((p) => p.sourceId === f.source)) &&
       (f.profileId === 'all' || m.profileId === f.profileId) &&
       (!f.fresh || freshness(m, now) >= cutoff) &&
-      experienceFits(m, f.experience),
+      experienceFits(m, f.experience) &&
+      (f.level === 'all' || m.seniority === null || m.seniority === f.level),
   );
 }
 

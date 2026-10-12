@@ -179,6 +179,10 @@ export function Feed({
             { value: 'fit', label: t('expFit') },
             ...[1, 2, 3, 5].map((n) => ({ value: String(n), label: t('expUpTo', { years: n }) })),
           ])}
+          {select('filter-level', t('filterLevel'), filters.level, (v) => setFilters((f) => ({ ...f, level: v as FeedFilters['level'] })), [
+            { value: 'all', label: t('all') },
+            ...(['intern', 'junior', 'middle', 'senior', 'lead'] as const).map((l) => ({ value: l, label: tt(`seniority_${l}`) })),
+          ])}
           {select('sort-select', tt('sortLabel'), filters.sort, (v) => setFilters((f) => ({ ...f, sort: v as FeedFilters['sort'] })), [{ value: 'best', label: tt('sortBest') }, { value: 'newest', label: tt('sortNewest') }])}
           <label className="flex items-end gap-2 pb-1 text-sm font-semibold">
             <input data-testid="filter-fresh" type="checkbox" checked={filters.fresh} onChange={(e) => setFilters((f) => ({ ...f, fresh: e.target.checked }))} className="size-5" />
