@@ -4,11 +4,7 @@ import { fingerprint, normalizeCompany, normalizeTitle, regionBucket } from './n
 import { normalizeRemoteRegions } from './regions';
 import { decodeEntities, htmlToText, normalizeWhitespace } from './text';
 
-export const SOURCE_IDS = [
-  'dou', 'djinni', 'robotaua', 'jooble', 'remoteok', 'remotive', 'himalayas', 'wwr', 'hn',
-  'workua', 'olx', 'linkedin', 'arbeitnow', 'jobicy', 'workingnomads', 'justjoin', 'jobico',
-  'greenhouse', 'lever', 'ashby', 'workable', 'telegram', 'adzuna', 'itlead',
-] as const;
+export const SOURCE_IDS = ['dou', 'djinni', 'robotaua'] as const;
 export type SourceId = (typeof SOURCE_IDS)[number];
 
 export const REMOTE_TYPES = ['remote', 'hybrid', 'office', 'unknown'] as const;

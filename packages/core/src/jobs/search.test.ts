@@ -37,9 +37,8 @@ describe('searchProfileInputSchema', () => {
 });
 
 describe('buildSourceQueries', () => {
-  const specs = buildSourceQueries({ keywords: ['Full Stack', 'React Developer'], skills: ['React', 'Node.js'], remoteType: 'any', sources: ['dou', 'djinni', 'robotaua', 'himalayas', 'hn'] });
+  const specs = buildSourceQueries({ keywords: ['Full Stack', 'React Developer'], skills: ['React', 'Node.js'], remoteType: 'any', sources: ['dou', 'djinni', 'robotaua'] });
   const bySource = (id: string) => specs.filter((s) => s.sourceId === id);
-  const withLowYield = buildSourceQueries({ keywords: ['Full Stack', 'React Developer'], skills: ['React', 'Node.js'], remoteType: 'any', sources: ['wwr', 'hn', 'remoteok'] });
 
   it('creates one query per keyword for search sources', () => {
     expect(bySource('dou').map((s) => s.params).filter((p) => p.search)).toEqual(
@@ -47,7 +46,7 @@ describe('buildSourceQueries', () => {
     );
     expect(bySource('dou').filter((s) => s.params.search)).toHaveLength(8);
     expect(bySource('robotaua')).toHaveLength(8);
-    expect(bySource('himalayas')[0]!.params).toEqual({ q: 'full stack' });
+    expect(bySource('robotaua')[0]!.params).toEqual({ keyWords: 'full stack' });
   });
   it('maps skills to djinni primary keywords', () => {
     expect(bySource('djinni').map((s) => s.params)).toEqual([
@@ -55,11 +54,6 @@ describe('buildSourceQueries', () => {
       { primary_keyword: 'React.js' },
       { primary_keyword: 'Node.js' },
     ]);
-  });
-  it('uses a slug tag for remoteok and no params for feeds', () => {
-    expect(withLowYield.find((s) => s.sourceId === 'remoteok')!.params).toEqual({ tag: 'react' });
-    expect(withLowYield.find((s) => s.sourceId === 'wwr')!.params).toEqual({});
-    expect(bySource('hn')[0]!.params).toEqual({});
   });
   it('builds deterministic unique query keys', () => {
     expect(bySource('dou')[0]!.queryKey).toBe('dou:{"search":"full stack"}');
@@ -71,37 +65,15 @@ describe('buildSourceQueries with source selection', () => {
   const base = { keywords: ['full stack'], skills: ['React'], remoteType: 'remote' as const };
 
   it('only builds queries for selected sources', () => {
-    const specs = buildSourceQueries({ ...base, sources: ['dou', 'workua'] });
-    expect([...new Set(specs.map((s) => s.sourceId))].sort()).toEqual(['dou', 'workua']);
+    const specs = buildSourceQueries({ ...base, sources: ['dou', 'robotaua'] });
+    expect([...new Set(specs.map((s) => s.sourceId))].sort()).toEqual(['dou', 'robotaua']);
   });
 
   it('falls back to defaults when sources is null', () => {
     const ids = new Set(buildSourceQueries({ ...base, sources: null }).map((s) => s.sourceId));
-    expect([...ids].sort()).toEqual(['djinni', 'dou', 'linkedin', 'robotaua']);
+    expect([...ids].sort()).toEqual(['djinni', 'dou', 'robotaua']);
   });
 
-  it('builds params for new sources', () => {
-    const specs = buildSourceQueries({
-      ...base,
-      sources: ['workua', 'olx', 'linkedin', 'jobicy', 'arbeitnow', 'workingnomads', 'justjoin', 'jobico', 'itlead'],
-    });
-    const p = (id: string) => specs.filter((s) => s.sourceId === id).map((s) => s.params);
-    expect(p('workua')[0]).toEqual({ search: 'full stack', remote: '1' });
-    expect(p('olx')[0]).toEqual({ search: 'full stack' });
-    expect(p('linkedin')[0]).toEqual({ keywords: 'full stack', location: 'Worldwide', remote: '1' });
-    expect(p('jobicy')[0]).toEqual({ tag: 'full stack' });
-    expect(p('arbeitnow')).toEqual([{}]);
-    expect(p('workingnomads')).toEqual([{}]);
-    expect(p('justjoin')).toEqual([{}]);
-    expect(p('jobico')).toEqual([{}]);
-    expect(p('itlead')).toEqual([{}]);
-  });
-
-  it('targets Ukraine on LinkedIn and office Work.ua for office profiles', () => {
-    const specs = buildSourceQueries({ ...base, remoteType: 'office', sources: ['workua', 'linkedin'] });
-    expect(specs.find((s) => s.sourceId === 'workua')!.params).toEqual({ search: 'full stack' });
-    expect(specs.find((s) => s.sourceId === 'linkedin')!.params).toEqual({ keywords: 'full stack', location: 'Ukraine' });
-  });
 });
 
 describe('DOU categories', () => {
@@ -138,28 +110,6 @@ describe('searchTerms', () => {
   });
   it('dedupes case-insensitively and drops blanks', () => {
     expect(searchTerms({ keywords: [' React ', 'react', ''], skills: [] })).toEqual(['react', 'react developer', 'frontend developer']);
-  });
-});
-
-describe('browser source terms', () => {
-  it('limits Work.ua and OLX to the first 2 terms while other keyword sources keep all', () => {
-    const profile = { keywords: ['full stack', 'react', 'node.js', 'next.js'], skills: [], remoteType: 'remote' as const, sources: ['workua', 'olx', 'jobicy'] as SourceId[] };
-    const specs = buildSourceQueries(profile);
-    const terms = (id: string) => specs.filter((s) => s.sourceId === id).map((s) => s.params.search ?? s.params.tag);
-    expect(terms('workua')).toEqual(['full stack', 'react']);
-    expect(terms('olx')).toEqual(['full stack', 'react']);
-    expect(terms('jobicy')).toHaveLength(searchTerms(profile).length);
-    expect(terms('jobicy').length).toBeGreaterThan(2);
-  });
-});
-
-describe('adzuna queries', () => {
-  it('builds 2 terms x 4 countries with remote', () => {
-    const specs = buildSourceQueries({ keywords: ['react', 'node.js'], skills: [], remoteType: 'remote', sources: ['adzuna'] });
-    expect(specs.map((s) => s.params)).toEqual([
-      { what: 'react remote', country: 'pl' }, { what: 'react remote', country: 'de' }, { what: 'react remote', country: 'gb' }, { what: 'react remote', country: 'nl' },
-      { what: 'node.js remote', country: 'pl' }, { what: 'node.js remote', country: 'de' }, { what: 'node.js remote', country: 'gb' }, { what: 'node.js remote', country: 'nl' },
-    ]);
   });
 });
 

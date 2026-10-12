@@ -1,7 +1,5 @@
-import type { SourceAdapter } from '@jp/scrapers';
 import type { Db } from '../db';
 import { getActiveProfilesOfUser } from './repository';
-import { deferUnconfigured } from './schedule';
 import { syncProfile } from './sync-profiles';
 
 export type DueQuery = { id: string; sourceId: string; nextRunAt: string };
@@ -9,13 +7,12 @@ export type DueQuery = { id: string; sourceId: string; nextRunAt: string };
 /**
  * "Find jobs now" for one user: re-link and re-match their active profiles, then pull every query of those profiles
  * forward to `now` so it is scraped immediately. Paused and disabled sources are left alone (runQuery would skip
- * them anyway); unconfigured ones (no API key) are deferred like the hourly scheduler does.
+ * them anyway).
  */
 export async function prepareSearchNow(
   db: Db,
   userId: string,
   now: Date,
-  deps: { adapters: Partial<Record<string, SourceAdapter>>; env: Record<string, string | undefined>; intervalMultiplier?: number },
 ): Promise<{ profiles: number; due: DueQuery[] }> {
   const profiles = await getActiveProfilesOfUser(db, userId);
   if (profiles.length === 0) return { profiles: 0, due: [] };
@@ -23,13 +20,11 @@ export async function prepareSearchNow(
   for (const profile of profiles) for (const id of (await syncProfile(db, profile, now)).queryIds) queryIds.add(id);
   if (queryIds.size === 0) return { profiles: profiles.length, due: [] };
 
-  return { profiles: profiles.length, due: await pullForward(db, [...queryIds], now, deps) };
+  return { profiles: profiles.length, due: await pullForward(db, [...queryIds], now) };
 }
 
-type Deps = { adapters: Partial<Record<string, SourceAdapter>>; env: Record<string, string | undefined>; intervalMultiplier?: number };
-
-/** Brings these queries' next run forward to now and returns them as due (paused/disabled/unconfigured left out). */
-async function pullForward(db: Db, ids: string[], now: Date, deps: Deps, onlyNeverRun = false): Promise<DueQuery[]> {
+/** Brings these queries' next run forward to now and returns them as due (paused/disabled left out). */
+async function pullForward(db: Db, ids: string[], now: Date, onlyNeverRun = false): Promise<DueQuery[]> {
   if (ids.length === 0) return [];
   const nowIso = now.toISOString();
   let query = db.from('search_queries').select('id, source_id, next_run_at, sources!inner(enabled, paused_until)').in('id', ids).eq('sources.enabled', true);
@@ -42,14 +37,13 @@ async function pullForward(db: Db, ids: string[], now: Date, deps: Deps, onlyNev
     const { error: updateError } = await db.from('search_queries').update({ next_run_at: nowIso }).in('id', later.slice(i, i + 200));
     if (updateError) throw updateError;
   }
-  const due = runnable.map((q) => ({ id: q.id, sourceId: q.source_id, nextRunAt: q.next_run_at > nowIso ? nowIso : q.next_run_at }));
-  return deferUnconfigured(db, due, deps.adapters, deps.env, now, deps.intervalMultiplier);
+  return runnable.map((q) => ({ id: q.id, sourceId: q.source_id, nextRunAt: q.next_run_at > nowIso ? nowIso : q.next_run_at }));
 }
 
 /**
  * After a profile is saved: queries that have never run (a new keyword or board) are scraped right away instead of
  * waiting for the next scheduler tick. Queries that already ran keep their cadence (no rate limit to bypass).
  */
-export async function dueNewQueries(db: Db, queryIds: string[], now: Date, deps: Deps): Promise<DueQuery[]> {
-  return pullForward(db, queryIds, now, deps, true);
+export async function dueNewQueries(db: Db, queryIds: string[], now: Date): Promise<DueQuery[]> {
+  return pullForward(db, queryIds, now, true);
 }

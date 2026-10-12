@@ -3,7 +3,6 @@ import { getDb } from '../db';
 import { getProfile } from '../pipeline/repository';
 import { dueNewQueries } from '../pipeline/search-now';
 import { syncProfile } from '../pipeline/sync-profiles';
-import { pipelineDeps } from '../runtime';
 import { enqueueScrapes } from './enqueue';
 
 export const syncProfileTask = task({
@@ -16,8 +15,7 @@ export const syncProfileTask = task({
     const now = new Date();
     const result = await syncProfile(db, profile, now);
     // New keywords / boards from this save are scraped now, not at the next 30-minute tick.
-    const deps = pipelineDeps();
-    const fresh = await dueNewQueries(db, result.queryIds, now, { adapters: deps.adapters, env: deps.env ?? {}, intervalMultiplier: deps.intervalMultiplier });
+    const fresh = await dueNewQueries(db, result.queryIds, now);
     await enqueueScrapes(fresh);
     logger.info('profile synced', { profileId: payload.profileId, matched: result.matched, queries: result.queryIds.length, scrapedNow: fresh.length });
     return { queryIds: result.queryIds.length, matched: result.matched, scrapedNow: fresh.length };

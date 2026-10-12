@@ -1,5 +1,4 @@
 import { config as loadEnv } from 'dotenv';
-import { playwright } from '@trigger.dev/build/extensions/playwright';
 import { defineConfig } from '@trigger.dev/sdk';
 
 loadEnv({ path: '.env' });
@@ -10,9 +9,8 @@ export default defineConfig({
   dirs: ['./src/trigger'],
   runtime: 'node-24',
   maxDuration: 300,
-  // Cheapest preset for everything; browser sources override to small-2x per run (schedule-queries.ts).
+  // Cheapest preset for everything; heavier tasks set their own machine.
   machine: 'micro',
-  build: { extensions: [playwright({ browsers: ['chromium'], version: '1.63.0' })] },
   retries: {
     enabledInDev: false,
     default: { maxAttempts: 3, minTimeoutInMs: 2_000, maxTimeoutInMs: 30_000, factor: 2 },

@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { SENIORITIES, SOURCE_IDS, type SourceId } from './job';
 import { isFrontendKeyword, keywordSearchVariants } from './keywords';
 import { ROLE_FAMILIES } from './roles';
-import { BROWSER_SOURCE_IDS, defaultSources } from './sources';
+import { defaultSources } from './sources';
 
 export function parseList(text: string, max = 30): string[] {
   const seen = new Set<string>();
@@ -122,17 +122,9 @@ function djinniCategories(raw: string): string[] {
 const SEARCH_SOURCES: [SourceId, string][] = [
   ['dou', 'search'],
   ['robotaua', 'keyWords'],
-  ['jooble', 'keywords'],
-  ['remotive', 'search'],
-  ['himalayas', 'q'],
-  ['workua', 'search'],
-  ['olx', 'search'],
-  ['jobicy', 'tag'],
 ];
 
 const MAX_TERMS = 14;
-/** LinkedIn fetches every posting page, so it gets the first terms only. */
-const LINKEDIN_TERMS = 6;
 /** Job-title variants that job boards match better than bare technology names. */
 // Bare role words also search their usual job titles; other spellings come from keywordSearchVariants.
 const TITLE_VARIANTS: [RegExp, string[]][] = [
@@ -162,8 +154,6 @@ export function searchTerms(profile: Pick<SearchProfile, 'keywords' | 'skills'>)
   return out.slice(0, MAX_TERMS);
 }
 
-export const ADZUNA_COUNTRIES = ['pl', 'de', 'gb', 'nl'] as const;
-
 export function queryKey(sourceId: SourceId, params: Record<string, string>): string {
   const sorted = Object.fromEntries(
     Object.keys(params)
@@ -173,15 +163,10 @@ export function queryKey(sourceId: SourceId, params: Record<string, string>): st
   return `${sourceId}:${JSON.stringify(sorted)}`;
 }
 
-function slug(s: string): string {
-  return s.toLowerCase().replace(/\.js$/, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-}
-
 export function buildSourceQueries(
   profile: Pick<SearchProfile, 'keywords' | 'skills' | 'remoteType' | 'sources'>,
 ): SourceQuerySpec[] {
   const enabled = new Set<SourceId>(profile.sources ?? defaultSources(profile.remoteType));
-  const remote = profile.remoteType === 'remote';
   const keywords = searchTerms(profile);
   const specs: SourceQuerySpec[] = [];
   const add = (sourceId: SourceId, params: Record<string, string>) => {
@@ -189,19 +174,7 @@ export function buildSourceQueries(
   };
 
   for (const [sourceId, param] of SEARCH_SOURCES) {
-    // Browser sources are the most expensive to run, so they get only the first two terms (like Adzuna).
-    for (const keyword of BROWSER_SOURCE_IDS.has(sourceId) ? keywords.slice(0, 2) : keywords) {
-      add(sourceId, sourceId === 'workua' && remote ? { [param]: keyword, remote: '1' } : { [param]: keyword });
-    }
-  }
-  for (const keyword of keywords.slice(0, LINKEDIN_TERMS)) {
-    add(
-      'linkedin',
-      remote ? { keywords: keyword, location: 'Worldwide', remote: '1' } : { keywords: keyword, location: 'Ukraine' },
-    );
-  }
-  for (const term of keywords.slice(0, 2)) {
-    for (const country of ADZUNA_COUNTRIES) add('adzuna', { what: `${term} remote`, country });
+    for (const keyword of keywords) add(sourceId, { [param]: keyword });
   }
 
   const terms = [...profile.keywords, ...profile.skills].map((t) => t.toLowerCase());
@@ -225,7 +198,6 @@ export function buildSourceQueries(
   ].filter((c): c is string => c !== null);
   for (const category of categories) add('dou', { category });
 
-
   const djinni = [
     ...new Set([
       ...[...profile.keywords, ...profile.skills].flatMap((t) => djinniCategories(t)),
@@ -235,17 +207,6 @@ export function buildSourceQueries(
   ].slice(0, MAX_DJINNI_CATEGORIES);
   if (djinni.length === 0) add('djinni', {});
   for (const primary of djinni) add('djinni', { primary_keyword: primary });
-
-  const tagSource = profile.skills[0] ?? profile.keywords[0];
-  const tag = tagSource ? slug(tagSource) : '';
-  add('remoteok', tag ? { tag } : {});
-  add('wwr', {});
-  add('hn', {});
-  add('arbeitnow', {});
-  add('workingnomads', {});
-  add('justjoin', {});
-  add('jobico', {});
-  add('itlead', {});
 
   const unique = new Map(specs.map((s) => [s.queryKey, s]));
   return [...unique.values()];

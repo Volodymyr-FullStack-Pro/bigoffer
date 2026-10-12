@@ -31,29 +31,3 @@ describe('regions', () => {
     expect(remoteBlockedFor(['us'], 'ZZ')).toBe(false);
   });
 });
-
-describe('regionsFromLocation', () => {
-  it('maps board location fields to regions and ISO countries', async () => {
-    const { regionsFromLocation, countryCodeFromName } = await import('./regions');
-    expect(countryCodeFromName('United States')).toBe('US');
-    expect(countryCodeFromName('Ukraine')).toBe('UA');
-    expect(countryCodeFromName('Czechia')).toBe('CZ');
-    expect(countryCodeFromName('Narnia')).toBeNull();
-    expect(regionsFromLocation('USA')).toEqual(['US']);
-    expect(regionsFromLocation('Canada,  USA')).toEqual(['CA', 'US']);
-    expect(regionsFromLocation('Anywhere in India')).toEqual(['IN']);
-    expect(regionsFromLocation('Europe, USA, UK')).toEqual(['europe', 'US', 'uk']);
-    expect(regionsFromLocation(['United States'])).toEqual(['US']);
-    expect(regionsFromLocation(['Poland', 'Ukraine', 'Germany'])).toEqual(['PL', 'UA', 'DE']);
-  });
-  it('returns no restriction when unsure or unrestricted', async () => {
-    const { regionsFromLocation } = await import('./regions');
-    expect(regionsFromLocation('Global')).toEqual(['worldwide']);
-    expect(regionsFromLocation('Anywhere in the World')).toEqual(['worldwide']);
-    expect(regionsFromLocation('Worldwide, USA')).toEqual(['worldwide']);
-    expect(regionsFromLocation('Remote')).toEqual([]);
-    expect(regionsFromLocation('Toronto office or nearby')).toEqual([]);
-    expect(regionsFromLocation('')).toEqual([]);
-    expect(regionsFromLocation([])).toEqual([]);
-  });
-});

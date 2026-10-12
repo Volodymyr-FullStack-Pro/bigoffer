@@ -1,6 +1,5 @@
-import { type BoardRef, boardQuerySpecs, buildSourceQueries, defaultSources, type SearchProfile, scoreJob } from '@jp/core';
+import { buildSourceQueries, defaultSources, type SearchProfile, scoreJob } from '@jp/core';
 import type { Db } from '../db';
-import { getEnabledBoards } from './boards';
 import { matchJobs } from './match';
 import { deleteNewMatches, getActiveProfiles, getNewMatchJobIdsOutsideSources, getRecentJobs } from './repository';
 
@@ -9,11 +8,8 @@ const CHUNK = 100;
 // query_key values are long JSON strings that URL-encode ~3x; 100 of them overflow the PostgREST URI limit.
 const KEY_CHUNK = 20;
 
-async function linkQueries(db: Db, profile: SearchProfile, boards: BoardRef[]): Promise<string[]> {
-  const specs = [
-    ...buildSourceQueries(profile),
-    ...boardQuerySpecs(boards, profile.sources ?? defaultSources(profile.remoteType)),
-  ];
+async function linkQueries(db: Db, profile: SearchProfile): Promise<string[]> {
+  const specs = buildSourceQueries(profile);
   const { error: upsertError } = await db
     .from('search_queries')
     .upsert(
@@ -34,7 +30,7 @@ async function linkQueries(db: Db, profile: SearchProfile, boards: BoardRef[]): 
     ids.push(...data.map((q) => q.id));
   }
 
-  // Prune links to queries the profile no longer has, in chunks so the URL stays short with hundreds of boards.
+  // Prune links to queries the profile no longer has, in chunks so the URL stays short.
   const { data: linked, error: linkedError } = await db
     .from('search_profile_queries')
     .select('search_query_id')
@@ -72,7 +68,7 @@ export async function syncProfile(
     await deleteNewMatches(db, profile.id);
     return { queryIds: [], matched: 0 };
   }
-  const queryIds = await linkQueries(db, profile, await getEnabledBoards(db));
+  const queryIds = await linkQueries(db, profile);
   const since = new Date(now.getTime() - RECENT_DAYS * 24 * 3600 * 1000);
   const sources = profile.sources ?? defaultSources(profile.remoteType);
   const recent = await getRecentJobs(db, since, sources);
@@ -105,7 +101,6 @@ export async function syncAllProfiles(db: Db, _now: Date): Promise<number> {
     if (unlinkError) throw unlinkError;
   }
   const profiles = await getActiveProfiles(db);
-  const boards = await getEnabledBoards(db);
-  for (const profile of profiles) await linkQueries(db, profile, boards);
+  for (const profile of profiles) await linkQueries(db, profile);
   return profiles.length;
 }
