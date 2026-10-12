@@ -32,6 +32,8 @@ export const contactsSchema = z.object({
   linkedin: httpUrl.optional(),
   github: httpUrl.optional(),
   portfolio: httpUrl.optional(),
+  /** A stable link to the CV (Google Drive, Dropbox, own site) to paste into applications and messages. */
+  cv: httpUrl.optional(),
   telegram: z
     .string()
     .regex(/^@?[A-Za-z0-9_]{5,32}$/)

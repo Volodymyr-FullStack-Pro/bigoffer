@@ -143,7 +143,8 @@ export async function recruiterNote(
     });
     const contacts = (me?.contacts ?? {}) as Record<string, unknown>;
     const str = (k: string) => (typeof contacts[k] === 'string' && (contacts[k] as string).trim() ? (contacts[k] as string).trim() : null);
-    const cvLink = cv.path ? await cvSignedUrl(supabase, cv.path) : null;
+    // The user's stable CV link first; else a 30-day link to the uploaded file.
+    const cvLink = str('cv') ?? (cv.path ? await cvSignedUrl(supabase, cv.path) : null);
     const lines = [
       cvLink ? `${SIGN[lang].cv}: ${cvLink}` : null,
       ...[['Email', str('email')], ['Telegram', str('telegram')], ['LinkedIn', str('linkedin')], ['GitHub', str('github')], ['Phone', str('phone')]]

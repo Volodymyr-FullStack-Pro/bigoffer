@@ -20,6 +20,7 @@ const CONTACT_FIELDS = [
   { key: 'phone', type: 'tel' },
   { key: 'linkedin', type: 'url' },
   { key: 'github', type: 'url' },
+  { key: 'cv', type: 'url' },
   { key: 'portfolio', type: 'url' },
   { key: 'telegram', type: 'text' },
 ] as const;
