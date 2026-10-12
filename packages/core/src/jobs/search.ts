@@ -77,9 +77,13 @@ export const DJINNI_PRIMARY_KEYWORDS: Record<string, string> = {
   golang: 'Golang',
   go: 'Golang',
   ruby: 'Ruby',
+  'react native': 'React Native',
+  'react-native': 'React Native',
+  expo: 'React Native',
   ios: 'iOS',
   android: 'Android',
   flutter: 'Flutter',
+  dart: 'Flutter',
   devops: 'DevOps',
   qa: 'QA',
   'project manager': 'Project Manager',
@@ -122,12 +126,14 @@ const SEARCH_SOURCES: [SourceId, string][] = [
   ['jobicy', 'tag'],
 ];
 
-const MAX_TERMS = 6;
+const MAX_TERMS = 8;
 /** Job-title variants that job boards match better than bare technology names. */
+// Titles spell these several ways ("Fullstack Engineer", "Full-Stack Developer", "Front-end Developer"); boards'
+// text search does not always join them, so a keyword brings its common spellings along.
 const TITLE_VARIANTS: [RegExp, string[]][] = [
-  [/^full ?-?stack$/, ['full stack developer']],
+  [/^full ?-?stack( developer| engineer)?$/, ['full stack developer', 'fullstack']],
   [/^react(\.js)?$/, ['react developer', 'frontend developer']],
-  [/^front ?-?end$/, ['frontend developer']],
+  [/^front ?-?end( developer| engineer)?$/, ['frontend developer', 'front-end']],
   [/^node(\.js)?$/, ['node.js developer']],
   [/^next(\.js)?$/, ['next.js developer']],
   [/^(javascript|js)$/, ['javascript developer']],
@@ -202,8 +208,9 @@ export function buildSourceQueries(
     has(/\bjava\b|spring|kotlin/) ? 'Java' : null,
     has(/\.net|c#|asp\.net/) ? '.NET' : null,
     has(/devops|\bsre\b|kubernetes|terraform/) ? 'DevOps' : null,
-    has(/\bios\b|swift/) ? 'iOS/macOS' : null,
-    has(/android/) ? 'Android' : null,
+    // DOU has no React Native / Flutter category: cross-platform jobs are filed under iOS and Android.
+    has(/\bios\b|swift|react[\s-]?native|flutter/) ? 'iOS/macOS' : null,
+    has(/android|kotlin|react[\s-]?native|flutter/) ? 'Android' : null,
     has(/designer|ui\/ux|\bux\b|figma/) ? 'Design' : null,
     has(/project manager/) ? 'Project Manager' : null,
     has(/product manager/) ? 'Product Manager' : null,

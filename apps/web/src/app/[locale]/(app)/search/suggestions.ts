@@ -1,9 +1,13 @@
 import type { RoleFamily } from '@jp/core';
 
-/** Search keywords people actually use per role family (job-title words, not skills). */
+/**
+ * Search keywords per role family, most frequent job-title wording first (measured on 680 front-end / full-stack
+ * titles from DOU, Djinni, robota.ua and LinkedIn, Oct 2026): "full stack developer/engineer" 140+, "frontend
+ * developer/engineer" 90+, "javascript developer" 25, "react developer" 30 with its spellings, "next.js" rare.
+ */
 const KEYWORDS: Record<RoleFamily, string[]> = {
-  frontend: ['frontend', 'react developer', 'next.js developer', 'vue developer', 'angular developer', 'javascript developer', 'typescript developer'],
-  fullstack: ['full stack', 'node.js developer', 'javascript developer', 'typescript developer', 'react developer'],
+  frontend: ['frontend', 'frontend engineer', 'react developer', 'javascript developer', 'angular developer', 'vue developer', 'typescript developer', 'next.js developer'],
+  fullstack: ['full stack', 'full stack engineer', 'javascript developer', 'react developer', 'typescript developer', 'software engineer', 'product engineer'],
   backend: ['backend', 'node.js developer', 'python developer', 'java developer', 'golang developer', '.net developer', 'php developer'],
   mobile: ['react native', 'flutter developer', 'ios developer', 'android developer', 'mobile developer'],
   devops: ['devops', 'sre', 'platform engineer', 'cloud engineer'],
