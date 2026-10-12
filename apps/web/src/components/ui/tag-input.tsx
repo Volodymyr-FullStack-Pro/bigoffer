@@ -1,7 +1,7 @@
 'use client';
 
 import { X } from 'lucide-react';
-import { useId, useMemo, useState } from 'react';
+import { useId, useMemo, useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
 
 const norm = (s: string) => s.trim().toLowerCase();
@@ -25,6 +25,9 @@ export function TagInput({
   invalid = false,
   placeholder,
   onChange,
+  sameKey = norm,
+  addLabel = '+ Add “{value}”',
+  duplicateLabel = 'Already there: {value}',
 }: {
   name: string;
   label: string;
@@ -39,11 +42,28 @@ export function TagInput({
   invalid?: boolean;
   placeholder?: string;
   onChange?: (tags: string[]) => void;
+  /** Same-thing key: "React.js" and "React" are one skill. Defaults to a case-insensitive compare. */
+  sameKey?: (s: string) => string;
+  /** "+ Add «{value}»" and "Already there: {value}" texts (with {value}). */
+  addLabel?: string;
+  duplicateLabel?: string;
 }) {
   const id = useId();
   const [tags, setTags] = useState(defaultValue);
   const [text, setText] = useState('');
   const [showAll, setShowAll] = useState(false);
+  // The chip a duplicate would have repeated: highlighted for a moment, with a note under the field.
+  const [dupe, setDupe] = useState<string | null>(null);
+  const dupeTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const flagDupe = (existing: string) => {
+    setDupe(existing);
+    clearTimeout(dupeTimer.current);
+    dupeTimer.current = setTimeout(() => setDupe(null), 2500);
+  };
+  const existingFor = (v: string) => {
+    const k = sameKey(v);
+    return k ? tags.find((t) => sameKey(t) === k) : undefined;
+  };
 
   const update = (next: string[]) => {
     setTags(next);
@@ -53,20 +73,27 @@ export function TagInput({
     const next = [...tags];
     for (const part of raw) {
       const v = part.trim();
-      if (v && next.length < max && !next.some((t) => norm(t) === norm(v))) next.push(v);
+      if (!v) continue;
+      const same = next.find((t) => sameKey(t) === sameKey(v));
+      if (same) flagDupe(same);
+      else if (next.length < max) next.push(v);
     }
     if (next.length !== tags.length) update(next);
   };
 
   const picks = useMemo(() => {
-    const taken = new Set(tags.map(norm));
-    return recommended.filter((s) => !taken.has(norm(s)));
-  }, [recommended, tags]);
+    const taken = new Set(tags.map(sameKey));
+    return recommended.filter((s) => !taken.has(sameKey(s)));
+  }, [recommended, tags, sameKey]);
   const open = useMemo(() => {
-    const taken = new Set([...tags, ...recommended].map(norm));
+    const taken = new Set([...tags, ...recommended].map(sameKey));
     const q = norm(text);
-    return suggestions.filter((s) => !taken.has(norm(s)) && (!q || norm(s).includes(q)));
-  }, [suggestions, recommended, tags, text]);
+    return suggestions.filter((s) => !taken.has(sameKey(s)) && (!q || norm(s).includes(q)));
+  }, [suggestions, recommended, tags, text, sameKey]);
+  // What is being typed, offered as its own chip unless it is already there or an exact suggestion.
+  const typed = text.trim();
+  const typedExisting = typed ? existingFor(typed) : undefined;
+  const offerTyped = typed !== '' && !typedExisting && !open.some((s) => norm(s) === norm(typed)) && tags.length < max;
   const shown = showAll || text ? open : open.slice(0, 12);
 
   return (
@@ -82,7 +109,15 @@ export function TagInput({
         )}
       >
         {tags.map((t) => (
-          <span key={t} data-testid="tag-chip" className="inline-flex items-center gap-1 rounded-full bg-brand/15 py-0.5 pr-1 pl-2.5 text-sm text-link">
+          <span
+            key={t}
+            data-testid="tag-chip"
+            data-duplicate={dupe === t || typedExisting === t || undefined}
+            className={cn(
+              'inline-flex items-center gap-1 rounded-full bg-brand/15 py-0.5 pr-1 pl-2.5 text-sm text-link transition-shadow',
+              (dupe === t || typedExisting === t) && 'shadow-[0_0_0_2px_var(--warning)]',
+            )}
+          >
             {t}
             <button type="button" aria-label={`× ${t}`} onClick={() => update(tags.filter((x) => x !== t))} className="grid size-5 place-items-center rounded-full hover:bg-brand/20">
               <X className="size-3" aria-hidden />
@@ -113,7 +148,25 @@ export function TagInput({
           className="min-w-32 flex-1 bg-transparent px-1 py-1 outline-none"
         />
       </div>
+      {(dupe || typedExisting) && (
+        <span data-testid={`duplicate-${name}`} aria-live="polite" className="text-xs font-medium text-warning">
+          {duplicateLabel.replace('{value}', (typedExisting ?? dupe)!)}
+        </span>
+      )}
       {hint && <span className="text-xs text-muted-foreground">{hint}</span>}
+      {offerTyped && (
+        <button
+          type="button"
+          data-testid={`add-typed-${name}`}
+          onClick={() => {
+            add([typed]);
+            setText('');
+          }}
+          className="self-start rounded-full border border-brand/60 bg-brand/15 px-2.5 py-0.5 text-sm font-medium text-link hover:bg-brand/25"
+        >
+          {addLabel.replace('{value}', typed)}
+        </button>
+      )}
       {picks.length > 0 && tags.length < max && (
         <div className="flex flex-wrap items-center gap-1.5" data-testid={`recommend-${name}`}>
           {recommendedLabel && <span className="mr-1 text-xs font-medium text-link">{recommendedLabel}</span>}
