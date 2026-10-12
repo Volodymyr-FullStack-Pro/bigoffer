@@ -331,7 +331,8 @@
     "tip_keywords": "Add keywords: {items} — jobs like yours are often titled so.",
     "tip_cvSkills": "Add skills from your CV: {items} — they raise the match.",
     "tip_roles": "Pick roles so other professions stay out of the feed.",
-    "tip_cities": "For hybrid/office, add cities — or choose Remote or Any."
+    "tip_cities": "For hybrid/office, add cities — or choose Remote or Any.",
+    "savedSearching": "Searching the new keywords and boards now — fresh jobs in 5–10 min."
   },
   "board": {
     "title": "Application board",

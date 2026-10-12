@@ -1,6 +1,8 @@
 import { afterAll, describe, expect, it } from 'vitest';
 import { getDb } from '../src/db';
-import { prepareSearchNow } from '../src/pipeline/search-now';
+import { dueNewQueries, prepareSearchNow } from '../src/pipeline/search-now';
+import { syncProfile } from '../src/pipeline/sync-profiles';
+import { getProfile } from '../src/pipeline/repository';
 
 const db = getDb();
 const uniq = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
@@ -46,6 +48,35 @@ describe('prepareSearchNow', () => {
     if (error) throw error;
     try {
       expect(await prepareSearchNow(db, user.user.id, now, { adapters: {}, env: {} })).toEqual({ profiles: 0, due: [] });
+    } finally {
+      await db.auth.admin.deleteUser(user.user.id);
+    }
+  });
+});
+
+describe('dueNewQueries', () => {
+  it('returns only queries that never ran, pulled forward to now', async () => {
+    const { data: user, error } = await db.auth.admin.createUser({ email: `save-new-${uniq}@e2e.test`, email_confirm: true });
+    if (error) throw error;
+    try {
+      const { data: sp, error: spErr } = await db
+        .from('search_profiles')
+        .insert({ user_id: user.user.id, name: 'Save', keywords: [`yy${uniq}`, `ww${uniq}`], skills: [], remote_type: 'remote', sources: ['remotive'] })
+        .select('id')
+        .single();
+      if (spErr) throw spErr;
+      await db.from('sources').update({ enabled: true, paused_until: null }).eq('id', 'remotive');
+      const { queryIds } = await syncProfile(db, (await getProfile(db, sp.id))!, now);
+      const { data: rows } = await db.from('search_queries').select('id, query_key').in('id', queryIds).eq('source_id', 'remotive');
+      const ran = rows!.find((r) => r.query_key.includes(`yy${uniq}`))!;
+      // One keyword's query already ran and is scheduled later; the other is brand new.
+      await db.from('search_queries').update({ last_run_at: now.toISOString(), next_run_at: later }).eq('id', ran.id);
+      await db.from('search_queries').update({ next_run_at: later }).in('id', rows!.filter((r) => r.id !== ran.id).map((r) => r.id));
+      const due = await dueNewQueries(db, queryIds, now, { adapters: {}, env: {} });
+      const dueIds = due.map((q) => q.id);
+      expect(dueIds).not.toContain(ran.id);
+      expect(dueIds.length).toBeGreaterThan(0);
+      expect(due.every((q) => q.nextRunAt === now.toISOString())).toBe(true);
     } finally {
       await db.auth.admin.deleteUser(user.user.id);
     }
