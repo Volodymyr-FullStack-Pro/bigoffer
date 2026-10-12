@@ -17,7 +17,7 @@ export async function saveSearchProfile(_prev: SearchFormState, formData: FormDa
     name: String(formData.get('name') ?? ''),
     keywords: parseList(String(formData.get('keywords') ?? ''), 10),
     targetRoles: formData.getAll('targetRoles').map(String),
-    skills: parseList(String(formData.get('skills') ?? '')),
+    skills: parseList(String(formData.get('skills') ?? ''), 100),
     excludeKeywords: parseList(String(formData.get('excludeKeywords') ?? '')),
     seniority: formData.getAll('seniority').map(String),
     locations: parseList(String(formData.get('locations') ?? ''), 10),

@@ -99,8 +99,8 @@ select throws_ok(format($$ insert into public.search_profiles (user_id, name, ke
   values ('11111111-1111-1111-1111-111111111111', 'Long skill', '{react}', '{%s}') $$, repeat('s', 61)),
   '23514', null, 'a 61-char skill is rejected');
 select throws_ok($$ insert into public.search_profiles (user_id, name, keywords, skills)
-  select '11111111-1111-1111-1111-111111111111', 'Many skills', '{react}', array_agg('s' || g) from generate_series(1, 31) g $$,
-  '23514', null, '31 skills are rejected');
+  select '11111111-1111-1111-1111-111111111111', 'Many skills', '{react}', array_agg('s' || g) from generate_series(1, 101) g $$,
+  '23514', null, '101 skills are rejected');
 select throws_ok($$ insert into public.search_profiles (user_id, name, keywords, locations)
   select '11111111-1111-1111-1111-111111111111', 'Many places', '{react}', array_agg('l' || g) from generate_series(1, 11) g $$,
   '23514', null, '11 locations are rejected');
