@@ -39,7 +39,7 @@ export function FeedListItem({
       <ScoreMeter score={match.score} label={t('match')} />
       <span className="font-display text-[15px] leading-snug font-bold">{match.title}</span>
       {match.excludedBy && <HiddenReason reason={match.excludedBy} />}
-      <DomainBadges domains={match.domains} />
+      <DomainBadges domains={match.domains} perks={match.perks} />
       {match.onBoard !== null && (
         <span
           data-testid="on-board-badge"

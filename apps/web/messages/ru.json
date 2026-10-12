@@ -210,7 +210,21 @@
     "domain_adtech": "AdTech",
     "domain_logistics": "Логистика",
     "domain_govtech": "GovTech",
-    "domain_outsource": "Аутсорс"
+    "domain_outsource": "Аутсорс",
+    "filterDomain": "Сфера",
+    "filterReservation": "С бронированием",
+    "perk_reservation": "🛡 Бронирование",
+    "perk_testTask": "Тестовое задание",
+    "perk_partTime": "Part-time",
+    "perk_urgent": "⚡ Срочно",
+    "labelsMenu": "Метки",
+    "labelsTitle": "Метки на карточках",
+    "label_domains": "Сфера (FinTech, GameDev…)",
+    "label_military": "Армия",
+    "label_reservation": "Бронирование",
+    "label_testTask": "Тестовое задание",
+    "label_partTime": "Part-time",
+    "label_urgent": "Срочно"
   },
   "comingSoon": {
     "badge": "Скоро",

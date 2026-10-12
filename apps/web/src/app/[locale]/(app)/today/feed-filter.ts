@@ -1,3 +1,4 @@
+import type { JobDomain } from '@jp/core';
 import type { FeedMatch } from './feed-types';
 
 export type FeedFilters = {
@@ -14,9 +15,13 @@ export type FeedFilters = {
   level: 'all' | NonNullable<FeedMatch['seniority']>;
   /** Leave out vacancies for service in the armed forces. */
   noArmy: boolean;
+  /** One field ('all' = any). */
+  domain: 'all' | JobDomain;
+  /** Only jobs that offer reservation from mobilisation. */
+  reservation: boolean;
 };
 
-export const DEFAULT_FILTERS: FeedFilters = { profileId: 'all', minScore: 0, remote: 'any', source: 'all', fresh: false, sort: 'best', experience: 'any', level: 'all', noArmy: false };
+export const DEFAULT_FILTERS: FeedFilters = { profileId: 'all', minScore: 0, remote: 'any', source: 'all', fresh: false, sort: 'best', experience: 'any', level: 'all', noArmy: false, domain: 'all', reservation: false };
 
 const DAY_MS = 24 * 3600 * 1000;
 
@@ -40,7 +45,9 @@ export function filterMatches(items: FeedMatch[], f: FeedFilters, now: Date = ne
       (!f.fresh || freshness(m, now) >= cutoff) &&
       experienceFits(m, f.experience) &&
       (f.level === 'all' || m.seniority === null || m.seniority === f.level) &&
-      !(f.noArmy && m.domains.includes('military')),
+      !(f.noArmy && m.domains.includes('military')) &&
+      (f.domain === 'all' || m.domains.includes(f.domain)) &&
+      (!f.reservation || m.perks.includes('reservation')),
   );
 }
 

@@ -210,7 +210,21 @@
     "domain_adtech": "AdTech",
     "domain_logistics": "Logistics",
     "domain_govtech": "GovTech",
-    "domain_outsource": "Outsource"
+    "domain_outsource": "Outsource",
+    "filterDomain": "Field",
+    "filterReservation": "With reservation",
+    "perk_reservation": "🛡 Reservation",
+    "perk_testTask": "Test task",
+    "perk_partTime": "Part-time",
+    "perk_urgent": "⚡ Urgent",
+    "labelsMenu": "Labels",
+    "labelsTitle": "Labels on cards",
+    "label_domains": "Field (FinTech, GameDev…)",
+    "label_military": "Army",
+    "label_reservation": "Mobilisation reservation",
+    "label_testTask": "Test task",
+    "label_partTime": "Part-time",
+    "label_urgent": "Urgent"
   },
   "comingSoon": {
     "badge": "Soon",

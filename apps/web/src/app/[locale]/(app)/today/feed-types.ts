@@ -1,4 +1,4 @@
-import type { JobDomain } from '@jp/core';
+import type { JobDomain, JobPerk } from '@jp/core';
 
 export type RemoteType = 'remote' | 'hybrid' | 'office' | 'unknown';
 
@@ -35,6 +35,8 @@ export type FeedMatch = {
   excludedBy: string | null;
   /** Field of the vacancy (fintech, gamedev, …); 'military' = service in the armed forces. */
   domains: JobDomain[];
+  /** Stated conditions: reservation from mobilisation, a test task, part-time, urgent. */
+  perks: JobPerk[];
   /** Board column the user already has this job in (same job, or the same company + title from another board). */
   onBoard: string | null;
 };

@@ -1,5 +1,6 @@
 'use client';
 
+import { JOB_DOMAINS } from '@jp/core';
 import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { GlowCard } from '@/components/ui/glow-card';
@@ -9,7 +10,9 @@ import { tellGenie } from '@/lib/genie/events';
 import { useSaveUiPrefs } from '@/lib/use-save-ui-prefs';
 import { hideMatch, restoreMatch, saveMatch } from './actions';
 import { DEFAULT_FILTERS, filterMatches, sortMatches, type FeedFilters } from './feed-filter';
+import { ALL_LABELS, type CardLabels, CardLabelsContext } from './domain-badges';
 import { FeedListItem } from './feed-list-item';
+import { LabelsMenu } from './labels-menu';
 import type { FeedMatch } from './feed-types';
 import { MatchDetail, type MatchAction } from './match-detail';
 import { SwipeCard } from './swipe-card';
@@ -33,10 +36,12 @@ export function Feed({
   focusId = null,
   savedFilters,
   ruleHidden = [],
+  savedLabels,
 }: {
   matches: FeedMatch[];
   /** Matches the profile rules hid, browsable with the "Hidden by rules" toggle. */
   ruleHidden?: FeedMatch[];
+  savedLabels?: Partial<CardLabels>;
   profiles: { id: string; name: string }[];
   sources: { id: string; name: string }[];
   focusId?: string | null;
@@ -54,6 +59,7 @@ export function Feed({
   const setItems = showHidden ? setHiddenItems : setMainItems;
   const [filters, setFilters] = useState<FeedFilters>(() => initialFilters(savedFilters, profiles, sources));
   const saveUiPrefs = useSaveUiPrefs();
+  const [labels, setLabels] = useState<CardLabels>({ ...ALL_LABELS, ...savedLabels });
   const firstFilters = useRef(filters);
   // Every filter change is remembered for this user (all devices) until they change it again.
   useEffect(() => {
@@ -177,6 +183,7 @@ export function Feed({
   }
 
   return (
+    <CardLabelsContext.Provider value={labels}>
     <section data-testid="feed" className="flex flex-col gap-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div className="flex flex-wrap items-center gap-3">
@@ -211,7 +218,22 @@ export function Feed({
             { value: 'all', label: t('all') },
             ...(['intern', 'junior', 'middle', 'senior', 'lead'] as const).map((l) => ({ value: l, label: tt(`seniority_${l}`) })),
           ])}
+          <LabelsMenu
+            value={labels}
+            onChange={(next) => {
+              setLabels(next);
+              saveUiPrefs({ cardLabels: next });
+            }}
+          />
           {select('sort-select', tt('sortLabel'), filters.sort, (v) => setFilters((f) => ({ ...f, sort: v as FeedFilters['sort'] })), [{ value: 'best', label: tt('sortBest') }, { value: 'newest', label: tt('sortNewest') }])}
+          {select('filter-domain', t('filterDomain'), filters.domain, (v) => setFilters((f) => ({ ...f, domain: v as FeedFilters['domain'] })), [
+            { value: 'all', label: t('all') },
+            ...JOB_DOMAINS.filter((d) => d !== 'military').map((d) => ({ value: d, label: t(`domain_${d}`) })),
+          ])}
+          <label className="flex items-end gap-2 pb-1 text-sm font-semibold">
+            <input data-testid="filter-reservation" type="checkbox" checked={filters.reservation} onChange={(e) => setFilters((f) => ({ ...f, reservation: e.target.checked }))} className="size-5" />
+            {t('filterReservation')}
+          </label>
           <label className="flex items-end gap-2 pb-1 text-sm font-semibold">
             <input data-testid="filter-no-army" type="checkbox" checked={filters.noArmy} onChange={(e) => setFilters((f) => ({ ...f, noArmy: e.target.checked }))} className="size-5" />
             {t('filterNoArmy')}
@@ -262,5 +284,6 @@ export function Feed({
       )}
       <Toast toast={toast} onClose={close} />
     </section>
+    </CardLabelsContext.Provider>
   );
 }

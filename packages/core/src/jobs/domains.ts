@@ -89,3 +89,29 @@ export function detectDomains(job: { title: string; company?: string | null; des
     .map((x) => x.d as JobDomain);
   return (isArmy(job) ? ['military' as const, ...scored] : scored).slice(0, max);
 }
+
+/** What the vacancy offers or asks that matters before applying. */
+export const JOB_PERKS = ['reservation', 'testTask', 'partTime', 'urgent'] as const;
+export type JobPerk = (typeof JOB_PERKS)[number];
+
+const PERK_PATTERNS: Record<JobPerk, RegExp> = {
+  // Deferment from mobilisation for employees (not "reservation system" products).
+  reservation: W(
+    String.raw`бронюванн\p{L}*(?! (?:квитк\p{L}*|номер\p{L}*|готел\p{L}*|столик\p{L}*|систем\p{L}*))|бронировани\p{L}*(?! (?:билет\p{L}*|номер\p{L}*|отел\p{L}*|столик\p{L}*|систем\p{L}*))|бронь (?:від|от) мобіліз\p{L}*|бронь (?:від|от) мобилиз\p{L}*|відстрочк\p{L}*|отсрочк\p{L}*|броню(?:ємо|ем)|військов\p{L}* облік\p{L}* та бронюванн\p{L}*|deferment from (?:mobili[sz]ation|military service)|reservation from (?:mobili[sz]ation|conscription)|draft deferment`,
+  ),
+  testTask: W(String.raw`тестов\p{L}* завданн\p{L}*|тестов\p{L}* задани\p{L}*|test task|take-home|home assignment|coding assignment`),
+  // The position itself, not "part-time employees are not eligible" in benefits.
+  partTime: W(String.raw`part[- ]time (?:role|position|job|contract|basis|engagement|developer|engineer|freelance)|(?:is|this is) (?:a )?part[- ]time|employment(?: type)?: ?part[- ]time|часткова зайнятість|частичная занятость|неповн\p{L}* (?:робоч\p{L}* )?(?:день|зайнят\p{L}*)|неполн\p{L}* (?:рабоч\p{L}* )?(?:день|занятост\p{L}*)`),
+  urgent: W(String.raw`терміново|срочно|urgent(?:ly)? (?:hiring|need|vacancy|position)|hiring urgently|immediate start|start immediately`),
+};
+
+/** Perks and conditions stated in the posting (title + text). */
+const WEEKLY_HOURS = /(\d{1,2})\s*(?:hours|hrs|h|годин\p{L}*|час\p{L}*)\s*(?:per|a|на|в)\s*(?:week|тиждень|неделю)/giu;
+
+export function detectPerks(job: { title: string; descriptionText: string }): JobPerk[] {
+  const text = `${job.title}\n${job.descriptionText}`.slice(0, 20_000);
+  // "20 hours per week" is part-time; "40 hours per week" is not.
+  const fewHours = [...text.matchAll(WEEKLY_HOURS)].some((m) => Number(m[1]) > 0 && Number(m[1]) <= 30);
+  const inTitle = /part[- ]time|частков|частичн|неповн|неполн/i.test(job.title);
+  return JOB_PERKS.filter((k) => (text.match(PERK_PATTERNS[k]) ?? []).length > 0 || (k === 'partTime' && (fewHours || inTitle)));
+}

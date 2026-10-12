@@ -169,7 +169,7 @@ export function MatchDetail({
           {match.title}
         </h2>
         {match.excludedBy && <HiddenReason reason={match.excludedBy} />}
-        <DomainBadges domains={match.domains} detailed />
+        <DomainBadges domains={match.domains} perks={match.perks} detailed />
         {match.onBoard !== null && (
           <p
             data-testid="on-board"

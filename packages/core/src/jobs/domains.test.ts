@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { detectDomains } from './domains';
+import { detectDomains, detectPerks } from './domains';
 
 describe('detectDomains', () => {
   it('flags army service', () => {
@@ -21,5 +21,21 @@ describe('detectDomains', () => {
   });
   it('stays quiet without evidence', () => {
     expect(detectDomains({ title: 'Frontend Developer', descriptionText: 'React, TypeScript, Tailwind. Remote.' })).toEqual([]);
+  });
+});
+
+describe('detectPerks', () => {
+  it('finds reservation from mobilisation, but not booking products', () => {
+    expect(detectPerks({ title: 'Dev', descriptionText: 'Пропонуємо: бронювання від мобілізації, гнучкий графік.' })).toContain('reservation');
+    expect(detectPerks({ title: 'Dev', descriptionText: 'Можливість бронювання для військовозобов’язаних.' })).toContain('reservation');
+    expect(detectPerks({ title: 'Dev', descriptionText: 'Предоставляем отсрочку от мобилизации.' })).toContain('reservation');
+    expect(detectPerks({ title: 'Dev', descriptionText: 'Розробка системи бронювання квитків та готелів.' })).not.toContain('reservation');
+  });
+  it('finds a test task, part-time and urgency', () => {
+    expect(detectPerks({ title: 'Dev', descriptionText: 'Етапи: HR, тестове завдання, технічна співбесіда.' })).toContain('testTask');
+    expect(detectPerks({ title: 'Part-time React developer', descriptionText: '' })).toContain('partTime');
+    expect(detectPerks({ title: 'Dev', descriptionText: 'Workload: 20 hours per week.' })).toContain('partTime');
+    expect(detectPerks({ title: 'Терміново! Frontend', descriptionText: '' })).toContain('urgent');
+    expect(detectPerks({ title: 'Frontend', descriptionText: 'React, TypeScript.' })).toEqual([]);
   });
 });

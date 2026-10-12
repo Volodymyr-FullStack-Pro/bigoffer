@@ -28,6 +28,7 @@ const m = (id: string, over: Partial<FeedMatch> = {}): FeedMatch => ({
   onBoard: null,
     excludedBy: null,
     domains: [],
+    perks: [],
   firstSeenAt: '2026-10-05T10:00:00.000Z',
   postings: [{ sourceId: 'dou', url: 'https://jobs.dou.ua/v/1' }],
   ...over,
@@ -119,5 +120,15 @@ describe('army filter', () => {
     const items = [m('army', { domains: ['military'] }), m('fin', { domains: ['fintech'] })];
     expect(filterMatches(items, DEFAULT_FILTERS)).toHaveLength(2);
     expect(filterMatches(items, { ...DEFAULT_FILTERS, noArmy: true }).map((x) => x.id)).toEqual(['fin']);
+  });
+});
+
+describe('field and reservation filters', () => {
+  const items = [m('fin', { domains: ['fintech'], perks: ['reservation'] }), m('game', { domains: ['gamedev'] }), m('none')];
+  it('keeps one field', () => {
+    expect(filterMatches(items, { ...DEFAULT_FILTERS, domain: 'fintech' }).map((x) => x.id)).toEqual(['fin']);
+  });
+  it('keeps only jobs offering reservation', () => {
+    expect(filterMatches(items, { ...DEFAULT_FILTERS, reservation: true }).map((x) => x.id)).toEqual(['fin']);
   });
 });
