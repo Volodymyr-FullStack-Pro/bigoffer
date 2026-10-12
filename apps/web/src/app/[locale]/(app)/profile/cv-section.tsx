@@ -131,7 +131,8 @@ export function CvSection({
           {pending ? t('uploading') : t('upload')}
         </button>
       </form>
-      {cv && !parsed && aiAvailable && (
+      {/* Also for a parsed CV: a re-read picks up details an earlier, shorter parse left out. */}
+      {cv && aiAvailable && (
         <button
           type="button"
           data-testid="cv-retry"
@@ -147,7 +148,7 @@ export function CvSection({
           }
           className="brutal-press self-start rounded-full border border-border px-4 py-1.5 text-sm font-medium text-link hover:bg-muted disabled:opacity-50"
         >
-          {retrying ? t('retrying') : t('retry')}
+          {retrying ? t('retrying') : t(parsed ? 'reread' : 'retry')}
         </button>
       )}
       <p data-testid="cv-status" role="status" className="text-sm">

@@ -441,7 +441,8 @@
     "dropHere": "Drop your CV here or click to choose",
     "dropHint": "PDF up to 5 MB",
     "retry": "Try reading it again",
-    "retrying": "Reading…"
+    "retrying": "Reading…",
+    "reread": "Re-read the CV"
   },
   "bank": {
     "title": "Answer bank",
