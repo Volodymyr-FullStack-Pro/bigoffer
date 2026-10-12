@@ -1,9 +1,10 @@
 name: CI
 
+# Pull requests only: a merge to develop or main ships code its PR already tested (deploy.yml runs on main),
+# so re-running CI on those pushes only spent Actions minutes.
 on:
   pull_request:
-  push:
-    branches: [main, develop]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -34,7 +35,10 @@ jobs:
         run: pnpm --filter @jp/web exec vitest run src/lib/job-preview.test.ts
         env: { PERF: '1' }
 
+  # The release PR (develop -> main) carries commits that already passed database and e2e in their own PRs;
+  # it re-runs only the fast checks above.
   database:
+    if: github.base_ref != 'main'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -58,6 +62,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     needs: checks
+    if: github.base_ref != 'main'
     steps:
       - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
