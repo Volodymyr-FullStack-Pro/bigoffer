@@ -1,6 +1,7 @@
 import { z } from 'zod';
-import type { LlmClient } from '../types';
+import type { GenerateJsonRequest, LlmClient } from '../types';
 import { cvToPrompt, type ParsedCv } from './parse-cv';
+import { bannedPhrases, rewriteNote } from './style';
 
 export const applyKitWireSchema = z.object({
   lang: z.string().describe('ISO 639-1 code of the language you wrote the letter in'),
@@ -79,6 +80,7 @@ function system(lang: 'auto' | 'en' | 'uk' | 'ru', tone: 'default' | 'shorter' |
     '     experience once at most, only if the job asks for them and the CV meets it.',
     '   - Never write a requirement as a claim without a CV fact behind it, and never copy the posting\'s wording as a claim',
     '     ("I design systems outside of frameworks" is a claim; "I built X without a framework" is a fact — only if the CV says so).',
+    '   - Keep CV facts as the CV words them: do not relabel them into the job\'s domain ("analytics dashboards" must not become "financial dashboards").',
     '   - Gaps: do not claim a missing requirement; at most mention a closely related strength.',
     '   - Close: one sentence that the candidate can start right away and would be glad to talk (no dates, no "next week").',
     '   - Do NOT add a sign-off, name or contacts: they are appended automatically after your text.',
@@ -118,7 +120,7 @@ export async function generateApplyKit(
     `Candidate name: ${input.candidate?.fullName?.trim().slice(0, 120) || 'not set'}`,
     '',
   ].join('\n');
-  const res = await llm.generateJson({
+  const request: GenerateJsonRequest<typeof applyKitWireSchema> = {
     sensitivity: 'private',
     // Written while the user waits on screen: the fast model (see GenerateJsonRequest.tier).
     // The full model with light thinking: Flash-Lite wrote generic letters that echoed the posting.
@@ -131,7 +133,10 @@ export async function generateApplyKit(
     system: system(input.lang, input.tone),
     prompt,
     maxOutputTokens: 4000,
-  });
+  };
+  let res = await llm.generateJson(request);
+  const found = bannedPhrases(`${res.data.cover_letter}\n${res.data.short_message}`);
+  if (found.length > 0) res = await llm.generateJson({ ...request, prompt: request.prompt + rewriteNote(found) });
   const w = res.data;
   const lang = /^[a-z]{2}$/.test(w.lang.trim().toLowerCase()) ? w.lang.trim().toLowerCase() : input.lang === 'auto' ? 'en' : input.lang;
   return {

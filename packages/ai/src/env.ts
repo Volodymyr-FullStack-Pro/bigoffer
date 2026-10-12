@@ -12,7 +12,7 @@ const aiEnvSchema = z.object({
   GEMINI_API_KEY_PUBLIC: z.string().min(1).optional(),
   GEMINI_API_KEY_PRIVATE: z.string().min(1).optional(),
   OPENROUTER_API_KEY: z.string().min(1).optional(),
-  AI_MODEL_WRITER: z.string().min(1).default('anthropic/claude-sonnet-5.5'),
+  AI_MODEL_WRITER: z.string().min(1).default('anthropic/claude-haiku-5.5'),
   ALLOW_FAKE_AI: z.string().optional(),
 });
 export type AiEnv = z.infer<typeof aiEnvSchema>;
