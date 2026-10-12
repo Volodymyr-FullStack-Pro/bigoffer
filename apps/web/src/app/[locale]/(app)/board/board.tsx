@@ -1,5 +1,6 @@
 'use client';
 
+import { tellGenie } from '@/lib/genie/events';
 import { applicationUrgency, type FollowUpRules, rankAtEnd, rankBetween, type RejectionInput, type RejectionReason, smartSort } from '@jp/core';
 import { closestCorners, DndContext, type DragEndEvent, DragOverlay, KeyboardSensor, PointerSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
@@ -97,7 +98,10 @@ export function Board({ columns, cards: initial, labels: initialLabels, rules, n
       patchLocal(id, previous);
       return show({ message: t('moveError'), tone: 'error' });
     }
-    if (target.kind === 'won' && card.columnId !== columnId) setConfetti(true);
+    if (target.kind === 'won' && card.columnId !== columnId) {
+      setConfetti(true);
+      tellGenie({ type: 'offer' });
+    } else if (target.key === 'applied' && card.columnId !== columnId) tellGenie({ type: 'applied' });
   };
 
   const requestMove = (id: string, columnId: string, rank: string, reasons: RejectionReason[] = [], outcome: 'rejected' | 'ghosted' = 'rejected') => {
@@ -170,7 +174,7 @@ export function Board({ columns, cards: initial, labels: initialLabels, rules, n
 
   return (
     <div data-testid="board" className="flex flex-col gap-6">
-      <button type="button" data-testid="add-card" onClick={() => setAdding(true)} className="brutal brutal-press self-start bg-brand px-4 py-2 font-semibold text-brand-foreground">
+      <button type="button" data-testid="add-card" onClick={() => setAdding(true)} className="brutal-press self-start rounded-full bg-brand px-4 py-2 text-sm font-semibold text-brand-foreground hover:bg-brand/90">
         + {t('addCard')}
       </button>
       <TodayActions
@@ -190,7 +194,8 @@ export function Board({ columns, cards: initial, labels: initialLabels, rules, n
       />
       {cards.length === 0 && <p data-testid="board-empty" className="text-muted-foreground">{t('empty')}</p>}
       <DndContext id="board-dnd" sensors={sensors} collisionDetection={closestCorners} onDragStart={({ active: a }) => setActiveId(String(a.id))} onDragCancel={() => setActiveId(null)} onDragEnd={onDragEnd}>
-        <div className="flex gap-4 overflow-x-auto pb-4">
+        {/* Phones scroll one column at a time; desktops show as many as fit. */}
+        <div className="-mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-4 sm:mx-0 sm:snap-none sm:px-0">
           {columns.map((col) => (
             <BoardColumnView
               key={col.id}

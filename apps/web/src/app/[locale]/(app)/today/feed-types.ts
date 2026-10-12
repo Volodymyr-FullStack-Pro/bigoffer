@@ -1,3 +1,5 @@
+import type { JobDomain, JobPerk } from '@jp/core';
+
 export type RemoteType = 'remote' | 'hybrid' | 'office' | 'unknown';
 
 export type FeedMatch = {
@@ -31,6 +33,10 @@ export type FeedMatch = {
   candidateYears: number | null;
   /** Why the profile rules hid it: 'seniority' | 'role' | 'format' | 'region' | an exclude word; null when shown. */
   excludedBy: string | null;
+  /** Field of the vacancy (fintech, gamedev, …); 'military' = service in the armed forces. */
+  domains: JobDomain[];
+  /** Stated conditions: reservation from mobilisation, a test task, part-time, urgent. */
+  perks: JobPerk[];
   /** Board column the user already has this job in (same job, or the same company + title from another board). */
   onBoard: string | null;
 };

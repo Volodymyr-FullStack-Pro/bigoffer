@@ -7,6 +7,7 @@ import { type ReactNode, useActionState, useEffect, useMemo, useRef, useState } 
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { TagInput } from '@/components/ui/tag-input';
+import { tellGenie } from '@/lib/genie/events';
 import { cn } from '@/lib/utils';
 import { deleteSearchProfile, saveSearchProfile, type SearchFormState } from './actions';
 import { profileTips } from './profile-tips';
@@ -89,12 +90,17 @@ export function SearchProfileForm({ values, cvSkills = [], cvHeadline = null }: 
   const [skills, setSkills] = useState(values.skills);
   const [locations, setLocations] = useState(values.locations);
   const [name, setName] = useState(values.name);
-  const recommended = useMemo(() => recommendedKeywords(cvHeadline, roles, cvSkills), [cvHeadline, roles, cvSkills]);
+  const recommended = useMemo(() => recommendedKeywords(cvHeadline, roles, cvSkills, 6, keywords), [cvHeadline, roles, cvSkills, keywords]);
   const nameSuggestion = profileNameSuggestion(cvHeadline, t(`remote_${(SEARCH_REMOTE_TYPES.find((r) => r === remoteType) ?? 'any') as 'any'}`));
   const tips = useMemo(
     () => profileTips({ keywords, recommended, skills, cvSkills, roles, remoteType, locations, sources }),
     [keywords, recommended, skills, cvSkills, roles, remoteType, locations, sources],
   );
+  // The Offer Genie mentions the tips when the user arrives here; cleared when leaving the page.
+  useEffect(() => {
+    tellGenie(tips.length > 0 ? { type: 'hint', key: 'searchTips', params: { count: tips.length } } : { type: 'clearHint' });
+  }, [tips.length]);
+  useEffect(() => () => tellGenie({ type: 'clearHint' }), []);
   // Pop-up feedback for every save; a tip follows when the profile could still find more.
   const lastStatus = useRef(state);
   useEffect(() => {
@@ -278,7 +284,8 @@ export function SearchProfileForm({ values, cvSkills = [], cvHeadline = null }: 
           {invalid.has('sources') && <p className="text-sm text-danger">{t('sourcesRequired')}</p>}
         </Section>
 
-        <div className="flex flex-wrap items-center gap-4 border-t border-border pt-5">
+        {/* Save stays in reach on a long form: sticks to the bottom of the screen (above the phone nav). */}
+        <div className="sticky bottom-16 z-20 -mx-6 flex flex-wrap items-center gap-4 border-t border-border bg-card/95 px-6 py-3 backdrop-blur md:bottom-0">
           <label className="flex items-center gap-2">
             <input type="checkbox" name="isActive" defaultChecked={values.isActive} className="size-4" />
             {t('active')}

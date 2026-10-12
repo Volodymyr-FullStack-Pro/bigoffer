@@ -10,6 +10,7 @@ import { PeopleSearch } from '@/components/apply-kit/people-search';
 import { ScoreMeter } from '@/components/ui/score-meter';
 import { LevelBadge } from '@/components/ui/tech-chip';
 import type { FeedMatch } from './feed-types';
+import { DomainBadges } from './domain-badges';
 import { HiddenReason } from './hidden-reason';
 
 export type MatchAction = 'saved' | 'applied' | 'hide';
@@ -34,12 +35,12 @@ export function MatchActions({
 }) {
   const t = useTranslations('feed');
   return (
-    <div className={`flex flex-wrap gap-2 ${compact ? 'justify-between' : ''}`}>
+    <div className={`flex flex-wrap gap-2 ${compact ? 'justify-between' : ''}`} data-testid="match-actions">
       <button
         type="button"
         data-testid="match-hide"
         onClick={() => onAction('hide')}
-        className="brutal brutal-press px-4 py-2 font-semibold"
+        className="brutal-press inline-flex items-center gap-1.5 rounded-full border border-border px-4 py-2 text-sm font-semibold hover:bg-muted"
       >
         {t('hide')} {!compact && <kbd className="font-mono text-xs opacity-60">H</kbd>}
       </button>
@@ -47,7 +48,7 @@ export function MatchActions({
         type="button"
         data-testid="match-save"
         onClick={() => onAction('saved')}
-        className="brutal brutal-press px-4 py-2 font-semibold"
+        className="brutal-press inline-flex items-center gap-1.5 rounded-full border border-border px-4 py-2 text-sm font-semibold hover:bg-muted"
       >
         {t('save')} {!compact && <kbd className="font-mono text-xs opacity-60">S</kbd>}
       </button>
@@ -55,7 +56,7 @@ export function MatchActions({
         type="button"
         data-testid="match-applied"
         onClick={() => onAction('applied')}
-        className="brutal brutal-press bg-brand px-4 py-2 font-semibold text-brand-foreground"
+        className="brutal-press inline-flex items-center gap-1.5 rounded-full bg-brand px-4 py-2 text-sm font-semibold text-brand-foreground hover:bg-brand/90"
       >
         {t('applied')} {!compact && <kbd className="font-mono text-xs opacity-60">A</kbd>}
       </button>
@@ -220,6 +221,7 @@ export function MatchDetail({
           {match.title}
         </h2>
         {match.excludedBy && <HiddenReason reason={match.excludedBy} />}
+        <DomainBadges domains={match.domains} perks={match.perks} detailed />
         {match.onBoard !== null && (
           <p
             data-testid="on-board"
@@ -228,7 +230,7 @@ export function MatchDetail({
             ✓ {tf('onBoard', { column: match.onBoard || '—' })}
           </p>
         )}
-        <p className="text-muted-foreground">{match.company}</p>
+        {!match.companyIsPlaceholder && <p className="text-muted-foreground">{match.company}</p>}
         <p className="flex flex-wrap items-center gap-x-4 gap-y-1.5 font-mono text-xs text-muted-foreground">
           <span>{t(`remote_${match.remoteType}`)}</span>
           {match.location && <span>{match.location}</span>}

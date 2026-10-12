@@ -1,3 +1,4 @@
+import { JOB_DOMAINS } from '@jp/core';
 import { z } from 'zod';
 
 /** Per-user UI choices kept in profiles.ui_prefs so they survive reloads and devices. Unknown/invalid keys are dropped. */
@@ -13,11 +14,18 @@ export const uiPrefsSchema = z
         sort: z.enum(['best', 'newest']),
         experience: z.union([z.enum(['any', 'fit']), z.number().int().min(0).max(20)]),
         level: z.enum(['all', 'intern', 'junior', 'middle', 'senior', 'lead']),
+        noArmy: z.boolean(),
+        domain: z.enum(['all', ...JOB_DOMAINS]),
+        reservation: z.boolean(),
       })
       .partial(),
     /** Board column id -> sort mode. */
     boardSort: z.record(z.string().max(64), z.enum(['smart', 'manual'])),
     kitLang: z.enum(['auto', 'en', 'uk', 'ru']),
+    /** Which label groups the job cards show. */
+    cardLabels: z.object({ domains: z.boolean(), military: z.boolean(), reservation: z.boolean(), testTask: z.boolean(), partTime: z.boolean(), urgent: z.boolean() }).partial(),
+    /** Offer Genie: on (tips + motivation), quiet (only important: goal, health, celebrations), off; daily goal. */
+    genie: z.object({ mode: z.enum(['on', 'quiet', 'off']), goal: z.number().int().min(1).max(50) }).partial(),
   })
   .partial();
 
@@ -41,5 +49,7 @@ export function mergeUiPrefs(current: UiPrefs, patch: UiPrefs): UiPrefs {
     ...patch,
     ...(patch.feed ? { feed: { ...current.feed, ...patch.feed } } : {}),
     ...(patch.boardSort ? { boardSort: { ...current.boardSort, ...patch.boardSort } } : {}),
+    ...(patch.genie ? { genie: { ...current.genie, ...patch.genie } } : {}),
+    ...(patch.cardLabels ? { cardLabels: { ...current.cardLabels, ...patch.cardLabels } } : {}),
   };
 }
