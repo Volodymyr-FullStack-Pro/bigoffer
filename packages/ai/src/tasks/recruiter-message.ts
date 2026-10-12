@@ -46,7 +46,14 @@ export async function recruiterMessage(
       `Write ${FORMAT_HINT[input.format]} from a candidate to a recruiter, in ${LANG_NAME[input.lang] ?? 'English'}.`,
       input.kind === 'follow_up'
         ? 'It is a polite follow-up: reference the earlier message briefly, add one new relevant point, ask about next steps.'
-        : 'It is a first message: who the candidate is, one or two concrete matches with the job, a clear ask.',
+        : [
+            'It is a first message: greeting; one line on why they write (the role by name; "I have applied" only if told so); one line with',
+            'years and core stack from the CV; then 2–3 short lines, each a concrete CV fact with its employer or project, matched to the core work of',
+            'this role (what the team builds, not only the stack); one line on how they work only if the CV supports it; then a clear ask for a short',
+            'chat. In a LinkedIn note keep only the strongest single fact. Never mention location or remote preferences unless the posting asks.',
+            'Layout (not for a LinkedIn note): an empty line between greeting, intro, facts, how they work and the ask; each fact on its own line',
+            'starting with "• ".',
+          ].join(' '),
       `Hard limit: ${limit} characters for the body. ${input.tone === 'shorter' ? 'Be very brief.' : input.tone === 'formal' ? 'Formal tone.' : 'Friendly professional tone.'}`,
       'Use only facts from the CV. No placeholders like [Name] — if the recruiter name is unknown, use a neutral greeting.',
       input.candidateName

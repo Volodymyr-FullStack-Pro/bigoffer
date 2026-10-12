@@ -38,3 +38,22 @@ describe('parseCv', () => {
     });
   });
 });
+
+describe('CV detail kept for letters', () => {
+  it('keeps up to 12 bullets per role and cuts a long one instead of dropping it', async () => {
+    const { normalizeCv, cvToPrompt } = await import('./parse-cv');
+    const long = `Park-It: Implemented complex booking calculation logic (pricing, durations, availability) ${'x'.repeat(500)}`;
+    const bullets = [long, ...Array.from({ length: 14 }, (_, i) => `Bullet ${i}`)];
+    const cv = normalizeCv({
+      full_name: 'A', headline: 'Dev', seniority: null, years_experience: 3, skills: [], locations: [], languages: [],
+      remote_preference: 'any', summary: null,
+      experience: [{ company: 'Arctic Web', title: 'Engineer', start: null, end: null, highlights: bullets }],
+      contacts: { email: null, phone: null, linkedin: null, github: null, portfolio: null, telegram: null },
+    });
+    const h = cv.experience[0]!.highlights;
+    expect(h).toHaveLength(12);
+    expect(h[0]).toMatch(/^Park-It: Implemented complex booking calculation logic \(pricing, durations, availability\)/);
+    expect(h[0]!.length).toBe(400);
+    expect(cvToPrompt(cv)).toContain('  • Bullet 10');
+  });
+});

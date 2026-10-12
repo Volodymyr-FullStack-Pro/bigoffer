@@ -15,7 +15,15 @@ export const cvWireSchema = z.object({
   remote_preference: z.enum(['any', 'remote', 'hybrid', 'office']),
   summary: nullableText.describe('Two sentences in English'),
   experience: z.array(
-    z.object({ company: z.string(), title: z.string(), start: nullableText, end: nullableText, highlights: z.array(z.string()) }),
+    z.object({
+      company: z.string(),
+      title: z.string(),
+      start: nullableText,
+      end: nullableText,
+      highlights: z
+        .array(z.string())
+        .describe('Every bullet of this role copied verbatim with its details and numbers, including bullets of projects done there ("Park-It: ...")'),
+    }),
   ),
   contacts: z.object({ email: nullableText, phone: nullableText, linkedin: nullableText, github: nullableText, portfolio: nullableText, telegram: nullableText }),
 });
@@ -44,6 +52,8 @@ export const parsedCvSchema = z.object({
   contacts: contact,
 });
 export type ParsedCv = z.infer<typeof parsedCvSchema>;
+
+const MAX_HIGHLIGHT = 400;
 
 const clip = (s: string | null, n: number) => {
   const t = s?.trim() ?? '';
@@ -83,7 +93,8 @@ export function normalizeCv(w: z.output<typeof cvWireSchema>): ParsedCv {
       title: e.title.trim().slice(0, 120),
       start: clip(e.start, 20),
       end: clip(e.end, 20),
-      highlights: dedupe(e.highlights, 4, 200),
+      // Letters and answers are built from these: keep every bullet with its details, cut a long one instead of dropping it.
+      highlights: dedupe(e.highlights.map((h) => h.trim().slice(0, MAX_HIGHLIGHT)), 12, MAX_HIGHLIGHT),
     })),
     contacts: {
       email: valid(z.email(), w.contacts.email?.trim()),
@@ -130,9 +141,9 @@ export function cvToPrompt(cv: ParsedCv): string {
     `Location: ${cv.locations.join(', ') || 'n/a'}; prefers ${cv.remotePreference}`,
     `Summary: ${cv.summary ?? 'n/a'}`,
     'Experience:',
-    ...cv.experience.map((e) => `- ${e.title} at ${e.company} (${e.start ?? '?'}–${e.end ?? 'now'}): ${e.highlights.join('; ')}`),
+    ...cv.experience.flatMap((e) => [`- ${e.title} at ${e.company} (${e.start ?? '?'}–${e.end ?? 'now'}):`, ...e.highlights.map((h) => `  • ${h}`)]),
   ];
-  return lines.join('\n').slice(0, 4000);
+  return lines.join('\n').slice(0, 10_000);
 }
 
 export function searchProfileFromCv(cv: ParsedCv) {

@@ -148,8 +148,10 @@ export async function recruiterNote(
     const cvLink = str('cv') ?? (cv.path ? await cvSignedUrl(supabase, cv.path) : null);
     const lines = [
       cvLink ? `${SIGN[lang].cv}: ${cvLink}` : null,
-      ...[['Email', str('email')], ['Telegram', str('telegram')], ['LinkedIn', str('linkedin')], ['GitHub', str('github')], ['Phone', str('phone')]]
-        .filter(([, v]) => v)
+      // A recruiter needs one more way to answer, not the full list: skip the channel the message already goes through.
+      ...[['Email', 'email', str('email')], ['Telegram', 'telegram', str('telegram')], ['LinkedIn', 'linkedin', str('linkedin')]]
+        .filter(([, kind, v]) => v && kind !== to.kind)
+        .map(([k, , v]) => [k, v])
         .map(([k, v]) => `${k}: ${v}`),
     ].filter((l): l is string => Boolean(l));
     const body = lines.length > 0 ? `${res.body}\n\n${lines.join('\n')}` : res.body;
