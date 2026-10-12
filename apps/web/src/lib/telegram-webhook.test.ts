@@ -112,11 +112,14 @@ describe('telegram webhook', () => {
     expect(f.bot.sendMessage).toHaveBeenCalledWith(42, expect.stringContaining('Ссылка устарела'));
   });
 
-  it('explains how to link on a bare /start', async () => {
-    const f = fakes();
+  it('explains how to link on a bare /start in an unlinked chat; lists commands in a linked one', async () => {
+    const f = fakes({ profileByChat: vi.fn(async () => null) });
     await run(f, startUpdate('/start'));
     expect(f.store.linkChat).not.toHaveBeenCalled();
     expect(f.bot.sendMessage).toHaveBeenCalledWith(42, expect.stringContaining('BigOffer'));
+    const linked = fakes();
+    await run(linked, startUpdate('/start'));
+    expect(linked.bot.sendMessage).toHaveBeenCalledWith(42, expect.stringContaining('/top'));
   });
 
   it('/stop unlinks the chat', async () => {
