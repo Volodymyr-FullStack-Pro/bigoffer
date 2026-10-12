@@ -70,6 +70,8 @@ const SYSTEM = [
   'You extract structured facts from ONE job posting for a job search app.',
   'Use only information present in the posting; never guess a salary, level or region that is not stated.',
   'Skills: concrete technologies, tools or professional skills the candidate needs, not soft-skill fluff.',
+  'Work format: "remote" only when the posting or location says remote / віддалено / удаленно / work from home; a city or office address',
+  'without that is "office", or "hybrid" when it mentions hybrid or some office days; "unknown" only when neither is stated.',
   'Summaries: plain and factual, no marketing language, no emojis.',
 ].join('\n');
 

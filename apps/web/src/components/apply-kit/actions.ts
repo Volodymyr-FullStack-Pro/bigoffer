@@ -111,7 +111,13 @@ export async function generateKit(jobId: string, opts: { lang: 'auto' | 'en' | '
   ]);
   if (!(await consumePrivateAi(supabase))) return { ok: false, error: 'ai_limit' };
   try {
-    const kit = await generateApplyKit(getLlm(), { job, cv: cv.parsed, lang: opts.lang, tone: opts.tone, salaryMinUsd: profiles?.[0]?.salary_min_usd ?? null, candidate: kitCandidate(profileRow) });
+    const candidate = kitCandidate(profileRow);
+    // The sign-off links the user's own CV link, else a 30-day link to the uploaded file.
+    if (!candidate.contacts.cv && cv.path) {
+      const link = await cvSignedUrl(supabase, cv.path);
+      if (link) candidate.contacts.cv = link;
+    }
+    const kit = await generateApplyKit(getLlm(), { job, cv: cv.parsed, lang: opts.lang, tone: opts.tone, salaryMinUsd: profiles?.[0]?.salary_min_usd ?? null, candidate });
     const { data: existing } = await supabase.from('apply_kits').select('form_answers').eq('job_id', jobId).maybeSingle();
     const stored = await storeKit(supabase, userId, jobId, {
       lang: kit.lang,
@@ -171,7 +177,9 @@ export async function answerFormQuestions(jobId: string, formText: string): Prom
     if (!cv?.parsed) return { ok: false, error: 'no_cv' };
     if (!(await consumePrivateAi(supabase))) return { ok: false, error: 'ai_limit' };
     try {
-      const generated = await answerForm(getLlm(), { questions: missing.map((m) => m.question), job, cv: cv.parsed, lang });
+      const { data: salary } = await supabase.from('search_profiles').select('salary_min_usd').not('salary_min_usd', 'is', null).limit(1);
+      const candidate = { fullName: profile?.full_name ?? null, salaryMinUsd: salary?.[0]?.salary_min_usd ?? null };
+      const generated = await answerForm(getLlm(), { questions: missing.map((m) => m.question), job, cv: cv.parsed, lang, candidate });
       missing.forEach((m, i) => { m.answer = generated[i] ?? ''; });
     } catch (err) {
       logFail('answerForm', err);
