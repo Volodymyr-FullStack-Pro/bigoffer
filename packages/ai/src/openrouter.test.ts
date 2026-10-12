@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import { LlmError } from './errors';
 import { LlmInvalidOutputError } from './errors';
-import { createOpenRouterClient, withRoutes } from './openrouter';
+import { createOpenRouterClient, REASONING_HEADROOM_TOKENS, withRoutes } from './openrouter';
 import { FakeLlmClient } from './testing';
 
 const schema = z.object({ a: z.string() });
@@ -24,6 +24,12 @@ describe('createOpenRouterClient', () => {
     const body = JSON.parse(String(seen[0]!.init!.body));
     expect(body.provider).toEqual({ data_collection: 'deny', require_parameters: true });
     expect(body.response_format.json_schema).toMatchObject({ name: 'apply_kit', strict: true });
+  });
+  it('leaves room for thinking on top of the answer budget', async () => {
+    const seen: { init?: RequestInit }[] = [];
+    const client = createOpenRouterClient({ apiKey: 'k', model: 'm', fetch: fakeFetch(200, { choices: [{ message: { content: '{"a":"hi"}' } }] }, seen) });
+    await client.generateJson({ ...req, maxOutputTokens: 4000 });
+    expect(JSON.parse(String(seen[0]!.init!.body)).max_tokens).toBe(4000 + REASONING_HEADROOM_TOKENS);
   });
   it('turns an HTTP error into an LlmError with the status', async () => {
     const client = createOpenRouterClient({ apiKey: 'k', model: 'm', fetch: fakeFetch(502, { error: { message: 'down', code: 502 } }) });

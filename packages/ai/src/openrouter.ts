@@ -18,6 +18,12 @@ type ChatResponse = {
 };
 
 const ENDPOINT = 'https://openrouter.ai/api/v1/chat/completions';
+/**
+ * Claude models behind OpenRouter think by default and the thinking counts against max_tokens: a cover letter
+ * spent ~3,400 of 4,000 tokens thinking and the JSON came back cut off. Only used tokens are billed, so the
+ * headroom costs nothing; reasoning settings are not sent because some endpoints reject them.
+ */
+export const REASONING_HEADROOM_TOKENS = 6000;
 
 /**
  * Writing model behind OpenRouter (cover letters, form answers, recruiter messages). Private data only goes to
@@ -37,7 +43,7 @@ export function createOpenRouterClient(opts: OpenRouterOptions): LlmClient {
         { role: 'user', content: req.prompt },
       ],
       // No temperature: newer Claude models reject it, and with require_parameters that leaves no endpoint at all.
-      max_tokens: req.maxOutputTokens ?? 2048,
+      max_tokens: (req.maxOutputTokens ?? 2048) + REASONING_HEADROOM_TOKENS,
       response_format: {
         type: 'json_schema',
         json_schema: {
