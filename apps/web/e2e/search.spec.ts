@@ -109,7 +109,8 @@ test('chips: suggestions add a term, × removes it, salary is picked from a list
   await loginAs(context, uniqueEmail('search-chips'));
   await page.goto('/en/search');
   await page.getByTestId('role-frontend').check();
-  await page.getByTestId('suggest-keywords').getByRole('button', { name: '+ react developer' }).click();
+  // For a front-end search "react developer" is one of the recommended (★) keywords.
+  await page.getByTestId('recommend-keywords').getByRole('button', { name: '★ react developer' }).click();
   await page.getByTestId('suggest-skills').getByRole('button', { name: '+ TypeScript' }).click();
   await page.getByLabel('Your skills').fill('Redux');
   await page.getByLabel('Your skills').press('Enter');
