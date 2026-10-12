@@ -98,7 +98,7 @@ export function SearchProfileForm({ values, cvSkills = [], cvHeadline = null }: 
   );
   // The Offer Genie mentions the tips when the user arrives here; cleared when leaving the page.
   useEffect(() => {
-    tellGenie(tips.length > 0 ? { type: 'hint', key: 'searchTips', params: { count: tips.length } } : { type: 'clearHint' });
+    tellGenie(tips.length > 0 ? { type: 'hint', key: 'searchTips', params: { count: tips.length }, action: { href: '/search#profile-tips', labelKey: 'actShowTips' } } : { type: 'clearHint' });
   }, [tips.length]);
   useEffect(() => () => tellGenie({ type: 'clearHint' }), []);
   // Pop-up feedback for every save; a tip follows when the profile could still find more.
@@ -121,7 +121,7 @@ export function SearchProfileForm({ values, cvSkills = [], cvHeadline = null }: 
         {values.id && <input type="hidden" name="id" value={values.id} />}
 
         {tips.length > 0 && (
-          <aside data-testid="profile-tips" className="flex flex-col gap-2 rounded-xl border border-brand/40 bg-brand/[0.07] p-4">
+          <aside id="profile-tips" data-testid="profile-tips" className="scroll-mt-24 flex flex-col gap-2 rounded-xl border border-brand/40 bg-brand/[0.07] p-4">
             <p className="flex items-center gap-2 text-sm font-semibold">
               <Lightbulb className="size-4 text-link" aria-hidden />
               {t('tipsTitle')}

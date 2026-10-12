@@ -39,7 +39,7 @@ export async function getGenieState(tzRaw: string): Promise<GenieState | null> {
   const waitingSince = new Date(now.getTime() - 5 * 24 * 3600_000).toISOString();
 
   const [{ data: me }, { data: profiles }, { data: applied }, fresh, hot, hidden, waiting] = await Promise.all([
-    supabase.from('profiles').select('ui_prefs, timezone').eq('id', userId).maybeSingle(),
+    supabase.from('profiles').select('ui_prefs, timezone, full_name').eq('id', userId).maybeSingle(),
     supabase.from('search_profiles').select('is_active, sources'),
     supabase.from('applications').select('applied_at').gte('applied_at', since14d),
     supabase.from('job_matches').select('id', { count: 'exact', head: true }).in('state', ['new', 'seen']).gte('created_at', since24h),
@@ -102,5 +102,6 @@ export async function getGenieState(tzRaw: string): Promise<GenieState | null> {
     hotMatches: hot.count ?? 0,
     ruleHidden: hidden.count ?? 0,
     waitingReplies: waiting.count ?? 0,
+    firstName: (me?.full_name ?? '').trim().split(/\s+/)[0] ?? '',
   };
 }

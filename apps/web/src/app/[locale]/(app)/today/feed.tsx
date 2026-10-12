@@ -38,11 +38,15 @@ export function Feed({
   savedFilters,
   ruleHidden = [],
   savedLabels,
+  openHidden = false,
+  onlyFresh = false,
 }: {
   matches: FeedMatch[];
   /** Matches the profile rules hid, browsable with the "Hidden by rules" toggle. */
   ruleHidden?: FeedMatch[];
   savedLabels?: Partial<CardLabels>;
+  openHidden?: boolean;
+  onlyFresh?: boolean;
   profiles: { id: string; name: string }[];
   sources: { id: string; name: string }[];
   focusId?: string | null;
@@ -54,11 +58,11 @@ export function Feed({
   const [startedEmpty] = useState(matches.length === 0);
   const [mainItems, setMainItems] = useState(matches);
   const [hiddenItems, setHiddenItems] = useState(ruleHidden);
-  const [showHidden, setShowHidden] = useState(false);
+  const [showHidden, setShowHidden] = useState(openHidden && ruleHidden.length > 0);
   // The toggle swaps which list the feed (and its actions) works on.
   const items = showHidden ? hiddenItems : mainItems;
   const setItems = showHidden ? setHiddenItems : setMainItems;
-  const [filters, setFilters] = useState<FeedFilters>(() => initialFilters(savedFilters, profiles, sources));
+  const [filters, setFilters] = useState<FeedFilters>(() => ({ ...initialFilters(savedFilters, profiles, sources), ...(onlyFresh ? { fresh: true } : {}) }));
   const saveUiPrefs = useSaveUiPrefs();
   const [labels, setLabels] = useState<CardLabels>({ ...ALL_LABELS, ...savedLabels });
   // The less used filters fold away; open when one of them is set, else as the user left it.

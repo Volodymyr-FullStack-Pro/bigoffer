@@ -5,7 +5,7 @@ const NOW = Date.parse('2026-10-12T10:00:00Z');
 const fresh: GenieMemory = { shown: {}, lastMotivationAt: 0 };
 const ok: GenieState = {
   mode: 'on', goal: 5, appliedToday: 1, streak: 0, idleDays: 0, hour: 12, hasProfile: true, profileActive: true,
-  staleSources: [], lastRunMinutes: 12, newMatches24h: 14, hotMatches: 0, ruleHidden: 0, waitingReplies: 0,
+  staleSources: [], lastRunMinutes: 12, newMatches24h: 14, hotMatches: 0, ruleHidden: 0, waitingReplies: 0, firstName: '',
 };
 
 describe('routeOf', () => {
@@ -59,5 +59,17 @@ describe('streaks', () => {
     expect(streaks([...d('2026-10-11', 5), ...d('2026-10-10', 6), ...d('2026-10-09', 1)], '2026-10-12', 5)).toEqual({ streak: 2, idleDays: 0 });
     expect(streaks(d('2026-10-08', 3), '2026-10-12', 5)).toEqual({ streak: 0, idleDays: 3 });
     expect(streaks([], '2026-10-12', 5)).toEqual({ streak: 0, idleDays: 0 });
+  });
+});
+
+describe('actions and greeting', () => {
+  it('every tip leads where it can be done', () => {
+    expect(pickMessage({ ...ok, hotMatches: 3 }, 'board', fresh, NOW)?.action?.href).toBe('/today?fresh=1');
+    expect(pickMessage({ ...ok, ruleHidden: 20 }, 'today', { shown: { 'health:ok:2026-10-12': NOW }, lastMotivationAt: 0 }, NOW)?.action?.href).toBe('/today?view=hidden');
+    expect(pickMessage({ ...ok, waitingReplies: 2 }, 'search', { shown: { 'health:ok:2026-10-12': NOW }, lastMotivationAt: 0 }, NOW)?.action?.href).toBe('/board#today-actions');
+    expect(pickMessage({ ...ok, appliedToday: 5 }, 'search', fresh, NOW)?.action?.href).toBe('/analytics');
+  });
+  it('greets by name with the daily report', () => {
+    expect(pickMessage({ ...ok, firstName: 'Volodymyr', hour: 9 }, 'other', fresh, NOW)).toMatchObject({ key: 'allGoodMorning', params: { name: 'Volodymyr' } });
   });
 });

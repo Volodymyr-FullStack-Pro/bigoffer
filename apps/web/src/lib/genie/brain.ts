@@ -27,6 +27,8 @@ export type GenieState = {
   ruleHidden: number;
   /** Applications waiting 5+ days in "Applied" without any reply. */
   waitingReplies: number;
+  /** First name for a greeting; empty when unknown. */
+  firstName: string;
 };
 
 export type GenieMood = 'happy' | 'neutral' | 'worried' | 'excited';
@@ -50,7 +52,7 @@ export type GenieMemory = {
 export type GenieRoute = 'today' | 'search' | 'board' | 'profile' | 'other';
 
 /** Page-provided hint (e.g. the search form's tips count). */
-export type GeniePageHint = { key: string; params?: Record<string, string | number> } | null;
+export type GeniePageHint = { key: string; params?: Record<string, string | number>; action?: GenieMessage['action'] } | null;
 
 const HOUR = 3600_000;
 const DAY = 24 * HOUR;
@@ -92,7 +94,7 @@ export function pickMessage(
   const left = Math.max(0, s.goal - s.appliedToday);
   if (s.hasProfile) {
     if (left === 0) {
-      candidates.push({ id: `goal:done:${dayKey(now)}`, kind: 'goal', mood: 'excited', key: s.streak > 0 ? 'goalDoneStreak' : 'goalDone', params: { goal: s.goal, streak: s.streak + 1 } });
+      candidates.push({ id: `goal:done:${dayKey(now)}`, kind: 'goal', mood: 'excited', key: s.streak > 0 ? 'goalDoneStreak' : 'goalDone', params: { goal: s.goal, streak: s.streak + 1 }, action: { href: '/analytics', labelKey: 'actProgress' } });
     } else if (s.idleDays >= 2) {
       candidates.push({ id: `goal:idle:${dayKey(now)}`, kind: 'goal', mood: 'worried', key: 'idle', params: { days: s.idleDays }, action: { href: '/today', labelKey: 'actFeed' } });
     } else if (s.hour >= 17 && left > 0) {
@@ -102,19 +104,21 @@ export function pickMessage(
 
   // 3. Fresh strong matches: the first ten applicants get the replies.
   if (!quiet && s.hotMatches > 0 && route !== 'today') {
-    candidates.push({ id: `hot:${s.hotMatches}:${Math.floor(now / (2 * HOUR))}`, kind: 'tip', mood: 'excited', key: 'hot', params: { count: s.hotMatches }, action: { href: '/today', labelKey: 'actFeed' } });
+    candidates.push({ id: `hot:${s.hotMatches}:${Math.floor(now / (2 * HOUR))}`, kind: 'tip', mood: 'excited', key: 'hot', params: { count: s.hotMatches }, action: { href: '/today?fresh=1', labelKey: 'actFresh' } });
   }
 
   // 4. What the current page can do better.
   if (!quiet) {
-    if (hint) candidates.push({ id: `hint:${route}:${hint.key}`, kind: 'tip', mood: 'neutral', key: hint.key, params: hint.params });
-    if (route === 'today' && s.ruleHidden >= 10) candidates.push({ id: 'tip:ruleHidden', kind: 'tip', mood: 'neutral', key: 'ruleHidden', params: { count: s.ruleHidden } });
-    if (route === 'board' && s.waitingReplies > 0) candidates.push({ id: 'tip:followUp', kind: 'tip', mood: 'neutral', key: 'followUp', params: { count: s.waitingReplies } });
+    if (hint) candidates.push({ id: `hint:${route}:${hint.key}`, kind: 'tip', mood: 'neutral', key: hint.key, params: hint.params, action: hint.action });
+    if (route === 'today' && s.ruleHidden >= 10) candidates.push({ id: 'tip:ruleHidden', kind: 'tip', mood: 'neutral', key: 'ruleHidden', params: { count: s.ruleHidden }, action: { href: '/today?view=hidden', labelKey: 'actShowHidden' } });
+    if (s.waitingReplies > 0) candidates.push({ id: 'tip:followUp', kind: 'tip', mood: 'neutral', key: 'followUp', params: { count: s.waitingReplies }, action: { href: '/board#today-actions', labelKey: 'actFollowUp' } });
   }
 
   // 5. Daily "everything works" report.
   if (s.hasProfile && s.profileActive && s.staleSources.length === 0 && s.lastRunMinutes !== null) {
-    candidates.push({ id: `health:ok:${dayKey(now)}`, kind: 'health', mood: 'happy', key: 'allGood', params: { found: s.newMatches24h, minutes: s.lastRunMinutes } });
+    // The first message of the day greets by name and reports.
+    const greet = s.hour < 12 ? 'Morning' : s.hour < 18 ? 'Day' : 'Evening';
+    candidates.push({ id: `health:ok:${dayKey(now)}`, kind: 'health', mood: 'happy', key: s.firstName ? `allGood${greet}` : 'allGood', params: { found: s.newMatches24h, minutes: s.lastRunMinutes, name: s.firstName }, action: s.newMatches24h > 0 ? { href: '/today', labelKey: 'actFeed' } : undefined });
   }
 
   const once = { 'health:ok': DAY, goal: DAY, hint: 6 * HOUR, tip: DAY, hot: 2 * HOUR, health: 3 * HOUR } as const;

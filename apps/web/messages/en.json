@@ -648,7 +648,18 @@
     "motto26": "Every day of searching makes you a stronger candidate.",
     "motto27": "Good news usually follows persistent work.",
     "motto28": "I watch the boards 24/7 — your only job is to apply.",
-    "motto29": "Believe in yourself the way I believe in you! 🧞"
+    "motto29": "Believe in yourself the way I believe in you! 🧞",
+    "actProgress": "My progress",
+    "actFresh": "Show fresh",
+    "actShowHidden": "Show hidden",
+    "actFollowUp": "Who to nudge",
+    "actShowTips": "Show tips",
+    "actBoard": "To the board",
+    "actNext": "Next job",
+    "allGoodMorning": "Good morning, {name}! ☀️ {found} new jobs in the last day, boards refreshed {minutes} min ago.",
+    "allGoodDay": "Hi, {name}! {found} new jobs in the last day, boards refreshed {minutes} min ago. All good ✓",
+    "allGoodEvening": "Good evening, {name}! {found} new jobs in the last day, boards refreshed {minutes} min ago.",
+    "streak": "{days} days in a row"
   },
   "analytics": {
     "eyebrow": "Your progress",
