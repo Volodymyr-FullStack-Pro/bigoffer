@@ -25,91 +25,114 @@ const ENDPOINT = 'https://openrouter.ai/api/v1/chat/completions';
  */
 export function createOpenRouterClient(opts: OpenRouterOptions): LlmClient {
   const doFetch = opts.fetch ?? fetch;
+  async function attempt<S extends z.ZodType>(
+    req: GenerateJsonRequest<S>,
+  ): Promise<GenerateJsonResult<z.output<S>>> {
+    if (req.files?.length || req.images?.length)
+      throw new LlmError('OpenRouter client does not take files', null);
+    const body = {
+      model: opts.model,
+      messages: [
+        { role: 'system', content: req.system },
+        { role: 'user', content: req.prompt },
+      ],
+      // No temperature: newer Claude models reject it, and with require_parameters that leaves no endpoint at all.
+      max_tokens: req.maxOutputTokens ?? 2048,
+      response_format: {
+        type: 'json_schema',
+        json_schema: {
+          name: (req.task ?? 'result').replace(/[^\w-]/g, '_').slice(0, 64),
+          strict: true,
+          schema: toResponseJsonSchema(req.schema),
+        },
+      },
+      provider: { data_collection: 'deny', require_parameters: true },
+    };
+    let res: Response;
+    try {
+      res = await doFetch(ENDPOINT, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${opts.apiKey}`,
+          'Content-Type': 'application/json',
+          'X-Title': 'BigOffer',
+        },
+        body: JSON.stringify(body),
+        signal: AbortSignal.timeout(req.timeoutMs ?? 60_000),
+      });
+    } catch (err) {
+      throw new LlmError(err instanceof Error ? err.message : String(err), null, { cause: err });
+    }
+    const json = (await res.json().catch(() => ({}))) as ChatResponse;
+    if (!res.ok || json.error) {
+      const status = json.error?.code ?? res.status;
+      const message = json.error?.message ?? `HTTP ${res.status}`;
+      throw status === 429 ? new LlmRateLimitError(message, null) : new LlmError(message, status);
+    }
+    const usage: LlmUsage = {
+      requests: 1,
+      inputTokens: json.usage?.prompt_tokens ?? 0,
+      outputTokens: json.usage?.completion_tokens ?? 0,
+    };
+    const text = json.choices?.[0]?.message?.content ?? '';
+    let data: unknown;
+    try {
+      data = JSON.parse(text.replace(/^```(?:json)?\s*|\s*```$/g, ''));
+    } catch {
+      throw new LlmInvalidOutputError('response is not JSON', text, usage);
+    }
+    const parsed = req.schema.safeParse(data);
+    if (!parsed.success)
+      throw new LlmInvalidOutputError('response does not match the schema', text, usage);
+    return { data: parsed.data, usage, model: opts.model };
+  }
+
   return {
     isAvailable: () => true,
     model: () => opts.model,
-    async generateJson<S extends z.ZodType>(
-      req: GenerateJsonRequest<S>,
-    ): Promise<GenerateJsonResult<z.output<S>>> {
-      if (req.files?.length || req.images?.length)
-        throw new LlmError('OpenRouter client does not take files', null);
-      const body = {
-        model: opts.model,
-        messages: [
-          { role: 'system', content: req.system },
-          { role: 'user', content: req.prompt },
-        ],
-        temperature: 0.3,
-        max_tokens: req.maxOutputTokens ?? 2048,
-        response_format: {
-          type: 'json_schema',
-          json_schema: {
-            name: (req.task ?? 'result').replace(/[^\w-]/g, '_').slice(0, 64),
-            strict: true,
-            schema: toResponseJsonSchema(req.schema),
-          },
-        },
-        provider: { data_collection: 'deny', require_parameters: true },
-      };
-      let res: Response;
+    async generateJson(req) {
       try {
-        res = await doFetch(ENDPOINT, {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${opts.apiKey}`,
-            'Content-Type': 'application/json',
-            'X-Title': 'BigOffer',
-          },
-          body: JSON.stringify(body),
-          signal: AbortSignal.timeout(req.timeoutMs ?? 60_000),
-        });
+        return await attempt(req);
       } catch (err) {
-        throw new LlmError(err instanceof Error ? err.message : String(err), null, { cause: err });
+        // Cheap models occasionally break the schema; one more try usually fixes it.
+        if (err instanceof LlmInvalidOutputError) return attempt(req);
+        throw err;
       }
-      const json = (await res.json().catch(() => ({}))) as ChatResponse;
-      if (!res.ok || json.error) {
-        const status = json.error?.code ?? res.status;
-        const message = json.error?.message ?? `HTTP ${res.status}`;
-        throw status === 429 ? new LlmRateLimitError(message, null) : new LlmError(message, status);
-      }
-      const usage: LlmUsage = {
-        requests: 1,
-        inputTokens: json.usage?.prompt_tokens ?? 0,
-        outputTokens: json.usage?.completion_tokens ?? 0,
-      };
-      const text = json.choices?.[0]?.message?.content ?? '';
-      let data: unknown;
-      try {
-        data = JSON.parse(text.replace(/^```(?:json)?\s*|\s*```$/g, ''));
-      } catch {
-        throw new LlmInvalidOutputError('response is not JSON', text, usage);
-      }
-      const parsed = req.schema.safeParse(data);
-      if (!parsed.success)
-        throw new LlmInvalidOutputError('response does not match the schema', text, usage);
-      return { data: parsed.data, usage, model: opts.model };
     },
   };
 }
 
+export type Routes = {
+  /** Text sent to companies (`tier: 'writer'`): cover letters, form answers, recruiter messages. */
+  writer?: LlmClient | null;
+  /** Public data (job enrichment, explanations): no daily free-tier quota. */
+  public?: LlmClient | null;
+};
+
 /**
- * Sends `tier: 'writer'` requests to the writing model and everything else to the base client; when the writer
- * fails for any reason the base client answers, so a user waiting on screen still gets a result.
+ * Sends writer requests and public-data requests to their OpenRouter models and the rest to the base client; when a
+ * routed model fails for any reason the base client answers, so a user waiting on screen still gets a result and
+ * enrichment keeps going on the free tier.
  */
-export function withWriter(base: LlmClient, writer: LlmClient | null): LlmClient {
-  if (!writer) return base;
+export function withRoutes(base: LlmClient, routes: Routes): LlmClient {
+  const { writer, public: publicClient } = routes;
+  if (!writer && !publicClient) return base;
+  const pick = (req: GenerateJsonRequest<z.ZodType>): LlmClient | null | undefined =>
+    req.tier === 'writer' ? writer : req.sensitivity === 'public' ? publicClient : null;
   return {
-    isAvailable: (s) => base.isAvailable(s),
-    model: (s) => base.model(s),
+    isAvailable: (s) => (s === 'public' && publicClient ? true : base.isAvailable(s)),
+    model: (s) => (s === 'public' && publicClient ? publicClient.model(s) : base.model(s)),
     async generateJson(req) {
-      if (req.tier !== 'writer') return base.generateJson(req);
+      const routed = pick(req);
+      if (!routed) return base.generateJson(req);
       try {
-        return await writer.generateJson(req);
+        return await routed.generateJson(req);
       } catch (err) {
         console.error(
-          'writer model failed, falling back',
+          'routed model failed, falling back',
           err instanceof LlmError ? err.status : 'unknown',
         );
+        if (!base.isAvailable(req.sensitivity)) throw err;
         return base.generateJson(req);
       }
     },

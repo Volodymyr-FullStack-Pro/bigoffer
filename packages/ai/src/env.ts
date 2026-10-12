@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { createGeminiClient } from './gemini';
-import { createOpenRouterClient, withWriter } from './openrouter';
+import { createOpenRouterClient, withRoutes } from './openrouter';
 import { FakeLlmClient, fakeResponder } from './testing';
 import type { LlmClient } from './types';
 
@@ -13,6 +13,8 @@ const aiEnvSchema = z.object({
   GEMINI_API_KEY_PRIVATE: z.string().min(1).optional(),
   OPENROUTER_API_KEY: z.string().min(1).optional(),
   AI_MODEL_WRITER: z.string().min(1).default('anthropic/claude-haiku-5.5'),
+  /** OpenRouter model for public-data tasks (job enrichment); "off" keeps them on the Gemini key. */
+  AI_MODEL_PUBLIC_OPENROUTER: z.string().min(1).default('google/gemini-2.5-flash-lite'),
   ALLOW_FAKE_AI: z.string().optional(),
 });
 export type AiEnv = z.infer<typeof aiEnvSchema>;
@@ -36,6 +38,7 @@ export function readAiEnv(env: Record<string, string | undefined> = process.env)
     GEMINI_API_KEY_PRIVATE: pick('GEMINI_API_KEY_PRIVATE'),
     OPENROUTER_API_KEY: pick('OPENROUTER_API_KEY'),
     AI_MODEL_WRITER: pick('AI_MODEL_WRITER'),
+    AI_MODEL_PUBLIC_OPENROUTER: pick('AI_MODEL_PUBLIC_OPENROUTER'),
     ALLOW_FAKE_AI: pick('ALLOW_FAKE_AI'),
   });
   assertFakeAllowed(parsed, env.NODE_ENV || process.env.NODE_ENV);
@@ -48,7 +51,7 @@ export function createLlmClient(env: AiEnv): LlmClient {
       assertFakeAllowed(env);
       return new FakeLlmClient(fakeResponder, ['public', 'private']);
     case 'gemini':
-      return withWriter(
+      return withRoutes(
         createGeminiClient({
           publicKey: env.GEMINI_API_KEY_PUBLIC,
           privateKey: env.GEMINI_API_KEY_PRIVATE,
@@ -56,9 +59,18 @@ export function createLlmClient(env: AiEnv): LlmClient {
           privateModel: env.AI_MODEL_PRIVATE,
           privateFastModel: env.AI_MODEL_PRIVATE_FAST,
         }),
-        env.OPENROUTER_API_KEY
-          ? createOpenRouterClient({ apiKey: env.OPENROUTER_API_KEY, model: env.AI_MODEL_WRITER })
-          : null,
+        {
+          writer: env.OPENROUTER_API_KEY
+            ? createOpenRouterClient({ apiKey: env.OPENROUTER_API_KEY, model: env.AI_MODEL_WRITER })
+            : null,
+          public:
+            env.OPENROUTER_API_KEY && env.AI_MODEL_PUBLIC_OPENROUTER !== 'off'
+              ? createOpenRouterClient({
+                  apiKey: env.OPENROUTER_API_KEY,
+                  model: env.AI_MODEL_PUBLIC_OPENROUTER,
+                })
+              : null,
+        },
       );
   }
 }

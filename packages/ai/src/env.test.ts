@@ -13,6 +13,7 @@ describe('readAiEnv', () => {
       GEMINI_API_KEY_PRIVATE: undefined,
       OPENROUTER_API_KEY: undefined,
       AI_MODEL_WRITER: 'anthropic/claude-haiku-5.5',
+      AI_MODEL_PUBLIC_OPENROUTER: 'google/gemini-2.5-flash-lite',
       ALLOW_FAKE_AI: undefined,
     });
     const client = createLlmClient(env);

@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import { LlmError } from './errors';
-import { createOpenRouterClient, withWriter } from './openrouter';
+import { LlmInvalidOutputError } from './errors';
+import { createOpenRouterClient, withRoutes } from './openrouter';
 import { FakeLlmClient } from './testing';
 
 const schema = z.object({ a: z.string() });
@@ -30,19 +31,36 @@ describe('createOpenRouterClient', () => {
   });
 });
 
-describe('withWriter', () => {
-  it('sends writer requests to the writer and the rest to the base client', async () => {
+describe('withRoutes', () => {
+  it('sends writer requests to the writer, public ones to the public model, the rest to the base client', async () => {
     const base = new FakeLlmClient(() => ({ a: 'base' }), ['private']);
-    const writer = new FakeLlmClient(() => ({ a: 'writer' }), ['private']);
-    const client = withWriter(base, writer);
+    const client = withRoutes(base, { writer: new FakeLlmClient(() => ({ a: 'writer' }), ['private']), public: new FakeLlmClient(() => ({ a: 'public' }), ['public']) });
     expect((await client.generateJson(req)).data).toEqual({ a: 'writer' });
     expect((await client.generateJson({ ...req, tier: 'fast' })).data).toEqual({ a: 'base' });
+    expect((await client.generateJson({ ...req, tier: undefined, sensitivity: 'public' })).data).toEqual({ a: 'public' });
+    // Enrichment runs even without a free-tier Gemini key.
+    expect(client.isAvailable('public')).toBe(true);
   });
-  it('falls back to the base client when the writer fails', async () => {
-    const base = new FakeLlmClient(() => ({ a: 'base' }), ['private']);
-    const writer = new FakeLlmClient(() => {
+  it('falls back to the base client when a routed model fails', async () => {
+    const base = new FakeLlmClient(() => ({ a: 'base' }), ['private', 'public']);
+    const down = new FakeLlmClient(() => {
       throw new LlmError('down', 503);
-    }, ['private']);
-    expect((await withWriter(base, writer).generateJson(req)).data).toEqual({ a: 'base' });
+    }, ['private', 'public']);
+    const client = withRoutes(base, { writer: down, public: down });
+    expect((await client.generateJson(req)).data).toEqual({ a: 'base' });
+    expect((await client.generateJson({ ...req, tier: undefined, sensitivity: 'public' })).data).toEqual({ a: 'base' });
+  });
+});
+
+describe('schema retry', () => {
+  it('asks once more when the answer breaks the schema', async () => {
+    const replies = [{ choices: [{ message: { content: '{"b":1}' } }] }, { choices: [{ message: { content: '{"a":"ok"}' } }] }];
+    const f = (async () => new Response(JSON.stringify(replies.shift()), { status: 200 })) as unknown as typeof fetch;
+    const client = createOpenRouterClient({ apiKey: 'k', model: 'm', fetch: f });
+    expect((await client.generateJson(req)).data).toEqual({ a: 'ok' });
+  });
+  it('gives up after the second broken answer', async () => {
+    const f = (async () => new Response(JSON.stringify({ choices: [{ message: { content: 'nope' } }] }), { status: 200 })) as unknown as typeof fetch;
+    await expect(createOpenRouterClient({ apiKey: 'k', model: 'm', fetch: f }).generateJson(req)).rejects.toBeInstanceOf(LlmInvalidOutputError);
   });
 });
