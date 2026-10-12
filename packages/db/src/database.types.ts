@@ -584,6 +584,9 @@ isOneToOne: false
 "find_similar_job":
 { Args: { "p_company_id": string,"p_title": string }; Returns: string
                            },
+"hide_match":
+{ Args: { "p_match_id": string }; Returns: string
+                           },
 "jobs_to_enrich":
 { Args: { "p_job_ids"?: (string)[],"p_limit": number }; Returns: string[]
                            },
