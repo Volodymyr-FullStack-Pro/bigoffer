@@ -59,29 +59,50 @@ describe('hrContactsFromResults', () => {
 });
 
 describe('rankRecruiters', () => {
-  it('puts current sourcers first and probable past employees last', async () => {
+  it('treats people found by company as current and puts sourcers first', async () => {
     const { rankRecruiters } = await import('./recruiters');
-    const ranked = rankRecruiters(
+    // The Newxel case: headlines carry only the role, the company is in the snippet.
+    const found = recruitersFromResults(
       [
-        { kind: 'linkedin', label: 'Olga Alekseeva', title: 'Talent Acquisition Lead | Full Cycle Recruitment', href: 'https://www.linkedin.com/in/olga' },
-        { kind: 'linkedin', label: 'Oksana Niechaieva', title: 'Talent Acquisition Specialist · Newxel', href: 'https://www.linkedin.com/in/oksana' },
-        { kind: 'linkedin', label: 'Solomiia Letsiuk', title: 'Talent Sourcing Specialist · Newxel · Lviv, Ukraine', href: 'https://www.linkedin.com/in/solomiia' },
+        { title: 'Olga Alekseeva - Talent Acquisition Lead | LinkedIn', url: 'https://www.linkedin.com/in/olga', description: 'Experience: Newxel · Location: Kyiv' },
+        { title: 'Oksana Niechaieva - Talent Acquisition Specialist | LinkedIn', url: 'https://www.linkedin.com/in/oksana', description: 'Talent Acquisition Specialist at Newxel' },
+        { title: 'Solomiia Letsiuk - Talent Sourcer | LinkedIn', url: 'https://www.linkedin.com/in/solomiia', description: 'Experience: Newxel · Education: LNU' },
       ],
       'Newxel',
     );
-    expect(ranked.map((r) => r.label)).toEqual(['Solomiia Letsiuk', 'Oksana Niechaieva', 'Olga Alekseeva']);
-    expect(ranked[0]).toMatchObject({ best: true, current: true });
-    expect(ranked[2]).toMatchObject({ best: false, current: false });
+    const ranked = rankRecruiters(found);
+    expect(ranked.map((r) => r.label)).toEqual(['Oksana Niechaieva', 'Solomiia Letsiuk', 'Olga Alekseeva']);
+    expect(ranked.every((r) => r.current)).toBe(true);
+    expect(ranked[0]).toMatchObject({ best: true });
+  });
+  it('puts people the result names as past employees last', async () => {
+    const { rankRecruiters } = await import('./recruiters');
+    const found = recruitersFromResults(
+      [
+        { title: 'Anna K - Recruiter | LinkedIn', url: 'https://www.linkedin.com/in/anna', description: 'Recruiter at SoftServe. Ex-Newxel' },
+        { title: 'Olena P - Talent Sourcer - Newxel | LinkedIn', url: 'https://www.linkedin.com/in/olena' },
+        { title: 'Iryna B - HR | LinkedIn', url: 'https://www.linkedin.com/in/iryna', description: 'Former recruiter at Newxel' },
+      ],
+      'Newxel',
+    );
+    const ranked = rankRecruiters(found);
+    expect(ranked.map((r) => [r.label, r.current])).toEqual([['Olena P', true], ['Anna K', false], ['Iryna B', false]]);
+    expect(ranked[0]).toMatchObject({ best: true });
+  });
+  it('treats cached contacts without the flag as current', async () => {
+    const { rankRecruiters } = await import('./recruiters');
+    const ranked = rankRecruiters([
+      { kind: 'linkedin', label: 'Olga', title: 'Talent Acquisition Lead', href: 'https://www.linkedin.com/in/olga' },
+      { kind: 'linkedin', label: 'Solomiia', title: 'Talent Sourcer', href: 'https://www.linkedin.com/in/solomiia' },
+    ]);
+    expect(ranked.map((r) => [r.label, r.current, r.best])).toEqual([['Solomiia', true, true], ['Olga', true, false]]);
   });
   it('puts a contact named in the posting first', async () => {
     const { rankRecruiters } = await import('./recruiters');
-    const ranked = rankRecruiters(
-      [
-        { kind: 'linkedin', label: 'Anna', title: 'Recruiter · Acme', href: 'https://www.linkedin.com/in/anna' },
-        { kind: 'email', label: 'hr@acme.io', href: 'mailto:hr@acme.io' },
-      ],
-      'Acme',
-    );
+    const ranked = rankRecruiters([
+      { kind: 'linkedin', label: 'Anna', title: 'Recruiter · Acme', href: 'https://www.linkedin.com/in/anna' },
+      { kind: 'email', label: 'hr@acme.io', href: 'mailto:hr@acme.io' },
+    ]);
     expect(ranked[0]).toMatchObject({ kind: 'email', best: true });
   });
 });

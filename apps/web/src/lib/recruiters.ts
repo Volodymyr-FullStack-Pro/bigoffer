@@ -6,6 +6,8 @@ export type RecruiterContact = {
   /** Role line from the profile ("Talent Acquisition at Acme"), when known. */
   title?: string;
   href: string;
+  /** False when the search result says they left the company ("ex-Acme", "formerly at Acme"); unknown otherwise. */
+  current?: boolean;
 };
 
 export type SearchResult = { title: string; url: string; description?: string };
@@ -82,6 +84,21 @@ export function hrContactsFromResults(results: readonly SearchResult[], company:
  * Keeps LinkedIn profiles whose title or snippet names both the company and a recruiting role. Titles look like
  * "Olena Petrenko - Talent Acquisition - SoftServe | LinkedIn".
  */
+const PAST = /(?:^|\s)(?:ex|former|formerly|previously|past|колишн\p{L}*|бывш\p{L}*|раніше|ранее)(?:\s+(?:at|in|в|у))?\s+$/u;
+
+/** The text names the company only as a past employer: "ex-Acme", "Former recruiter at Acme", "Previously: Acme". */
+function leftCompany(text: string, key: string): boolean {
+  const words = ` ${companyKey(text)} `;
+  let at = words.indexOf(` ${key} `);
+  if (at < 0) return false;
+  while (at >= 0) {
+    const before = words.slice(Math.max(0, at - 40), at + 1).replace(/\b(?:recruiter|sourcer|hr|talent|acquisition|specialist|manager|lead|partner)\b/g, ' ').replace(/\s+/g, ' ');
+    if (!PAST.test(before)) return false;
+    at = words.indexOf(` ${key} `, at + 1);
+  }
+  return true;
+}
+
 export function recruitersFromResults(results: readonly SearchResult[], company: string, max = 3): RecruiterContact[] {
   const key = companyKey(company);
   if (!key) return [];
@@ -95,14 +112,15 @@ export function recruitersFromResults(results: readonly SearchResult[], company:
     const [name, ...rest] = title.split(/\s+[-–—]\s+/);
     if (!name || name.length > 60) continue;
     const id = slug.toLowerCase();
-    if (!out.has(id)) out.set(id, { kind: 'linkedin', label: name, title: rest.join(' · ') || undefined, href: `https://www.linkedin.com/in/${slug}` });
+    const current = !leftCompany(text, key);
+    if (!out.has(id)) out.set(id, { kind: 'linkedin', label: name, title: rest.join(' · ') || undefined, href: `https://www.linkedin.com/in/${slug}`, ...(current ? {} : { current }) });
     if (out.size >= max) break;
   }
   return [...out.values()];
 }
 
 export type RankedContact = RecruiterContact & {
-  /** Works at the job's company now (the company is in their headline, not only somewhere in the snippet). */
+  /** Works at the job's company now, as far as the search result tells. */
   current: boolean;
   /** The one to write to first, when there is a choice. */
   best: boolean;
@@ -114,14 +132,13 @@ const UA = /ukraine|україн|украин|kyiv|київ|lviv|львів|khar
 
 /**
  * Who to write to first. A contact the posting itself names comes first; then recruiters who work at the company
- * now, sourcers and talent-acquisition people before HR generalists before leads and managers; people whose
- * headline does not name the company (probably past employees) last.
+ * now, sourcers and talent-acquisition people before HR generalists before leads and managers; people the result
+ * names as past employees last.
  */
-export function rankRecruiters(contacts: readonly RecruiterContact[], company: string): RankedContact[] {
-  const key = companyKey(company);
+export function rankRecruiters(contacts: readonly RecruiterContact[]): RankedContact[] {
   const scored = contacts.map((c, i) => {
     const role = c.title ?? '';
-    const current = c.kind !== 'linkedin' || (key !== '' && ` ${companyKey(role)} `.includes(` ${key} `));
+    const current = c.current !== false;
     let score = c.kind === 'linkedin' ? 50 : 100;
     if (c.kind === 'linkedin') {
       if (SOURCER.test(role)) score += 20;
