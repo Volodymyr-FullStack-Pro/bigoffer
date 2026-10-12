@@ -16,7 +16,7 @@ export function TodayActions({ cards, onPinged, onOpen, onGhosted }: {
   if (actions.length === 0) return null;
   const byId = new Map(cards.map((c) => [c.id, c]));
   return (
-    <aside data-testid="today-actions" className="brutal flex flex-col gap-2 p-4">
+    <aside id="today-actions" data-testid="today-actions" className="scroll-mt-24 brutal flex flex-col gap-2 p-4">
       <h2 className="font-display text-lg font-semibold">{t('todayTitle', { count: actions.length })}</h2>
       <ul className="flex flex-col gap-2">
         {actions.map((a) => {

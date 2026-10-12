@@ -193,6 +193,21 @@
   }
 }
 
+/* Where an Offer Genie link points (#profile-tips, #today-actions): a short mint glow on arrival. */
+@keyframes target-glow {
+  0%,
+  60% {
+    box-shadow: 0 0 0 3px var(--brand), 0 0 24px rgb(115 247 178 / 0.45);
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+:target,
+.genie-flash {
+  animation: target-glow 2.2s ease-out;
+}
+
 /* Search in progress: a light sweep over the progress bar, so a slow source still reads as "working". */
 @keyframes bar-sweep {
   from {
