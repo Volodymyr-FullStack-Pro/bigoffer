@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { FakeLlmClient } from '../testing';
-import { buildEnrichPrompt, enrichJob, normalizeEnrichment, type EnrichJobInput } from './enrich-job';
+import { toResponseJsonSchema } from '../json-schema';
+import { buildEnrichPrompt, enrichJob, enrichWireSchema, normalizeEnrichment, type EnrichJobInput } from './enrich-job';
 
 const wire = {
   is_job: true,
@@ -22,6 +23,23 @@ const input: EnrichJobInput = {
   tags: ['react'],
   descriptionText: 'a'.repeat(10_000),
 };
+
+describe('enrichWireSchema', () => {
+  it('drops facts that break the schema instead of failing the job', () => {
+    const broken = { ...wire, seniority: 'staff', salary: 'unknown', remote_type: 'onsite', skills: null, remote_regions: 'EU' };
+    expect(enrichWireSchema.parse(broken)).toMatchObject({
+      seniority: null,
+      salary: null,
+      remote_type: 'unknown',
+      skills: [],
+      remote_regions: [],
+    });
+  });
+
+  it('keeps catch defaults out of the JSON Schema', () => {
+    expect(JSON.stringify(toResponseJsonSchema(enrichWireSchema))).not.toContain('default');
+  });
+});
 
 describe('normalizeEnrichment', () => {
   it('cleans and converts the model output', () => {

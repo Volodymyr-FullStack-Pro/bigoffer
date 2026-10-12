@@ -13,24 +13,30 @@ import {
 import { z } from 'zod';
 import type { LlmClient, LlmUsage } from '../types';
 
-/** What the model returns. Plain schema (no transforms): it is sent as JSON Schema. */
+/**
+ * What the model returns. Plain schema (no transforms): it is sent as JSON Schema. Providers behind OpenRouter don't
+ * always enforce it (e.g. "staff" or "unknown" for a nullable enum), so optional facts fall back to empty via
+ * `.catch()` instead of failing the whole job.
+ */
 export const enrichWireSchema = z.object({
   is_job: z.boolean().describe('false if this is not one concrete vacancy: a course, an ad, a list of many roles, spam'),
   role: z.string().describe('Normalized role title in English without seniority, e.g. "Frontend Developer", "Accountant"'),
-  seniority: z.enum(SENIORITIES).nullable().describe('Required level; null if not stated'),
-  skills: z.array(z.string()).describe('Up to 15 concrete required skills/tools, canonical names, e.g. "React", "PostgreSQL", "Excel"'),
+  seniority: z.enum(SENIORITIES).nullable().catch(null).describe('Required level; null if not stated'),
+  skills: z.array(z.string()).catch([]).describe('Up to 15 concrete required skills/tools, canonical names, e.g. "React", "PostgreSQL", "Excel"'),
   salary: z
     .object({
       min: z.number().nullable(),
       max: z.number().nullable(),
       currency: z.string().nullable().describe('ISO 4217 code, e.g. USD, EUR, UAH, PLN, GBP'),
-      period: z.enum(SALARY_PERIODS).nullable(),
+      period: z.enum(SALARY_PERIODS).nullable().catch(null),
     })
     .nullable()
+    .catch(null)
     .describe('Gross salary as stated in the posting; null if absent'),
-  remote_type: z.enum(REMOTE_TYPES),
+  remote_type: z.enum(REMOTE_TYPES).catch('unknown'),
   remote_regions: z
     .array(z.string())
+    .catch([])
     .describe(
       `For remote jobs: where candidates may live. "worldwide" if unrestricted, else region codes (${REMOTE_REGIONS.join(', ')}) or ISO 3166-1 alpha-2 country codes. Empty if not stated.`,
     ),
