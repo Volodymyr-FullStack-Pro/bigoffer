@@ -242,3 +242,17 @@ describe('alert extras', () => {
     expect(inQuietHours(10, 9, 9)).toBe(false);
   });
 });
+
+describe('genie in the digest', () => {
+  it('reports yesterday, the streak and a motto; nudges after idle days', async () => {
+    const { digestGenieLines, digestMessage } = await import('./format');
+    const met = digestGenieLines({ yesterday: 5, goal: 5, streak: 3, idleDays: 0 }, 'uk', 1);
+    expect(met[0]).toBe('🧞 Вчора: 5/5 — ціль виконано! 🎉');
+    expect(met[1]).toBe('Серія: 🔥3 дн. поспіль');
+    expect(met[2]).toMatch(/^<i>.+<\/i>$/);
+    expect(digestGenieLines({ yesterday: 2, goal: 5, streak: 0, idleDays: 0 }, 'en')[0]).toContain('2/5');
+    expect(digestGenieLines({ yesterday: 0, goal: 5, streak: 0, idleDays: 3 }, 'en')).toEqual([expect.stringContaining('3 days without applications')]);
+    const msg = digestMessage({ total: 0, top: [], followUps: [], genie: met }, 'uk', 'https://x.app');
+    expect(msg.text.startsWith('🧞 Вчора: 5/5')).toBe(true);
+  });
+});
