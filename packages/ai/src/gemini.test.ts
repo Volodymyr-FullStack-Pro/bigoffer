@@ -115,6 +115,21 @@ describe('createGeminiClient', () => {
   });
 });
 
+describe('fallback to the fast model', () => {
+  it('retries an overloaded writer request once on the fast model', async () => {
+    const { client, calls } = setup([new ApiError({ message: 'overloaded', status: 503 }), ok('{"answer":"a"}')], { privateKey: 'priv' });
+    const res = await client.generateJson({ sensitivity: 'private', tier: 'writer', fallback: 'fast', schema, system: 's', prompt: 'p' });
+    expect(calls.map((c) => c.params.model)).toEqual(['model-private', 'model-private-fast']);
+    expect(res.model).toBe('model-private-fast');
+  });
+  it('does not fall back on a rate limit or without the option', async () => {
+    const { client, calls } = setup([new ApiError({ message: 'quota', status: 429 }), new ApiError({ message: 'overloaded', status: 503 })], { privateKey: 'priv' });
+    await expect(client.generateJson({ sensitivity: 'private', fallback: 'fast', schema, system: 's', prompt: 'p' })).rejects.toBeInstanceOf(LlmRateLimitError);
+    await expect(client.generateJson({ sensitivity: 'private', schema, system: 's', prompt: 'p' })).rejects.toMatchObject({ status: 503 });
+    expect(calls).toHaveLength(2);
+  });
+});
+
 describe('thinking and timeout per request', () => {
   it('sends neither by default', async () => {
     const { client, calls } = setup([ok('{"answer":"42"}')]);

@@ -79,6 +79,44 @@ export function createGeminiClient(opts: GeminiOptions): LlmClient {
   const keyFor = (s: Sensitivity) => (s === 'public' ? opts.publicKey : opts.privateKey) || undefined;
   const modelFor = (s: Sensitivity) => (s === 'public' ? opts.publicModel : opts.privateModel);
 
+  async function run<S extends z.ZodType>(call: GenerateContent, req: GenerateJsonRequest<S>, model: string): Promise<GenerateJsonResult<z.output<S>>> {
+    const parts: Part[] = [
+      ...[...(req.files ?? []), ...(req.images ?? [])].map((i) => ({ inlineData: { mimeType: i.mimeType, data: i.dataBase64 } })),
+      { text: req.prompt },
+    ];
+    const params: GenerateContentParameters = {
+      model,
+      contents: [{ role: 'user', parts }],
+      config: {
+        systemInstruction: req.system,
+        responseMimeType: 'application/json',
+        responseJsonSchema: toResponseJsonSchema(req.schema),
+        temperature: 0.2,
+        maxOutputTokens: req.maxOutputTokens ?? 2048,
+        ...(req.thinking ? { thinkingConfig: thinkingConfigFor(model, req.thinking) } : {}),
+        ...(req.timeoutMs ? { httpOptions: { timeout: req.timeoutMs } } : {}),
+      },
+    };
+
+    const usage: LlmUsage = { requests: 0, inputTokens: 0, outputTokens: 0 };
+    let failure = { message: 'no attempt made', raw: '' };
+    for (let attempt = 0; attempt < ATTEMPTS; attempt++) {
+      let res: GeminiResponse;
+      try {
+        res = await call(params);
+      } catch (err) {
+        throw toLlmError(err);
+      }
+      usage.requests += 1;
+      usage.inputTokens += res.usageMetadata?.promptTokenCount ?? 0;
+      usage.outputTokens += (res.usageMetadata?.candidatesTokenCount ?? 0) + (res.usageMetadata?.thoughtsTokenCount ?? 0);
+      const parsed = parse(req.schema, res.text);
+      if (parsed.ok) return { data: parsed.data, usage, model };
+      failure = { message: parsed.message, raw: res.text ?? '' };
+    }
+    throw new LlmInvalidOutputError(failure.message, failure.raw, usage);
+  }
+
   return {
     isAvailable: (s) => keyFor(s) !== undefined,
     model: modelFor,
@@ -90,42 +128,15 @@ export function createGeminiClient(opts: GeminiOptions): LlmClient {
         call = connect(key);
         connections.set(req.sensitivity, call);
       }
-      const model = req.tier === 'fast' && req.sensitivity === 'private' && opts.privateFastModel ? opts.privateFastModel : modelFor(req.sensitivity);
-      const parts: Part[] = [
-        ...[...(req.files ?? []), ...(req.images ?? [])].map((i) => ({ inlineData: { mimeType: i.mimeType, data: i.dataBase64 } })),
-        { text: req.prompt },
-      ];
-      const params: GenerateContentParameters = {
-        model,
-        contents: [{ role: 'user', parts }],
-        config: {
-          systemInstruction: req.system,
-          responseMimeType: 'application/json',
-          responseJsonSchema: toResponseJsonSchema(req.schema),
-          temperature: 0.2,
-          maxOutputTokens: req.maxOutputTokens ?? 2048,
-          ...(req.thinking ? { thinkingConfig: thinkingConfigFor(model, req.thinking) } : {}),
-          ...(req.timeoutMs ? { httpOptions: { timeout: req.timeoutMs } } : {}),
-        },
-      };
-
-      const usage: LlmUsage = { requests: 0, inputTokens: 0, outputTokens: 0 };
-      let failure = { message: 'no attempt made', raw: '' };
-      for (let attempt = 0; attempt < ATTEMPTS; attempt++) {
-        let res: GeminiResponse;
-        try {
-          res = await call(params);
-        } catch (err) {
-          throw toLlmError(err);
-        }
-        usage.requests += 1;
-        usage.inputTokens += res.usageMetadata?.promptTokenCount ?? 0;
-        usage.outputTokens += (res.usageMetadata?.candidatesTokenCount ?? 0) + (res.usageMetadata?.thoughtsTokenCount ?? 0);
-        const parsed = parse(req.schema, res.text);
-        if (parsed.ok) return { data: parsed.data, usage, model };
-        failure = { message: parsed.message, raw: res.text ?? '' };
+      const fastModel = req.sensitivity === 'private' ? opts.privateFastModel : undefined;
+      const model = req.tier === 'fast' && fastModel ? fastModel : modelFor(req.sensitivity);
+      try {
+        return await run(call, req, model);
+      } catch (err) {
+        const overloaded = err instanceof LlmError && !(err instanceof LlmRateLimitError) && (err.status === null || err.status >= 500);
+        if (req.fallback === 'fast' && fastModel && fastModel !== model && overloaded) return run(call, req, fastModel);
+        throw err;
       }
-      throw new LlmInvalidOutputError(failure.message, failure.raw, usage);
     },
   };
 }

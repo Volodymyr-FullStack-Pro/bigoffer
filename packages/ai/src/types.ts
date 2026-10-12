@@ -30,8 +30,15 @@ export type GenerateJsonRequest<S extends z.ZodType> = {
   /**
    * 'fast' = the provider's quick model, for text the user waits for on screen (cover letters, form answers):
    * the full Flash model took 2+ minutes (504 deadline) on a letter brief that Flash-Lite answers in seconds.
+   * 'writer' = text the user sends to a company (letters, form answers, recruiter messages): the writing model when
+   * one is configured (OpenRouter), else the provider's main model.
    */
-  tier?: 'fast';
+  tier?: 'fast' | 'writer';
+  /**
+   * 'fast' = when the main model is overloaded or times out (5xx, no response), try once more on the quick model,
+   * so a user waiting on screen still gets an answer.
+   */
+  fallback?: 'fast';
 };
 
 export type GenerateJsonResult<T> = { data: T; usage: LlmUsage; model: string };

@@ -8,6 +8,8 @@ export function scrapeIntervalMultiplier(env: { SCRAPE_INTERVAL_MULTIPLIER?: str
 }
 
 export function jobsEnv() {
+  // Enrichment on a paid OpenRouter model has no free-tier quota or per-minute cap: larger batches, no pause.
+  const paidPublicAi = Boolean(process.env.OPENROUTER_API_KEY) && process.env.AI_MODEL_PUBLIC_OPENROUTER !== 'off';
   return z
     .object({
       SUPABASE_URL: z.url(),
@@ -33,8 +35,8 @@ export function jobsEnv() {
       SCRAPE_INTERVAL_MULTIPLIER: scrapeIntervalMultiplier(),
       TELEGRAM_BOT_TOKEN: process.env.TELEGRAM_BOT_TOKEN || undefined,
       SITE_URL: process.env.SITE_URL || undefined,
-      AI_DAILY_LIMIT: process.env.AI_DAILY_LIMIT || undefined,
-      AI_BATCH_SIZE: process.env.AI_BATCH_SIZE || undefined,
-      AI_MIN_INTERVAL_MS: process.env.AI_MIN_INTERVAL_MS || undefined,
+      AI_DAILY_LIMIT: process.env.AI_DAILY_LIMIT || (paidPublicAi ? 3000 : undefined),
+      AI_BATCH_SIZE: process.env.AI_BATCH_SIZE || (paidPublicAi ? 60 : undefined),
+      AI_MIN_INTERVAL_MS: process.env.AI_MIN_INTERVAL_MS || (paidPublicAi ? 300 : undefined),
     });
 }
