@@ -183,6 +183,7 @@
     "expGap": "За CV: {years} р. — просять більше",
     "onBoard": "Вже на вашій дошці: {column}",
     "filterExperience": "Досвід",
+    "filterLevel": "Рівень",
     "expFit": "Підходить мені",
     "expUpTo": "до {years} р."
   },
