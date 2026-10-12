@@ -12,7 +12,7 @@ import { MatchActions, MatchDetail, type MatchAction } from './match-detail';
 const THRESHOLD = 120;
 
 /** Top card of the mobile deck: drag right → save, left → hide. Every swipe has a button twin. */
-export function SwipeCard({ match, onAction, onApplied }: { match: FeedMatch; onAction: (a: MatchAction) => void; onApplied?: () => void }) {
+export function SwipeCard({ match, onAction, onApplied, kitOpen = false }: { match: FeedMatch; onAction: (a: MatchAction) => void; onApplied?: () => void; kitOpen?: boolean }) {
   const t = useTranslations('today');
   const tf = useTranslations('feed');
   const reduce = useReducedMotion();
@@ -20,7 +20,7 @@ export function SwipeCard({ match, onAction, onApplied }: { match: FeedMatch; on
   const rotate = useTransform(x, [-200, 200], reduce ? [0, 0] : [-12, 12]);
   const saveOpacity = useTransform(x, [0, 40, 120], [0, 0, 1]);
   const hideOpacity = useTransform(x, [-120, -40, 0], [1, 0, 0]);
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(kitOpen);
 
   return (
     <div className="flex flex-col gap-4">
@@ -55,7 +55,7 @@ export function SwipeCard({ match, onAction, onApplied }: { match: FeedMatch; on
           {open ? tf('lessDetails') : tf('moreDetails')}
         </button>
       </motion.article>
-      {open && <MatchDetail match={match} onApplied={onApplied} />}
+      {open && <MatchDetail match={match} onApplied={onApplied} kitOpen={kitOpen} />}
       <MatchActions onAction={onAction} compact />
     </div>
   );

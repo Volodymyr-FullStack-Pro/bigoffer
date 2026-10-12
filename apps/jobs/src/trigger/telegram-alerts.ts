@@ -10,7 +10,8 @@ export const telegramAlertsTask = schedules.task({
   ttl: '10m',
   // No retries: a retried run could send the same messages twice; the next tick picks up what is left.
   retry: { maxAttempts: 1 },
-  cron: '*/15 * * * *',
+  // Every 5 minutes: being among the first applicants matters more than batching.
+  cron: '*/5 * * * *',
   run: async () => {
     const deps = telegramDeps();
     if (!deps) return { skipped: 'no token' };

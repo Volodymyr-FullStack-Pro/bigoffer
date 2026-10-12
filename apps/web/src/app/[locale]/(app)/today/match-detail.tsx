@@ -64,11 +64,11 @@ export function MatchActions({
   );
 }
 
-function ApplyKitToggle({ jobId, onApplied }: { jobId: string; onApplied?: () => void }) {
+function ApplyKitToggle({ jobId, onApplied, defaultOpen = false }: { jobId: string; onApplied?: () => void; defaultOpen?: boolean }) {
   const tk = useTranslations('kit');
   const rawLocale = useLocale();
   const locale: Locale = isLocale(rawLocale) ? rawLocale : 'en';
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(defaultOpen);
   return (
     <div className="flex flex-col gap-3">
       <button
@@ -202,11 +202,13 @@ export function MatchDetail({
   onAction,
   onApplied,
   showDescription = true,
+  kitOpen = false,
 }: {
   match: FeedMatch;
   onAction?: (a: MatchAction) => void;
   onApplied?: () => void;
   showDescription?: boolean;
+  kitOpen?: boolean;
 }) {
   const t = useTranslations('today');
   const tf = useTranslations('feed');
@@ -290,7 +292,7 @@ export function MatchDetail({
             </div>
           ))}
       </div>
-      <ApplyKitToggle key={match.id} jobId={match.jobId} onApplied={onApplied} />
+      <ApplyKitToggle key={match.id} jobId={match.jobId} onApplied={onApplied} defaultOpen={kitOpen} />
       {onAction && <MatchActions onAction={onAction} />}
       <PeopleSearch jobId={match.jobId} />
       {showDescription && match.description && (

@@ -17,6 +17,10 @@ function fakes(over: Partial<WebhookStore> = {}) {
     ownsMatch: vi.fn(async () => true),
     hideMatch: vi.fn(async () => {}),
     saveApplied: vi.fn(async () => {}),
+    saveSaved: vi.fn(async () => {}),
+    topMatches: vi.fn(async () => []),
+    goal: vi.fn(async () => ({ done: 3, goal: 5, streak: 2 })),
+    setPause: vi.fn(async () => {}),
     ...over,
   };
   const ok = async () => ({ ok: true as const });
@@ -162,5 +166,42 @@ describe('telegram webhook', () => {
     expect(await run(f, startUpdate(`/start ${TOKEN}`))).toEqual({ status: 200 });
     expect(JSON.stringify(err.mock.calls)).not.toContain(TOKEN);
     err.mockRestore();
+  });
+});
+
+describe('telegram commands and save button', () => {
+  const command = (text: string) => ({ update_id: 5, message: { message_id: 9, text, chat: { id: 42, type: 'private' }, from: { language_code: 'en' } } });
+  it('/goal reports today against the goal and the streak', async () => {
+    const f = fakes();
+    await run(f, command('/goal'));
+    expect(f.bot.sendMessage).toHaveBeenCalledWith(42, expect.stringContaining('3/5'));
+    expect(f.bot.sendMessage).toHaveBeenCalledWith(42, expect.stringContaining('🔥2'));
+  });
+  it('/pause 3h pauses, /resume resumes, a bad /pause explains', async () => {
+    const f = fakes();
+    await run(f, command('/pause 3h'));
+    expect(f.store.setPause).toHaveBeenCalledWith(USER, expect.any(String));
+    await run(f, command('/resume'));
+    expect(f.store.setPause).toHaveBeenLastCalledWith(USER, null);
+    await run(f, command('/pause later'));
+    expect(f.bot.sendMessage).toHaveBeenLastCalledWith(42, expect.stringContaining('/pause 3h'));
+  });
+  it('/top lists jobs or says there are none; /help lists commands', async () => {
+    const f = fakes();
+    await run(f, command('/top'));
+    expect(f.bot.sendMessage).toHaveBeenCalledWith(42, expect.stringContaining('No fresh jobs'), expect.anything());
+    await run(f, command('/help'));
+    expect(f.bot.sendMessage).toHaveBeenLastCalledWith(42, expect.stringContaining('/pause'));
+  });
+  it('an unlinked chat is told how to link', async () => {
+    const f = fakes({ profileByChat: vi.fn(async () => null) });
+    await run(f, command('/top'));
+    expect(f.bot.sendMessage).toHaveBeenCalledWith(42, expect.stringContaining('Connect Telegram'));
+  });
+  it('the save button puts the job on the board', async () => {
+    const f = fakes();
+    await run(f, callback(`s:${MATCH}`));
+    expect(f.store.saveSaved).toHaveBeenCalledWith(USER, MATCH);
+    expect(f.bot.answerCallback).toHaveBeenCalledWith('cb1', 'Saved to the board');
   });
 });

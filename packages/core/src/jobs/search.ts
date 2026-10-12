@@ -28,7 +28,7 @@ export const searchProfileInputSchema = z.object({
   keywords: z.array(term).min(1).max(10),
   /** Job families to show; empty = derived from the keywords (see targetRoleFamilies). */
   targetRoles: z.array(z.enum(ROLE_FAMILIES)).max(ROLE_FAMILIES.length).default([]),
-  skills: z.array(term).max(30),
+  skills: z.array(term).max(100),
   excludeKeywords: z.array(term).max(30),
   seniority: z.array(z.enum(SENIORITIES)),
   locations: z.array(term).max(10),

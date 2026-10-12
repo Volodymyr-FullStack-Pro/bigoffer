@@ -9,6 +9,7 @@ export async function POST(request: Request) {
       secret: process.env.TELEGRAM_WEBHOOK_SECRET,
       store: () => supabaseWebhookStore(createAdminSupabase()),
       bot: createBotApi(process.env.TELEGRAM_BOT_TOKEN || undefined),
+      siteUrl: process.env.SITE_URL ?? '',
     },
   );
   return status === 401 ? new Response(null, { status: 401 }) : Response.json({});

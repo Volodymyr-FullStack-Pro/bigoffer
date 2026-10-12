@@ -40,6 +40,7 @@ export function Feed({
   savedLabels,
   openHidden = false,
   onlyFresh = false,
+  openKit = false,
 }: {
   matches: FeedMatch[];
   /** Matches the profile rules hid, browsable with the "Hidden by rules" toggle. */
@@ -47,6 +48,7 @@ export function Feed({
   savedLabels?: Partial<CardLabels>;
   openHidden?: boolean;
   onlyFresh?: boolean;
+  openKit?: boolean;
   profiles: { id: string; name: string }[];
   sources: { id: string; name: string }[];
   focusId?: string | null;
@@ -324,13 +326,13 @@ export function Feed({
               // Sticky: the details stay in view while the list scrolls.
               <GlowCard className="sticky top-20 self-start">
                 <div className="brutal p-6">
-                  <MatchDetail match={selected} onAction={(a) => void act(selected, a)} onApplied={() => appliedFromKit(selected)} />
+                  <MatchDetail match={selected} onAction={(a) => void act(selected, a)} onApplied={() => appliedFromKit(selected)} kitOpen={openKit && selected.id === focusId} />
                 </div>
               </GlowCard>
             )}
           </div>
           <div className="md:hidden">
-            {visible[0] && <SwipeCard key={visible[0].id} match={visible[0]} onAction={(a) => void act(visible[0]!, a)} onApplied={() => appliedFromKit(visible[0]!)} />}
+            {visible[0] && <SwipeCard key={visible[0].id} match={visible[0]} onAction={(a) => void act(visible[0]!, a)} onApplied={() => appliedFromKit(visible[0]!)} kitOpen={openKit && visible[0].id === focusId} />}
           </div>
         </>
       )}
