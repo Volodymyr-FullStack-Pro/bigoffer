@@ -306,7 +306,8 @@ export function MatchDetail({
               testId="copy-description"
             />
           </div>
-          <div className="max-h-[50vh] overflow-y-auto whitespace-pre-line text-sm">
+          {/* Desktop: its own scroll beside the list. Phone: part of the page, so a swipe on it scrolls the page. */}
+          <div className="whitespace-pre-line text-sm md:max-h-[50vh] md:overflow-y-auto">
             {match.description}
           </div>
         </div>

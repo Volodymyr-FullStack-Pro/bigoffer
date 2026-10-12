@@ -138,10 +138,17 @@ export function Genie() {
     return () => clearTimeout(id);
   }, [state, folded, route, hint]);
 
-  // Speak at most once per page visit, a moment after the page settles.
+  // Speak at most once per page visit, a moment after the page settles. On a phone the bubble would cover the job
+  // being read, so only problems pop up by themselves; anything else waits behind a dot until the genie is tapped.
   useEffect(() => {
     if (!state || folded) return;
-    const id = setTimeout(() => show(pickMessage(state, route, memory.current, Date.now(), hint)), 1500);
+    const id = setTimeout(() => {
+      const next = pickMessage(state, route, memory.current, Date.now(), hint);
+      const phone = window.matchMedia('(max-width: 767px)').matches;
+      const urgent = next !== null && next.kind === 'health' && !next.id.startsWith('health:ok');
+      if (!phone || urgent) show(next);
+      else setPending(Boolean(next && next.kind !== 'motivation'));
+    }, 1500);
     return () => clearTimeout(id);
     // hint changes are picked up by the next page visit or refresh, not re-spoken immediately
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -205,6 +212,7 @@ export function Genie() {
 
   // A click always answers: the next useful thing, else a motto.
   const poke = () => {
+    setPending(false);
     if (message) return setMessage(null);
     const next = pickMessage(state, route, memory.current, Date.now(), hint);
     show(next ?? { id: `motivation:poke:${Date.now()}`, kind: 'motivation', mood: 'happy', key: `motto${Math.floor(Math.random() * MOTIVATION_COUNT)}` });
@@ -233,6 +241,7 @@ export function Genie() {
       <div className="pointer-events-auto relative shrink-0">
         <button type="button" data-testid="genie-avatar" onClick={poke} aria-label={t('name')} className="relative grid size-12 place-items-center rounded-full bg-card/80 backdrop-blur md:size-16 md:bg-transparent">
           <GoalRing done={state.appliedToday} goal={state.goal} />
+          {pending && !message && <span data-testid="genie-dot" aria-hidden className="absolute top-0 right-0 z-10 size-3 animate-pulse rounded-full border-2 border-card bg-brand" />}
           <GenieAvatar mood={message?.mood ?? (state.appliedToday >= state.goal ? "happy" : "neutral")} size={40} />
         </button>
         <span data-testid="genie-goal" className="absolute -bottom-1 left-1/2 -translate-x-1/2 rounded-full border border-border bg-card px-1.5 font-mono text-[10px] font-bold text-link">
