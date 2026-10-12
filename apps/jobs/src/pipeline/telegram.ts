@@ -1,4 +1,4 @@
-import { alertLabels, alertMessage, detectDomains, detectPerks, digestMessage, inQuietHours, overflowMessage, sourceInfo, toTgLocale, type AlertJob, type BotApi, type BotResult, type TgLocale } from '@jp/core';
+import { alertLabels, alertMessage, detectDomains, detectPerks, digestGenieLines, digestMessage, streaks, inQuietHours, overflowMessage, sourceInfo, toTgLocale, type AlertJob, type BotApi, type BotResult, type TgLocale } from '@jp/core';
 import type { Db } from '../db';
 
 /** `onlyUserIds` restricts the run to those users (tests; never set in production). */
@@ -265,11 +265,13 @@ async function digestUser(db: Db, deps: TelegramDeps, p: Profile, date: string, 
   const locale = toTgLocale(p.locale);
   const top = ((data ?? []) as unknown as MatchRow[]).map((m) => toAlertJob(m, locale));
   const followUps = apps ?? [];
-  if (top.length === 0 && followUps.length === 0) {
+  const genie = await genieDigest(db, p, date, locale);
+  // An idle-days nudge is worth a message even when nothing new came in.
+  if (top.length === 0 && followUps.length === 0 && !genie.nudge) {
     await markDone();
     return;
   }
-  const msg = digestMessage({ total: count ?? top.length, top, followUps }, locale, deps.siteUrl);
+  const msg = digestMessage({ total: count ?? top.length, top, followUps, genie: genie.lines }, locale, deps.siteUrl);
   const res = await deps.bot.sendMessage(p.telegram_chat_id, msg.text, msg.replyMarkup);
   if (res.ok) {
     result.sent++;
@@ -278,4 +280,24 @@ async function digestUser(db: Db, deps: TelegramDeps, p: Profile, date: string, 
     result.blocked++;
     await dropChat(db, p.id);
   } else result.failed++;
+}
+
+/** Yesterday's applications against the Offer Genie goal (unless the genie is off), in the user's time zone. */
+async function genieDigest(db: Db, p: Profile, today: string, locale: TgLocale): Promise<{ lines: string[]; nudge: boolean }> {
+  const genie = (p.ui_prefs as { genie?: { mode?: unknown; goal?: unknown } } | null)?.genie;
+  if (genie?.mode === 'off') return { lines: [], nudge: false };
+  const goal = typeof genie?.goal === 'number' && genie.goal > 0 ? genie.goal : 5;
+  const since = new Date(Date.parse(`${today}T00:00:00Z`) - 16 * DAY_MS).toISOString();
+  const { data, error } = await db.from('applications').select('applied_at').eq('user_id', p.id).gte('applied_at', since);
+  if (error) throw error;
+  const dates = (data ?? []).flatMap((a) => (a.applied_at ? [localTime(new Date(a.applied_at), p.timezone)?.date ?? ''] : [])).filter(Boolean);
+  if (dates.length === 0) return { lines: [], nudge: false };
+  const back = new Date(`${today}T12:00:00Z`);
+  back.setUTCDate(back.getUTCDate() - 1);
+  const yesterday = back.toISOString().slice(0, 10);
+  const { streak, idleDays } = streaks(dates.filter((d) => d !== today), today, goal);
+  return {
+    lines: digestGenieLines({ yesterday: dates.filter((d) => d === yesterday).length, goal, streak, idleDays }, locale, Number(today.replaceAll('-', ''))),
+    nudge: idleDays >= 2,
+  };
 }

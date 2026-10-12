@@ -279,6 +279,24 @@ describe('sendDigests', () => {
     expect(bot.sent).toHaveLength(1);
   });
 
+  it("starts with the genie: yesterday against the goal; nudges after idle days even with nothing new", async () => {
+    const u = await makeUser('digest-genie', { timezone: 'Europe/Kyiv', digest_hour: 8, ui_prefs: { genie: { goal: 5 } } });
+    await addMatch(u.id, 80, { createdAt: hoursAgo(1) });
+    const { data: col } = await db.from('board_columns').select('id').eq('user_id', u.id).limit(1).single();
+    const yesterday = new Date(at.getTime() - 20 * 3_600_000).toISOString();
+    await db.from('applications').insert([0, 1, 2].map((i) => ({ user_id: u.id, column_id: col!.id, rank: `g${i}`, title: `Role ${i}`, company: 'Co', applied_at: yesterday })));
+    const bot = new FakeBot();
+    await run(sendDigests, bot, u.id, at);
+    expect(bot.sent[0]!.text.startsWith('🧞 Yesterday: 3/5')).toBe(true);
+
+    const idle = await makeUser('digest-idle', { timezone: 'Europe/Kyiv', digest_hour: 8 });
+    const { data: col2 } = await db.from('board_columns').select('id').eq('user_id', idle.id).limit(1).single();
+    await db.from('applications').insert({ user_id: idle.id, column_id: col2!.id, rank: 'i', title: 'Old', company: 'Co', applied_at: new Date(at.getTime() - 4 * 86_400_000).toISOString() });
+    const bot2 = new FakeBot();
+    expect((await run(sendDigests, bot2, idle.id, at)).sent).toBe(1);
+    expect(bot2.sent[0]!.text).toContain('days without applications');
+  });
+
   it('does nothing before the digest hour', async () => {
     const u = await makeUser('wronghour', { timezone: 'Europe/Kyiv', digest_hour: 8 });
     const early = new Date('2026-10-08T04:10:00Z'); // 07:10 Kyiv

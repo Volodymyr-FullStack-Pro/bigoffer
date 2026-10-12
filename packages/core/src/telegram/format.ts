@@ -170,8 +170,45 @@ export function overflowMessage(count: number, locale: TgLocale, siteUrl: string
 /** Telegram's limit for a message text, in UTF-16 code units. */
 const MESSAGE_LIMIT = 4096;
 
+/** The Offer Genie's line in the morning digest: yesterday vs. the goal, the streak, or a nudge after idle days. */
+export type DigestGoal = { yesterday: number; goal: number; streak: number; idleDays: number };
+
+const GENIE: Record<TgLocale, { met: (d: number, g: number) => string; short: (d: number, g: number) => string; streak: (n: number) => string; idle: (n: number) => string; mottos: string[] }> = {
+  en: {
+    met: (d, g) => `🧞 Yesterday: ${d}/${g} — goal reached! 🎉`,
+    short: (d, g) => `🧞 Yesterday: ${d}/${g} applications. Today let’s close the goal 💪`,
+    streak: (n) => `Streak: 🔥${n} days`,
+    idle: (n) => `🧞 ${n} days without applications — the best jobs go in the first hours. Start with the top ones below!`,
+    mottos: ['Every application is a step towards an offer.', 'Replies go to the first applicants — be quick today.', 'A small application today beats a perfect one never.', 'A rejection is a “not here”, not a “no”.', 'Today’s applications are tomorrow’s interviews.'],
+  },
+  uk: {
+    met: (d, g) => `🧞 Вчора: ${d}/${g} — ціль виконано! 🎉`,
+    short: (d, g) => `🧞 Вчора: ${d}/${g} відгуків. Сьогодні закриємо ціль 💪`,
+    streak: (n) => `Серія: 🔥${n} дн. поспіль`,
+    idle: (n) => `🧞 Вже ${n} дні без відгуків — найкращі вакансії розбирають за перші години. Почни з топових нижче!`,
+    mottos: ['Кожен відгук — крок до оферу.', 'Відповідь отримують перші — будь швидким сьогодні.', 'Маленький відгук сьогодні > ідеальний ніколи.', 'Відмова — це «не тут», а не «ні».', 'Сьогоднішні відгуки — це завтрашні співбесіди.'],
+  },
+  ru: {
+    met: (d, g) => `🧞 Вчера: ${d}/${g} — цель выполнена! 🎉`,
+    short: (d, g) => `🧞 Вчера: ${d}/${g} откликов. Сегодня закроем цель 💪`,
+    streak: (n) => `Серия: 🔥${n} дн. подряд`,
+    idle: (n) => `🧞 Уже ${n} дня без откликов — лучшие вакансии разбирают в первые часы. Начни с топовых ниже!`,
+    mottos: ['Каждый отклик — шаг к офферу.', 'Ответ получают первые — будь быстрым сегодня.', 'Маленький отклик сегодня > идеальный никогда.', 'Отказ — это «не здесь», а не «нет».', 'Сегодняшние отклики — это завтрашние собеседования.'],
+  },
+};
+
+/** The genie lines for a digest (empty when there is nothing to say). `seed` picks the motto (e.g. the day). */
+export function digestGenieLines(g: DigestGoal, locale: TgLocale, seed = 0): string[] {
+  const t = GENIE[locale];
+  if (g.idleDays >= 2) return [t.idle(g.idleDays)];
+  const lines = [g.yesterday >= g.goal ? t.met(g.yesterday, g.goal) : t.short(g.yesterday, g.goal)];
+  if (g.streak >= 2) lines.push(t.streak(g.streak));
+  lines.push(`<i>${escapeHtml(t.mottos[Math.abs(seed) % t.mottos.length]!)}</i>`);
+  return lines;
+}
+
 export function digestMessage(
-  d: { total: number; top: AlertJob[]; followUps: { company: string; title: string }[] },
+  d: { total: number; top: AlertJob[]; followUps: { company: string; title: string }[]; genie?: string[] },
   locale: TgLocale,
   siteUrl: string,
 ): { text: string; replyMarkup: InlineKeyboard } {
@@ -182,7 +219,7 @@ export function digestMessage(
   });
   const followUps = d.followUps.slice(0, 10).map((f) => `• ${safe(f.company, 60)} — ${safe(f.title, 100)}`);
   const build = () => {
-    const lines = [`<b>${escapeHtml(t.digestTitle(d.total))}</b>`];
+    const lines = [...(d.genie && d.genie.length > 0 ? [...d.genie, ''] : []), `<b>${escapeHtml(t.digestTitle(d.total))}</b>`];
     if (jobs.length === 0) lines.push(t.digestEmpty);
     else lines.push('', ...jobs);
     if (followUps.length > 0) lines.push('', `⏰ <b>${escapeHtml(t.followUps)}</b>`, ...followUps);
