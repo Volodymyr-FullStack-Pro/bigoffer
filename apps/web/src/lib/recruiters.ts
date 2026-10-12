@@ -100,3 +100,40 @@ export function recruitersFromResults(results: readonly SearchResult[], company:
   }
   return [...out.values()];
 }
+
+export type RankedContact = RecruiterContact & {
+  /** Works at the job's company now (the company is in their headline, not only somewhere in the snippet). */
+  current: boolean;
+  /** The one to write to first, when there is a choice. */
+  best: boolean;
+};
+
+const SOURCER = /sourc|talent acquisition|recruit|рекрут|talent partner|hiring/i;
+const HR = /\bhr\b|human resources|people partner|people ops/i;
+const UA = /ukraine|україн|украин|kyiv|київ|lviv|львів|kharkiv|харків|dnipro|дніпр|odesa|одес/i;
+
+/**
+ * Who to write to first. A contact the posting itself names comes first; then recruiters who work at the company
+ * now, sourcers and talent-acquisition people before HR generalists before leads and managers; people whose
+ * headline does not name the company (probably past employees) last.
+ */
+export function rankRecruiters(contacts: readonly RecruiterContact[], company: string): RankedContact[] {
+  const key = companyKey(company);
+  const scored = contacts.map((c, i) => {
+    const role = c.title ?? '';
+    const current = c.kind !== 'linkedin' || (key !== '' && ` ${companyKey(role)} `.includes(` ${key} `));
+    let score = c.kind === 'linkedin' ? 50 : 100;
+    if (c.kind === 'linkedin') {
+      if (SOURCER.test(role)) score += 20;
+      else if (HR.test(role)) score += 10;
+      if (/lead|head|director|manager|vp/i.test(role)) score -= 5;
+      if (UA.test(role)) score += 3;
+      if (!current) score -= 40;
+    }
+    return { contact: { ...c, current, best: false }, score, i };
+  });
+  scored.sort((a, b) => b.score - a.score || a.i - b.i);
+  const out = scored.map((s) => s.contact);
+  if (out.length >= 2 && out[0]!.current) out[0]!.best = true;
+  return out;
+}

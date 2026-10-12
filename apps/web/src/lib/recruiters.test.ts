@@ -57,3 +57,31 @@ describe('hrContactsFromResults', () => {
     ]);
   });
 });
+
+describe('rankRecruiters', () => {
+  it('puts current sourcers first and probable past employees last', async () => {
+    const { rankRecruiters } = await import('./recruiters');
+    const ranked = rankRecruiters(
+      [
+        { kind: 'linkedin', label: 'Olga Alekseeva', title: 'Talent Acquisition Lead | Full Cycle Recruitment', href: 'https://www.linkedin.com/in/olga' },
+        { kind: 'linkedin', label: 'Oksana Niechaieva', title: 'Talent Acquisition Specialist · Newxel', href: 'https://www.linkedin.com/in/oksana' },
+        { kind: 'linkedin', label: 'Solomiia Letsiuk', title: 'Talent Sourcing Specialist · Newxel · Lviv, Ukraine', href: 'https://www.linkedin.com/in/solomiia' },
+      ],
+      'Newxel',
+    );
+    expect(ranked.map((r) => r.label)).toEqual(['Solomiia Letsiuk', 'Oksana Niechaieva', 'Olga Alekseeva']);
+    expect(ranked[0]).toMatchObject({ best: true, current: true });
+    expect(ranked[2]).toMatchObject({ best: false, current: false });
+  });
+  it('puts a contact named in the posting first', async () => {
+    const { rankRecruiters } = await import('./recruiters');
+    const ranked = rankRecruiters(
+      [
+        { kind: 'linkedin', label: 'Anna', title: 'Recruiter · Acme', href: 'https://www.linkedin.com/in/anna' },
+        { kind: 'email', label: 'hr@acme.io', href: 'mailto:hr@acme.io' },
+      ],
+      'Acme',
+    );
+    expect(ranked[0]).toMatchObject({ kind: 'email', best: true });
+  });
+});
