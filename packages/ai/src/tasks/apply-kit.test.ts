@@ -14,7 +14,7 @@ describe('generateApplyKit', () => {
     expect(req).toMatchObject({ sensitivity: 'private', task: 'apply_kit', tier: 'writer', thinking: 'low', fallback: 'fast' });
     expect(req.prompt).toContain('Senior Developer at Acme');
     expect(req.prompt).not.toContain('template');
-    expect(req.system).toContain('built only from the pitch facts');
+    expect(req.system).toContain('the pitch facts, must-haves first');
     expect(req.system).toContain('Never paraphrase the company');
     expect(req.prompt).toMatch(/<job_posting>[\s\S]*<\/job_posting>/);
     expect(req.system).toContain('untrusted data');
@@ -50,7 +50,7 @@ describe('generateApplyKit', () => {
     const llm = new FakeLlmClient(fakeResponder, ['private']);
     await generateApplyKit(llm, { job, cv, lang: 'uk', tone: 'shorter', salaryMinUsd: null });
     expect(llm.calls[0]!.system).toContain('Ukrainian');
-    expect(llm.calls[0]!.system).toContain('70–90 words');
+    expect(llm.calls[0]!.system).toContain('80–100 words');
   });
 
   it('truncates an over-long short message', async () => {

@@ -1,5 +1,6 @@
 'use client';
 
+import { pill } from '@/components/ui/pill';
 import { Check, Copy, ExternalLink, Mail, Send, Sparkles, UserRound } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
@@ -42,7 +43,7 @@ function NoteComposer({ jobId, contact }: { jobId: string; contact: RankedContac
         <select value={lang} onChange={(e) => setLang(e.target.value as Lang)} aria-label={t('lang')} className="h-8 rounded-lg border border-border bg-card px-2 text-xs">
           {(['auto', 'uk', 'en', 'ru'] as const).map((l) => <option key={l} value={l}>{t(`lang_${l}`)}</option>)}
         </select>
-        <button type="button" data-testid="recruiter-note-generate" disabled={state === 'loading'} onClick={() => void generate()} className="brutal-press inline-flex items-center gap-1.5 rounded-full bg-foreground px-3 py-1 text-xs font-semibold text-background disabled:opacity-60">
+        <button type="button" data-testid="recruiter-note-generate" disabled={state === 'loading'} onClick={() => void generate()} className={pill.primary}>
           <Sparkles className="size-3.5" aria-hidden />
           {state === 'loading' ? t('generating') : body ? t('regenerate') : t('generate')}
         </button>
@@ -53,11 +54,11 @@ function NoteComposer({ jobId, contact }: { jobId: string; contact: RankedContac
           {subject && <p className="text-xs"><span className="text-muted-foreground">{t('subject')}:</span> {subject}</p>}
           <textarea data-testid="recruiter-note-body" value={body} onChange={(e) => setBody(e.target.value)} className="min-h-40 rounded-lg border border-border bg-card px-2.5 py-2 text-sm" />
           <div className="flex flex-wrap gap-2">
-            <button type="button" data-testid="recruiter-note-copy" onClick={() => void copy()} className="brutal-press inline-flex items-center gap-1.5 rounded-full bg-brand px-3 py-1 text-xs font-semibold text-brand-foreground">
+            <button type="button" data-testid="recruiter-note-copy" onClick={() => void copy()} className={pill.accent}>
               {copied ? <Check className="size-3.5" aria-hidden /> : <Copy className="size-3.5" aria-hidden />}
               {copied ? t('copied') : t('copy')}
             </button>
-            <a href={contact.href} target={contact.kind === 'email' ? undefined : '_blank'} rel="noopener noreferrer" className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1 text-xs font-medium hover:bg-muted">
+            <a href={contact.href} target={contact.kind === 'email' ? undefined : '_blank'} rel="noopener noreferrer" className={pill.quiet}>
               <ExternalLink className="size-3.5" aria-hidden />
               {t(contact.kind === 'email' ? 'openEmail' : contact.kind === 'telegram' ? 'openTelegram' : 'openProfile')}
             </a>
@@ -105,10 +106,10 @@ export function PeopleSearch({ jobId }: { jobId: string }) {
                   {p.title && <span className="truncate text-xs text-muted-foreground">{p.title}</span>}
                   {!p.current && <span className="text-[11px] text-warning">{t('maybePast')}</span>}
                 </span>
-                <a data-testid="contact-recruiter" href={p.href} target={p.kind === 'email' ? undefined : '_blank'} rel="noopener noreferrer" className="rounded-full border border-border px-3 py-1 text-xs font-medium hover:bg-muted">
+                <a data-testid="contact-recruiter" href={p.href} target={p.kind === 'email' ? undefined : '_blank'} rel="noopener noreferrer" className={pill.quiet}>
                   {t('contact')}
                 </a>
-                <button type="button" data-testid="recruiter-write" aria-expanded={writing === p.href} onClick={() => setWriting((w) => (w === p.href ? null : p.href))} className="inline-flex items-center gap-1 rounded-full border border-brand/60 bg-brand/15 px-3 py-1 text-xs font-semibold text-link hover:bg-brand/25">
+                <button type="button" data-testid="recruiter-write" aria-expanded={writing === p.href} onClick={() => setWriting((w) => (w === p.href ? null : p.href))} className={`${pill.quiet} border-brand/60 bg-brand/15 font-semibold text-link hover:bg-brand/25`}>
                   ✍️ {t('write')}
                 </button>
               </div>

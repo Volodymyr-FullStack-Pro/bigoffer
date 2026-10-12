@@ -1,5 +1,6 @@
 'use client';
 
+import { pill } from '@/components/ui/pill';
 import { Check, Copy, Sparkles } from 'lucide-react';
 import { textLang } from '@jp/core';
 import { useTranslations } from 'next-intl';
@@ -111,11 +112,7 @@ export function ApplyKitPanel({ jobId, onApplied, hidePeopleSearch }: { jobId: s
 
   if (!data) return <p className="text-sm text-muted-foreground">{t('loading')}</p>;
   const field = 'rounded-xl border border-border bg-card px-3 py-2 text-sm text-foreground';
-  // One compact button scale for the whole kit: primary (white), accent (mint) and quiet (outline).
-  const btn = 'brutal-press inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-semibold transition-colors disabled:opacity-50';
-  const primary = `${btn} bg-foreground text-background hover:bg-foreground/90`;
-  const accent = `${btn} bg-brand text-brand-foreground hover:bg-brand/90`;
-  const quiet = `${btn} border border-border font-medium hover:bg-muted`;
+  const { primary, accent, quiet } = pill;
 
   return (
     <section data-testid="apply-kit" aria-label={t('title')} className="flex flex-col gap-4 border-t border-border pt-4">
@@ -126,7 +123,7 @@ export function ApplyKitPanel({ jobId, onApplied, hidePeopleSearch }: { jobId: s
       <div className="flex flex-wrap items-end gap-2">
         <label className="flex flex-col gap-1.5 text-xs text-muted-foreground">
           {t('language')}
-          <select value={lang} onChange={(e) => { const v = e.target.value as Lang; setLang(v); saveUiPrefs({ kitLang: v }); }} className={field}>
+          <select value={lang} onChange={(e) => { const v = e.target.value as Lang; setLang(v); saveUiPrefs({ kitLang: v }); }} className="h-8 rounded-full border border-border bg-card px-3 text-[13px] text-foreground">
             {(['auto', 'en', 'uk', 'ru'] as const).map((l) => <option key={l} value={l}>{t(`lang_${l}`)}</option>)}
           </select>
         </label>
@@ -237,14 +234,14 @@ export function ApplyKitPanel({ jobId, onApplied, hidePeopleSearch }: { jobId: s
             <p className="text-sm font-semibold">{a.question}{a.fromBank && <span className="ml-2 font-mono text-[10px] text-muted-foreground">{t('fromBank')}</span>}</p>
             <textarea value={a.answer} onChange={(e) => setAnswers((list) => list.map((x, j) => (j === i ? { ...x, answer: e.target.value } : x)))} className={`${field} min-h-14`} aria-label={a.question} />
             <div className="flex flex-wrap items-center gap-2">
-              <button type="button" data-testid="kit-copy-answer" onClick={() => void copy(`a${i}`, a.answer)} className={`${btn} border border-border px-3 py-1 text-xs font-medium hover:bg-muted ${copied === `a${i}` ? 'border-brand/60 text-link' : ''}`}>
+              <button type="button" data-testid="kit-copy-answer" onClick={() => void copy(`a${i}`, a.answer)} className={`${quiet} ${copied === `a${i}` ? 'border-brand/60 text-link' : ''}`}>
                 <CopyIcon done={copied === `a${i}`} />
                 {copied === `a${i}` ? t('copied') : t('copy')}
               </button>
               <button type="button" data-testid="kit-save-answer" onClick={async () => {
                 const res = await saveBankAnswer({ key: null, question: a.question, answer: a.answer, locale: textLang(a.question) }).catch(() => ({ ok: false }));
                 setSavedKey(res.ok ? i : null);
-              }} className={`${btn} px-3 py-1 text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground`}>{t('saveToBank')}</button>
+              }} className={`${quiet} border-transparent text-muted-foreground hover:text-foreground`}>{t('saveToBank')}</button>
               {savedKey === i && <span role="status" className="text-xs text-success">{t('savedToBank')}</span>}
             </div>
           </div>
@@ -267,7 +264,7 @@ export function ApplyKitPanel({ jobId, onApplied, hidePeopleSearch }: { jobId: s
         <div role="alertdialog" aria-label={t('didApply')} className="brutal flex items-center gap-3 p-3">
           <span className="font-semibold">{t('didApply')}</span>
           <button type="button" data-testid="kit-applied-yes" onClick={() => void confirmApplied(true)} className={accent}>{t('yes')}</button>
-          <button type="button" data-testid="kit-applied-no" onClick={() => void confirmApplied(false)} className="px-3 py-1 text-sm">{t('no')}</button>
+          <button type="button" data-testid="kit-applied-no" onClick={() => void confirmApplied(false)} className={`${quiet} border-transparent`}>{t('no')}</button>
         </div>
       )}
       {appliedState === 'done' && <p role="status" className="text-sm text-success">{t('appliedDone')}</p>}
