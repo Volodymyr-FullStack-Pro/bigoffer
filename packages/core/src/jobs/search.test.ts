@@ -167,7 +167,7 @@ describe('djinni categories', () => {
     expect(specs.map((s) => s.params.primary_keyword)).toEqual(['Fullstack', 'JavaScript', 'React.js', 'Node.js']);
   });
   it('never emits an unknown category', () => {
-    const valid = new Set(['Fullstack', 'React.js', 'Node.js', 'JavaScript', 'Vue.js', 'Angular', 'Python', 'Java', 'PHP', 'Golang', 'Ruby', 'iOS', 'Android', 'Flutter', 'DevOps', 'QA', 'Project Manager', 'Product Manager', 'Design', 'Marketing', 'Sales', 'HR']);
+    const valid = new Set(['Fullstack', 'React.js', 'Node.js', 'JavaScript', 'Vue.js', 'Angular', 'Python', 'Java', 'PHP', 'Golang', 'Ruby', 'React Native', 'iOS', 'Android', 'Flutter', 'DevOps', 'QA', 'Project Manager', 'Product Manager', 'Design', 'Marketing', 'Sales', 'HR']);
     for (const v of Object.values(DJINNI_PRIMARY_KEYWORDS)) expect(valid.has(v), v).toBe(true);
   });
 });
@@ -200,5 +200,16 @@ describe('DOU queries for non-JavaScript roles', () => {
     const params = qa.filter((q) => q.sourceId === 'dou').map((q) => q.params);
     expect(params).toContainEqual({ category: 'QA' });
     expect(params).not.toContainEqual({ category: 'Front End' });
+  });
+});
+
+describe('mobile searches', () => {
+  it('maps React Native and Flutter to their Djinni and DOU categories', () => {
+    const specs = buildSourceQueries({ keywords: ['react native', 'flutter developer'], skills: ['Expo'], remoteType: 'any', sources: ['djinni', 'dou'] });
+    const djinni = specs.filter((s) => s.sourceId === 'djinni').map((s) => s.params.primary_keyword);
+    expect(djinni).toEqual(expect.arrayContaining(['React Native', 'Flutter']));
+    expect(djinni).not.toContain('React.js');
+    const dou = specs.filter((s) => s.sourceId === 'dou').map((s) => s.params.category).filter(Boolean);
+    expect(dou).toEqual(expect.arrayContaining(['iOS/macOS', 'Android']));
   });
 });
