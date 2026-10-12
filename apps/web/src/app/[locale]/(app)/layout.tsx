@@ -1,5 +1,6 @@
 import { hasLocale } from 'next-intl';
 import type { ReactNode } from 'react';
+import { Genie } from '@/components/genie/genie';
 import { LegalLinks } from '@/components/legal-links';
 import { BottomNav } from '@/components/shell/bottom-nav';
 import { Header } from '@/components/shell/header';
@@ -29,6 +30,7 @@ export default async function AppLayout({
         <LegalLinks className="text-xs text-muted-foreground" />
       </footer>
       <BottomNav />
+      <Genie />
     </>
   );
 }

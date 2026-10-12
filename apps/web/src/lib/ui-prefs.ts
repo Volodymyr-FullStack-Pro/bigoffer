@@ -18,6 +18,8 @@ export const uiPrefsSchema = z
     /** Board column id -> sort mode. */
     boardSort: z.record(z.string().max(64), z.enum(['smart', 'manual'])),
     kitLang: z.enum(['auto', 'en', 'uk', 'ru']),
+    /** Offer Genie: on (tips + motivation), quiet (only important: goal, health, celebrations), off; daily goal. */
+    genie: z.object({ mode: z.enum(['on', 'quiet', 'off']), goal: z.number().int().min(1).max(50) }).partial(),
   })
   .partial();
 
@@ -41,5 +43,6 @@ export function mergeUiPrefs(current: UiPrefs, patch: UiPrefs): UiPrefs {
     ...patch,
     ...(patch.feed ? { feed: { ...current.feed, ...patch.feed } } : {}),
     ...(patch.boardSort ? { boardSort: { ...current.boardSort, ...patch.boardSort } } : {}),
+    ...(patch.genie ? { genie: { ...current.genie, ...patch.genie } } : {}),
   };
 }

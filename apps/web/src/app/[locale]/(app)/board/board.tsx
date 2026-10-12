@@ -1,5 +1,6 @@
 'use client';
 
+import { tellGenie } from '@/lib/genie/events';
 import { applicationUrgency, type FollowUpRules, rankAtEnd, rankBetween, type RejectionInput, type RejectionReason, smartSort } from '@jp/core';
 import { closestCorners, DndContext, type DragEndEvent, DragOverlay, KeyboardSensor, PointerSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
@@ -97,7 +98,10 @@ export function Board({ columns, cards: initial, labels: initialLabels, rules, n
       patchLocal(id, previous);
       return show({ message: t('moveError'), tone: 'error' });
     }
-    if (target.kind === 'won' && card.columnId !== columnId) setConfetti(true);
+    if (target.kind === 'won' && card.columnId !== columnId) {
+      setConfetti(true);
+      tellGenie({ type: 'offer' });
+    } else if (target.key === 'applied' && card.columnId !== columnId) tellGenie({ type: 'applied' });
   };
 
   const requestMove = (id: string, columnId: string, rank: string, reasons: RejectionReason[] = [], outcome: 'rejected' | 'ghosted' = 'rejected') => {

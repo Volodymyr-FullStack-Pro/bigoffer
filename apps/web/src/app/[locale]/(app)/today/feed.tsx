@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { GlowCard } from '@/components/ui/glow-card';
 import { Toast, useToast } from '@/components/ui/toast';
 import { Link } from '@/i18n/navigation';
+import { tellGenie } from '@/lib/genie/events';
 import { useSaveUiPrefs } from '@/lib/use-save-ui-prefs';
 import { hideMatch, restoreMatch, saveMatch } from './actions';
 import { DEFAULT_FILTERS, filterMatches, sortMatches, type FeedFilters } from './feed-filter';
@@ -98,6 +99,7 @@ export function Feed({
         else existing = true;
       }
       setDone((d) => [...d, { match, index, action }]);
+      if (action !== 'hide') tellGenie({ type: action === 'applied' ? 'applied' : 'saved' });
       show({
         message: t(action === 'hide' ? 'hidden' : existing ? 'alreadyOnBoard' : action === 'saved' ? 'saved' : 'appliedDone', { title: match.title }),
         undoLabel: t('undo'),
