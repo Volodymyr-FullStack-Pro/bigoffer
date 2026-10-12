@@ -103,15 +103,20 @@ export function SearchProfileForm({ values, cvSkills = [], cvHeadline = null }: 
   useEffect(() => () => tellGenie({ type: 'clearHint' }), []);
   // Pop-up feedback for every save; a tip follows when the profile could still find more.
   const lastStatus = useRef(state);
+  const savedRef = useRef({ keywords: values.keywords, sources: values.sources });
   useEffect(() => {
     if (state === lastStatus.current) return;
     lastStatus.current = state;
     if (state.status === 'saved') {
-      toast.success(t('saved'));
+      // New keywords or boards are scraped right after saving (sync-profile), not at the next 30-minute tick.
+      const norm = (xs: Iterable<string>) => [...xs].map((x) => x.toLowerCase()).sort().join('|');
+      const widened = norm(keywords) !== norm(savedRef.current.keywords) || norm(sources) !== norm(savedRef.current.sources);
+      savedRef.current = { keywords: [...keywords], sources: [...sources] };
+      toast.success(t('saved'), widened ? { description: t('savedSearching') } : undefined);
       if (tips.length > 0) toast(t('tipsToast', { count: tips.length }), { icon: '💡' });
     } else if (state.status === 'invalid') toast.error(t('invalid', { fields: (state.fields ?? []).join(', ') }));
     else if (state.status === 'error') toast.error(t('error'));
-  }, [state, tips.length, t]);
+  }, [state, tips.length, t, keywords, sources]);
 
   const toggle = <T,>(set: (fn: (prev: T[]) => T[]) => void, v: T, on: boolean) => set((prev) => (on ? [...prev, v] : prev.filter((x) => x !== v)));
 
