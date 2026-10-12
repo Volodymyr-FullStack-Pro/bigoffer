@@ -36,7 +36,11 @@ async function makeUser(tag: string, profile: Record<string, unknown> = {}) {
   const id = data.user.id;
   createdUsers.push(id);
   const chatId = chatSeq++;
-  const { error: upError } = await db.from('profiles').update({ telegram_chat_id: chatId, locale: 'en', ...profile }).eq('id', id);
+  // No quiet hours unless a test sets them: the default 23–08 Kyiv window held every alert when the suite ran at night.
+  const { error: upError } = await db
+    .from('profiles')
+    .update({ telegram_chat_id: chatId, locale: 'en', telegram_quiet_start: 0, telegram_quiet_end: 0, ...profile })
+    .eq('id', id);
   if (upError) throw upError;
   return { id, chatId };
 }
