@@ -1,5 +1,6 @@
 'use client';
 
+import { Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -79,6 +80,7 @@ export function SearchNow({
 
   const total = status?.total ?? 0;
   const done = Math.min(status?.done ?? 0, total);
+  const pct = total ? Math.round((done / total) * 100) : 0;
 
   return (
     <GlowCard>
@@ -109,25 +111,31 @@ export function SearchNow({
             </p>
           )}
           {running && (
-            <span
-              aria-hidden
-              className="mt-1 h-1 w-full max-w-xs overflow-hidden rounded-full bg-muted"
-            >
+            <span aria-hidden className="mt-1.5 h-1.5 w-full max-w-sm overflow-hidden rounded-full bg-muted">
               <span
-                className="block h-full bg-brand-gradient transition-[width]"
-                style={{ width: `${total ? Math.round((done / total) * 100) : 5}%` }}
+                className="progress-sweep block h-full rounded-full bg-brand transition-[width] duration-700"
+                style={{ width: `${Math.max(pct, 6)}%` }}
               />
             </span>
           )}
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          <HoverBorderGradient
-            data-testid="search-now-start"
-            disabled={pending || running}
-            onClick={() => void start()}
-          >
-            {running ? t('searching') : t('start')}
-          </HoverBorderGradient>
+          {running ? (
+            // A calm "working" pill instead of a dimmed button: spinner, label and percent, no glow.
+            <span
+              data-testid="search-now-running"
+              className="inline-flex items-center gap-2 rounded-full border border-brand/40 bg-brand/10 px-5 py-2.5 text-sm font-semibold text-link"
+            >
+              <Loader2 className="size-4 animate-spin" aria-hidden />
+              {t('searching')}
+              <span className="font-mono text-xs opacity-80">{pct}%</span>
+            </span>
+          ) : (
+            <HoverBorderGradient data-testid="search-now-start" disabled={pending} onClick={() => void start()}>
+              {pending && <Loader2 className="mr-1.5 inline size-4 animate-spin" aria-hidden />}
+              {t('start')}
+            </HoverBorderGradient>
+          )}
           <label className="mono-label flex cursor-pointer items-center gap-2">
             <input
               type="checkbox"

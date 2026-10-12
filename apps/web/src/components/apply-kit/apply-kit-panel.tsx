@@ -1,6 +1,7 @@
 'use client';
 
 import { Check, Copy, Sparkles } from 'lucide-react';
+import { textLang } from '@jp/core';
 import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 import { saveBankAnswer } from '@/app/[locale]/(app)/profile/profile-extras-actions';
@@ -17,7 +18,7 @@ function CopyIcon({ done }: { done: boolean }) {
   return done ? <Check className="size-4" aria-hidden /> : <Copy className="size-4" aria-hidden />;
 }
 
-export function ApplyKitPanel({ jobId, locale, onApplied, hidePeopleSearch }: { jobId: string; locale: 'en' | 'uk' | 'ru'; hidePeopleSearch?: boolean; onApplied?: (r: { columnId: string; rank: string }) => void }) {
+export function ApplyKitPanel({ jobId, onApplied, hidePeopleSearch }: { jobId: string; locale: 'en' | 'uk' | 'ru'; hidePeopleSearch?: boolean; onApplied?: (r: { columnId: string; rank: string }) => void }) {
   const t = useTranslations('kit');
   const [data, setData] = useState<KitData | null>(null);
   const [kit, setKit] = useState<StoredKit | null>(null);
@@ -240,7 +241,7 @@ export function ApplyKitPanel({ jobId, locale, onApplied, hidePeopleSearch }: { 
                 {copied === `a${i}` ? t('copied') : t('copy')}
               </button>
               <button type="button" data-testid="kit-save-answer" onClick={async () => {
-                const res = await saveBankAnswer({ key: null, question: a.question, answer: a.answer, locale }).catch(() => ({ ok: false }));
+                const res = await saveBankAnswer({ key: null, question: a.question, answer: a.answer, locale: textLang(a.question) }).catch(() => ({ ok: false }));
                 setSavedKey(res.ok ? i : null);
               }} className={`${btn} px-3 py-1 text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground`}>{t('saveToBank')}</button>
               {savedKey === i && <span role="status" className="text-xs text-success">{t('savedToBank')}</span>}

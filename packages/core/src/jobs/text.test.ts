@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { decodeEntities, htmlToText, normalizeWhitespace } from './text';
+import { decodeEntities, htmlToText, normalizeWhitespace, textLang } from './text';
 
 describe('decodeEntities', () => {
   it('decodes named, decimal and hex entities', () => {
@@ -33,5 +33,16 @@ describe('htmlToText', () => {
 describe('normalizeWhitespace', () => {
   it('collapses all whitespace', () => {
     expect(normalizeWhitespace('  a \n\t b  ')).toBe('a b');
+  });
+});
+
+describe('textLang', () => {
+  it('detects the language of a form question', () => {
+    expect(textLang('What institution(s) did you graduate from?')).toBe('en');
+    expect(textLang('Який ваш досвід з React?')).toBe('uk');
+    expect(textLang('Какой у вас опыт работы с React?')).toBe('ru');
+    expect(textLang('Почему вы хотите работать у нас?')).toBe('ru');
+    expect(textLang('Чому ви хочете працювати у нас?')).toBe('uk');
+    expect(textLang('Опишіть свій React stack')).toBe('uk');
   });
 });

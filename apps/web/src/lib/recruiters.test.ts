@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { companyKey, contactsFromDescription, recruiterQuery, recruitersFromResults } from './recruiters';
+import { companyKey, contactsFromDescription, hrContactsFromResults, recruiterQuery, recruitersFromResults } from './recruiters';
 
 describe('companyKey', () => {
   it('drops legal forms and punctuation', () => {
@@ -40,5 +40,20 @@ describe('recruitersFromResults', () => {
   });
   it('builds a LinkedIn-profile query', () => {
     expect(recruiterQuery(' Acme ')).toBe('site:linkedin.com/in "Acme" (recruiter OR "talent acquisition" OR HR OR рекрутер)');
+  });
+});
+
+describe('hrContactsFromResults', () => {
+  it('keeps HR mailboxes and recruiters\' Telegram handles of this company only', () => {
+    const results = [
+      { title: 'Контакти — SoftServe', url: 'https://softserve.ua/contacts', description: 'SoftServe: info@softserve.com, вакансії: hr@softserve.com' },
+      { title: 'SoftServe на DOU', url: 'https://jobs.dou.ua/companies/softserve/', description: 'Рекрутер SoftServe — Telegram: @olena_hr_ss' },
+      { title: 'Acme jobs', url: 'https://acme.io', description: 'Write to jobs@acme.io' },
+      { title: 'SoftServe news', url: 'https://news.example', description: 'Telegram: @softserve_news' },
+    ];
+    expect(hrContactsFromResults(results, 'SoftServe')).toEqual([
+      { kind: 'email', label: 'hr@softserve.com', href: 'mailto:hr@softserve.com' },
+      { kind: 'telegram', label: '@olena_hr_ss', href: 'https://t.me/olena_hr_ss' },
+    ]);
   });
 });

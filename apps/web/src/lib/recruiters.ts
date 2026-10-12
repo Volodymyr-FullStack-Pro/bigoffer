@@ -49,6 +49,35 @@ export function recruiterQuery(company: string): string {
   return `site:linkedin.com/in "${company.trim()}" (recruiter OR "talent acquisition" OR HR OR рекрутер)`;
 }
 
+/** A broad query (any site: DOU, Djinni, Telegram, the company's careers page) for the company's HR contacts. */
+export function hrContactQuery(company: string): string {
+  return `"${company.trim()}" рекрутер OR recruiter OR HR контакти OR contacts`;
+}
+
+const HR_MAILBOX = /^(?:hr|recruit\w*|career\w*|jobs?|talent\w*|hiring|people|cv|resume|vacanc\w*)[\w.+-]*@/i;
+
+/**
+ * HR e-mails and recruiters' Telegram handles named in broad search results that mention the company: an address
+ * must look like an HR mailbox, a handle must sit next to a recruiting word.
+ */
+export function hrContactsFromResults(results: readonly SearchResult[], company: string, max = 2): RecruiterContact[] {
+  const key = companyKey(company);
+  if (!key) return [];
+  const out = new Map<string, RecruiterContact>();
+  for (const r of results) {
+    const text = `${stripTags(r.title)} ${stripTags(r.description ?? '')}`;
+    if (!` ${companyKey(text)} `.includes(` ${key} `)) continue;
+    for (const c of contactsFromDescription(text)) {
+      if (c.kind === 'email' && !HR_MAILBOX.test(c.label)) continue;
+      if (c.kind === 'telegram' && !RECRUITER.test(text)) continue;
+      if (c.kind === 'linkedin') continue; // profiles come from recruitersFromResults, which checks the role
+      out.set(c.href, c);
+    }
+    if (out.size >= max) break;
+  }
+  return [...out.values()].slice(0, max);
+}
+
 /**
  * Keeps LinkedIn profiles whose title or snippet names both the company and a recruiting role. Titles look like
  * "Olena Petrenko - Talent Acquisition - SoftServe | LinkedIn".

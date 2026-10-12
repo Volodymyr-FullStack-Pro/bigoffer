@@ -1,7 +1,7 @@
 'use server';
 
 import { answerForm, type ApplyKit, generateApplyKit, type KitJob } from '@jp/ai';
-import { matchBankKey, rankAtTop, splitQuestions } from '@jp/core';
+import { matchBankKey, rankAtTop, splitQuestions, textLang } from '@jp/core';
 import type { Json, TablesInsert } from '@jp/db';
 import { revalidatePath } from 'next/cache';
 import { consumePrivateAi, getLlm, privateAiAvailable } from '@/lib/ai';
@@ -156,7 +156,8 @@ export async function answerFormQuestions(jobId: string, formText: string): Prom
     const key = matchBankKey(q);
     const row = key ? bank?.find((b) => b.key === key) : undefined;
     const answers = (row?.answer ?? {}) as Record<string, string>;
-    return row ? (answers[lang] || answers.en || Object.values(answers).find(Boolean) || null) : null;
+    // A saved answer in the question's language; otherwise let the AI write one rather than answer in another language.
+    return row ? (answers[textLang(q)] || null) : null;
   };
   const answers: FormAnswer[] = questions.map((q) => {
     const a = fromBank(q);
