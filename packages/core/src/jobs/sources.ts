@@ -1,6 +1,6 @@
 import type { SourceId } from './job';
 
-export type SourceMarket = 'ua' | 'remote' | 'europe' | 'global';
+export type SourceMarket = 'ua' | 'remote' | 'global';
 
 export type SourceInfo = {
   id: SourceId;
@@ -19,26 +19,18 @@ export type SourceInfo = {
 export const SOURCE_CATALOG: readonly SourceInfo[] = [
   { id: 'dou', name: 'DOU', market: 'ua', url: 'https://jobs.dou.ua' },
   { id: 'djinni', name: 'Djinni', market: 'ua', url: 'https://djinni.co' },
-  // Answers HTTP 403 to every non-browser-fingerprinted client (incl. our cloud workers), so it never yields.
-  { id: 'workua', name: 'Work.ua', market: 'ua', url: 'https://www.work.ua', browser: true, lowYield: true },
+  { id: 'workua', name: 'Work.ua', market: 'ua', url: 'https://www.work.ua', browser: true },
   { id: 'robotaua', name: 'robota.ua', market: 'ua', url: 'https://robota.ua' },
-  { id: 'jobico', name: 'Jobico', market: 'ua', url: 'https://www.jobico.io', lowYield: true },
   { id: 'itlead', name: 'ITLead', market: 'ua', url: 'https://itlead.org/vacancies' },
-  { id: 'olx', name: 'OLX Робота', market: 'ua', url: 'https://www.olx.ua/uk/rabota/', browser: true, lowYield: true },
   // Aggregator: many listings are already closed on the employer side (its pages block checks), short snippets.
   { id: 'jooble', name: 'Jooble', market: 'global', url: 'https://jooble.org', requiresKey: 'JOOBLE_API_KEY', lowYield: true },
-  { id: 'adzuna', name: 'Adzuna', market: 'europe', url: 'https://www.adzuna.com', requiresKey: 'ADZUNA_APP_ID' },
   { id: 'linkedin', name: 'LinkedIn', market: 'global', url: 'https://www.linkedin.com/jobs' },
   // Applying needs a paid Remote OK membership.
   { id: 'remoteok', name: 'Remote OK', market: 'remote', url: 'https://remoteok.com', applyPaywall: true, lowYield: true },
   { id: 'remotive', name: 'Remotive', market: 'remote', url: 'https://remotive.com' },
   { id: 'himalayas', name: 'Himalayas', market: 'remote', url: 'https://himalayas.app' },
-  { id: 'wwr', name: 'We Work Remotely', market: 'remote', url: 'https://weworkremotely.com', lowYield: true },
-  { id: 'jobicy', name: 'Jobicy', market: 'remote', url: 'https://jobicy.com', lowYield: true },
   { id: 'workingnomads', name: 'Working Nomads', market: 'remote', url: 'https://www.workingnomads.com' },
   { id: 'hn', name: "HN Who's Hiring", market: 'remote', url: 'https://news.ycombinator.com' },
-  { id: 'arbeitnow', name: 'Arbeitnow', market: 'europe', url: 'https://www.arbeitnow.com', lowYield: true },
-  { id: 'justjoin', name: 'Just Join IT', market: 'europe', url: 'https://justjoin.it', lowYield: true },
   { id: 'telegram', name: 'Telegram channels', market: 'ua', url: 'https://t.me' },
   { id: 'greenhouse', name: 'Greenhouse boards', market: 'global', url: 'https://www.greenhouse.com' },
   { id: 'lever', name: 'Lever boards', market: 'global', url: 'https://www.lever.co' },
@@ -57,7 +49,7 @@ export const BROWSER_SOURCE_IDS: ReadonlySet<SourceId> = new Set(
 );
 
 /** The boards most good matches come from; shown first and picked by "Use recommended". */
-export const MAIN_SOURCE_IDS: readonly SourceId[] = ['dou', 'djinni', 'robotaua', 'linkedin'];
+export const MAIN_SOURCE_IDS: readonly SourceId[] = ['dou', 'djinni', 'robotaua', 'workua'];
 
 /**
  * Fallback for profiles saved before sources were chosen explicitly (new profiles start with none checked). The

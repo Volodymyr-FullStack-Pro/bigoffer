@@ -7,8 +7,6 @@ export type RssItem = {
   description: string;
   pubDate: string | null;
   category: string | null;
-  region: string | null;
-  type: string | null;
 };
 
 const parser = new XMLParser({
@@ -39,8 +37,6 @@ export function parseRss(xml: string): RssItem[] {
       description: text(i.description),
       pubDate: text(i.pubDate) || null,
       category: text(i.category) || null,
-      region: text(i.region) || null,
-      type: text(i.type) || null,
     };
   });
 }

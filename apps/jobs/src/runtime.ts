@@ -11,8 +11,6 @@ export function pipelineDeps(): RunQueryDeps {
   const env = jobsEnv();
   const adapterEnv = {
     JOOBLE_API_KEY: env.JOOBLE_API_KEY,
-    ADZUNA_APP_ID: env.ADZUNA_APP_ID,
-    ADZUNA_APP_KEY: env.ADZUNA_APP_KEY,
   };
   return {
     db: getDb(),

@@ -3,7 +3,7 @@
 import { defaultSources, keywordForms, MAIN_SOURCE_IDS, ROLE_FAMILIES, type RoleFamily, SEARCH_REMOTE_TYPES, SENIORITIES, SOURCE_CATALOG, type SourceInfo } from '@jp/core';
 import { useTranslations } from 'next-intl';
 import { Lightbulb } from 'lucide-react';
-import { type ReactNode, useActionState, useEffect, useMemo, useRef, useState } from 'react';
+import { type ReactNode, startTransition, useActionState, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { TagInput } from '@/components/ui/tag-input';
@@ -32,7 +32,7 @@ export type SearchProfileValues = {
   isActive: boolean;
 };
 
-const MARKETS = ['main', 'ua', 'remote', 'europe', 'global'] as const;
+const MARKETS = ['main', 'ua', 'remote', 'global'] as const;
 const MAIN = new Set<string>(MAIN_SOURCE_IDS);
 const field = 'rounded-xl border border-border bg-card px-3 py-2.5 outline-none focus:ring-2 focus:ring-brand';
 
@@ -126,7 +126,17 @@ export function SearchProfileForm({ values, cvSkills = [], cvHeadline = null }: 
 
   return (
     <div className="brutal flex flex-col gap-4 p-6">
-      <form action={action} noValidate className="flex flex-col gap-6">
+      {/* Submitted by hand, not via the action prop: React resets a form after its action, which put every unchecked
+          board back on screen and into the next save. */}
+      <form
+        noValidate
+        className="flex flex-col gap-6"
+        onSubmit={(e) => {
+          e.preventDefault();
+          const data = new FormData(e.currentTarget);
+          startTransition(() => action(data));
+        }}
+      >
         {values.id && <input type="hidden" name="id" value={values.id} />}
 
         {tips.length > 0 && (
@@ -296,7 +306,7 @@ export function SearchProfileForm({ values, cvSkills = [], cvHeadline = null }: 
                   />
                 ))}
               </div>
-              {market === 'main' && <span id="source-linkedin-warning" className="text-xs text-muted-foreground">{t('linkedinWarning')}</span>}
+              {market === 'global' && <span id="source-linkedin-warning" className="text-xs text-muted-foreground">{t('linkedinWarning')}</span>}
             </fieldset>
           ))}
           {invalid.has('sources') && <p className="text-sm text-danger">{t('sourcesRequired')}</p>}

@@ -41,7 +41,7 @@
 ## 4. Trigger.dev Cloud
 
 - [ ] Створіть проєкт, візьміть **project ref** (`proj_…`) і **Personal Access Token** (Account → Personal Access Tokens).
-- [ ] Project → Environment Variables (середовище **Production**), додайте: `SUPABASE_URL`, `SUPABASE_SECRET_KEY`, `GEMINI_API_KEY_PUBLIC`, `JOOBLE_API_KEY` (якщо є), `ADZUNA_APP_ID` і `ADZUNA_APP_KEY` (якщо є), `SCRAPE_INTERVAL_MULTIPLIER=3` (див. розділ про витрати; за замовчуванням 1), `AI_DAILY_LIMIT` (необов'язково, за замовчуванням 900). `TELEGRAM_BOT_TOKEN` і `SITE_URL` тут не додавайте: їх разом задає розділ 8 (токен без `SITE_URL` змушує задачі Telegram падати).
+- [ ] Project → Environment Variables (середовище **Production**), додайте: `SUPABASE_URL`, `SUPABASE_SECRET_KEY`, `GEMINI_API_KEY_PUBLIC`, `JOOBLE_API_KEY` (якщо є), `SCRAPE_INTERVAL_MULTIPLIER=3` (див. розділ про витрати; за замовчуванням 1), `AI_DAILY_LIMIT` (необов'язково, за замовчуванням 900). `TELEGRAM_BOT_TOKEN` і `SITE_URL` тут не додавайте: їх разом задає розділ 8 (токен без `SITE_URL` змушує задачі Telegram падати).
 - [ ] Візьміть **`TRIGGER_SECRET_KEY`** для Production (Project → API Keys) — він піде у Vercel.
 
 ### Jooble
@@ -50,7 +50,6 @@
 
 ### Adzuna
 
-- [ ] На developer.adzuna.com → Register створіть акаунт і візьміть **App ID** та **App Key**. Вони йдуть у Trigger.dev як `ADZUNA_APP_ID` і `ADZUNA_APP_KEY`.
 - Adzuna — офіційний API: шукає по країнах pl, de, gb, nl запитом «<термін> remote» кожні 6 годин. Без обох ключів джерело вимкнене. Безкоштовна квота ≈ 250 запитів на день, 1 000 на тиждень, 2 500 на місяць; один профіль витрачає ≈ 32 запити на день, тому кілька різних профілів можуть вичерпати квоту.
 
 ### Множник частоти
@@ -150,7 +149,6 @@ curl -X POST "https://api.telegram.org/bot<TOKEN>/setWebhook" \
 | `SUPABASE_SECRET_KEY` | Trigger.dev | Supabase → secret key | так |
 | `GEMINI_API_KEY_PUBLIC` | Trigger.dev | AI Studio, безкоштовний ключ | так (для AI-збагачення) |
 | `JOOBLE_API_KEY` | Trigger.dev | jooble.org/api/about | ні |
-| `ADZUNA_APP_ID`, `ADZUNA_APP_KEY` | Trigger.dev | developer.adzuna.com → Register | ні (без обох ключів Adzuna вимкнена) |
 | `SCRAPE_INTERVAL_MULTIPLIER` | Trigger.dev | число ≥ 1, за замовчуванням 1; 2 — удвічі рідше й дешевше | ні |
 | `AI_DAILY_LIMIT` | Trigger.dev | число, за замовчуванням 900 | ні |
 | `AI_BATCH_SIZE`, `AI_MIN_INTERVAL_MS`, `AI_MODEL_PUBLIC`, `SCRAPER_USER_AGENT` | Trigger.dev | налаштування за потреби | ні |

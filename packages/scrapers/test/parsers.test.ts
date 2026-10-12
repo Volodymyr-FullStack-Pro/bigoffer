@@ -17,12 +17,6 @@ describe('parseRss', () => {
     }
   });
 
-  it('parses WWR extra fields', () => {
-    const items = parseRss(fixture('wwr.xml'));
-    expect(items).toHaveLength(3);
-    expect(items.some((i) => i.region !== null)).toBe(true);
-  });
-
   it('handles a feed with a single item and no items', () => {
     const one = '<rss><channel><item><title>A</title><link>https://x.test/1</link></item></channel></rss>';
     expect(parseRss(one)).toHaveLength(1);

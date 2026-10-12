@@ -47,7 +47,6 @@ const trimTelegram = (html) => {
 const tasks = {
   'dou.xml': async () => trimRss(await get('https://jobs.dou.ua/vacancies/feeds/?search=react')),
   'djinni.html': async () => trimLdHtml(await get('https://djinni.co/jobs/?primary_keyword=JavaScript')),
-  'wwr.xml': async () => trimRss(await get('https://weworkremotely.com/remote-jobs.rss')),
   'remoteok.json': async () => JSON.stringify(JSON.parse(await get('https://remoteok.com/api?tag=react')).slice(0, 4), null, 1),
   'remotive.json': async () => {
     const d = JSON.parse(await get('https://remotive.com/api/remote-jobs?search=react&limit=3'));
@@ -68,25 +67,12 @@ const tasks = {
     const item = JSON.parse(await get(`https://hn.algolia.com/api/v1/items/${hit.objectID}`));
     return JSON.stringify({ ...item, children: item.children.filter((c) => c.text).slice(0, 3) }, null, 1);
   },
-  'arbeitnow.json': async () => {
-    const d = JSON.parse(await get('https://www.arbeitnow.com/api/job-board-api'));
-    return JSON.stringify({ ...d, data: d.data.slice(0, 3) }, null, 1);
-  },
-  'jobicy.json': async () => {
-    const d = JSON.parse(await get('https://jobicy.com/api/v2/remote-jobs?count=3&tag=react'));
-    return JSON.stringify({ ...d, jobs: d.jobs.slice(0, 3) }, null, 1);
-  },
   'workingnomads.json': async () => JSON.stringify(JSON.parse(await get('https://www.workingnomads.com/api/exposed_jobs/')).slice(0, 3), null, 1),
-  'justjoin.json': async () => {
-    const d = JSON.parse(await get('https://justjoin.it/api/candidate-api/offers?from=0&itemsCount=3'));
-    return JSON.stringify(d, null, 1);
-  },
   'linkedin.html': async () => {
     const html = await get('https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search?keywords=react&location=Ukraine&start=0');
     return [...html.matchAll(/<li>[\s\S]*?<\/li>/g)].slice(0, 3).map((m) => m[0]).join('\n');
   },
   'workua.html': async () => renderTrim('https://www.work.ua/jobs-remote-react/', 'div.card.job-link'),
-  'olx.html': async () => renderTrim('https://www.olx.ua/uk/rabota/q-react/', '[data-cy="l-card"]'),
   'greenhouse.json': async () => {
     const d = JSON.parse(await get('https://boards-api.greenhouse.io/v1/boards/gitlab/jobs?content=true'));
     return JSON.stringify({ jobs: pick(d.jobs, (j) => tech(j.title)) }, null, 1);

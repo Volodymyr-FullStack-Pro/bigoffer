@@ -4,8 +4,8 @@ select plan(5);
 
 select is(
   (select count(*)::int from public.sources
-   where id in ('workua','olx','linkedin','arbeitnow','jobicy','workingnomads','justjoin')),
-  7, 'seven new sources exist');
+   where id in ('workua','linkedin','workingnomads') and enabled),
+  3, 'the kept sources from this batch are enabled');
 select is((select min_interval_minutes from public.sources where id = 'linkedin'), 120, 'linkedin polls like the other main boards');
 
 insert into auth.users (id, email) values ('55555555-5555-5555-5555-555555555555', 'src@test.dev');

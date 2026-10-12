@@ -3,8 +3,6 @@ import { normalizeJob } from '@jp/core';
 import { describe, expect, it } from 'vitest';
 import { djinniAdapter } from '../src/adapters/djinni';
 import { douAdapter, splitDouTitle } from '../src/adapters/dou';
-import { jobicoAdapter } from '../src/adapters/jobico';
-import { wwrAdapter } from '../src/adapters/wwr';
 import { fakeContext } from './fake-context';
 
 const fixture = (name: string) => readFileSync(new URL(`../fixtures/${name}`, import.meta.url), 'utf8');
@@ -81,41 +79,5 @@ describe('djinniAdapter', () => {
     ]);
     expect(jobs.filter((j) => j.externalId === '787644')).toHaveLength(1);
     await expectNormalizable(jobs);
-  });
-});
-
-describe('wwrAdapter', () => {
-  it('splits "Company: Role" titles and marks jobs remote', async () => {
-    const { ctx } = fakeContext({ 'weworkremotely.com': fixture('wwr.xml') });
-    const jobs = await wwrAdapter.search({}, ctx);
-    expect(jobs).toHaveLength(3);
-    expect(jobs.every((j) => j.company.length > 0 && !j.title.startsWith(`${j.company}:`))).toBe(true);
-    expect(jobs.every((j) => j.remoteHint === 'remote')).toBe(true);
-    await expectNormalizable(jobs);
-  });
-});
-
-describe('jobicoAdapter', () => {
-  it('reads the official XML feed', async () => {
-    const { ctx, calls } = fakeContext({ 'jobico.io/api/feeds/jobs.xml': fixture('jobico.xml') });
-    const jobs = await jobicoAdapter.search({}, ctx);
-    expect(calls[0]!.url).toBe('https://www.jobico.io/api/feeds/jobs.xml');
-    expect(jobs).toHaveLength(3);
-    expect(jobs[0]).toMatchObject({
-      title: 'Senior IT Business Analyst',
-      company: 'Техно Іновейшн Компані',
-      location: 'Kiyv, Ukraine',
-      salaryRaw: '2500-3000 USD',
-      remoteHint: 'hybrid',
-    });
-    expect(jobs[1]).toMatchObject({ location: null, salaryRaw: null, remoteHint: 'remote' });
-    expect(jobs.every((j) => j.url.startsWith('https://www.jobico.io/jobs/') && !j.url.includes('utm_'))).toBe(true);
-    expect(new Set(jobs.map((j) => j.externalId)).size).toBe(3);
-    await expectNormalizable(jobs);
-  });
-
-  it('returns nothing for an empty feed', async () => {
-    const { ctx } = fakeContext({ 'jobico.io': '<?xml version="1.0"?><source><publisher>Jobico</publisher></source>' });
-    expect(await jobicoAdapter.search({}, ctx)).toEqual([]);
   });
 });

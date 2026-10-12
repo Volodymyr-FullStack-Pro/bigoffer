@@ -126,8 +126,6 @@ const SEARCH_SOURCES: [SourceId, string][] = [
   ['remotive', 'search'],
   ['himalayas', 'q'],
   ['workua', 'search'],
-  ['olx', 'search'],
-  ['jobicy', 'tag'],
 ];
 
 const MAX_TERMS = 14;
@@ -162,8 +160,6 @@ export function searchTerms(profile: Pick<SearchProfile, 'keywords' | 'skills'>)
   return out.slice(0, MAX_TERMS);
 }
 
-export const ADZUNA_COUNTRIES = ['pl', 'de', 'gb', 'nl'] as const;
-
 export function queryKey(sourceId: SourceId, params: Record<string, string>): string {
   const sorted = Object.fromEntries(
     Object.keys(params)
@@ -189,7 +185,7 @@ export function buildSourceQueries(
   };
 
   for (const [sourceId, param] of SEARCH_SOURCES) {
-    // Browser sources are the most expensive to run, so they get only the first two terms (like Adzuna).
+    // Browser sources are the most expensive to run, so they get only the first two terms.
     for (const keyword of BROWSER_SOURCE_IDS.has(sourceId) ? keywords.slice(0, 2) : keywords) {
       add(sourceId, sourceId === 'workua' && remote ? { [param]: keyword, remote: '1' } : { [param]: keyword });
     }
@@ -199,9 +195,6 @@ export function buildSourceQueries(
       'linkedin',
       remote ? { keywords: keyword, location: 'Worldwide', remote: '1' } : { keywords: keyword, location: 'Ukraine' },
     );
-  }
-  for (const term of keywords.slice(0, 2)) {
-    for (const country of ADZUNA_COUNTRIES) add('adzuna', { what: `${term} remote`, country });
   }
 
   const terms = [...profile.keywords, ...profile.skills].map((t) => t.toLowerCase());
@@ -239,12 +232,8 @@ export function buildSourceQueries(
   const tagSource = profile.skills[0] ?? profile.keywords[0];
   const tag = tagSource ? slug(tagSource) : '';
   add('remoteok', tag ? { tag } : {});
-  add('wwr', {});
   add('hn', {});
-  add('arbeitnow', {});
   add('workingnomads', {});
-  add('justjoin', {});
-  add('jobico', {});
   add('itlead', {});
 
   const unique = new Map(specs.map((s) => [s.queryKey, s]));
