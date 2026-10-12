@@ -181,7 +181,7 @@ export function Feed({
 
   const select = (testId: string, label: string, value: string, onChange: (v: string) => void, options: { value: string; label: string }[]) => (
     <label className="flex min-w-0 flex-col gap-1 text-xs text-muted-foreground">
-      {label}
+      <span className="sr-only sm:not-sr-only">{label}</span>
       <select data-testid={testId} value={value} onChange={(e) => onChange(e.target.value)} className="h-[34px] rounded-xl border border-border bg-card px-2.5 font-sans text-sm text-foreground">
         {options.map((o) => (
           <option key={o.value} value={o.value}>{o.label}</option>

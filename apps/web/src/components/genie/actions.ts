@@ -44,7 +44,15 @@ export async function getGenieState(tzRaw: string): Promise<GenieState | null> {
     supabase.from('applications').select('applied_at').gte('applied_at', since14d),
     supabase.from('job_matches').select('id', { count: 'exact', head: true }).in('state', ['new', 'seen']).gte('created_at', since24h),
     supabase.from('job_matches').select('id', { count: 'exact', head: true }).eq('state', 'new').gte('score', 80).gte('created_at', since2h),
-    supabase.from('job_matches').select('id', { count: 'exact', head: true }).eq('state', 'hidden').not('breakdown->>excludedBy', 'is', null),
+    // Same set as the feed's "Hidden by rules" toggle: active, recent, not stale.
+    supabase
+      .from('job_matches')
+      .select('id, jobs!inner(status)', { count: 'exact', head: true })
+      .eq('state', 'hidden')
+      .not('breakdown->>excludedBy', 'is', null)
+      .eq('jobs.status', 'active')
+      .gte('created_at', new Date(now.getTime() - 3 * 24 * 3600_000).toISOString())
+      .or(`posted_at.is.null,posted_at.gte.${new Date(now.getTime() - 30 * 24 * 3600_000).toISOString()}`, { referencedTable: 'jobs' }),
     supabase
       .from('applications')
       .select('id, board_columns!inner(key)', { count: 'exact', head: true })
