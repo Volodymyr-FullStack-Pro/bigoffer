@@ -23,12 +23,18 @@ export async function prepareSearchNow(
   for (const profile of profiles) for (const id of (await syncProfile(db, profile, now)).queryIds) queryIds.add(id);
   if (queryIds.size === 0) return { profiles: profiles.length, due: [] };
 
+  return { profiles: profiles.length, due: await pullForward(db, [...queryIds], now, deps) };
+}
+
+type Deps = { adapters: Partial<Record<string, SourceAdapter>>; env: Record<string, string | undefined>; intervalMultiplier?: number };
+
+/** Brings these queries' next run forward to now and returns them as due (paused/disabled/unconfigured left out). */
+async function pullForward(db: Db, ids: string[], now: Date, deps: Deps, onlyNeverRun = false): Promise<DueQuery[]> {
+  if (ids.length === 0) return [];
   const nowIso = now.toISOString();
-  const { data, error } = await db
-    .from('search_queries')
-    .select('id, source_id, next_run_at, sources!inner(enabled, paused_until)')
-    .in('id', [...queryIds])
-    .eq('sources.enabled', true);
+  let query = db.from('search_queries').select('id, source_id, next_run_at, sources!inner(enabled, paused_until)').in('id', ids).eq('sources.enabled', true);
+  if (onlyNeverRun) query = query.is('last_run_at', null);
+  const { data, error } = await query;
   if (error) throw error;
   const runnable = data.filter((q) => !q.sources.paused_until || q.sources.paused_until <= nowIso);
   const later = runnable.filter((q) => q.next_run_at > nowIso).map((q) => q.id);
@@ -37,5 +43,13 @@ export async function prepareSearchNow(
     if (updateError) throw updateError;
   }
   const due = runnable.map((q) => ({ id: q.id, sourceId: q.source_id, nextRunAt: q.next_run_at > nowIso ? nowIso : q.next_run_at }));
-  return { profiles: profiles.length, due: await deferUnconfigured(db, due, deps.adapters, deps.env, now, deps.intervalMultiplier) };
+  return deferUnconfigured(db, due, deps.adapters, deps.env, now, deps.intervalMultiplier);
+}
+
+/**
+ * After a profile is saved: queries that have never run (a new keyword or board) are scraped right away instead of
+ * waiting for the next scheduler tick. Queries that already ran keep their cadence (no rate limit to bypass).
+ */
+export async function dueNewQueries(db: Db, queryIds: string[], now: Date, deps: Deps): Promise<DueQuery[]> {
+  return pullForward(db, queryIds, now, deps, true);
 }
