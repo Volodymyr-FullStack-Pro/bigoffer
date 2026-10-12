@@ -103,3 +103,11 @@ describe('experience filter', () => {
   });
 });
 
+
+describe('level filter', () => {
+  const items = [m('none', { seniority: null }), m('jun', { seniority: 'junior' }), m('mid', { seniority: 'middle' }), m('sen', { seniority: 'senior' })];
+  it('keeps the chosen level and jobs that state none', () => {
+    expect(filterMatches(items, { ...DEFAULT_FILTERS, level: 'middle' }).map((x) => x.id)).toEqual(['none', 'mid']);
+    expect(filterMatches(items, DEFAULT_FILTERS)).toHaveLength(4);
+  });
+});

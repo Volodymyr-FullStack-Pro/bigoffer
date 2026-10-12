@@ -183,6 +183,7 @@
     "expGap": "Your CV: {years} yrs — they ask for more",
     "onBoard": "Already on your board: {column}",
     "filterExperience": "Experience",
+    "filterLevel": "Level",
     "expFit": "Fits my CV",
     "expUpTo": "up to {years} yrs"
   },
