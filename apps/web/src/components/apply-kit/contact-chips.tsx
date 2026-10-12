@@ -8,7 +8,12 @@ const ORDER = ['email', 'phone', 'linkedin', 'github', 'portfolio', 'telegram'] 
 export function ContactChips({ contacts, cvLink }: { contacts: Record<string, string>; cvLink: string | null }) {
   const t = useTranslations('kit');
   const [copied, setCopied] = useState<string | null>(null);
-  const items = [...ORDER.filter((k) => contacts[k]).map((k) => ({ key: k, label: t(`contact_${k}`), value: contacts[k]! })), ...(cvLink ? [{ key: 'cv', label: t('contact_cv'), value: cvLink }] : [])];
+  // The user's own CV link wins over the 30-day link to the uploaded file.
+  const cv = contacts.cv ?? cvLink;
+  const items = [
+    ...(cv ? [{ key: 'cv', label: t('contact_cv'), value: cv }] : []),
+    ...ORDER.filter((k) => contacts[k]).map((k) => ({ key: k, label: t(`contact_${k}`), value: contacts[k]! })),
+  ];
   if (items.length === 0) return <p className="text-sm text-muted-foreground">{t('noContacts')}</p>;
   return (
     <ul className="flex flex-wrap gap-1.5" aria-label={t('contacts')}>

@@ -21,7 +21,7 @@ export type ApplyKit = {
 };
 export type KitJob = { title: string; company: string; description: string; salary: string | null };
 /** The candidate's own name and contacts from the profile, used to fill [Full name], [Phone], [LinkedIn]… placeholders. */
-export type KitCandidate = { fullName: string | null; contacts: Partial<Record<'email' | 'phone' | 'linkedin' | 'github' | 'portfolio' | 'telegram', string>> };
+export type KitCandidate = { fullName: string | null; contacts: Partial<Record<'email' | 'phone' | 'linkedin' | 'github' | 'cv' | 'portfolio' | 'telegram', string>> };
 
 const CONTACT_LABELS = [
   ['email', 'Email'],

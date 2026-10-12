@@ -1,6 +1,6 @@
 import type { KitCandidate } from '@jp/ai';
 
-const CONTACT_KEYS = ['email', 'phone', 'linkedin', 'github', 'portfolio', 'telegram'] as const;
+const CONTACT_KEYS = ['email', 'phone', 'linkedin', 'github', 'cv', 'portfolio', 'telegram'] as const;
 
 /** The profile's name and non-empty string contacts, for the [Full name] / [Phone] / … template placeholders. */
 export function kitCandidate(row: { full_name: string | null; contacts: unknown } | null | undefined): KitCandidate {

@@ -15,7 +15,7 @@ export type ProfileState = {
   rev?: number;
 };
 
-const CONTACT_KEYS = ['email', 'phone', 'linkedin', 'github', 'portfolio', 'telegram'] as const;
+const CONTACT_KEYS = ['email', 'phone', 'linkedin', 'github', 'cv', 'portfolio', 'telegram'] as const;
 
 export async function updateProfile(prev: ProfileState, formData: FormData): Promise<ProfileState> {
   const values: ProfileValues = {
