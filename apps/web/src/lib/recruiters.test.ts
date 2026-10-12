@@ -16,7 +16,7 @@ describe('contactsFromDescription', () => {
     expect(contactsFromDescription(text)).toEqual([
       { kind: 'email', label: 'anna.hr@acme.io', href: 'mailto:anna.hr@acme.io' },
       { kind: 'telegram', label: '@anna_recruits', href: 'https://t.me/anna_recruits' },
-      { kind: 'linkedin', label: 'olena petrenko', href: 'https://www.linkedin.com/in/olena-petrenko-1a2b3c4d' },
+      { kind: 'linkedin', label: 'olena petrenko', href: 'https://www.linkedin.com/in/olena-petrenko-1a2b3c4d', posted: true },
     ]);
   });
   it('returns nothing for a plain description', () => {
@@ -96,6 +96,15 @@ describe('rankRecruiters', () => {
       { kind: 'linkedin', label: 'Solomiia', title: 'Talent Sourcer', href: 'https://www.linkedin.com/in/solomiia' },
     ]);
     expect(ranked.map((r) => [r.label, r.current, r.best])).toEqual([['Solomiia', true, true], ['Olga', true, false]]);
+  });
+  it('puts a LinkedIn profile named in the posting above recruiters found by search', async () => {
+    const { rankRecruiters } = await import('./recruiters');
+    const own = contactsFromDescription('Questions: https://www.linkedin.com/in/olena-petrenko');
+    const ranked = rankRecruiters([
+      { kind: 'linkedin', label: 'Anna', title: 'Talent Sourcer', href: 'https://www.linkedin.com/in/anna' },
+      ...own,
+    ]);
+    expect(ranked.map((r) => [r.label, r.best])).toEqual([['olena petrenko', true], ['Anna', false]]);
   });
   it('puts a contact named in the posting first', async () => {
     const { rankRecruiters } = await import('./recruiters');
