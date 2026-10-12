@@ -4,6 +4,7 @@ import { regionBucket } from './normalize';
 import type { SearchProfile } from './search';
 import { remoteBlockedFor } from './regions';
 import { isTechTitle } from './boards';
+import { detectSeniority } from './detect';
 import { detectRoleFamilies, type RoleFamily, roleOffTarget, targetRoleFamilies } from './roles';
 
 const TECH_FAMILIES: ReadonlySet<RoleFamily> = new Set<RoleFamily>(['frontend', 'fullstack', 'backend', 'mobile', 'devops', 'qa', 'data']);
@@ -171,7 +172,10 @@ export function scoreJob(
     job.remoteType === 'remote' && remoteBlockedFor(regions, profile.candidateCountry) ? regions : null;
   // "Remote only" hides jobs that say they are hybrid or office; jobs that state no format stay.
   const formatOff = profile.remoteType === 'remote' && (job.remoteType === 'hybrid' || job.remoteType === 'office');
-  const levelOff = profile.seniority.length > 0 && job.seniority !== null && !profile.seniority.includes(job.seniority);
+  // Only a level the title states hides a job. The AI's level is a guess from the text (a "3+ years" posting that
+  // "owns the panel" came out senior), so it only moves the score.
+  const titleLevel = detectSeniority(job.title);
+  const levelOff = profile.seniority.length > 0 && titleLevel !== null && !profile.seniority.includes(titleLevel);
   const keywordExclusion = profile.excludeKeywords.find((e) => containsTerm(text, e))?.toLowerCase() ?? null;
   const breakdown: MatchBreakdown = {
     skills,
@@ -181,8 +185,8 @@ export function scoreJob(
     salary: salaryPoints(profile.salaryMinUsd, job),
     matchedSkills,
     // 'role' / 'region' hide the row like an exclude keyword, so upsert_job_matches keeps rescoring it.
-    // A stated level outside the profile's chosen levels is hidden, not just scored lower: unchecking "Senior"
-    // must take senior jobs out of the feed. Jobs that state no level stay.
+    // A level in the title outside the profile's chosen levels is hidden, not just scored lower: unchecking "Senior"
+    // must take "Senior …" jobs out of the feed. Jobs whose title states no level stay.
     excludedBy: keywordExclusion ?? (offTarget ? 'role' : levelOff ? 'seniority' : formatOff ? 'format' : blockedRegions ? 'region' : null),
     blockedRegions,
   };

@@ -193,6 +193,28 @@
   }
 }
 
+/* Search in progress: a light sweep over the progress bar, so a slow source still reads as "working". */
+@keyframes bar-sweep {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(300%);
+  }
+}
+.progress-sweep {
+  position: relative;
+  overflow: hidden;
+}
+.progress-sweep::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  width: 35%;
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.45), transparent);
+  animation: bar-sweep 1.6s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

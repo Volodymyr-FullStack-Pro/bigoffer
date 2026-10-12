@@ -48,3 +48,15 @@ export function htmlToText(html: string): string {
     .filter(Boolean)
     .join('\n');
 }
+
+/**
+ * The language a short text (a form question) is written in: Cyrillic with Russian-only letters is "ru", other
+ * Cyrillic "uk", anything else "en".
+ */
+export function textLang(s: string): 'en' | 'uk' | 'ru' {
+  const cyr = (s.match(/[а-яёіїєґ]/gi) ?? []).length;
+  const lat = (s.match(/[a-z]/gi) ?? []).length;
+  if (cyr === 0 || lat > cyr) return 'en';
+  if (/[іїєґ]/i.test(s)) return 'uk';
+  return /[ыэъё]/i.test(s) ? 'ru' : 'uk';
+}
