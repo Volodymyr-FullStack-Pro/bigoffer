@@ -180,8 +180,8 @@ export function SearchProfileForm({ values, cvSkills = [], cvHeadline = null }: 
             invalid={invalid.has('keywords')}
             placeholder={t('keywordsPlaceholder')}
             sameKey={keywordKey}
-            addLabel={t('addTyped')}
-            duplicateLabel={t('alreadyThere')}
+            addLabel={t.raw('addTyped')}
+            duplicateLabel={t.raw('alreadyThere')}
           />
           <fieldset className="flex flex-col gap-2">
             <legend className="mb-1.5 text-xs text-muted-foreground">{t('seniority')}</legend>
@@ -206,8 +206,8 @@ export function SearchProfileForm({ values, cvSkills = [], cvHeadline = null }: 
             invalid={invalid.has('skills')}
             placeholder={t('skillsPlaceholder')}
             sameKey={skillKey}
-            addLabel={t('addTyped')}
-            duplicateLabel={t('alreadyThere')}
+            addLabel={t.raw('addTyped')}
+            duplicateLabel={t.raw('alreadyThere')}
           />
           <TagInput
             name="excludeKeywords"
@@ -217,8 +217,8 @@ export function SearchProfileForm({ values, cvSkills = [], cvHeadline = null }: 
             suggestions={EXCLUDE_SUGGESTIONS}
             suggestionsLabel={t('suggested')}
             invalid={invalid.has('excludeKeywords')}
-            addLabel={t('addTyped')}
-            duplicateLabel={t('alreadyThere')}
+            addLabel={t.raw('addTyped')}
+            duplicateLabel={t.raw('alreadyThere')}
           />
         </Section>
 

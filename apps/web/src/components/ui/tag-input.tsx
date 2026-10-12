@@ -149,7 +149,7 @@ export function TagInput({
         />
       </div>
       {(dupe || typedExisting) && (
-        <span data-testid={`duplicate-${name}`} role="status" className="text-xs font-medium text-warning">
+        <span data-testid={`duplicate-${name}`} aria-live="polite" className="text-xs font-medium text-warning">
           {duplicateLabel.replace('{value}', (typedExisting ?? dupe)!)}
         </span>
       )}
