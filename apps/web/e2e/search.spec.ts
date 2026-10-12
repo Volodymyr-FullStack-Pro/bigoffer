@@ -79,7 +79,6 @@ test('an office profile with no stored sources shows office defaults', async ({ 
   await page.goto('/en/search');
   await expect(page.getByTestId('source-remoteok').first()).not.toBeChecked();
   await expect(page.getByTestId('source-robotaua').first()).toBeChecked();
-  await expect(page.getByTestId('source-workua').first()).toBeChecked();
   await expect(page.getByTestId('source-linkedin').first()).not.toBeChecked();
 });
 
@@ -95,15 +94,15 @@ test('rejects a profile with no job boards selected', async ({ context, page }) 
   await expect(page.getByText('Pick at least one job board')).toBeVisible();
 });
 
-test('a new profile starts with no boards; "main boards" picks DOU, Djinni, robota.ua and Work.ua', async ({ context, page }) => {
+test('a new profile starts with no boards; "main boards" picks DOU, Djinni and robota.ua', async ({ context, page }) => {
   await loginAs(context, uniqueEmail('search-low-yield'));
   await page.goto('/en/search');
   await expect(page.locator('input[name="sources"]:checked')).toHaveCount(0);
   await expect(page.getByTestId('low-yield-remoteok')).toHaveText('(rarely relevant)');
   await expect(page.getByTestId('low-yield-djinni')).toHaveCount(0);
   await page.getByTestId('sources-recommended').click();
-  for (const id of ['dou', 'djinni', 'robotaua', 'workua']) await expect(page.getByTestId(`source-${id}`)).toBeChecked();
-  await expect(page.locator('input[name="sources"]:checked')).toHaveCount(4);
+  for (const id of ['dou', 'djinni', 'robotaua']) await expect(page.getByTestId(`source-${id}`)).toBeChecked();
+  await expect(page.locator('input[name="sources"]:checked')).toHaveCount(3);
 });
 
 test('chips: suggestions add a term, × removes it, salary is picked from a list', async ({ context, page }) => {

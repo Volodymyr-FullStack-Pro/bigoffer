@@ -1,7 +1,6 @@
 // Fetches live samples from every source and trims them to 3 jobs.
 // Re-run when a source changes its markup; also serves as a manual canary.
 import { mkdir, writeFile } from 'node:fs/promises';
-import { chromium } from 'playwright';
 
 const UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130 Safari/537.36';
 const dir = new URL('../fixtures/', import.meta.url);
@@ -21,19 +20,6 @@ const trimLdHtml = (html) => {
   const list = JSON.parse(m[1]).filter((x) => x['@type'] === 'JobPosting').slice(0, 3);
   return `<html><body><script type="application/ld+json">${JSON.stringify(list)}</script></body></html>`;
 };
-
-async function renderTrim(url, selector) {
-  const browser = await chromium.launch({ headless: true });
-  try {
-    const page = await browser.newPage({ userAgent: UA, locale: 'uk-UA' });
-    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
-    await page.waitForSelector(selector, { timeout: 15000 });
-    const cards = await page.$$eval(selector, (els) => els.slice(0, 3).map((e) => e.outerHTML));
-    return `<html><body>${cards.join('\n')}</body></html>`;
-  } finally {
-    await browser.close();
-  }
-}
 
 const pick = (list, isTech) => [...list.filter((j) => isTech(j)).slice(0, 3), ...list.filter((j) => !isTech(j)).slice(0, 1)];
 const tech = (t) => /engineer|developer|front|full|software|web/i.test(t ?? '');
@@ -72,7 +58,6 @@ const tasks = {
     const html = await get('https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search?keywords=react&location=Ukraine&start=0');
     return [...html.matchAll(/<li>[\s\S]*?<\/li>/g)].slice(0, 3).map((m) => m[0]).join('\n');
   },
-  'workua.html': async () => renderTrim('https://www.work.ua/jobs-remote-react/', 'div.card.job-link'),
   'greenhouse.json': async () => {
     const d = JSON.parse(await get('https://boards-api.greenhouse.io/v1/boards/gitlab/jobs?content=true'));
     return JSON.stringify({ jobs: pick(d.jobs, (j) => tech(j.title)) }, null, 1);

@@ -11,7 +11,6 @@ export type SourceInfo = {
   /** Rarely relevant for the target audience (measured share of good matches); off by default, still selectable. */
   lowYield?: true;
   requiresKey?: string;
-  browser?: true;
   /** The board's apply button needs a paid subscription; point users to the company site. */
   applyPaywall?: true;
 };
@@ -19,7 +18,6 @@ export type SourceInfo = {
 export const SOURCE_CATALOG: readonly SourceInfo[] = [
   { id: 'dou', name: 'DOU', market: 'ua', url: 'https://jobs.dou.ua' },
   { id: 'djinni', name: 'Djinni', market: 'ua', url: 'https://djinni.co' },
-  { id: 'workua', name: 'Work.ua', market: 'ua', url: 'https://www.work.ua', browser: true },
   { id: 'robotaua', name: 'robota.ua', market: 'ua', url: 'https://robota.ua' },
   { id: 'itlead', name: 'ITLead', market: 'ua', url: 'https://itlead.org/vacancies' },
   // Aggregator: many listings are already closed on the employer side (its pages block checks), short snippets.
@@ -44,12 +42,8 @@ export function sourceInfo(id: string): SourceInfo | undefined {
   return BY_ID.get(id);
 }
 
-export const BROWSER_SOURCE_IDS: ReadonlySet<SourceId> = new Set(
-  SOURCE_CATALOG.filter((s) => s.browser).map((s) => s.id),
-);
-
 /** The boards most good matches come from; shown first and picked by "Use recommended". */
-export const MAIN_SOURCE_IDS: readonly SourceId[] = ['dou', 'djinni', 'robotaua', 'workua'];
+export const MAIN_SOURCE_IDS: readonly SourceId[] = ['dou', 'djinni', 'robotaua'];
 
 /**
  * Fallback for profiles saved before sources were chosen explicitly (new profiles start with none checked). The

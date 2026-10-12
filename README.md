@@ -20,7 +20,6 @@ Requirements: Node 24+, pnpm 12, Docker (for the local Supabase stack), Supabase
 pnpm install
 pnpm db:start                      # supabase start — local Postgres/Auth/API in Docker
 pnpm db:env                        # writes apps/web/.env.local and apps/jobs/.env.local from the running stack
-pnpm --filter @jp/scrapers exec playwright install chromium   # browser for Work.ua / OLX
 ```
 
 Personal-data AI (CV, letters, recruiter messages) needs a **paid** Gemini key in `apps/web/.env.local` as `GEMINI_API_KEY_PRIVATE`; E2E uses `AI_PROVIDER=fake` (with `ALLOW_FAKE_AI=1`).

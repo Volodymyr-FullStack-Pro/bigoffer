@@ -5,7 +5,7 @@ import { normalizeRemoteRegions } from './regions';
 import { decodeEntities, htmlToText, normalizeWhitespace } from './text';
 
 export const SOURCE_IDS = [
-  'dou', 'djinni', 'robotaua', 'workua', 'linkedin', 'jooble', 'remoteok', 'remotive', 'himalayas', 'hn',
+  'dou', 'djinni', 'robotaua', 'linkedin', 'jooble', 'remoteok', 'remotive', 'himalayas', 'hn',
   'workingnomads', 'greenhouse', 'lever', 'ashby', 'workable', 'telegram', 'itlead',
 ] as const;
 export type SourceId = (typeof SOURCE_IDS)[number];

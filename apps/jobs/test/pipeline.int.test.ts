@@ -282,7 +282,7 @@ describe('expireJobs', () => {
   });
 });
 
-describe('browser sources and source selection', () => {
+describe('adapter context and source selection', () => {
   it('disposes the adapter context after a run, even on error', async () => {
     const dispose = vi.fn(async () => {});
     const failing: SourceAdapter = { id: 'dou', search: async () => { throw new Error('boom'); } };
@@ -295,7 +295,7 @@ describe('browser sources and source selection', () => {
   it('only links queries for the sources the profile selected', async () => {
     const { data: sp, error } = await db
       .from('search_profiles')
-      .insert({ user_id: userId, name: 'UA only', keywords: ['react'], sources: ['dou', 'workua'] })
+      .insert({ user_id: userId, name: 'UA only', keywords: ['react'], sources: ['dou', 'robotaua'] })
       .select('id')
       .single();
     if (error) throw error;
@@ -303,7 +303,7 @@ describe('browser sources and source selection', () => {
       const profile = await getProfile(db, sp.id);
       const { queryIds } = await syncProfile(db, profile!, now);
       const { data } = await db.from('search_queries').select('source_id').in('id', queryIds);
-      expect([...new Set(data!.map((q) => q.source_id))].sort()).toEqual(['dou', 'workua']);
+      expect([...new Set(data!.map((q) => q.source_id))].sort()).toEqual(['dou', 'robotaua']);
     } finally {
       await db.from('search_profiles').delete().eq('id', sp.id);
     }
@@ -312,14 +312,14 @@ describe('browser sources and source selection', () => {
   it('links queries whose key contains commas and quotes (multi-param params), so they become due', async () => {
     const { data: sp, error } = await db
       .from('search_profiles')
-      .insert({ user_id: userId, name: 'LI remote', keywords: [`react${uniq}`], remote_type: 'remote', sources: ['linkedin', 'workua'] })
+      .insert({ user_id: userId, name: 'LI remote', keywords: [`react${uniq}`], remote_type: 'remote', sources: ['linkedin'] })
       .select('id')
       .single();
     if (error) throw error;
     try {
       const profile = await getProfile(db, sp.id);
       const { queryIds } = await syncProfile(db, profile!, now);
-      expect(queryIds).toHaveLength(2); // linkedin + workua(remote) both have multi-param keys
+      expect(queryIds).toHaveLength(1); // linkedin (remote) has a multi-param key
       const { data } = await db.from('search_queries').select('id').in('id', queryIds);
       await db.from('search_queries').update({ next_run_at: now.toISOString() }).in('id', queryIds);
       const due = (await getDueQueryIds(db, now, 5000)).map((q) => q.id);

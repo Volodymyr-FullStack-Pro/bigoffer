@@ -1,30 +1,14 @@
 import { readFileSync } from 'node:fs';
 import { normalizeJob } from '@jp/core';
-import { load } from 'cheerio';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { linkedinAdapter, linkedinUrl } from '../src/adapters/linkedin';
-import { workuaAdapter, workuaUrl } from '../src/adapters/workua';
 import type { AdapterContext } from '../src/types';
 import { fakeContext } from './fake-context';
 
-const CARD = '[data-cy="l-card"]';
 const fixture = (name: string) => readFileSync(new URL(`../fixtures/${name}`, import.meta.url), 'utf8');
 
-function browserContext(html: string) {
-  const renderPage = vi.fn(async () => html);
-  const ctx: AdapterContext = {
-    env: {},
-    fetchText: async () => { throw new Error('unexpected fetch'); },
-    fetchJson: async () => { throw new Error('unexpected fetch'); },
-    renderPage,
-  };
-  return { ctx, renderPage };
-}
-
 describe('URL builders', () => {
-  it('builds Work.ua and LinkedIn search URLs', () => {
-    expect(workuaUrl({ search: 'react developer', remote: '1' })).toBe('https://www.work.ua/jobs-remote-react+developer/');
-    expect(workuaUrl({ search: 'react' })).toBe('https://www.work.ua/jobs-react/');
+  it('builds LinkedIn search URLs', () => {
     expect(linkedinUrl({ keywords: 'react', location: 'Worldwide', remote: '1' })).toBe(
       'https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search?keywords=react&location=Worldwide&f_WT=2&f_TPR=r604800&sortBy=DD&start=0',
     );
@@ -65,24 +49,3 @@ describe('linkedinAdapter', () => {
   });
 });
 
-describe('workuaAdapter', () => {
-  it('renders the page and parses cards', async () => {
-    const { ctx, renderPage } = browserContext(fixture('workua.html'));
-    const jobs = await workuaAdapter.search({ search: 'react', remote: '1' }, ctx);
-    expect(renderPage).toHaveBeenCalledWith('https://www.work.ua/jobs-remote-react/', { waitForSelector: 'div.card.job-link' });
-    expect(jobs).toHaveLength(3);
-    expect(jobs[0]!.url).toMatch(/^https:\/\/www\.work\.ua\/jobs\/\d+\/$/);
-    expect(jobs[0]!.company.length).toBeGreaterThan(0);
-    expect(jobs[0]!.postedAt).toBe(new Date(Date.UTC(2026, 9, 2)).toISOString()); // "вакансія від 2 жовтня 2026"
-    const paid = jobs.filter((j) => j.salaryRaw);
-    expect(paid.length).toBeGreaterThan(0);
-    for (const j of paid) expect(j.salaryPeriod).toBe('month');
-    for (const j of jobs.filter((j) => !j.salaryRaw)) expect(j.salaryPeriod).toBeUndefined();
-    for (const raw of jobs) expect(await normalizeJob(raw)).not.toBeNull();
-  });
-
-  it('fails clearly without a renderer', async () => {
-    const { ctx } = fakeContext({});
-    await expect(workuaAdapter.search({ search: 'react' }, ctx)).rejects.toThrow(/browser/i);
-  });
-});

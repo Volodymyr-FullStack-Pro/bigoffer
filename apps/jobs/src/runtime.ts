@@ -1,6 +1,6 @@
 import { createLlmClient, readAiEnv } from '@jp/ai';
-import { BROWSER_SOURCE_IDS, createBotApi, type SourceId } from '@jp/core';
-import { ADAPTERS, createHttpContext, createPlaywrightRenderer } from '@jp/scrapers';
+import { createBotApi } from '@jp/core';
+import { ADAPTERS, createHttpContext } from '@jp/scrapers';
 import { getDb } from './db';
 import { jobsEnv } from './env';
 import type { AiDeps } from './pipeline/enrich';
@@ -17,14 +17,7 @@ export function pipelineDeps(): RunQueryDeps {
     adapters: ADAPTERS,
     env: adapterEnv,
     intervalMultiplier: env.SCRAPE_INTERVAL_MULTIPLIER,
-    createContext: (sourceId) =>
-      createHttpContext(
-        { userAgent: env.SCRAPER_USER_AGENT },
-        adapterEnv,
-        BROWSER_SOURCE_IDS.has(sourceId as SourceId)
-          ? () => createPlaywrightRenderer({ userAgent: env.SCRAPER_USER_AGENT })
-          : undefined,
-      ),
+    createContext: () => createHttpContext({ userAgent: env.SCRAPER_USER_AGENT }, adapterEnv),
   };
 }
 

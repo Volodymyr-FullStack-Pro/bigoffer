@@ -16,7 +16,6 @@ import { leverAdapter } from './lever';
 import { telegramAdapter } from './telegram';
 import { workableAdapter } from './workable';
 import { workingnomadsAdapter } from './workingnomads';
-import { workuaAdapter } from './workua';
 
 export const ADAPTERS: Record<SourceId, SourceAdapter> = {
   dou: douAdapter,
@@ -29,7 +28,6 @@ export const ADAPTERS: Record<SourceId, SourceAdapter> = {
   hn: hnAdapter,
   workingnomads: workingnomadsAdapter,
   linkedin: linkedinAdapter,
-  workua: workuaAdapter,
   greenhouse: greenhouseAdapter,
   lever: leverAdapter,
   ashby: ashbyAdapter,

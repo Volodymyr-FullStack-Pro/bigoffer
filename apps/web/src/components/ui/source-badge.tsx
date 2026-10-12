@@ -5,7 +5,6 @@ const SOURCE_COLORS: Record<string, string> = {
   dou: '#f97316',
   djinni: '#22c55e',
   robotaua: '#ef4444',
-  workua: '#3b82f6',
   itlead: '#eab308',
   telegram: '#38bdf8',
   linkedin: '#0a66c2',

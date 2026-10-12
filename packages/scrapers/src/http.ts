@@ -1,9 +1,9 @@
-import { type AdapterContext, type PageRenderer, SourceBlockedError } from './types';
+import { type AdapterContext, SourceBlockedError } from './types';
 
 export const DEFAULT_USER_AGENT =
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130 Safari/537.36';
 
-/** Query-string credentials (e.g. Adzuna app_key) must never reach logs or stored error messages. */
+/** Query-string credentials (e.g. an app_key) must never reach logs or stored error messages. */
 export const maskSecrets = (url: string): string =>
   url.replace(/([?&](?:app_key|api_key|key|token|secret)=)[^&\s]*/gi, '$1***');
 
@@ -21,7 +21,6 @@ export type HttpOptions = {
 export function createHttpContext(
   opts: HttpOptions,
   env: Record<string, string | undefined> = {},
-  rendererFactory?: () => Promise<PageRenderer>,
 ): AdapterContext {
   const { userAgent, timeoutMs = 20_000, retries = 2, minDelayMs = 1_000, maxDelayMs = 4_000 } = opts;
   const doFetch = opts.fetchImpl ?? fetch;
@@ -59,35 +58,10 @@ export function createHttpContext(
     }
   }
 
-  let rendererP: Promise<PageRenderer> | undefined;
-  let lock: Promise<unknown> = Promise.resolve();
-  const ctx: AdapterContext = {
+  return {
     env,
     fetchText: async (url, init) => (await request(url, init)).text(),
     fetchJson: async <T>(url: string, init?: RequestInit) => (await (await request(url, init)).json()) as T,
-    dispose: async () => {
-      const p = rendererP;
-      rendererP = undefined;
-      if (!p) return;
-      let r: PageRenderer;
-      try {
-        r = await p;
-      } catch {
-        return;
-      }
-      await r.close();
-    },
+    dispose: async () => {},
   };
-  if (rendererFactory) {
-    ctx.renderPage = (url, renderOpts) => {
-      const run = lock.then(async () => {
-        await pace();
-        rendererP ??= rendererFactory();
-        return (await rendererP).render(url, renderOpts);
-      });
-      lock = run.catch(() => undefined);
-      return run;
-    };
-  }
-  return ctx;
 }

@@ -70,30 +70,28 @@ describe('buildSourceQueries with source selection', () => {
   const base = { keywords: ['full stack'], skills: ['React'], remoteType: 'remote' as const };
 
   it('only builds queries for selected sources', () => {
-    const specs = buildSourceQueries({ ...base, sources: ['dou', 'workua'] });
-    expect([...new Set(specs.map((s) => s.sourceId))].sort()).toEqual(['dou', 'workua']);
+    const specs = buildSourceQueries({ ...base, sources: ['dou', 'remotive'] });
+    expect([...new Set(specs.map((s) => s.sourceId))].sort()).toEqual(['dou', 'remotive']);
   });
 
   it('falls back to defaults when sources is null', () => {
     const ids = new Set(buildSourceQueries({ ...base, sources: null }).map((s) => s.sourceId));
-    expect([...ids].sort()).toEqual(['djinni', 'dou', 'robotaua', 'workua']);
+    expect([...ids].sort()).toEqual(['djinni', 'dou', 'robotaua']);
   });
 
   it('builds params for new sources', () => {
     const specs = buildSourceQueries({
       ...base,
-      sources: ['workua', 'linkedin', 'workingnomads', 'itlead'],
+      sources: ['linkedin', 'workingnomads', 'itlead'],
     });
     const p = (id: string) => specs.filter((s) => s.sourceId === id).map((s) => s.params);
-    expect(p('workua')[0]).toEqual({ search: 'full stack', remote: '1' });
     expect(p('linkedin')[0]).toEqual({ keywords: 'full stack', location: 'Worldwide', remote: '1' });
     expect(p('workingnomads')).toEqual([{}]);
     expect(p('itlead')).toEqual([{}]);
   });
 
-  it('targets Ukraine on LinkedIn and office Work.ua for office profiles', () => {
-    const specs = buildSourceQueries({ ...base, remoteType: 'office', sources: ['workua', 'linkedin'] });
-    expect(specs.find((s) => s.sourceId === 'workua')!.params).toEqual({ search: 'full stack' });
+  it('targets Ukraine on LinkedIn for office profiles', () => {
+    const specs = buildSourceQueries({ ...base, remoteType: 'office', sources: ['linkedin'] });
     expect(specs.find((s) => s.sourceId === 'linkedin')!.params).toEqual({ keywords: 'full stack', location: 'Ukraine' });
   });
 });
@@ -132,17 +130,6 @@ describe('searchTerms', () => {
   });
   it('dedupes case-insensitively and drops blanks', () => {
     expect(searchTerms({ keywords: [' React ', 'react', ''], skills: [] })).toEqual(['react', 'react developer', 'frontend developer']);
-  });
-});
-
-describe('browser source terms', () => {
-  it('limits Work.ua to the first 2 terms while other keyword sources keep all', () => {
-    const profile = { keywords: ['full stack', 'react', 'node.js', 'next.js'], skills: [], remoteType: 'remote' as const, sources: ['workua', 'remotive'] as SourceId[] };
-    const specs = buildSourceQueries(profile);
-    const terms = (id: string) => specs.filter((s) => s.sourceId === id).map((s) => s.params.search ?? s.params.tag);
-    expect(terms('workua')).toEqual(['full stack', 'react']);
-    expect(terms('remotive')).toHaveLength(searchTerms(profile).length);
-    expect(terms('remotive').length).toBeGreaterThan(2);
   });
 });
 

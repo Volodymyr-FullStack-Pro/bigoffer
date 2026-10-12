@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { SOURCE_IDS } from './job';
-import { BOARD_SOURCE_IDS, BROWSER_SOURCE_IDS, defaultSources, MAIN_SOURCE_IDS, PRIORITY_SOURCE_IDS, SOURCE_CATALOG, sourceInfo } from './sources';
+import { BOARD_SOURCE_IDS, defaultSources, MAIN_SOURCE_IDS, PRIORITY_SOURCE_IDS, SOURCE_CATALOG, sourceInfo } from './sources';
 
 describe('SOURCE_CATALOG', () => {
   it('lists ITLead as a Ukrainian board', () => {
@@ -14,15 +14,12 @@ describe('SOURCE_CATALOG', () => {
     expect(sourceInfo('jooble')?.requiresKey).toBe('JOOBLE_API_KEY');
     expect(sourceInfo('nope')).toBeUndefined();
   });
-  it('lists browser sources', () => {
-    expect([...BROWSER_SOURCE_IDS].sort()).toEqual(['workua']);
-  });
 });
 
 describe('defaultSources', () => {
-  it('is the four Ukrainian main boards for every work format', () => {
+  it('is the three Ukrainian main boards for every work format', () => {
     for (const r of ['any', 'remote', 'hybrid', 'office'] as const) {
-      expect(defaultSources(r)).toEqual(['dou', 'djinni', 'robotaua', 'workua']);
+      expect(defaultSources(r)).toEqual(['dou', 'djinni', 'robotaua']);
     }
     expect(defaultSources('any')).not.toBe(MAIN_SOURCE_IDS);
   });
