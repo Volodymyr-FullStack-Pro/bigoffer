@@ -197,6 +197,6 @@ export async function seedSearchProfile(email: string, isActive = true) {
   const userId = await userIdByEmail(email);
   const { error } = await db
     .from('search_profiles')
-    .insert({ user_id: userId, name: 'E2E search', keywords: ['frontend'], skills: ['React'], remote_type: 'remote', sources: ['remotive'], is_active: isActive });
+    .insert({ user_id: userId, name: 'E2E search', keywords: ['frontend'], skills: ['React'], remote_type: 'remote', sources: ['dou'], is_active: isActive });
   if (error) throw error;
 }

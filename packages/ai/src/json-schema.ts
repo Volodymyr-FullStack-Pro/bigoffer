@@ -1,7 +1,8 @@
 import { z } from 'zod';
 
 // Gemini's responseJsonSchema supports a subset of JSON Schema; these keys either fail or add nothing.
-const DROP_KEYS = new Set(['$schema', 'maxLength', 'minLength', 'pattern', 'format']);
+// `default` comes from `.catch()`, which only matters when parsing the answer.
+const DROP_KEYS = new Set(['$schema', 'maxLength', 'minLength', 'pattern', 'format', 'default']);
 const SAFE_INT_BOUNDS = new Set([Number.MAX_SAFE_INTEGER, Number.MIN_SAFE_INTEGER]);
 
 function strip(node: unknown): unknown {

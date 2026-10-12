@@ -3,10 +3,16 @@ import { SENIORITIES } from './job';
 import { regionBucket } from './normalize';
 import type { SearchProfile } from './search';
 import { remoteBlockedFor } from './regions';
-import { isTechTitle } from './boards';
 import { detectSeniority } from './detect';
 import { keywordForms } from './keywords';
 import { detectRoleFamilies, type RoleFamily, roleOffTarget, targetRoleFamilies } from './roles';
+
+const TECH = /\b(engineer|engineering|developer|dev|programmer|swe|sre|devops|front[- ]?end|back[- ]?end|full[- ]?stack|software|web|react|angular|vue|node(\.js)?|typescript|javascript|mobile|ios|android|qa|tester|architect|data|ml|ai)\b|розробник|разработчик|програміст|программист|інженер|инженер/i;
+
+/** A title that names an engineering role (any stack). */
+export function isTechTitle(title: string): boolean {
+  return TECH.test(title);
+}
 
 const TECH_FAMILIES: ReadonlySet<RoleFamily> = new Set<RoleFamily>(['frontend', 'fullstack', 'backend', 'mobile', 'devops', 'qa', 'data']);
 

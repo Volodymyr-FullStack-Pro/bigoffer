@@ -9,13 +9,13 @@ const base = {
   roles: ['frontend'],
   remoteType: 'remote',
   locations: [],
-  sources: new Set(['dou', 'djinni', 'robotaua', 'linkedin']),
+  sources: new Set(['dou', 'djinni', 'robotaua']),
 };
 
 describe('profileTips', () => {
   it('suggests missing main boards, keywords, CV skills; spellings of a chosen word count as chosen', () => {
     expect(profileTips({ ...base, sources: new Set(['dou']) })).toEqual([
-      { id: 'mainSources', items: ['Djinni', 'robota.ua', 'LinkedIn'] },
+      { id: 'mainSources', items: ['Djinni', 'robota.ua'] },
       { id: 'keywords', items: ['full-stack software engineer', 'react developer'] },
       { id: 'cvSkills', items: ['Docker'] },
     ]);

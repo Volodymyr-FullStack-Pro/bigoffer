@@ -20,13 +20,19 @@ test('the Offer Genie greets a new user, can be folded and remembers it, and fol
 
   // Profile settings: a goal of 3 shows up on the ring; "off" removes the genie.
   await page.goto('/en/profile');
+  // The setting is saved by a server action; leaving the page before it answers would abort it.
+  const saved = () => page.waitForResponse((r) => r.request().method() === 'POST' && r.url().includes('/en/profile'));
+  let done = saved();
   await page.getByTestId('genie-goal-input').fill('3');
+  await done;
   await expect.poll(async () => {
     await page.goto('/en/today');
     return page.getByTestId('genie-goal').textContent();
   }).toBe('0/3');
   await page.goto('/en/profile');
+  done = saved();
   await page.getByTestId('genie-mode-off').click();
+  await done;
   await expect.poll(async () => {
     await page.goto('/en/today');
     return page.getByTestId('genie').count();

@@ -1,5 +1,6 @@
 'use client';
 
+import { pill } from '@/components/ui/pill';
 import { isLocale, type Locale, sourceInfo } from '@jp/core';
 import { useFormatter, useLocale, useNow, useTranslations } from 'next-intl';
 import { Sparkles } from 'lucide-react';
@@ -40,7 +41,7 @@ export function MatchActions({
         type="button"
         data-testid="match-hide"
         onClick={() => onAction('hide')}
-        className="brutal-press inline-flex items-center gap-1.5 rounded-full border border-border px-4 py-2 text-sm font-semibold hover:bg-muted"
+        className={pill.quiet}
       >
         {t('hide')} {!compact && <kbd className="font-mono text-xs opacity-60">H</kbd>}
       </button>
@@ -48,7 +49,7 @@ export function MatchActions({
         type="button"
         data-testid="match-save"
         onClick={() => onAction('saved')}
-        className="brutal-press inline-flex items-center gap-1.5 rounded-full border border-border px-4 py-2 text-sm font-semibold hover:bg-muted"
+        className={pill.quiet}
       >
         {t('save')} {!compact && <kbd className="font-mono text-xs opacity-60">S</kbd>}
       </button>
@@ -56,7 +57,7 @@ export function MatchActions({
         type="button"
         data-testid="match-applied"
         onClick={() => onAction('applied')}
-        className="brutal-press inline-flex items-center gap-1.5 rounded-full bg-brand px-4 py-2 text-sm font-semibold text-brand-foreground hover:bg-brand/90"
+        className={pill.accent}
       >
         {t('applied')} {!compact && <kbd className="font-mono text-xs opacity-60">A</kbd>}
       </button>
@@ -76,7 +77,7 @@ function ApplyKitToggle({ jobId, onApplied, defaultOpen = false }: { jobId: stri
         data-testid="apply-kit-open"
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
-        className="brutal-press inline-flex items-center gap-2 self-start rounded-full bg-brand px-5 py-2.5 text-[15px] font-bold text-brand-foreground shadow-[0_0_20px_rgb(115_247_178/0.22)]"
+        className={`${pill.main} self-start`}
       >
         <Sparkles className="size-5" aria-hidden />
         {tk('open')}
@@ -137,7 +138,7 @@ function CopyButton({
           // clipboard blocked: nothing to do
         }
       }}
-      className="brutal-press rounded-full border border-border px-3 py-1 text-xs font-medium hover:bg-muted"
+      className={pill.quiet}
     >
       {done ? `✓ ${doneLabel}` : label}
     </button>
@@ -274,21 +275,11 @@ export function MatchDetail({
                   target="_blank"
                   rel="noopener"
                   data-testid="match-open"
-                  className="brutal brutal-press px-3 py-1.5 text-sm font-semibold"
+                  className={pill.quiet}
                 >
                   {t('open', { source: sourceInfo(p.sourceId)?.name ?? p.sourceId })} ↗
                 </a>
-                {sourceInfo(p.sourceId)?.applyPaywall && (
-                  <span data-testid="paid-apply" className="font-mono text-xs text-warning">
-                    {t('paidApply')}
-                  </span>
-                )}
               </span>
-              {sourceInfo(p.sourceId)?.applyPaywall && (
-                <p data-testid="paid-apply-hint" className="max-w-sm text-xs text-muted-foreground">
-                  {t('paidApplyHint')}
-                </p>
-              )}
             </div>
           ))}
       </div>

@@ -1,6 +1,5 @@
 import {
   type NormalizedJob,
-  PRIORITY_SOURCE_IDS,
   ROLE_FAMILIES,
   type RoleFamily,
   type ScorableJob,
@@ -104,7 +103,7 @@ export async function updateSourceHealth(
   now: Date,
 ): Promise<{ alert: string | null }> {
   if (outcome === 'blocked') {
-    // Blocks (403/captcha) rarely lift within the hour; a long pause stops paying for doomed browser runs.
+    // Blocks (403/captcha) rarely lift within the hour; a long pause stops paying for doomed runs.
     const until = new Date(now.getTime() + BLOCKED_PAUSE_MS).toISOString();
     const { error } = await db.from('sources').update({ paused_until: until }).eq('id', source.id);
     if (error) throw error;
@@ -122,10 +121,8 @@ export async function deferQuery(db: Db, queryId: string, until: string) {
   if (error) throw error;
 }
 
-export async function markQueryRun(db: Db, queryId: string, now: Date, intervalMinutes: number, multiplier = 1, sourceId?: string) {
-  // Priority boards (DOU, Djinni, robota.ua) keep their own cadence; the cost multiplier slows only the rest.
-  const factor = sourceId && PRIORITY_SOURCE_IDS.has(sourceId as SourceId) ? 1 : multiplier;
-  const next = new Date(now.getTime() + Math.max(intervalMinutes, 15) * factor * 60 * 1000);
+export async function markQueryRun(db: Db, queryId: string, now: Date, intervalMinutes: number) {
+  const next = new Date(now.getTime() + Math.max(intervalMinutes, 15) * 60 * 1000);
   const { error } = await db
     .from('search_queries')
     .update({ last_run_at: now.toISOString(), next_run_at: next.toISOString() })

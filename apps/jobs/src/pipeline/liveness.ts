@@ -2,7 +2,7 @@ import type { SourceAdapter, AdapterContext } from '@jp/scrapers';
 import type { Db } from '../db';
 
 /** Boards whose adapters can tell a closed posting (see SourceAdapter.isOpen). */
-export const LIVENESS_SOURCES = ['dou', 'djinni', 'robotaua', 'linkedin'] as const;
+export const LIVENESS_SOURCES = ['dou', 'djinni', 'robotaua'] as const;
 const RECHECK_MS = 6 * 3600 * 1000;
 const CONCURRENCY = 4;
 

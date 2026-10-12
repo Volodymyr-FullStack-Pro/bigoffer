@@ -4,21 +4,12 @@ export interface AdapterContext {
   fetchText(url: string, init?: RequestInit): Promise<string>;
   fetchJson<T = unknown>(url: string, init?: RequestInit): Promise<T>;
   env: Record<string, string | undefined>;
-  /** Present only when the pipeline can run a headless browser for this source. */
-  renderPage?(url: string, opts?: { waitForSelector?: string }): Promise<string>;
-  /** Releases resources (browser). Always called by the pipeline after a run. */
+  /** Releases resources. Always called by the pipeline after a run. */
   dispose?(): Promise<void>;
-}
-
-export interface PageRenderer {
-  render(url: string, opts?: { waitForSelector?: string; timeoutMs?: number }): Promise<string>;
-  close(): Promise<void>;
 }
 
 export interface SourceAdapter {
   id: SourceId;
-  /** Sources that need credentials report false when they are missing; the pipeline then skips them. */
-  isConfigured?(env: Record<string, string | undefined>): boolean;
   search(params: Record<string, string>, ctx: AdapterContext): Promise<RawJob[]>;
   /**
    * Whether a stored posting is still open: false = closed or removed, null = could not tell (blocked, network).

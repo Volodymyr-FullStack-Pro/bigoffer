@@ -31,8 +31,8 @@ export type KitJob = { title: string; company: string; description: string; sala
 /** The candidate's own name and contacts from the profile, used to fill [Full name], [Phone], [LinkedIn]… placeholders. */
 export type KitCandidate = { fullName: string | null; contacts: Partial<Record<'email' | 'phone' | 'linkedin' | 'github' | 'cv' | 'portfolio' | 'telegram', string>> };
 
+// No CV link: the CV goes along as a file with the application, a link in the letter only repeats it.
 const CONTACT_LABELS = [
-  ['cv', 'CV'],
   ['email', 'Email'],
   ['phone', 'Phone'],
   ['linkedin', 'LinkedIn'],
@@ -43,7 +43,7 @@ const CONTACT_LABELS = [
 
 const SIGN_OFF: Record<string, string> = { en: 'Best regards,', uk: 'З повагою,', ru: 'С уважением,' };
 
-/** The letter's sign-off, added by code so the name, CV link and contacts are exact and labelled. */
+/** The letter's sign-off, added by code so the name and contacts are exact and labelled. */
 export function signOff(candidate: KitCandidate | null | undefined, lang: string): string {
   const lines = [SIGN_OFF[lang] ?? SIGN_OFF.en!];
   const name = candidate?.fullName?.trim();
@@ -70,27 +70,32 @@ function system(lang: 'auto' | 'en' | 'uk' | 'ru', tone: 'default' | 'shorter' |
     '   prefer an experience bullet. Look across ALL roles, not only the latest.',
     '2. pitch: the 3 strongest CV facts for THIS job, best first. Also scan the nice-to-haves ("stand out", "a plus", "bonus") and the domain',
     '   (payments, fintech, AdTech, AI, marketplace...): a CV fact that matches the company domain or a nice-to-have is often the strongest. Prefer facts with numbers.',
-    '3. cover_letter, built only from the pitch facts:',
+    '   Match the core daily work of the role too, not only the stack: what the team builds (e.g. fee calculation → calculation logic the candidate',
+    '   implemented; payments → the payment integrations they did, naming the providers from the CV).',
+    '3. cover_letter: a short letter a strong candidate would write themselves — warm, direct and specific, with natural varied sentences, never a',
+    '   list of facts glued together. Paragraphs:',
     '   - Greeting: the hiring manager if the posting names one, else the company team (e.g. "Hi Acme team,").',
-    '   - Hook, 1–2 sentences: connect the candidate\'s own most relevant experience to what this team builds (e.g. "I have built Stripe payment flows and',
-    '     finance dashboards, so a finance system handling 18M payments a month is exactly the problem I want to work on"). Never paraphrase the company\'s',
-    '     mission or marketing back to them, and do not reuse the posting\'s adjectives ("next-generation", "mission-critical", "world-class").',
-    '   - Proof, the core: the pitch facts, each in one sentence tied to what the job needs, with the employer name the first time. Every proof',
-    '     sentence carries a CV fact; a sentence that only says the candidate is ready, able or well-prepared for something is wrong. Mention years of',
-    '     experience once at most, only if the job asks for them and the CV meets it.',
+    '   - Opening, 2 sentences: who the candidate is (role and years from the CV) and what concretely draws them to THIS role — a specific detail of',
+    '     the work (the product, the problem, how the team works), connected to something they have done. Never paraphrase the company\'s mission or',
+    '     marketing back to them, and do not reuse the posting\'s adjectives ("next-generation", "mission-critical", "world-class").',
+    '   - Proof, 3–4 sentences: the pitch facts, must-haves first, then a nice-to-have; each fact tied to what the job needs, with the employer or',
+    '     project name the first time; at least one with a number when the CV has one. Every proof sentence carries a CV fact.',
+    '   - How they work, 1 sentence, only when the CV supports it: e.g. building a product alone from scratch to production shows ownership; an',
+    '     AI-assisted workflow matches a team that invests in AI tools.',
+    '   - Close, 1 sentence: they can start right away and would be glad to talk. Simple and friendly; no dates, no "next week".',
     '   - Never write a requirement as a claim without a CV fact behind it, and never copy the posting\'s wording as a claim',
     '     ("I design systems outside of frameworks" is a claim; "I built X without a framework" is a fact — only if the CV says so).',
     '   - Keep CV facts as the CV words them: do not relabel them into the job\'s domain ("analytics dashboards" must not become "financial dashboards").',
-    '   - Gaps: do not claim a missing requirement; at most mention a closely related strength.',
-    '   - Close: one sentence that the candidate can start right away and would be glad to talk (no dates, no "next week").',
+    '   - Gaps: do not claim a missing requirement. When one central must-have is missing and the CV has a close fact, one honest sentence may',
+    '     say so (e.g. "My backend work is Node.js rather than .NET, though I have built REST APIs end to end").',
     '   - Do NOT add a sign-off, name or contacts: they are appended automatically after your text.',
-    `   - Length: ${tone === 'shorter' ? '70–90 words' : '120–170 words'}; at most four short paragraphs; separate paragraphs with one empty line; plain text, no markdown, no [placeholders].`,
-    '   - Style: confident, specific, human. Banned: "I am writing to express", "passionate", "team player", "I bring", "for your technical requirements",',
-    '     "next-generation", "cutting-edge", "I am confident that", "align with", "aligns perfectly", "well-prepared", "well-positioned", "eager to",',
-    '     buzzword lists.',
-    tone === 'formal' ? '   - Formal tone.' : '   - Friendly professional tone.',
+    `   - Length: ${tone === 'shorter' ? '80–100 words, three short paragraphs' : '150–200 words, four short paragraphs'}; separate paragraphs with one empty line; plain text, no markdown, no [placeholders].`,
+    '   - Banned: "I am writing to express", "passionate", "team player", "I bring", "for your technical requirements", "next-generation",',
+    '     "cutting-edge", "I am confident that", "align with", "aligns perfectly", "well-prepared", "well-positioned", "eager to", buzzword lists.',
+    tone === 'formal' ? '   - Formal tone.' : '   - Friendly professional tone, like a message to a future colleague.',
     '4. short_message: at most 450 characters, for a recruiter chat (Djinni, LinkedIn, Telegram): who the candidate is, the single strongest pitch fact, a clear ask.',
-    '5. red_flags: up to 5 concrete concerns stated in the posting (unpaid trial, 6-day week, unclear salary, etc.); empty if none.',
+    '5. red_flags: up to 5 concrete concerns about the working conditions stated in the posting (unpaid trial, 6-day week, unclear salary, unpaid',
+    '   overtime, etc.); not about the company\'s marketing tone; empty if none.',
     '6. salary_hint: one sentence using the job salary (if any) and the candidate minimum; null if nothing to say.',
   ].join('\n');
 }
