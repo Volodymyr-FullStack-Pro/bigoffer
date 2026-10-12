@@ -71,3 +71,13 @@ test('answer bank: per-row save feedback and presets', async ({ page }) => {
   await expect(format.getByRole('textbox')).toHaveValue('Remote, EU time zones');
 });
 
+
+test('keeps a CV link among the contacts', async ({ page }) => {
+  await page.goto('/en/profile');
+  await page.getByLabel('Full name').fill('Test User');
+  await page.getByLabel('CV link').fill('https://drive.google.com/file/d/abc/view');
+  await page.getByTestId('profile-save').click();
+  await expect(page.locator('form').getByRole('status')).toHaveText('Saved');
+  await page.reload();
+  await expect(page.getByLabel('CV link')).toHaveValue('https://drive.google.com/file/d/abc/view');
+});

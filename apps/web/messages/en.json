@@ -256,7 +256,9 @@
     "error": "Couldn't save. Please try again.",
     "country": "Country of residence",
     "countryNone": "Not set",
-    "countryHint": "Remote jobs that only hire in other countries are hidden."
+    "countryHint": "Remote jobs that only hire in other countries are hidden.",
+    "cv": "CV link",
+    "cvHint": "Google Drive, Dropbox or your site — for applications and recruiter messages"
   },
   "search": {
     "title": "Job search settings",
