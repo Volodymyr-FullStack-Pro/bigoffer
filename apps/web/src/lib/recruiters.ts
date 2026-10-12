@@ -8,6 +8,8 @@ export type RecruiterContact = {
   href: string;
   /** False when the search result says they left the company ("ex-Acme", "formerly at Acme"); unknown otherwise. */
   current?: boolean;
+  /** Named in the vacancy itself: the company chose this contact. */
+  posted?: boolean;
 };
 
 export type SearchResult = { title: string; url: string; description?: string };
@@ -41,7 +43,7 @@ export function contactsFromDescription(text: string): RecruiterContact[] {
   }
   for (const m of plain.matchAll(/(?:https?:\/\/)?(?:[a-z]{2,3}\.)?linkedin\.com\/in\/([\w%-]+)/gi)) {
     const slug = m[1]!;
-    out.set(`li:${slug.toLowerCase()}`, { kind: 'linkedin', label: decodeURIComponent(slug).replace(/-[0-9a-f]{6,}$/i, '').replace(/-/g, ' '), href: `https://www.linkedin.com/in/${slug}` });
+    out.set(`li:${slug.toLowerCase()}`, { kind: 'linkedin', label: decodeURIComponent(slug).replace(/-[0-9a-f]{6,}$/i, '').replace(/-/g, ' '), href: `https://www.linkedin.com/in/${slug}`, posted: true });
   }
   return [...out.values()].slice(0, 3);
 }
@@ -139,8 +141,9 @@ export function rankRecruiters(contacts: readonly RecruiterContact[]): RankedCon
   const scored = contacts.map((c, i) => {
     const role = c.title ?? '';
     const current = c.current !== false;
-    let score = c.kind === 'linkedin' ? 50 : 100;
-    if (c.kind === 'linkedin') {
+    const searched = c.kind === 'linkedin' && !c.posted;
+    let score = searched ? 50 : 100;
+    if (searched) {
       if (SOURCER.test(role)) score += 20;
       else if (HR.test(role)) score += 10;
       if (/lead|head|director|manager|vp/i.test(role)) score -= 5;
