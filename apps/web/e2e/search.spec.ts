@@ -115,6 +115,15 @@ test('chips: suggestions add a term, × removes it, salary is picked from a list
   await page.getByLabel('Your skills').fill('Redux');
   await page.getByLabel('Your skills').press('Enter');
   await page.getByRole('button', { name: '× Redux' }).click();
+  // A spelling variant of a skill already there is not added; the existing chip is pointed out.
+  await page.getByLabel('Your skills').fill('typescript');
+  await expect(page.getByTestId('duplicate-skills')).toHaveText('Already there: TypeScript');
+  await page.getByLabel('Your skills').press('Enter');
+  await expect(page.getByTestId('tag-chip').filter({ hasText: /^TypeScript$/ })).toHaveCount(1);
+  // A new skill can be typed and added with the "+ Add" chip.
+  await page.getByLabel('Your skills').fill('Effector');
+  await page.getByTestId('add-typed-skills').click();
+  await expect(page.getByTestId('tag-chip').filter({ hasText: /^Effector$/ })).toHaveCount(1);
   await page.getByTestId('salary-select').selectOption('2000');
   await page.getByTestId('source-dou').check();
   await page.getByTestId('search-save').click();
@@ -124,6 +133,7 @@ test('chips: suggestions add a term, × removes it, salary is picked from a list
   await expect(chips.filter({ hasText: /^react developer$/ })).toHaveCount(1);
   await expect(chips.filter({ hasText: /^TypeScript$/ })).toHaveCount(1);
   await expect(chips.filter({ hasText: /^Redux$/ })).toHaveCount(0);
+  await expect(chips.filter({ hasText: /^Effector$/ })).toHaveCount(1);
   await expect(page.getByTestId('salary-select')).toHaveValue('2000');
 });
 

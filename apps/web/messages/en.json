@@ -332,7 +332,9 @@
     "tip_cvSkills": "Add skills from your CV: {items} — they raise the match.",
     "tip_roles": "Pick roles so other professions stay out of the feed.",
     "tip_cities": "For hybrid/office, add cities — or choose Remote or Any.",
-    "savedSearching": "Searching the new keywords and boards now — fresh jobs in 5–10 min."
+    "savedSearching": "Searching the new keywords and boards now — fresh jobs in 5–10 min.",
+    "addTyped": "+ Add “{value}”",
+    "alreadyThere": "Already there: {value}"
   },
   "board": {
     "title": "Application board",

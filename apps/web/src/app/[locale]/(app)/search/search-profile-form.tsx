@@ -1,6 +1,6 @@
 'use client';
 
-import { defaultSources, MAIN_SOURCE_IDS, ROLE_FAMILIES, type RoleFamily, SEARCH_REMOTE_TYPES, SENIORITIES, SOURCE_CATALOG, type SourceInfo } from '@jp/core';
+import { defaultSources, keywordForms, MAIN_SOURCE_IDS, ROLE_FAMILIES, type RoleFamily, SEARCH_REMOTE_TYPES, SENIORITIES, SOURCE_CATALOG, type SourceInfo } from '@jp/core';
 import { useTranslations } from 'next-intl';
 import { Lightbulb } from 'lucide-react';
 import { type ReactNode, useActionState, useEffect, useMemo, useRef, useState } from 'react';
@@ -8,10 +8,14 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { TagInput } from '@/components/ui/tag-input';
 import { tellGenie } from '@/lib/genie/events';
+import { skillKey } from '../today/card-skills';
 import { cn } from '@/lib/utils';
 import { deleteSearchProfile, saveSearchProfile, type SearchFormState } from './actions';
 import { profileTips } from './profile-tips';
 import { EXCLUDE_SUGGESTIONS, keywordSuggestions, LOCATION_SUGGESTIONS, profileNameSuggestion, recommendedKeywords, SALARY_STEPS, skillSuggestions } from './suggestions';
+
+/** One key per role word, however it is spelled: "front-end developer" = "frontend developer". */
+const keywordKey = (k: string) => keywordForms(k).sort()[0] ?? k.trim().toLowerCase();
 
 export type SearchProfileValues = {
   id?: string;
@@ -175,6 +179,9 @@ export function SearchProfileForm({ values, cvSkills = [], cvHeadline = null }: 
             max={10}
             invalid={invalid.has('keywords')}
             placeholder={t('keywordsPlaceholder')}
+            sameKey={keywordKey}
+            addLabel={t('addTyped')}
+            duplicateLabel={t('alreadyThere')}
           />
           <fieldset className="flex flex-col gap-2">
             <legend className="mb-1.5 text-xs text-muted-foreground">{t('seniority')}</legend>
@@ -198,6 +205,9 @@ export function SearchProfileForm({ values, cvSkills = [], cvHeadline = null }: 
             suggestionsLabel={cvSkills.length > 0 ? t('suggestedFromCv') : t('suggested')}
             invalid={invalid.has('skills')}
             placeholder={t('skillsPlaceholder')}
+            sameKey={skillKey}
+            addLabel={t('addTyped')}
+            duplicateLabel={t('alreadyThere')}
           />
           <TagInput
             name="excludeKeywords"
@@ -207,6 +217,8 @@ export function SearchProfileForm({ values, cvSkills = [], cvHeadline = null }: 
             suggestions={EXCLUDE_SUGGESTIONS}
             suggestionsLabel={t('suggested')}
             invalid={invalid.has('excludeKeywords')}
+            addLabel={t('addTyped')}
+            duplicateLabel={t('alreadyThere')}
           />
         </Section>
 
