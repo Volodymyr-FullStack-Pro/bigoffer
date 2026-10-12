@@ -202,8 +202,19 @@ describe('seniority filter', () => {
     expect(scoreJob(jm, { ...job, seniority: 'senior' })!.breakdown.excludedBy).toBe('seniority');
   });
   it('keeps chosen levels and jobs without a level', () => {
-    expect(scoreJob(jm, { ...job, seniority: 'middle' })!.hidden).toBe(false);
+    expect(scoreJob(jm, { ...job, title: 'Middle Full Stack Engineer', seniority: 'middle' })!.hidden).toBe(false);
     expect(scoreJob(jm, { ...job, title: 'Full Stack Engineer', seniority: null })!.hidden).toBe(false);
+  });
+  it('does not hide on a level only the AI inferred (title states none)', () => {
+    const r = scoreJob(jm, {
+      ...job,
+      title: 'Full-Stack Developer (Next.js, TypeScript, Supabase) who builds with AI coding agents',
+      descriptionText: 'You have 3+ years of real web development with React or Next.js.',
+      seniority: 'senior',
+    })!;
+    expect(r.hidden).toBe(false);
+    expect(r.breakdown.excludedBy).toBeNull();
+    expect(r.breakdown.seniority).toBe(8); // adjacent to middle: scored lower, still shown
   });
 });
 

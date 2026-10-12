@@ -2,7 +2,7 @@
 
 import type { Json } from '@jp/db';
 import { getUserId } from '@/lib/auth';
-import { companyKey, contactsFromDescription, type RecruiterContact, recruiterQuery, recruitersFromResults, type SearchResult } from '@/lib/recruiters';
+import { companyKey, contactsFromDescription, hrContactQuery, hrContactsFromResults, type RecruiterContact, recruiterQuery, recruitersFromResults, type SearchResult } from '@/lib/recruiters';
 import { createAdminSupabase } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
 
@@ -11,19 +11,23 @@ const CACHE_MS = 30 * 24 * 3600 * 1000;
 
 const SEARCH_KEYS = ['TAVILY_API_KEY', 'SERPER_API_KEY', 'BRAVE_SEARCH_API_KEY'] as const;
 
-/** Recruiter search results from the first configured provider: Tavily (free monthly quota), Serper, Brave. */
-async function webSearch(company: string): Promise<SearchResult[] | null> {
+/** Search results from the first configured provider: Tavily (free monthly quota), Serper, Brave. */
+async function webSearch(q: string): Promise<SearchResult[] | null> {
   const tavily = process.env.TAVILY_API_KEY;
   const serper = process.env.SERPER_API_KEY;
   const brave = process.env.BRAVE_SEARCH_API_KEY;
   const signal = AbortSignal.timeout(8000);
-  const q = recruiterQuery(company);
   if (tavily) {
     // Tavily takes the domain as a filter instead of a site: operator.
     const res = await fetch('https://api.tavily.com/search', {
       method: 'POST',
       headers: { Authorization: `Bearer ${tavily}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query: q.replace(/^site:\S+\s*/, ''), include_domains: ['linkedin.com'], max_results: 20, search_depth: 'basic' }),
+      body: JSON.stringify({
+        query: q.replace(/^site:\S+\s*/, ''),
+        ...(q.startsWith('site:linkedin.com') ? { include_domains: ['linkedin.com'] } : {}),
+        max_results: 20,
+        search_depth: 'basic',
+      }),
       signal,
     });
     if (!res.ok) return null;
@@ -62,9 +66,14 @@ async function searchRecruiters(company: string): Promise<RecruiterContact[]> {
   const previous = (cached?.people as RecruiterContact[] | undefined) ?? [];
   if (cached && Date.now() - new Date(cached.fetched_at).getTime() < CACHE_MS) return previous;
   try {
-    const results = await webSearch(company);
-    if (!results) return previous;
-    const people = recruitersFromResults(results, company);
+    // Two searches per company (cached for a month): recruiters' LinkedIn profiles, then any site for HR contacts.
+    const [profiles, broad] = await Promise.all([webSearch(recruiterQuery(company)), webSearch(hrContactQuery(company))]);
+    if (!profiles && !broad) return previous;
+    const fromBroad = broad ?? [];
+    const people = [
+      ...recruitersFromResults([...(profiles ?? []), ...fromBroad], company),
+      ...hrContactsFromResults(fromBroad, company),
+    ].slice(0, 4);
     await admin.from('recruiter_lookups').upsert({ company_key: key, people: people as unknown as NonNullable<Json>, fetched_at: new Date().toISOString() });
     return people;
   } catch {
