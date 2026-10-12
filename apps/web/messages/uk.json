@@ -173,8 +173,6 @@
     "skills": "Навички",
     "moreDetails": "Деталі",
     "lessDetails": "Сховати деталі",
-    "missingShow": "{count, plural, one {ще # ваша навичка не згадана} few {ще # ваші навички не згадані} other {ще # ваших навичок не згадано}}",
-    "missingHide": "Сховати",
     "description": "Опис вакансії",
     "copyDescription": "Копіювати опис",
     "copied": "Скопійовано",
@@ -185,7 +183,13 @@
     "filterExperience": "Досвід",
     "filterLevel": "Рівень",
     "expFit": "Підходить мені",
-    "expUpTo": "до {years} р."
+    "expUpTo": "до {years} р.",
+    "techsTitle": "Технології з вакансії",
+    "techsCount": "{have} з {total} у вас",
+    "techsHave": "Є у вас",
+    "techsLack": "Немає у вашому профілі",
+    "techsMore": "ще {count}",
+    "techsLess": "Згорнути"
   },
   "comingSoon": {
     "badge": "Скоро",

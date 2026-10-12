@@ -173,8 +173,6 @@
     "skills": "Skills",
     "moreDetails": "Details",
     "lessDetails": "Hide details",
-    "missingShow": "{count, plural, one {# more of your skills not mentioned} other {# more of your skills not mentioned}}",
-    "missingHide": "Hide",
     "description": "Job description",
     "copyDescription": "Copy description",
     "copied": "Copied",
@@ -185,7 +183,13 @@
     "filterExperience": "Experience",
     "filterLevel": "Level",
     "expFit": "Fits my CV",
-    "expUpTo": "up to {years} yrs"
+    "expUpTo": "up to {years} yrs",
+    "techsTitle": "Tech the job asks for",
+    "techsCount": "you have {have} of {total}",
+    "techsHave": "You have",
+    "techsLack": "Not in your profile",
+    "techsMore": "{count} more",
+    "techsLess": "Show less"
   },
   "comingSoon": {
     "badge": "Soon",
