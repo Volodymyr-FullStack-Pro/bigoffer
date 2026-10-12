@@ -21,14 +21,15 @@ export function LabelsMenu({ value, onChange }: { value: CardLabels; onChange: (
     return () => document.removeEventListener('mousedown', close);
   }, [open]);
   return (
-    <div ref={box} className="relative flex flex-col gap-1 font-mono text-xs">
-      <span>{t('labelsMenu')}</span>
+    <div ref={box} className="relative flex flex-col gap-1 text-xs text-muted-foreground">
+      <span className="hidden sm:inline">{t('labelsMenu')}</span>
       <button
         type="button"
         data-testid="labels-menu"
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
-        className="brutal inline-flex items-center gap-1.5 bg-card px-2 py-1 font-sans text-sm"
+        aria-label={t('labelsTitle')}
+        className="inline-flex h-[34px] items-center gap-1.5 rounded-xl border border-border bg-card px-2.5 font-sans text-sm text-foreground"
       >
         <Tags className="size-4" aria-hidden />
         {KEYS.filter((k) => value[k]).length}/{KEYS.length}

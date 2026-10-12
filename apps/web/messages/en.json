@@ -228,7 +228,10 @@
     "label_reservation": "Mobilisation reservation",
     "label_testTask": "Test task",
     "label_partTime": "Part-time",
-    "label_urgent": "Urgent"
+    "label_urgent": "Urgent",
+    "moreFilters": "Filters",
+    "resetFilters": "Reset filters",
+    "progressLabel": "reviewed"
   },
   "comingSoon": {
     "badge": "Soon",
@@ -646,5 +649,32 @@
     "motto27": "Good news usually follows persistent work.",
     "motto28": "I watch the boards 24/7 — your only job is to apply.",
     "motto29": "Believe in yourself the way I believe in you! 🧞"
+  },
+  "analytics": {
+    "eyebrow": "Your progress",
+    "title": "Analytics",
+    "empty": "No applications yet — add your first jobs to the board and your funnel will show up here.",
+    "toFeed": "To the feed",
+    "appliedWeek": "Applications, 7 days",
+    "appliedMonth": "{count} in 30 days",
+    "responseRate": "Replies",
+    "responseHint": "share of applications with a reply",
+    "interviews": "Test tasks & interviews",
+    "offers": "Offers",
+    "daily": "Applications per day",
+    "goalLine": "dashed line — goal of {goal} a day",
+    "today": "today",
+    "funnel": "Funnel",
+    "stage_saved": "On the board",
+    "stage_applied": "Applied",
+    "stage_responded": "Got a reply",
+    "stage_interview": "Test task / interview",
+    "stage_offer": "Offer",
+    "sources": "Where applications went",
+    "sourceLine": "{applied} sent · {responded} replies",
+    "manual": "Added by hand",
+    "noData": "No data yet.",
+    "reasons": "Rejection reasons",
+    "noReasons": "No rejections with reasons yet — good!"
   }
 }

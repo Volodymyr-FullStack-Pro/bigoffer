@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { SourceBadge } from '@/components/ui/source-badge';
 import { ScoreMeter } from '@/components/ui/score-meter';
+import { DomainBadges } from './domain-badges';
 import type { FeedMatch } from './feed-types';
 import { MatchActions, MatchDetail, type MatchAction } from './match-detail';
 
@@ -44,8 +45,9 @@ export function SwipeCard({ match, onAction, onApplied }: { match: FeedMatch; on
         </motion.span>
         <ScoreMeter score={match.score} label={t('match')} />
         <h2 className="font-display text-xl font-semibold leading-tight">{match.title}</h2>
+        <DomainBadges domains={match.domains} perks={match.perks} />
         <p className="flex flex-wrap items-center gap-2 text-muted-foreground">
-          {match.company}
+          {!match.companyIsPlaceholder && match.company}
           {match.postings[0] && <SourceBadge sourceId={match.postings[0].sourceId} />}
         </p>
         {match.summary && <p data-testid="match-summary" className="line-clamp-2 text-sm">{match.summary}</p>}

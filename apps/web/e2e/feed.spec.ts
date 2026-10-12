@@ -9,7 +9,7 @@ test('saves a match to the board and can undo it', async ({ context, page }) => 
   await loginAs(context, email);
   const { title } = await seedMatch(email, { score: 91 });
   await page.goto('/en/today');
-  await expect(visible(page, 'feed-progress')).toHaveText('0 / 1');
+  await expect(visible(page, 'feed-progress')).toContainText('0/1');
   await visible(page, 'match-save').click();
   await expect(visible(page, 'toast')).toContainText(title);
   await expect(visible(page, 'feed-empty')).toBeVisible();

@@ -12,7 +12,7 @@ export const NAV_ITEMS: {
   { key: 'today', href: '/today', icon: Flame, mobile: true },
   { key: 'board', href: '/board', icon: Columns3, mobile: true },
   { key: 'search', href: '/search', icon: SlidersHorizontal, mobile: true },
-  { key: 'analytics', href: '/analytics', icon: BarChart3, mobile: false },
-  { key: 'prep', href: '/prep', icon: GraduationCap, soon: true, mobile: true },
+  { key: 'analytics', href: '/analytics', icon: BarChart3, mobile: true },
+  { key: 'prep', href: '/prep', icon: GraduationCap, soon: true, mobile: false },
   { key: 'profile', href: '/profile', icon: User, mobile: true },
 ];

@@ -1,6 +1,7 @@
 'use client';
 
 import { JOB_DOMAINS } from '@jp/core';
+import { SlidersHorizontal } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { GlowCard } from '@/components/ui/glow-card';
@@ -60,6 +61,24 @@ export function Feed({
   const [filters, setFilters] = useState<FeedFilters>(() => initialFilters(savedFilters, profiles, sources));
   const saveUiPrefs = useSaveUiPrefs();
   const [labels, setLabels] = useState<CardLabels>({ ...ALL_LABELS, ...savedLabels });
+  // The less used filters fold away; open when one of them is set, else as the user left it.
+  const moreActive = [filters.profileId !== 'all', filters.level !== 'all', filters.experience !== 'any', filters.remote !== 'any', filters.domain !== 'all', filters.source !== 'all'].filter(Boolean).length;
+  const [moreOpen, setMoreOpen] = useState(() => {
+    if (moreActive > 0) return true;
+    try {
+      return typeof window !== 'undefined' && localStorage.getItem('bigoffer:feed:filters-open') === '1';
+    } catch {
+      return false;
+    }
+  });
+  const toggleMore = (open: boolean) => {
+    setMoreOpen(open);
+    try {
+      localStorage.setItem('bigoffer:feed:filters-open', open ? '1' : '0');
+    } catch {
+      // ignore
+    }
+  };
   const firstFilters = useRef(filters);
   // Every filter change is remembered for this user (all devices) until they change it again.
   useEffect(() => {
@@ -161,9 +180,9 @@ export function Feed({
   const savedCount = done.filter((d) => d.action !== 'hide').length;
 
   const select = (testId: string, label: string, value: string, onChange: (v: string) => void, options: { value: string; label: string }[]) => (
-    <label className="flex flex-col gap-1 font-mono text-xs">
+    <label className="flex min-w-0 flex-col gap-1 text-xs text-muted-foreground">
       {label}
-      <select data-testid={testId} value={value} onChange={(e) => onChange(e.target.value)} className="brutal bg-card px-2 py-1 font-sans text-sm">
+      <select data-testid={testId} value={value} onChange={(e) => onChange(e.target.value)} className="h-[34px] rounded-xl border border-border bg-card px-2.5 font-sans text-sm text-foreground">
         {options.map((o) => (
           <option key={o.value} value={o.value}>{o.label}</option>
         ))}
@@ -187,7 +206,7 @@ export function Feed({
     <section data-testid="feed" className="flex flex-col gap-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div className="flex flex-wrap items-center gap-3">
-          <p data-testid="feed-progress" className="font-mono text-sm font-bold">{t('progress', { done: processed, total })}</p>
+          <p data-testid="feed-progress" className="text-sm text-muted-foreground"><span className="font-mono font-bold text-foreground">{processed}/{total}</span> {t('progressLabel')}</p>
           {(ruleHidden.length > 0 || showHidden) && (
             <button
               type="button"
@@ -205,19 +224,20 @@ export function Feed({
             </button>
           )}
         </div>
-        <div className="flex flex-wrap gap-2">
-          {profiles.length > 1 && select('filter-profile', t('filterProfile'), filters.profileId, (v) => setFilters((f) => ({ ...f, profileId: v })), [{ value: 'all', label: t('all') }, ...profiles.map((p) => ({ value: p.id, label: p.name }))])}
+        <div className="flex flex-wrap items-end gap-2">
+          {select('sort-select', tt('sortLabel'), filters.sort, (v) => setFilters((f) => ({ ...f, sort: v as FeedFilters['sort'] })), [{ value: 'best', label: tt('sortBest') }, { value: 'newest', label: tt('sortNewest') }])}
           {select('filter-min-score', t('filterScore'), String(filters.minScore), (v) => setFilters((f) => ({ ...f, minScore: Number(v) })), [0, 50, 70, 90].map((n) => ({ value: String(n), label: n === 0 ? t('all') : `≥ ${n}%` })))}
-          {select('filter-remote', t('filterRemote'), filters.remote, (v) => setFilters((f) => ({ ...f, remote: v as FeedFilters['remote'] })), (['any', 'remote', 'hybrid', 'office'] as const).map((r) => ({ value: r, label: t(`remote_${r}`) })))}
-          {select('filter-experience', t('filterExperience'), String(filters.experience), (v) => setFilters((f) => ({ ...f, experience: v === 'any' || v === 'fit' ? v : Number(v) })), [
-            { value: 'any', label: t('all') },
-            { value: 'fit', label: t('expFit') },
-            ...[1, 2, 3, 5].map((n) => ({ value: String(n), label: t('expUpTo', { years: n }) })),
-          ])}
-          {select('filter-level', t('filterLevel'), filters.level, (v) => setFilters((f) => ({ ...f, level: v as FeedFilters['level'] })), [
-            { value: 'all', label: t('all') },
-            ...(['intern', 'junior', 'middle', 'senior', 'lead'] as const).map((l) => ({ value: l, label: tt(`seniority_${l}`) })),
-          ])}
+          <button
+            type="button"
+            data-testid="filters-toggle"
+            aria-expanded={moreOpen}
+            onClick={() => toggleMore(!moreOpen)}
+            className={`brutal-press inline-flex h-[34px] items-center gap-1.5 rounded-xl border px-3 text-sm font-medium ${moreActive > 0 ? 'border-brand/60 bg-brand/10 text-link' : 'border-border bg-card'}`}
+          >
+            <SlidersHorizontal className="size-4" aria-hidden />
+            {t('moreFilters')}
+            {moreActive > 0 && <span className="rounded-full bg-brand px-1.5 font-mono text-[11px] font-bold text-brand-foreground">{moreActive}</span>}
+          </button>
           <LabelsMenu
             value={labels}
             onChange={(next) => {
@@ -225,26 +245,54 @@ export function Feed({
               saveUiPrefs({ cardLabels: next });
             }}
           />
-          {select('sort-select', tt('sortLabel'), filters.sort, (v) => setFilters((f) => ({ ...f, sort: v as FeedFilters['sort'] })), [{ value: 'best', label: tt('sortBest') }, { value: 'newest', label: tt('sortNewest') }])}
+        </div>
+      </div>
+      {/* Quick toggles: one tap, always visible. */}
+      <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:none]">
+        {([
+          ['filter-fresh', tt('filterFresh'), filters.fresh, (on: boolean) => setFilters((f) => ({ ...f, fresh: on }))],
+          ['filter-reservation', t('filterReservation'), filters.reservation, (on: boolean) => setFilters((f) => ({ ...f, reservation: on }))],
+          ['filter-no-army', t('filterNoArmy'), filters.noArmy, (on: boolean) => setFilters((f) => ({ ...f, noArmy: on }))],
+        ] as const).map(([id, label, on, set]) => (
+          <label
+            key={id}
+            className={`brutal-press inline-flex shrink-0 cursor-pointer items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${on ? 'border-brand/60 bg-brand/15 text-link' : 'border-border hover:bg-muted'}`}
+          >
+            <input data-testid={id} type="checkbox" checked={on} onChange={(e) => set(e.target.checked)} className="size-4 accent-[var(--brand)]" />
+            {label}
+          </label>
+        ))}
+      </div>
+      {moreOpen && (
+        <div data-testid="filters-panel" className="grid grid-cols-2 gap-3 rounded-2xl border border-border bg-card/60 p-3 sm:grid-cols-3 lg:grid-cols-6">
+          {profiles.length > 1 && select('filter-profile', t('filterProfile'), filters.profileId, (v) => setFilters((f) => ({ ...f, profileId: v })), [{ value: 'all', label: t('all') }, ...profiles.map((p) => ({ value: p.id, label: p.name }))])}
+          {select('filter-level', t('filterLevel'), filters.level, (v) => setFilters((f) => ({ ...f, level: v as FeedFilters['level'] })), [
+            { value: 'all', label: t('all') },
+            ...(['intern', 'junior', 'middle', 'senior', 'lead'] as const).map((l) => ({ value: l, label: tt(`seniority_${l}`) })),
+          ])}
+          {select('filter-experience', t('filterExperience'), String(filters.experience), (v) => setFilters((f) => ({ ...f, experience: v === 'any' || v === 'fit' ? v : Number(v) })), [
+            { value: 'any', label: t('all') },
+            { value: 'fit', label: t('expFit') },
+            ...[1, 2, 3, 5].map((n) => ({ value: String(n), label: t('expUpTo', { years: n }) })),
+          ])}
+          {select('filter-remote', t('filterRemote'), filters.remote, (v) => setFilters((f) => ({ ...f, remote: v as FeedFilters['remote'] })), (['any', 'remote', 'hybrid', 'office'] as const).map((r) => ({ value: r, label: t(`remote_${r}`) })))}
           {select('filter-domain', t('filterDomain'), filters.domain, (v) => setFilters((f) => ({ ...f, domain: v as FeedFilters['domain'] })), [
             { value: 'all', label: t('all') },
             ...JOB_DOMAINS.filter((d) => d !== 'military').map((d) => ({ value: d, label: t(`domain_${d}`) })),
           ])}
-          <label className="flex items-end gap-2 pb-1 text-sm font-semibold">
-            <input data-testid="filter-reservation" type="checkbox" checked={filters.reservation} onChange={(e) => setFilters((f) => ({ ...f, reservation: e.target.checked }))} className="size-5" />
-            {t('filterReservation')}
-          </label>
-          <label className="flex items-end gap-2 pb-1 text-sm font-semibold">
-            <input data-testid="filter-no-army" type="checkbox" checked={filters.noArmy} onChange={(e) => setFilters((f) => ({ ...f, noArmy: e.target.checked }))} className="size-5" />
-            {t('filterNoArmy')}
-          </label>
-          <label className="flex items-end gap-2 pb-1 text-sm font-semibold">
-            <input data-testid="filter-fresh" type="checkbox" checked={filters.fresh} onChange={(e) => setFilters((f) => ({ ...f, fresh: e.target.checked }))} className="size-5" />
-            {tt('filterFresh')}
-          </label>
           {select('filter-source', t('filterSource'), filters.source, (v) => setFilters((f) => ({ ...f, source: v })), [{ value: 'all', label: t('all') }, ...sources.map((s) => ({ value: s.id, label: s.name }))])}
+          {moreActive > 0 && (
+            <button
+              type="button"
+              data-testid="filters-reset"
+              onClick={() => setFilters((f) => ({ ...f, profileId: 'all', level: 'all', experience: 'any', remote: 'any', domain: 'all', source: 'all' }))}
+              className="col-span-full justify-self-start text-sm text-link underline"
+            >
+              {t('resetFilters')}
+            </button>
+          )}
         </div>
-      </div>
+      )}
 
       {showHidden && (
         <p data-testid="rule-hidden-note" className="rounded-xl border border-warning/40 bg-warning/10 px-4 py-3 text-sm">
