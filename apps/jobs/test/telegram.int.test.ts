@@ -114,6 +114,25 @@ const run = (fn: typeof sendAlerts, bot: BotApi, userId: string, now = new Date(
   fn(db, { bot, siteUrl: 'https://example.test', now, onlyUserIds: [userId] });
 
 describe('sendAlerts', () => {
+  it('holds alerts while paused or in quiet hours, then sends them', async () => {
+    const paused = await makeUser('paused', { telegram_min_score: 50, telegram_paused_until: new Date(Date.now() + 3_600_000).toISOString() });
+    const night = await makeUser('quiet', { telegram_min_score: 50, timezone: 'UTC', telegram_quiet_start: 0, telegram_quiet_end: 0 });
+    const p1 = await addMatch(paused.id, 90);
+    const bot = new FakeBot();
+    expect((await run(sendAlerts, bot, paused.id)).sent).toBe(0);
+    expect(await notified([p1])).toEqual(new Map([[p1, false]]));
+    await db.from('profiles').update({ telegram_paused_until: null }).eq('id', paused.id);
+    expect((await run(sendAlerts, bot, paused.id)).sent).toBe(1);
+    // Quiet hours covering the current UTC hour hold the alert; equal start and end mean "no quiet hours".
+    const h = new Date().getUTCHours();
+    await db.from('profiles').update({ telegram_quiet_start: h, telegram_quiet_end: (h + 2) % 24 }).eq('id', night.id);
+    const n1 = await addMatch(night.id, 90);
+    expect((await run(sendAlerts, bot, night.id)).sent).toBe(0);
+    await db.from('profiles').update({ telegram_quiet_start: 0, telegram_quiet_end: 0 }).eq('id', night.id);
+    expect((await run(sendAlerts, bot, night.id)).sent).toBe(1);
+    expect(await notified([n1])).toEqual(new Map([[n1, true]]));
+  });
+
   it('alerts matches at or above the threshold once, in score order', async () => {
     const u = await makeUser('basic', { telegram_min_score: 75 });
     const [a, b, c] = [await addMatch(u.id, 90), await addMatch(u.id, 80), await addMatch(u.id, 60)] as [string, string, string];
@@ -172,7 +191,7 @@ describe('sendAlerts', () => {
     );
   });
 
-  it('waits up to 45 minutes for enrichment before alerting', async () => {
+  it('waits up to 10 minutes for enrichment before alerting', async () => {
     const u = await makeUser('enrich');
     const minutesAgo = (m: number) => new Date(Date.now() - m * 60_000).toISOString();
     const waiting = await addMatch(u.id, 90, { enriched: false, createdAt: minutesAgo(5) });

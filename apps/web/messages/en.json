@@ -577,7 +577,14 @@
     "save": "Save",
     "saved": "Saved",
     "disconnect": "Disconnect",
-    "error": "Something went wrong. Please try again."
+    "error": "Something went wrong. Please try again.",
+    "quiet": "Quiet hours (no alerts)",
+    "quietFrom": "From",
+    "quietTo": "To",
+    "quietHint": "No night pings: new jobs arrive right after quiet hours.",
+    "pausedUntil": "Alerts paused until {until}.",
+    "resume": "Resume",
+    "commands": "In the bot: /top — best now, /goal — progress, /pause 3h — pause, /resume, /help."
   },
   "searchNow": {
     "title": "Job search",

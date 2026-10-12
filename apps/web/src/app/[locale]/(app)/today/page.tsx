@@ -30,7 +30,7 @@ function windowStart(): string {
 
 export default async function TodayPage({ searchParams }: { searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) {
   const userId = await requireUserId();
-  const { match, view, fresh } = await searchParams;
+  const { match, view, fresh, kit } = await searchParams;
   // ?match=<id> (the Telegram "Open" button) focuses that match when it is in the feed.
   const focusId = typeof match === 'string' && UUID.test(match) ? match : null;
   const t = await getTranslations('today');
@@ -151,6 +151,8 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
         // Offer Genie links: ?view=hidden opens "Hidden by rules", ?fresh=1 shows the last 24 h.
         openHidden={view === 'hidden'}
         onlyFresh={fresh === '1'}
+        // Telegram "Apply kit" button: the focused job opens with its apply kit expanded.
+        openKit={kit === '1'}
       />
     </section>
   );

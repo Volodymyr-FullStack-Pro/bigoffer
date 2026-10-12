@@ -29,7 +29,7 @@ export function profileTips(p: {
   if (p.roles.length === 0) tips.push({ id: 'roles' });
   const mine = new Set(p.skills.map((s) => s.toLowerCase()));
   const cvSkills = p.cvSkills.filter((s) => !mine.has(s.toLowerCase())).slice(0, 5);
-  if (cvSkills.length > 0 && p.skills.length < 30) tips.push({ id: 'cvSkills', items: cvSkills });
+  if (cvSkills.length > 0 && p.skills.length < 100) tips.push({ id: 'cvSkills', items: cvSkills });
   if ((p.remoteType === 'hybrid' || p.remoteType === 'office') && p.locations.length === 0) tips.push({ id: 'cities' });
   return tips;
 }

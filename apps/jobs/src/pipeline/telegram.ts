@@ -1,4 +1,4 @@
-import { alertMessage, digestMessage, overflowMessage, sourceInfo, toTgLocale, type AlertJob, type BotApi, type BotResult } from '@jp/core';
+import { alertLabels, alertMessage, detectDomains, detectPerks, digestMessage, inQuietHours, overflowMessage, sourceInfo, toTgLocale, type AlertJob, type BotApi, type BotResult, type TgLocale } from '@jp/core';
 import type { Db } from '../db';
 
 /** `onlyUserIds` restricts the run to those users (tests; never set in production). */
@@ -9,8 +9,11 @@ const MAX_ALERTS = 5;
 const FETCH_LIMIT = 50;
 const DIGEST_TOP = 10;
 const DAY_MS = 24 * 3600_000;
-/** An alert waits for AI enrichment (summary, is_job) this long at most, so alerts still flow when AI is off or behind. */
-const ENRICH_WAIT_MS = 45 * 60_000;
+/**
+ * An alert waits for AI enrichment (summary, is_job) this long at most, so alerts still flow when AI is off or
+ * behind. Kept short: replies go to the first applicants.
+ */
+const ENRICH_WAIT_MS = 10 * 60_000;
 
 type Profile = {
   id: string;
@@ -20,10 +23,16 @@ type Profile = {
   digest_last_sent_on: string | null;
   telegram_chat_id: number;
   telegram_min_score: number;
+  telegram_quiet_start: number;
+  telegram_quiet_end: number;
+  telegram_paused_until: string | null;
+  ui_prefs: unknown;
 };
 
 type JobRow = {
   title: string;
+  description_text?: string;
+  seniority?: string | null;
   location: string | null;
   remote_type: string;
   salary_raw: string | null;
@@ -34,9 +43,10 @@ type JobRow = {
 type MatchRow = { id: string; score: number; explanation: unknown; created_at: string; jobs: JobRow | null };
 
 const MATCH_SELECT =
-  'id, score, explanation, created_at, jobs!inner(title, location, remote_type, salary_raw, is_job, enriched_at, companies(name), job_postings(source_id, url, seen_at))';
+  'id, score, explanation, created_at, jobs!inner(title, description_text, seniority, location, remote_type, salary_raw, is_job, enriched_at, companies(name), job_postings(source_id, url, seen_at))';
 
-const PROFILE_SELECT = 'id, locale, timezone, digest_hour, digest_last_sent_on, telegram_chat_id, telegram_min_score';
+const PROFILE_SELECT =
+  'id, locale, timezone, digest_hour, digest_last_sent_on, telegram_chat_id, telegram_min_score, telegram_quiet_start, telegram_quiet_end, telegram_paused_until, ui_prefs';
 
 /** Users with a linked chat; instant alerts additionally require telegram_alerts (the digest does not). */
 async function linkedProfiles(db: Db, onlyUserIds: string[] | undefined, alertsOnly: boolean): Promise<Profile[]> {
@@ -48,7 +58,18 @@ async function linkedProfiles(db: Db, onlyUserIds: string[] | undefined, alertsO
   return (data ?? []) as unknown as Profile[];
 }
 
-function toAlertJob(m: MatchRow, locale: string): AlertJob {
+function jobFacts(job: JobRow) {
+  const text = { title: job.title, company: job.companies?.name ?? null, descriptionText: job.description_text ?? '' };
+  return { domains: detectDomains(text), perks: detectPerks(text), seniority: job.seniority ?? null };
+}
+
+/** The feed's "No army" filter applies to Telegram too. */
+function wantsNoArmy(p: Profile): boolean {
+  const feed = (p.ui_prefs as { feed?: { noArmy?: unknown } } | null)?.feed;
+  return feed?.noArmy === true;
+}
+
+function toAlertJob(m: MatchRow, locale: TgLocale): AlertJob {
   const job = m.jobs!;
   // The most recently seen posting is the one most likely still open.
   const posting = [...(job.job_postings ?? [])].sort((a, b) => (a.seen_at < b.seen_at ? 1 : -1))[0];
@@ -64,6 +85,7 @@ function toAlertJob(m: MatchRow, locale: string): AlertJob {
     why: typeof expl === 'string' && expl.trim() ? expl : null,
     source: posting ? (sourceInfo(posting.source_id)?.name ?? posting.source_id) : null,
     jobUrl: posting?.url ?? null,
+    labels: alertLabels(jobFacts(job), locale),
   };
 }
 
@@ -127,12 +149,20 @@ export async function sendAlerts(db: Db, deps: TelegramDeps): Promise<TelegramRe
 }
 
 async function alertUser(db: Db, deps: TelegramDeps, p: Profile, result: TelegramResult): Promise<void> {
+  // Paused (/pause) or quiet hours: matches stay un-notified and go out on the first run after.
+  if (p.telegram_paused_until && Date.parse(p.telegram_paused_until) > deps.now.getTime()) return;
+  const local = localTime(deps.now, p.timezone);
+  if (local && inQuietHours(local.hour, p.telegram_quiet_start, p.telegram_quiet_end)) return;
   const { data, error } = await freshMatches(db, p.id, deps.now)
     .is('notified_at', null)
     .gte('score', p.telegram_min_score)
     .limit(FETCH_LIMIT);
   if (error) throw error;
-  const matches = ((data ?? []) as unknown as MatchRow[]).filter((m) => readyToAlert(m, deps.now));
+  const ready = ((data ?? []) as unknown as MatchRow[]).filter((m) => readyToAlert(m, deps.now));
+  // Army-service jobs are skipped (and marked, so they are not checked again) when the feed hides them.
+  const skipped = wantsNoArmy(p) ? ready.filter((m) => m.jobs && jobFacts(m.jobs).domains.includes('military')) : [];
+  if (skipped.length > 0) await markNotified(db, skipped.map((m) => m.id), deps.now);
+  const matches = ready.filter((m) => !skipped.includes(m));
   if (matches.length === 0) return;
   result.users++;
   const locale = toTgLocale(p.locale);

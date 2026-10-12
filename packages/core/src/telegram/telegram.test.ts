@@ -212,3 +212,33 @@ describe('bot replies', () => {
     expect(botReplies('ru').unavailable).toBe('Недоступно');
   });
 });
+
+describe('alert extras', () => {
+  it('encodes the save button and parses /pause', async () => {
+    const { encodeCallback, decodeCallback, parsePauseMs } = await import('./format');
+    const id = '0fe608a4-d9e3-4777-8de0-4f3f7d956da4';
+    expect(decodeCallback(encodeCallback({ kind: 'save', matchId: id }))).toEqual({ kind: 'save', matchId: id });
+    expect(parsePauseMs('/pause 3h')).toBe(3 * 3_600_000);
+    expect(parsePauseMs('/pause 90m')).toBe(90 * 60_000);
+    expect(parsePauseMs('/pause 1d')).toBe(86_400_000);
+    expect(parsePauseMs('/pause 5m')).toBeNull();
+    expect(parsePauseMs('/pause soon')).toBeNull();
+  });
+  it('labels army, reservation, level and fields, and adds the kit and save buttons', async () => {
+    const { alertLabels, alertMessage } = await import('./format');
+    expect(alertLabels({ domains: ['fintech', 'military'], perks: ['reservation', 'testTask'], seniority: 'middle' }, 'uk')).toEqual(['🪖 Армія', '🛡 Бронювання', 'Middle', 'Тестове', 'FinTech']);
+    const msg = alertMessage({ matchId: '0fe608a4-d9e3-4777-8de0-4f3f7d956da4', title: 'Dev', company: 'Acme', score: 90, salary: null, location: null, remote: null, why: null, labels: ['🛡 Бронювання'] }, 'uk', 'https://x.app');
+    expect(msg.text).toContain('🛡 Бронювання');
+    const buttons = msg.replyMarkup.inline_keyboard.flat().map((b) => b.text);
+    expect(buttons).toEqual(expect.arrayContaining(['✍️ Набір для відгуку', '⭐ Зберегти', 'Сховати', 'Подано']));
+    expect(JSON.stringify(msg.replyMarkup)).toContain('kit=1');
+  });
+  it('knows quiet hours across midnight', async () => {
+    const { inQuietHours } = await import('./format');
+    expect(inQuietHours(23, 23, 8)).toBe(true);
+    expect(inQuietHours(3, 23, 8)).toBe(true);
+    expect(inQuietHours(8, 23, 8)).toBe(false);
+    expect(inQuietHours(14, 13, 15)).toBe(true);
+    expect(inQuietHours(10, 9, 9)).toBe(false);
+  });
+});

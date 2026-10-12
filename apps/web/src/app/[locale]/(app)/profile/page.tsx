@@ -21,7 +21,7 @@ export default async function ProfilePage() {
   const supabase = await createClient();
   const { data: profile, error } = await supabase
     .from('profiles')
-    .select('full_name, timezone, contacts, country, telegram_chat_id, telegram_alerts, telegram_min_score, digest_hour, ui_prefs')
+    .select('full_name, timezone, contacts, country, telegram_chat_id, telegram_alerts, telegram_min_score, digest_hour, ui_prefs, telegram_quiet_start, telegram_quiet_end, telegram_paused_until')
     .eq('id', userId)
     .single();
 
@@ -65,6 +65,9 @@ export default async function ProfilePage() {
           alerts: profile.telegram_alerts,
           minScore: profile.telegram_min_score,
           digestHour: profile.digest_hour,
+          quietStart: profile.telegram_quiet_start,
+          quietEnd: profile.telegram_quiet_end,
+          pausedUntil: profile.telegram_paused_until,
           timezone: profile.timezone ?? 'Europe/Kyiv',
         }}
       />

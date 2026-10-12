@@ -193,6 +193,7 @@ export function SearchProfileForm({ values, cvSkills = [], cvHeadline = null }: 
             hint={t('skillsHint')}
             defaultValue={values.skills}
             onChange={setSkills}
+            max={100}
             suggestions={skillSuggestions(roles, cvSkills)}
             suggestionsLabel={cvSkills.length > 0 ? t('suggestedFromCv') : t('suggested')}
             invalid={invalid.has('skills')}

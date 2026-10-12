@@ -41,17 +41,36 @@ const settingsSchema = z.object({
   alerts: z.boolean(),
   minScore: z.int().min(0).max(100),
   digestHour: z.int().min(0).max(23),
+  quietStart: z.int().min(0).max(23),
+  quietEnd: z.int().min(0).max(23),
 });
 
-export async function saveTelegramSettings(alerts: boolean, minScore: number, digestHour: number): Promise<boolean> {
-  const parsed = settingsSchema.safeParse({ alerts, minScore, digestHour });
+export async function saveTelegramSettings(alerts: boolean, minScore: number, digestHour: number, quietStart = 23, quietEnd = 8): Promise<boolean> {
+  const parsed = settingsSchema.safeParse({ alerts, minScore, digestHour, quietStart, quietEnd });
   const userId = await getUserId();
   if (!parsed.success || !userId) return false;
   const supabase = await createClient();
   const { error } = await supabase
     .from('profiles')
-    .update({ telegram_alerts: parsed.data.alerts, telegram_min_score: parsed.data.minScore, digest_hour: parsed.data.digestHour })
+    .update({
+      telegram_alerts: parsed.data.alerts,
+      telegram_min_score: parsed.data.minScore,
+      digest_hour: parsed.data.digestHour,
+      telegram_quiet_start: parsed.data.quietStart,
+      telegram_quiet_end: parsed.data.quietEnd,
+    })
     .eq('id', userId);
   if (error) console.error('saveTelegramSettings failed', error.code);
+  return !error;
+}
+
+/** Ends a /pause from the profile. */
+export async function resumeTelegram(): Promise<boolean> {
+  const userId = await getUserId();
+  if (!userId) return false;
+  const supabase = await createClient();
+  const { error } = await supabase.from('profiles').update({ telegram_paused_until: null }).eq('id', userId);
+  if (error) console.error('resumeTelegram failed', error.code);
+  revalidatePath('/[locale]/profile', 'page');
   return !error;
 }
