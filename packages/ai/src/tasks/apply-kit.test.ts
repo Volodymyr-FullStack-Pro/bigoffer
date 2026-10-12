@@ -38,7 +38,8 @@ describe('generateApplyKit', () => {
     expect(req.prompt.indexOf('Candidate name: Jane Doe')).toBeGreaterThan(req.prompt.indexOf('</job_posting>'));
     expect(req.prompt).not.toContain('+380500000000');
     expect(req.system).toContain('Do NOT add a sign-off');
-    expect(kit.coverLetter.endsWith('Best regards,\nJane Doe\nCV: https://cv.example/jane.pdf\nPhone: +380500000000\nLinkedIn: https://linkedin.com/in/jane')).toBe(true);
+    expect(kit.coverLetter.endsWith('Best regards,\nJane Doe\nPhone: +380500000000\nLinkedIn: https://linkedin.com/in/jane')).toBe(true);
+    expect(kit.coverLetter).not.toContain('cv.example');
   });
 
   it('signs off in the letter language and skips missing details', () => {

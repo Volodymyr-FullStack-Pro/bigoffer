@@ -31,8 +31,8 @@ export type KitJob = { title: string; company: string; description: string; sala
 /** The candidate's own name and contacts from the profile, used to fill [Full name], [Phone], [LinkedIn]… placeholders. */
 export type KitCandidate = { fullName: string | null; contacts: Partial<Record<'email' | 'phone' | 'linkedin' | 'github' | 'cv' | 'portfolio' | 'telegram', string>> };
 
+// No CV link: the CV goes along as a file with the application, a link in the letter only repeats it.
 const CONTACT_LABELS = [
-  ['cv', 'CV'],
   ['email', 'Email'],
   ['phone', 'Phone'],
   ['linkedin', 'LinkedIn'],
@@ -43,7 +43,7 @@ const CONTACT_LABELS = [
 
 const SIGN_OFF: Record<string, string> = { en: 'Best regards,', uk: 'З повагою,', ru: 'С уважением,' };
 
-/** The letter's sign-off, added by code so the name, CV link and contacts are exact and labelled. */
+/** The letter's sign-off, added by code so the name and contacts are exact and labelled. */
 export function signOff(candidate: KitCandidate | null | undefined, lang: string): string {
   const lines = [SIGN_OFF[lang] ?? SIGN_OFF.en!];
   const name = candidate?.fullName?.trim();
@@ -70,6 +70,8 @@ function system(lang: 'auto' | 'en' | 'uk' | 'ru', tone: 'default' | 'shorter' |
     '   prefer an experience bullet. Look across ALL roles, not only the latest.',
     '2. pitch: the 3 strongest CV facts for THIS job, best first. Also scan the nice-to-haves ("stand out", "a plus", "bonus") and the domain',
     '   (payments, fintech, AdTech, AI, marketplace...): a CV fact that matches the company domain or a nice-to-have is often the strongest. Prefer facts with numbers.',
+    '   Match the core daily work of the role too, not only the stack: what the team builds (e.g. fee calculation → calculation logic the candidate',
+    '   implemented; payments → the payment integrations they did, naming the providers from the CV).',
     '3. cover_letter: a short letter a strong candidate would write themselves — warm, direct and specific, with natural varied sentences, never a',
     '   list of facts glued together. Paragraphs:',
     '   - Greeting: the hiring manager if the posting names one, else the company team (e.g. "Hi Acme team,").',
@@ -84,7 +86,8 @@ function system(lang: 'auto' | 'en' | 'uk' | 'ru', tone: 'default' | 'shorter' |
     '   - Never write a requirement as a claim without a CV fact behind it, and never copy the posting\'s wording as a claim',
     '     ("I design systems outside of frameworks" is a claim; "I built X without a framework" is a fact — only if the CV says so).',
     '   - Keep CV facts as the CV words them: do not relabel them into the job\'s domain ("analytics dashboards" must not become "financial dashboards").',
-    '   - Gaps: do not claim a missing requirement; at most mention a closely related strength.',
+    '   - Gaps: do not claim a missing requirement. When one central must-have is missing and the CV has a close fact, one honest sentence may',
+    '     say so (e.g. "My backend work is Node.js rather than .NET, though I have built REST APIs end to end").',
     '   - Do NOT add a sign-off, name or contacts: they are appended automatically after your text.',
     `   - Length: ${tone === 'shorter' ? '80–100 words, three short paragraphs' : '150–200 words, four short paragraphs'}; separate paragraphs with one empty line; plain text, no markdown, no [placeholders].`,
     '   - Banned: "I am writing to express", "passionate", "team player", "I bring", "for your technical requirements", "next-generation",',
