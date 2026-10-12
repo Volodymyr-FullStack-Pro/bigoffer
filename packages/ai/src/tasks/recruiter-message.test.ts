@@ -25,4 +25,12 @@ describe('recruiterMessage', () => {
     expect(llm.calls[0]!.system).toContain('untrusted data');
     expect(llm.calls[0]!.system).toContain('never paste the whole CV');
   });
+  it('introduces the candidate by name, or by role when the name is unknown', async () => {
+    const llm = new FakeLlmClient(fakeResponder, ['private']);
+    await recruiterMessage(llm, { ...base, format: 'inmail', candidateName: 'Volodymyr Babiichuk' });
+    expect(llm.calls[0]!.prompt).toContain('Candidate name: Volodymyr Babiichuk');
+    expect(llm.calls[0]!.system).toContain('sign off with the name');
+    await recruiterMessage(llm, { ...base, format: 'inmail' });
+    expect(llm.calls[1]!.system).toContain('never "My name is" without a name');
+  });
 });

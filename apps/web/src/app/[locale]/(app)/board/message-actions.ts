@@ -13,15 +13,17 @@ export async function generateRecruiterMessage(
   applicationId: string,
   opts: { format: MessageFormat; kind: 'intro' | 'follow_up'; lang: 'en' | 'uk' | 'ru'; tone: 'default' | 'shorter' | 'formal' },
 ): Promise<{ ok: true; subject: string | null; body: string } | { ok: false; error: 'ai_unavailable' | 'ai_limit' | 'no_cv' | 'not_found' | 'failed' }> {
-  if (!(await getUserId()) || !UUID.test(applicationId) || !MESSAGE_FORMATS.includes(opts.format) || !['intro', 'follow_up'].includes(opts.kind) || !['en', 'uk', 'ru'].includes(opts.lang) || !['default', 'shorter', 'formal'].includes(opts.tone)) {
+  const userId = await getUserId();
+  if (!userId || !UUID.test(applicationId) || !MESSAGE_FORMATS.includes(opts.format) || !['intro', 'follow_up'].includes(opts.kind) || !['en', 'uk', 'ru'].includes(opts.lang) || !['default', 'shorter', 'formal'].includes(opts.tone)) {
     return { ok: false, error: 'not_found' };
   }
   if (!privateAiAvailable()) return { ok: false, error: 'ai_unavailable' };
   const supabase = await createClient();
-  const [{ data: app }, cv, { data: previous }] = await Promise.all([
+  const [{ data: app }, cv, { data: previous }, { data: me }] = await Promise.all([
     supabase.from('applications').select('title, company, contact, jobs(description_text)').eq('id', applicationId).maybeSingle(),
     loadPrimaryCv(supabase),
     supabase.from('application_messages').select('body').eq('application_id', applicationId).eq('direction', 'out').order('sent_at', { ascending: false }).limit(5),
+    supabase.from('profiles').select('full_name').eq('id', userId).maybeSingle(),
   ]);
   if (!app) return { ok: false, error: 'not_found' };
   if (!cv?.parsed) return { ok: false, error: 'no_cv' };
@@ -34,6 +36,7 @@ export async function generateRecruiterMessage(
       job: { title: app.title, company: app.company, description: app.jobs?.description_text ?? null },
       cv: cv.parsed,
       recruiterName: typeof contact.name === 'string' ? contact.name : null,
+      candidateName: me?.full_name?.trim() || cv.parsed.fullName?.trim() || null,
       lang: opts.lang,
       tone: opts.tone,
       previous: (previous ?? []).map((p) => p.body).reverse(),
