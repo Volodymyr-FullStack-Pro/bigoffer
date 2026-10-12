@@ -80,3 +80,11 @@ describe('targetRoleFamilies', () => {
     expect(new Set(ROLE_FAMILIES).size).toBe(ROLE_FAMILIES.length);
   });
 });
+
+describe('JavaScript next to another stack', () => {
+  it('counts as front-end work unless the title says back-end or Node', () => {
+    expect(detectRoleFamilies('Junior JavaScript + Java Engineer')).toEqual(['backend', 'frontend']);
+    expect(detectRoleFamilies('Senior Back-End JavaScript Engineer')).toEqual(['backend']);
+    expect(detectRoleFamilies('TypeScript/Node.js Developer')).toEqual(['backend']);
+  });
+});

@@ -29,6 +29,8 @@ export type FeedMatch = {
   requiredYears: number | null;
   /** The user's years of experience from their CV, to compare with requiredYears. */
   candidateYears: number | null;
+  /** Why the profile rules hid it: 'seniority' | 'role' | 'format' | 'region' | an exclude word; null when shown. */
+  excludedBy: string | null;
   /** Board column the user already has this job in (same job, or the same company + title from another board). */
   onBoard: string | null;
 };

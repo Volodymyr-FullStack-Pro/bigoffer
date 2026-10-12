@@ -39,13 +39,13 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
   const supabase = await createClient();
   const since = windowStart();
   const staleCutoff = staleSince();
-  const baseQuery = () =>
+  const baseQuery = (states: ('new' | 'seen' | 'hidden')[] = ['new', 'seen']) =>
     supabase
       .from('job_matches')
       .select(
         'id, job_id, score, created_at, breakdown, explanation, search_profile_id, jobs!inner(title, location, remote_type, seniority, salary_min_usd, salary_max_usd, posted_at, first_seen_at, summary, skills, description_text, is_job, company_is_placeholder, companies(name), job_postings(source_id, url))',
       )
-      .in('state', ['new', 'seen'])
+      .in('state', states)
       .eq('jobs.status', 'active')
       .not('jobs.is_job', 'is', false)
       // Board feeds re-surface months-old postings; a "Today" feed only shows jobs posted in the last 30 days.
@@ -66,6 +66,11 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
     loadPrimaryCv(supabase),
     supabase.from('applications').select('job_id, title, company, board_columns(key, title)'),
   ]);
+  // What the profile rules hid (level, role, format, region, exclude word): shown on demand so nothing is lost silently.
+  const { data: ruleHiddenRows } = await baseQuery(['hidden'])
+    .not('breakdown->>excludedBy', 'is', null)
+    .order('score', { ascending: false })
+    .limit(150);
 
   if (freshError) console.error('today: fresh matches query failed', { code: freshError.code, message: freshError.message });
 
@@ -104,6 +109,7 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
       onBoard: boardByJob.get(m.job_id) ?? boardByName.get(nameKey(m.jobs.companies?.name ?? '', m.jobs.title)) ?? null,
       skills: cardSkills(m.jobs.skills, matched, 8, wanted),
       techs: cardSkills(m.jobs.skills, matched, 60, wanted),
+      excludedBy: typeof (m.breakdown as { excludedBy?: unknown } | null)?.excludedBy === 'string' ? ((m.breakdown as { excludedBy: string }).excludedBy) : null,
       breakdown: b ? { skills: num(b.skills), role: num(b.role), seniority: num(b.seniority), location: num(b.location), salary: num(b.salary) } : null,
       profileId: m.search_profile_id,
       createdAt: m.created_at,
@@ -138,6 +144,7 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
         profiles={(profiles ?? []).map((p) => ({ id: p.id, name: p.name }))}
         sources={sourceIds.map((id) => ({ id, name: sourceInfo(id)?.name ?? id }))}
         savedFilters={parseUiPrefs(me?.ui_prefs).feed}
+        ruleHidden={(ruleHiddenRows ?? []).map(toMatch)}
       />
     </section>
   );

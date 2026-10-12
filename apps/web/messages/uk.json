@@ -189,7 +189,16 @@
     "techsHave": "Є у вас",
     "techsLack": "Немає у вашому профілі",
     "techsMore": "ще {count}",
-    "techsLess": "Згорнути"
+    "techsLess": "Згорнути",
+    "ruleHiddenShow": "Приховані правилами · {count}",
+    "ruleHiddenBack": "← Назад до стрічки",
+    "ruleHiddenNote": "Ці вакансії сховали правила вашого профілю пошуку: рівень у назві, роль, формат роботи, регіон або слово-виключення. Можна зберегти будь-яку з них або змінити правила.",
+    "ruleHiddenSettings": "Налаштування пошуку",
+    "reason_seniority": "Сховано: рівень",
+    "reason_role": "Сховано: роль",
+    "reason_format": "Сховано: формат",
+    "reason_region": "Сховано: регіон",
+    "reason_keyword": "Сховано: «{word}»"
   },
   "comingSoon": {
     "badge": "Скоро",

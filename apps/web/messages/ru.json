@@ -189,7 +189,16 @@
     "techsHave": "Есть у вас",
     "techsLack": "Нет в вашем профиле",
     "techsMore": "ещё {count}",
-    "techsLess": "Свернуть"
+    "techsLess": "Свернуть",
+    "ruleHiddenShow": "Скрытые правилами · {count}",
+    "ruleHiddenBack": "← Назад к ленте",
+    "ruleHiddenNote": "Эти вакансии скрыли правила вашего профиля поиска: уровень в названии, роль, формат работы, регион или слово-исключение. Любую можно сохранить или изменить правила.",
+    "ruleHiddenSettings": "Настройки поиска",
+    "reason_seniority": "Скрыто: уровень",
+    "reason_role": "Скрыто: роль",
+    "reason_format": "Скрыто: формат",
+    "reason_region": "Скрыто: регион",
+    "reason_keyword": "Скрыто: «{word}»"
   },
   "comingSoon": {
     "badge": "Скоро",

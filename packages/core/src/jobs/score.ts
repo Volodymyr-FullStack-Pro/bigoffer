@@ -157,7 +157,12 @@ export function scoreJob(
   // A tech search (frontend, backend, QA, …) never wants a job whose title is not technical at all ("Creative
   // Strategist"): generic CV skills (Figma, AI tools) and a stray keyword in the text must not pull it in.
   const techSearch = targets.length > 0 && targets.every((t) => TECH_FAMILIES.has(t));
-  const offTarget = roleOffTarget(families, targets) || (techSearch && families.length === 0 && !isTechTitle(job.title));
+  // Only the title hides a job by role. The AI role (read from the text) fills in for a generic title when scoring,
+  // but a "Software Engineer" it calls backend stays visible with fewer role points rather than disappearing.
+  const titleFamilies = detectRoleFamilies(job.title);
+  const offTarget =
+    roleOffTarget(titleFamilies, targets) ||
+    (techSearch && titleFamilies.length === 0 && !isTechTitle(job.title) && !familyMatch);
   // Skill credit saturates at SKILLS_FOR_FULL_CREDIT matches: a long profile list (e.g. 30 skills imported from a CV)
   // must not dilute a job that uses 8 of them down to 9/35. Short lists keep their plain share.
   const skillDenominator = Math.min(profile.skills.length, SKILLS_FOR_FULL_CREDIT);

@@ -31,8 +31,11 @@ export function Feed({
   sources,
   focusId = null,
   savedFilters,
+  ruleHidden = [],
 }: {
   matches: FeedMatch[];
+  /** Matches the profile rules hid, browsable with the "Hidden by rules" toggle. */
+  ruleHidden?: FeedMatch[];
   profiles: { id: string; name: string }[];
   sources: { id: string; name: string }[];
   focusId?: string | null;
@@ -42,7 +45,12 @@ export function Feed({
   const tt = useTranslations('today');
   // Decided once: a save/hide server action re-renders the page with fewer matches, which must not turn the feed into the "no matches yet" state.
   const [startedEmpty] = useState(matches.length === 0);
-  const [items, setItems] = useState(matches);
+  const [mainItems, setMainItems] = useState(matches);
+  const [hiddenItems, setHiddenItems] = useState(ruleHidden);
+  const [showHidden, setShowHidden] = useState(false);
+  // The toggle swaps which list the feed (and its actions) works on.
+  const items = showHidden ? hiddenItems : mainItems;
+  const setItems = showHidden ? setHiddenItems : setMainItems;
   const [filters, setFilters] = useState<FeedFilters>(() => initialFilters(savedFilters, profiles, sources));
   const saveUiPrefs = useSaveUiPrefs();
   const firstFilters = useRef(filters);
@@ -100,7 +108,7 @@ export function Feed({
         },
       });
     },
-    [items, visible, show, t],
+    [items, setItems, visible, show, t],
   );
 
   // The kit's "Did you apply? Yes" already moved the card on the server: just take the match out of the feed.
@@ -112,7 +120,7 @@ export function Feed({
       setDone((d) => [...d, { match, index: 0, action: 'applied' }]);
       show({ message: t('appliedDone', { title: match.title }) });
     },
-    [visible, show, t],
+    [setItems, visible, show, t],
   );
 
   useEffect(() => {
@@ -169,7 +177,25 @@ export function Feed({
   return (
     <section data-testid="feed" className="flex flex-col gap-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
-        <p data-testid="feed-progress" className="font-mono text-sm font-bold">{t('progress', { done: processed, total })}</p>
+        <div className="flex flex-wrap items-center gap-3">
+          <p data-testid="feed-progress" className="font-mono text-sm font-bold">{t('progress', { done: processed, total })}</p>
+          {(ruleHidden.length > 0 || showHidden) && (
+            <button
+              type="button"
+              data-testid="toggle-rule-hidden"
+              aria-pressed={showHidden}
+              onClick={() => {
+                setShowHidden((v) => !v);
+                setSelectedId(null);
+              }}
+              className={`brutal-press rounded-full border px-3 py-1 text-xs font-semibold transition-colors ${
+                showHidden ? 'border-warning/60 bg-warning/15 text-warning' : 'border-border text-muted-foreground hover:bg-muted hover:text-foreground'
+              }`}
+            >
+              {showHidden ? t('ruleHiddenBack') : t('ruleHiddenShow', { count: hiddenItems.length })}
+            </button>
+          )}
+        </div>
         <div className="flex flex-wrap gap-2">
           {profiles.length > 1 && select('filter-profile', t('filterProfile'), filters.profileId, (v) => setFilters((f) => ({ ...f, profileId: v })), [{ value: 'all', label: t('all') }, ...profiles.map((p) => ({ value: p.id, label: p.name }))])}
           {select('filter-min-score', t('filterScore'), String(filters.minScore), (v) => setFilters((f) => ({ ...f, minScore: Number(v) })), [0, 50, 70, 90].map((n) => ({ value: String(n), label: n === 0 ? t('all') : `≥ ${n}%` })))}
@@ -192,6 +218,12 @@ export function Feed({
         </div>
       </div>
 
+      {showHidden && (
+        <p data-testid="rule-hidden-note" className="rounded-xl border border-warning/40 bg-warning/10 px-4 py-3 text-sm">
+          {t('ruleHiddenNote')}{' '}
+          <Link href="/search" className="font-semibold underline">{t('ruleHiddenSettings')}</Link>
+        </p>
+      )}
       {visible.length === 0 ? (
         <div data-testid="feed-empty" className="brutal flex max-w-xl flex-col gap-3 p-6">
           <p className="font-display text-xl font-semibold">{t('empty')}</p>

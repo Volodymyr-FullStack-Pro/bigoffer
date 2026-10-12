@@ -189,7 +189,16 @@
     "techsHave": "You have",
     "techsLack": "Not in your profile",
     "techsMore": "{count} more",
-    "techsLess": "Show less"
+    "techsLess": "Show less",
+    "ruleHiddenShow": "Hidden by rules · {count}",
+    "ruleHiddenBack": "← Back to feed",
+    "ruleHiddenNote": "Your search profile rules hid these jobs: the level in the title, role, work format, region or an exclude word. Save any of them, or change the rules.",
+    "ruleHiddenSettings": "Search settings",
+    "reason_seniority": "Hidden: level",
+    "reason_role": "Hidden: role",
+    "reason_format": "Hidden: format",
+    "reason_region": "Hidden: region",
+    "reason_keyword": "Hidden: “{word}”"
   },
   "comingSoon": {
     "badge": "Soon",
