@@ -10,7 +10,8 @@ import { enqueueScrapes } from './enqueue';
 export const scheduleQueries = schedules.task({
   id: 'schedule-queries',
   machine: 'small-1x', // bulk-loads jobs/profiles; micro (0.25 GB) is too small
-  cron: '5 * * * *',
+  // Every 30 min: DOU is due every 30 min, Djinni / robota.ua hourly (see sources.min_interval_minutes).
+  cron: '5,35 * * * *',
   run: async () => {
     const db = getDb();
     const now = new Date();
