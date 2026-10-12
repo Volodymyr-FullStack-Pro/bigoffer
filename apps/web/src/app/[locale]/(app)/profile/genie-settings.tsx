@@ -11,7 +11,8 @@ const MODES = ['on', 'quiet', 'off'] as const;
 /** Offer Genie mode and the daily application goal, kept in ui_prefs. */
 export function GenieSettings({ initial }: { initial: NonNullable<UiPrefs['genie']> }) {
   const t = useTranslations('genie');
-  const save = useSaveUiPrefs();
+  // An explicit setting is written at once: a debounced write was lost when the user left the page right away.
+  const save = useSaveUiPrefs(0);
   const [mode, setMode] = useState(initial.mode ?? 'on');
   const [goal, setGoal] = useState(initial.goal ?? 5);
   return (
