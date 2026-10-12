@@ -96,7 +96,7 @@ export async function findRecruiters(jobId: string): Promise<RankedContact[]> {
   const company = job.companies?.name?.trim();
   const found = company && !job.company_is_placeholder ? await searchRecruiters(company) : [];
   const seen = new Set(own.map((c) => c.href));
-  return rankRecruiters([...own, ...found.filter((c) => !seen.has(c.href))], company ?? '').slice(0, 4);
+  return rankRecruiters([...own, ...found.filter((c) => !seen.has(c.href))]).slice(0, 4);
 }
 
 const FORMAT_FOR: Record<RecruiterContact['kind'], MessageFormat> = { linkedin: 'inmail', email: 'email', telegram: 'telegram' };
