@@ -278,17 +278,7 @@ export function MatchDetail({
                 >
                   {t('open', { source: sourceInfo(p.sourceId)?.name ?? p.sourceId })} ↗
                 </a>
-                {sourceInfo(p.sourceId)?.applyPaywall && (
-                  <span data-testid="paid-apply" className="font-mono text-xs text-warning">
-                    {t('paidApply')}
-                  </span>
-                )}
               </span>
-              {sourceInfo(p.sourceId)?.applyPaywall && (
-                <p data-testid="paid-apply-hint" className="max-w-sm text-xs text-muted-foreground">
-                  {t('paidApplyHint')}
-                </p>
-              )}
             </div>
           ))}
       </div>

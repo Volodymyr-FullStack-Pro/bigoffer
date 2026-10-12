@@ -1,4 +1,4 @@
--- Boards that never yielded a useful match in production (or never ran): their adapters are gone, so the scheduler
--- must not pick their queries. Rows stay (jobs and postings still reference them); nothing is deleted.
-update public.sources set enabled = false
- where id in ('workua', 'olx', 'jobico', 'arbeitnow', 'justjoin', 'jobicy', 'wwr', 'adzuna');
+-- Only DOU, Djinni and robota.ua stay: nearly every good match and application came from them. The other boards'
+-- adapters are gone, so the scheduler must not pick their queries. Rows stay (jobs, postings and applications still
+-- reference them); nothing is deleted.
+update public.sources set enabled = false where id not in ('dou', 'djinni', 'robotaua');

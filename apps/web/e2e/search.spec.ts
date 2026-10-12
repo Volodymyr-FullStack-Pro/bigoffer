@@ -55,31 +55,21 @@ test('saves a chosen subset of job boards', async ({ context, page }) => {
   await page.getByLabel('Role keywords').fill('react');
   await page.getByLabel('Work format').selectOption('remote');
   await page.getByTestId('source-dou').check();
-  await page.getByTestId('source-linkedin').check();
+  await page.getByTestId('source-robotaua').check();
   await page.getByTestId('search-save').click();
   await expect(page.getByTestId('search-add')).toBeVisible();
   await page.reload();
-  await expect(page.getByTestId('source-linkedin').first()).toBeChecked();
-  await expect(page.getByTestId('source-remoteok').first()).not.toBeChecked();
+  await expect(page.getByTestId('source-robotaua').first()).toBeChecked();
+  await expect(page.getByTestId('source-djinni').first()).not.toBeChecked();
   await expect(page.getByTestId('source-dou').first()).toBeChecked();
 });
 
-test('lists the company-board and Telegram sources for a new profile', async ({ context, page }) => {
-  await loginAs(context, uniqueEmail('search-new-sources'));
-  await page.goto('/en/search');
-  for (const id of ['greenhouse', 'lever', 'ashby', 'workable', 'telegram']) {
-    await expect(page.getByTestId(`source-${id}`)).toBeVisible();
-  }
-});
-
-test('an office profile with no stored sources shows office defaults', async ({ context, page }) => {
+test('a profile with no stored sources shows the three boards checked', async ({ context, page }) => {
   const email = uniqueEmail('search-null-sources');
   await loginAs(context, email);
   await seedProfileWithNullSources(email, 'office');
   await page.goto('/en/search');
-  await expect(page.getByTestId('source-remoteok').first()).not.toBeChecked();
-  await expect(page.getByTestId('source-robotaua').first()).toBeChecked();
-  await expect(page.getByTestId('source-linkedin').first()).not.toBeChecked();
+  for (const id of ['dou', 'djinni', 'robotaua']) await expect(page.getByTestId(`source-${id}`).first()).toBeChecked();
 });
 
 test('rejects a profile with no job boards selected', async ({ context, page }) => {
@@ -95,11 +85,9 @@ test('rejects a profile with no job boards selected', async ({ context, page }) 
 });
 
 test('a new profile starts with no boards; "main boards" picks DOU, Djinni and robota.ua', async ({ context, page }) => {
-  await loginAs(context, uniqueEmail('search-low-yield'));
+  await loginAs(context, uniqueEmail('search-main-boards'));
   await page.goto('/en/search');
   await expect(page.locator('input[name="sources"]:checked')).toHaveCount(0);
-  await expect(page.getByTestId('low-yield-remoteok')).toHaveText('(rarely relevant)');
-  await expect(page.getByTestId('low-yield-djinni')).toHaveCount(0);
   await page.getByTestId('sources-recommended').click();
   for (const id of ['dou', 'djinni', 'robotaua']) await expect(page.getByTestId(`source-${id}`)).toBeChecked();
   await expect(page.locator('input[name="sources"]:checked')).toHaveCount(3);
@@ -142,18 +130,18 @@ test('an unchecked board stays off after saving, saving again and reloading', as
   await loginAs(context, uniqueEmail('search-uncheck'));
   await page.goto('/en/search');
   await page.getByLabel('Role keywords').fill('react');
-  for (const id of ['dou', 'djinni', 'remotive']) await page.getByTestId(`source-${id}`).check();
+  for (const id of ['dou', 'djinni', 'robotaua']) await page.getByTestId(`source-${id}`).check();
   await page.getByTestId('search-save').click();
   await expect(page.getByTestId('search-add')).toBeVisible();
   await page.reload();
 
-  await page.getByTestId('source-remotive').first().uncheck();
+  await page.getByTestId('source-robotaua').first().uncheck();
   await page.getByTestId('search-save').first().click();
   await expect(page.getByRole('status').first()).toContainText('Saved');
   // React resets a form after its action; the board must not come back on screen nor on the next save.
-  await expect(page.getByTestId('source-remotive').first()).not.toBeChecked();
+  await expect(page.getByTestId('source-robotaua').first()).not.toBeChecked();
   await page.getByTestId('search-save').first().click();
   await page.reload();
-  await expect(page.getByTestId('source-remotive').first()).not.toBeChecked();
+  await expect(page.getByTestId('source-robotaua').first()).not.toBeChecked();
   await expect(page.getByTestId('source-dou').first()).toBeChecked();
 });

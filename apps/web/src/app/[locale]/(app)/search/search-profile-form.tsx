@@ -1,6 +1,6 @@
 'use client';
 
-import { defaultSources, keywordForms, MAIN_SOURCE_IDS, ROLE_FAMILIES, type RoleFamily, SEARCH_REMOTE_TYPES, SENIORITIES, SOURCE_CATALOG, type SourceInfo } from '@jp/core';
+import { defaultSources, keywordForms, ROLE_FAMILIES, type RoleFamily, SEARCH_REMOTE_TYPES, SENIORITIES, SOURCE_CATALOG } from '@jp/core';
 import { useTranslations } from 'next-intl';
 import { Lightbulb } from 'lucide-react';
 import { type ReactNode, startTransition, useActionState, useEffect, useMemo, useRef, useState } from 'react';
@@ -32,12 +32,10 @@ export type SearchProfileValues = {
   isActive: boolean;
 };
 
-const MARKETS = ['main', 'ua', 'remote', 'global'] as const;
-const MAIN = new Set<string>(MAIN_SOURCE_IDS);
 const field = 'rounded-xl border border-border bg-card px-3 py-2.5 outline-none focus:ring-2 focus:ring-brand';
 
 /** A checkbox drawn as a pill; the (transparent) input covers the pill, so it stays clickable and labelled. */
-function Pill({ name, value, label, checked, defaultChecked, onChange, testId, note, noteTestId, describedBy }: {
+function Pill({ name, value, label, checked, defaultChecked, onChange, testId }: {
   name: string;
   value: string;
   label: ReactNode;
@@ -45,9 +43,6 @@ function Pill({ name, value, label, checked, defaultChecked, onChange, testId, n
   defaultChecked?: boolean;
   onChange?: (on: boolean) => void;
   testId?: string;
-  note?: string;
-  noteTestId?: string;
-  describedBy?: string;
 }) {
   return (
     <label className="relative inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-sm transition-colors hover:border-muted-foreground has-checked:border-brand has-checked:bg-brand has-checked:text-brand-foreground has-focus-visible:ring-2 has-focus-visible:ring-brand">
@@ -57,11 +52,9 @@ function Pill({ name, value, label, checked, defaultChecked, onChange, testId, n
         value={value}
         {...(checked === undefined ? { defaultChecked } : { checked, onChange: (e) => onChange?.(e.target.checked) })}
         data-testid={testId}
-        aria-describedby={describedBy}
         className="absolute inset-0 z-10 cursor-pointer opacity-0"
       />
       <span className="pointer-events-none">{label}</span>
-      {note && <span data-testid={noteTestId} className="pointer-events-none text-xs opacity-70">({note})</span>}
     </label>
   );
 }
@@ -73,13 +66,6 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
       {children}
     </section>
   );
-}
-
-function sourceNote(s: SourceInfo, t: ReturnType<typeof useTranslations<'search'>>): string | undefined {
-  if (s.beta) return t('beta');
-  if (s.requiresKey) return t('needsKey');
-  if (s.lowYield) return t('lowYield');
-  return undefined;
 }
 
 export function SearchProfileForm({ values, cvSkills = [], cvHeadline = null }: { values: SearchProfileValues; cvSkills?: string[]; cvHeadline?: string | null }) {
@@ -284,31 +270,19 @@ export function SearchProfileForm({ values, cvSkills = [], cvHeadline = null }: 
               {t('sourcesRecommended')}
             </button>
           </div>
-          {MARKETS.map((market) => (
-            <fieldset key={market} className="flex flex-col gap-2">
-              <legend className="mb-1.5 text-sm font-medium">{t(`market_${market}`)}</legend>
-              <div className="flex flex-wrap gap-2">
-                {(market === 'main'
-                  ? MAIN_SOURCE_IDS.map((id) => SOURCE_CATALOG.find((s) => s.id === id)!)
-                  : SOURCE_CATALOG.filter((s) => s.market === market && !MAIN.has(s.id))
-                ).map((s) => (
-                  <Pill
-                    key={s.id}
-                    name="sources"
-                    value={s.id}
-                    label={s.name}
-                    note={sourceNote(s, t)}
-                    noteTestId={s.lowYield ? `low-yield-${s.id}` : undefined}
-                    checked={sources.has(s.id)}
-                    onChange={(on) => setSources((prev) => { const next = new Set(prev); if (on) next.add(s.id); else next.delete(s.id); return next; })}
-                    testId={`source-${s.id}`}
-                    describedBy={s.id === 'linkedin' ? 'source-linkedin-warning' : undefined}
-                  />
-                ))}
-              </div>
-              {market === 'global' && <span id="source-linkedin-warning" className="text-xs text-muted-foreground">{t('linkedinWarning')}</span>}
-            </fieldset>
-          ))}
+          <div className="flex flex-wrap gap-2">
+            {SOURCE_CATALOG.map((s) => (
+              <Pill
+                key={s.id}
+                name="sources"
+                value={s.id}
+                label={s.name}
+                checked={sources.has(s.id)}
+                onChange={(on) => setSources((prev) => { const next = new Set(prev); if (on) next.add(s.id); else next.delete(s.id); return next; })}
+                testId={`source-${s.id}`}
+              />
+            ))}
+          </div>
           {invalid.has('sources') && <p className="text-sm text-danger">{t('sourcesRequired')}</p>}
         </Section>
 

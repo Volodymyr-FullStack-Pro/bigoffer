@@ -1,6 +1,17 @@
 import { describe, expect, it } from 'vitest';
 import type { SearchProfile } from './search';
-import { scoreJob, type ScorableJob, wantedByAnyProfile } from './score';
+import { isTechTitle, scoreJob, type ScorableJob, wantedByAnyProfile } from './score';
+
+describe('isTechTitle', () => {
+  it('keeps engineering roles and drops the rest', () => {
+    for (const t of ['Senior Frontend Engineer', 'Full-Stack Developer (React/Node)', 'Software Engineer, Payments', 'Staff Web Developer', 'React Native Engineer', 'Node.js Backend Engineer', 'TypeScript Developer', 'Front-end розробник', 'Fullstack разработчик']) {
+      expect(isTechTitle(t), t).toBe(true);
+    }
+    for (const t of ['Account Executive - France', 'Recruiter', 'Product Marketing Manager', 'Customer Success Manager', 'Legal Counsel']) {
+      expect(isTechTitle(t), t).toBe(false);
+    }
+  });
+});
 
 const profile: SearchProfile = {
   id: 'p1',

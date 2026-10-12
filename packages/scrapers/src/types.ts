@@ -10,8 +10,6 @@ export interface AdapterContext {
 
 export interface SourceAdapter {
   id: SourceId;
-  /** Sources that need credentials report false when they are missing; the pipeline then skips them. */
-  isConfigured?(env: Record<string, string | undefined>): boolean;
   search(params: Record<string, string>, ctx: AdapterContext): Promise<RawJob[]>;
   /**
    * Whether a stored posting is still open: false = closed or removed, null = could not tell (blocked, network).

@@ -5,19 +5,6 @@ const SOURCE_COLORS: Record<string, string> = {
   dou: '#f97316',
   djinni: '#22c55e',
   robotaua: '#ef4444',
-  itlead: '#eab308',
-  telegram: '#38bdf8',
-  linkedin: '#0a66c2',
-  jooble: '#a855f7',
-  remoteok: '#f43f5e',
-  remotive: '#8b5cf6',
-  himalayas: '#6366f1',
-  workingnomads: '#0ea5e9',
-  hn: '#ff6600',
-  greenhouse: '#16a34a',
-  lever: '#94a3b8',
-  ashby: '#c084fc',
-  workable: '#2dd4bf',
 };
 
 export function SourceBadge({ sourceId }: { sourceId: string }) {

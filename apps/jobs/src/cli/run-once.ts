@@ -4,14 +4,12 @@ loadEnv({ path: '.env' });
 loadEnv({ path: '.env.local' });
 
 const { getDb } = await import('../db');
-const { discoverBoards } = await import('../pipeline/boards');
 const { getDueQueryIds } = await import('../pipeline/repository');
 const { runQuery } = await import('../pipeline/run-query');
 const { syncAllProfiles } = await import('../pipeline/sync-profiles');
 const { pipelineDeps } = await import('../runtime');
 
 const force = process.argv.includes('--force');
-const discover = process.argv.includes('--discover');
 const onlySource = process.argv.find((a) => a.startsWith('--source='))?.split('=')[1];
 
 const db = getDb();
@@ -32,8 +30,4 @@ for (const q of due) {
   } catch (err) {
     console.error(`${q.sourceId.padEnd(10)} error    ${err instanceof Error ? err.message : err}`);
   }
-}
-
-if (discover) {
-  console.log(`board discovery: ${JSON.stringify(await discoverBoards(db, deps))}`);
 }

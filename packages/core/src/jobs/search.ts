@@ -122,14 +122,9 @@ function djinniCategories(raw: string): string[] {
 const SEARCH_SOURCES: [SourceId, string][] = [
   ['dou', 'search'],
   ['robotaua', 'keyWords'],
-  ['jooble', 'keywords'],
-  ['remotive', 'search'],
-  ['himalayas', 'q'],
 ];
 
 const MAX_TERMS = 14;
-/** LinkedIn fetches every posting page, so it gets the first terms only. */
-const LINKEDIN_TERMS = 6;
 /** Job-title variants that job boards match better than bare technology names. */
 // Bare role words also search their usual job titles; other spellings come from keywordSearchVariants.
 const TITLE_VARIANTS: [RegExp, string[]][] = [
@@ -168,15 +163,10 @@ export function queryKey(sourceId: SourceId, params: Record<string, string>): st
   return `${sourceId}:${JSON.stringify(sorted)}`;
 }
 
-function slug(s: string): string {
-  return s.toLowerCase().replace(/\.js$/, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-}
-
 export function buildSourceQueries(
   profile: Pick<SearchProfile, 'keywords' | 'skills' | 'remoteType' | 'sources'>,
 ): SourceQuerySpec[] {
   const enabled = new Set<SourceId>(profile.sources ?? defaultSources(profile.remoteType));
-  const remote = profile.remoteType === 'remote';
   const keywords = searchTerms(profile);
   const specs: SourceQuerySpec[] = [];
   const add = (sourceId: SourceId, params: Record<string, string>) => {
@@ -185,12 +175,6 @@ export function buildSourceQueries(
 
   for (const [sourceId, param] of SEARCH_SOURCES) {
     for (const keyword of keywords) add(sourceId, { [param]: keyword });
-  }
-  for (const keyword of keywords.slice(0, LINKEDIN_TERMS)) {
-    add(
-      'linkedin',
-      remote ? { keywords: keyword, location: 'Worldwide', remote: '1' } : { keywords: keyword, location: 'Ukraine' },
-    );
   }
 
   const terms = [...profile.keywords, ...profile.skills].map((t) => t.toLowerCase());
@@ -214,7 +198,6 @@ export function buildSourceQueries(
   ].filter((c): c is string => c !== null);
   for (const category of categories) add('dou', { category });
 
-
   const djinni = [
     ...new Set([
       ...[...profile.keywords, ...profile.skills].flatMap((t) => djinniCategories(t)),
@@ -224,13 +207,6 @@ export function buildSourceQueries(
   ].slice(0, MAX_DJINNI_CATEGORIES);
   if (djinni.length === 0) add('djinni', {});
   for (const primary of djinni) add('djinni', { primary_keyword: primary });
-
-  const tagSource = profile.skills[0] ?? profile.keywords[0];
-  const tag = tagSource ? slug(tagSource) : '';
-  add('remoteok', tag ? { tag } : {});
-  add('hn', {});
-  add('workingnomads', {});
-  add('itlead', {});
 
   const unique = new Map(specs.map((s) => [s.queryKey, s]));
   return [...unique.values()];

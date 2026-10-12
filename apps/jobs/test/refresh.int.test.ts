@@ -42,10 +42,10 @@ async function enableSource(id: string) {
 }
 
 beforeAll(async () => {
-  await Promise.all(['djinni', 'remotive', 'dou'].map(enableSource));
+  await Promise.all(['djinni', 'robotaua', 'dou'].map(enableSource));
 });
 afterAll(async () => {
-  await Promise.all(['djinni', 'remotive', 'dou'].map(enableSource));
+  await Promise.all(['djinni', 'robotaua', 'dou'].map(enableSource));
 });
 
 describe('match refresh (F1)', () => {
@@ -150,7 +150,7 @@ describe('match refresh (F1)', () => {
 });
 
 describe('dedupe safety (F4, F5)', () => {
-  const adapter = (id: 'djinni' | 'remotive', jobs: RawJob[]): SourceAdapter => ({ id, search: async () => jobs });
+  const adapter = (id: 'djinni' | 'robotaua', jobs: RawJob[]): SourceAdapter => ({ id, search: async () => jobs });
 
   it('keeps anonymous postings with the same title apart', async () => {
     const queryId = await createQuery('djinni', 'anon', now);
@@ -172,13 +172,13 @@ describe('dedupe safety (F4, F5)', () => {
   });
 
   it('keeps C++, C# and C roles of one company apart', async () => {
-    const queryId = await createQuery('remotive', 'langs', now);
+    const queryId = await createQuery('robotaua', 'langs', now);
     const company = `Langs Co ${tag}`;
     const titles = ['Senior C++ Developer', 'Senior C# Developer', 'Senior C Developer', 'Senior .NET Developer'];
     const jobs = titles.map(
       (title, i): RawJob => ({
         externalId: `lang-${i}-${tag}`,
-        url: `https://remotive.com/jobs/lang-${i}-${tag}`,
+        url: `https://robota.ua/jobs/lang-${i}-${tag}`,
         title,
         company,
         description: 'Systems work',
@@ -186,7 +186,7 @@ describe('dedupe safety (F4, F5)', () => {
       }),
     );
     const result = await runQuery(
-      { db, adapters: { remotive: adapter('remotive', jobs) }, createContext: () => ctx, now: () => now },
+      { db, adapters: { robotaua: adapter('robotaua', jobs) }, createContext: () => ctx, now: () => now },
       queryId,
     );
     expect(result).toMatchObject({ status: 'ok', inserted: 4 });
@@ -215,7 +215,7 @@ describe('scheduling (F7)', () => {
 
   it('treats a query due within 10 minutes as due and returns its next_run_at', async () => {
     const soon = new Date(now.getTime() + 5 * 60_000);
-    const queryId = await createQuery('remotive', 'soon', soon, profileId);
+    const queryId = await createQuery('robotaua', 'soon', soon, profileId);
     const due = await getDueQueryIds(db, now, 100_000);
     const row = due.find((q) => q.id === queryId);
     expect(row).toBeDefined();
@@ -224,16 +224,16 @@ describe('scheduling (F7)', () => {
 
   it('skips a query that is not due without bookkeeping', async () => {
     const later = new Date(now.getTime() + 2 * 3600_000);
-    const queryId = await createQuery('remotive', 'later', later, profileId);
+    const queryId = await createQuery('robotaua', 'later', later, profileId);
     let called = false;
-    const remotive: SourceAdapter = {
-      id: 'remotive',
+    const robotaua: SourceAdapter = {
+      id: 'robotaua',
       search: async () => {
         called = true;
         return [];
       },
     };
-    const result = await runQuery({ db, adapters: { remotive }, createContext: () => ctx, now: () => now }, queryId);
+    const result = await runQuery({ db, adapters: { robotaua }, createContext: () => ctx, now: () => now }, queryId);
     expect(result.status).toBe('skipped');
     expect(called).toBe(false);
     const { data: runs } = await db.from('source_runs').select('id').eq('query_id', queryId);
@@ -245,12 +245,12 @@ describe('scheduling (F7)', () => {
 
 describe('failStaleRuns (M2)', () => {
   it('marks runs stuck in running for over an hour as timed out', async () => {
-    const queryId = await createQuery('remotive', 'stale', now);
+    const queryId = await createQuery('robotaua', 'stale', now);
     const { data, error } = await db
       .from('source_runs')
       .insert([
-        { source_id: 'remotive', query_id: queryId, started_at: new Date(now.getTime() - 2 * 3600_000).toISOString() },
-        { source_id: 'remotive', query_id: queryId, started_at: new Date(now.getTime() - 10 * 60_000).toISOString() },
+        { source_id: 'robotaua', query_id: queryId, started_at: new Date(now.getTime() - 2 * 3600_000).toISOString() },
+        { source_id: 'robotaua', query_id: queryId, started_at: new Date(now.getTime() - 10 * 60_000).toISOString() },
       ])
       .select('id, started_at')
       .order('started_at');

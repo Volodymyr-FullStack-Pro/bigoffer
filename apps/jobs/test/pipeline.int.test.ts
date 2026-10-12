@@ -3,11 +3,9 @@ import type { AdapterContext, SourceAdapter } from '@jp/scrapers';
 import { SourceBlockedError } from '@jp/scrapers';
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { getDb } from '../src/db';
-import { scrapeIntervalMultiplier } from '../src/env';
 import { expireJobs } from '../src/pipeline/expire';
 import { getDueQueryIds, getProfile, saveJob } from '../src/pipeline/repository';
 import { runQuery } from '../src/pipeline/run-query';
-import { deferUnconfigured } from '../src/pipeline/schedule';
 import { syncAllProfiles, syncProfile } from '../src/pipeline/sync-profiles';
 
 const db = getDb();
@@ -125,14 +123,14 @@ describe('runQuery', () => {
   it('dedupes the same job seen on another source by fingerprint', async () => {
     const { data: q } = await db
       .from('search_queries')
-      .upsert({ source_id: 'remotive', query_key: `remotive:test-${uniq}`, params: {} }, { onConflict: 'query_key' })
+      .upsert({ source_id: 'robotaua', query_key: `robotaua:test-${uniq}`, params: {} }, { onConflict: 'query_key' })
       .select('id')
       .single();
-    const remotive: SourceAdapter = { ...fakeAdapter([{ ...rawJobs[0]!, externalId: `r-${uniq}`, url: `https://remotive.com/x/${uniq}` }]), id: 'remotive' };
-    const result = await runQuery({ db, adapters: { remotive }, createContext: () => ctx, now: () => now }, q!.id);
+    const robotaua: SourceAdapter = { ...fakeAdapter([{ ...rawJobs[0]!, externalId: `r-${uniq}`, url: `https://robota.ua/x/${uniq}` }]), id: 'robotaua' };
+    const result = await runQuery({ db, adapters: { robotaua }, createContext: () => ctx, now: () => now }, q!.id);
     expect(result.inserted).toBe(0);
     const { data: job } = await db.from('jobs').select('id, job_postings(source_id)').eq('title', rawJobs[0]!.title).single();
-    expect(job!.job_postings.map((p) => p.source_id).sort()).toEqual(['dou', 'remotive']);
+    expect(job!.job_postings.map((p) => p.source_id).sort()).toEqual(['dou', 'robotaua']);
   });
 
   it('pauses the source when it blocks us', async () => {
@@ -160,51 +158,12 @@ describe('runQuery', () => {
     expect(results.map((r) => r.alert !== null)).toEqual([false, false, true]);
   });
 
-  it('scales the next run by the interval multiplier', async () => {
+  it('schedules the next run by the source interval', async () => {
     const { data: source } = await db.from('sources').select('min_interval_minutes').eq('id', 'dou').single();
-    const base = Math.max(source!.min_interval_minutes, 15) * 60 * 1000;
-    const nextRun = async (intervalMultiplier: number) => {
-      await makeDue(douQueryId);
-      const deps = { db, adapters: { dou: fakeAdapter(rawJobs) }, createContext: () => ctx, now: () => now, intervalMultiplier };
-      expect((await runQuery(deps, douQueryId)).status).toBe('ok');
-      const { data: q } = await db.from('search_queries').select('next_run_at').eq('id', douQueryId).single();
-      return new Date(q!.next_run_at).getTime();
-    };
-    // DOU is a priority source: its cadence ignores the cost multiplier (see PRIORITY_SOURCE_IDS).
-    expect(await nextRun(1)).toBe(now.getTime() + base);
-    expect(await nextRun(2)).toBe(now.getTime() + base);
-  });
-
-  it('scales the next run of a non-priority source by the interval multiplier', async () => {
-    const now2 = new Date();
-    const { data: q, error } = await db
-      .from('search_queries')
-      .insert({ source_id: 'remotive', query_key: `remotive:mult-${Date.now()}`, params: {}, next_run_at: now2.toISOString() })
-      .select('id')
-      .single();
-    if (error) throw error;
-    const { data: source } = await db.from('sources').select('min_interval_minutes').eq('id', 'remotive').single();
-    const base = Math.max(source!.min_interval_minutes, 15) * 60 * 1000;
-    const { data: before } = await db.from('sources').select('enabled, paused_until').eq('id', 'remotive').single();
-    await db.from('sources').update({ enabled: true, paused_until: null }).eq('id', 'remotive');
-    try {
-      const deps = { db, adapters: { remotive: fakeAdapter([]) }, createContext: () => ctx, now: () => now2, intervalMultiplier: 2 };
-      await runQuery(deps, q.id);
-      const { data: after } = await db.from('search_queries').select('next_run_at').eq('id', q.id).single();
-      expect(new Date(after!.next_run_at).getTime()).toBe(now2.getTime() + 2 * base);
-    } finally {
-      await db.from('sources').update(before!).eq('id', 'remotive');
-      await db.from('search_queries').delete().eq('id', q.id);
-    }
-  });
-
-  it('skips an unconfigured adapter and moves the query forward', async () => {
     await makeDue(douQueryId);
-    const unconfigured: SourceAdapter = { ...fakeAdapter(rawJobs), isConfigured: () => false };
-    const result = await runQuery({ db, adapters: { dou: unconfigured }, createContext: () => ctx, now: () => now }, douQueryId);
-    expect(result.status).toBe('skipped');
+    expect((await runQuery({ db, adapters: { dou: fakeAdapter(rawJobs) }, createContext: () => ctx, now: () => now }, douQueryId)).status).toBe('ok');
     const { data: q } = await db.from('search_queries').select('next_run_at').eq('id', douQueryId).single();
-    expect(new Date(q!.next_run_at).getTime()).toBeGreaterThan(now.getTime());
+    expect(new Date(q!.next_run_at).getTime()).toBe(now.getTime() + Math.max(source!.min_interval_minutes, 15) * 60 * 1000);
   });
 });
 
@@ -221,8 +180,8 @@ describe('getDueQueryIds', () => {
     const { data: queries, error: qError } = await db
       .from('search_queries')
       .insert([
-        { source_id: 'remotive', query_key: `remotive:inactive-${uniq}`, params: {}, next_run_at: past },
-        { source_id: 'remotive', query_key: `remotive:active-${uniq}`, params: {}, next_run_at: past },
+        { source_id: 'robotaua', query_key: `robotaua:inactive-${uniq}`, params: {}, next_run_at: past },
+        { source_id: 'robotaua', query_key: `robotaua:active-${uniq}`, params: {}, next_run_at: past },
       ])
       .select('id, query_key');
     if (qError) throw qError;
@@ -238,29 +197,12 @@ describe('getDueQueryIds', () => {
     expect(due).toContain(activeQ);
     expect(due).not.toContain(inactiveQ);
 
-    await db.from('sources').update({ paused_until: new Date(now.getTime() + 3600_000).toISOString() }).eq('id', 'remotive');
+    await db.from('sources').update({ paused_until: new Date(now.getTime() + 3600_000).toISOString() }).eq('id', 'robotaua');
     try {
       expect((await getDueQueryIds(db, now, 100_000)).map((q) => q.id)).not.toContain(activeQ);
     } finally {
-      await db.from('sources').update({ paused_until: null }).eq('id', 'remotive');
+      await db.from('sources').update({ paused_until: null }).eq('id', 'robotaua');
     }
-  });
-});
-
-describe('deferUnconfigured', () => {
-  it('drops due queries of unconfigured adapters and moves them forward in bulk', async () => {
-    await makeDue(douQueryId);
-    const due = [{ id: douQueryId, sourceId: 'dou', nextRunAt: now.toISOString() }];
-    const unconfigured: SourceAdapter = { ...fakeAdapter([]), isConfigured: () => false };
-    const configured: SourceAdapter = { ...fakeAdapter([]), isConfigured: () => true };
-
-    expect(await deferUnconfigured(db, due, { dou: configured }, {}, now)).toEqual(due);
-
-    const { data: source } = await db.from('sources').select('min_interval_minutes').eq('id', 'dou').single();
-    const base = Math.max(source!.min_interval_minutes, 15) * 60 * 1000;
-    expect(await deferUnconfigured(db, due, { dou: unconfigured }, {}, now, 2)).toEqual([]);
-    const { data: q } = await db.from('search_queries').select('next_run_at').eq('id', douQueryId).single();
-    expect(new Date(q!.next_run_at).getTime()).toBe(now.getTime() + 2 * base);
   });
 });
 
@@ -309,17 +251,17 @@ describe('adapter context and source selection', () => {
     }
   });
 
-  it('links queries whose key contains commas and quotes (multi-param params), so they become due', async () => {
+  it('links queries whose key contains quotes, so they become due', async () => {
     const { data: sp, error } = await db
       .from('search_profiles')
-      .insert({ user_id: userId, name: 'LI remote', keywords: [`react${uniq}`], remote_type: 'remote', sources: ['linkedin'] })
+      .insert({ user_id: userId, name: 'Quoted keys', keywords: [`react${uniq}`], remote_type: 'remote', sources: ['robotaua'] })
       .select('id')
       .single();
     if (error) throw error;
     try {
       const profile = await getProfile(db, sp.id);
       const { queryIds } = await syncProfile(db, profile!, now);
-      expect(queryIds).toHaveLength(1); // linkedin (remote) has a multi-param key
+      expect(queryIds).toHaveLength(1); // robotaua:{"keyWords":"..."}
       const { data } = await db.from('search_queries').select('id').in('id', queryIds);
       await db.from('search_queries').update({ next_run_at: now.toISOString() }).in('id', queryIds);
       const due = (await getDueQueryIds(db, now, 5000)).map((q) => q.id);
@@ -345,7 +287,7 @@ describe('adapter context and source selection', () => {
       return (await saveJob(db, sourceId, job!, now)).jobId;
     };
     const douJob = await save('dou', 'dou-only');
-    const remotiveJob = await save('remotive', 'remotive-only');
+    const robotauaJob = await save('robotaua', 'robotaua-only');
     const { data: sp, error } = await db
       .from('search_profiles')
       .insert({ user_id: u.user.id, name: 'Sources', keywords: [token], sources: ['dou'] })
@@ -360,9 +302,9 @@ describe('adapter context and source selection', () => {
       await syncProfile(db, (await getProfile(db, sp.id))!, now);
       expect(await matchedJobs()).toEqual([douJob]);
 
-      await db.from('search_profiles').update({ sources: ['remotive'] }).eq('id', sp.id);
+      await db.from('search_profiles').update({ sources: ['robotaua'] }).eq('id', sp.id);
       await syncProfile(db, (await getProfile(db, sp.id))!, now);
-      expect(await matchedJobs()).toEqual([remotiveJob]);
+      expect(await matchedJobs()).toEqual([robotauaJob]);
     } finally {
       await db.from('search_profiles').delete().eq('id', sp.id);
       await db.auth.admin.deleteUser(u.user.id);
@@ -373,21 +315,21 @@ describe('adapter context and source selection', () => {
 describe('saveJob', () => {
   it('backfills a thin job when a richer posting of the same job appears on another source', async () => {
     const base = { title: `Platform Engineer ${uniq}`, company: `Thin ${uniq}`, postedAt: now.toISOString() };
-    const thin = await normalizeJob({ ...base, externalId: `li-${uniq}`, url: `https://linkedin.com/jobs/view/${uniq}`, description: '' });
-    const { jobId, isNew } = await saveJob(db, 'linkedin', thin!, now);
+    const thin = await normalizeJob({ ...base, externalId: `li-${uniq}`, url: `https://djinni.co/jobs/thin-${uniq}/`, description: '' });
+    const { jobId, isNew } = await saveJob(db, 'djinni', thin!, now);
     expect(isNew).toBe(true);
 
     const rich = await normalizeJob({
       ...base,
       title: `platform engineer ${uniq}`,
       externalId: `rich-${uniq}`,
-      url: `https://remotive.com/x/rich-${uniq}`,
+      url: `https://robota.ua/x/rich-${uniq}`,
       description: 'Kubernetes, Terraform and AWS. Small platform team.',
       salaryRaw: '$5000 - $6000',
       salaryPeriod: 'month',
     });
     expect(rich!.fingerprint).toBe(thin!.fingerprint);
-    const second = await saveJob(db, 'remotive', rich!, now);
+    const second = await saveJob(db, 'robotaua', rich!, now);
     expect(second).toEqual({ jobId, isNew: false });
 
     // Same job, different region -> different fingerprint, found by the fuzzy company+title match; fills location.
@@ -410,7 +352,7 @@ describe('saveJob', () => {
     });
 
     // A later thinner posting never overwrites richer data.
-    await saveJob(db, 'linkedin', thin!, now);
+    await saveJob(db, 'djinni', thin!, now);
     const { data: again } = await db.from('jobs').select('description_text, salary_min_usd').eq('id', jobId).single();
     expect(again).toEqual({ description_text: rich!.descriptionText, salary_min_usd: 5000 });
   });
@@ -430,29 +372,11 @@ describe('saveJob', () => {
   });
 
   it('unions board-stated remote regions across postings of the same job', async () => {
-    const job = await normalizeJob({ title: `Region Engineer ${uniq}`, company: `Regions ${uniq}`, postedAt: now.toISOString(), externalId: `reg-${uniq}`, url: `https://remotive.com/x/reg-${uniq}`, description: 'Region test job.' });
-    const { jobId } = await saveJob(db, 'remotive', { ...job!, remoteRegions: ['US'] }, now);
-    await saveJob(db, 'remotive', { ...job!, remoteRegions: ['UA', 'PL'] }, now);
-    await saveJob(db, 'remotive', { ...job!, remoteRegions: ['US'] }, now);
+    const job = await normalizeJob({ title: `Region Engineer ${uniq}`, company: `Regions ${uniq}`, postedAt: now.toISOString(), externalId: `reg-${uniq}`, url: `https://robota.ua/x/reg-${uniq}`, description: 'Region test job.' });
+    const { jobId } = await saveJob(db, 'robotaua', { ...job!, remoteRegions: ['US'] }, now);
+    await saveJob(db, 'robotaua', { ...job!, remoteRegions: ['UA', 'PL'] }, now);
+    await saveJob(db, 'robotaua', { ...job!, remoteRegions: ['US'] }, now);
     const { data } = await db.from('jobs').select('remote_regions').eq('id', jobId).single();
     expect([...(data?.remote_regions ?? [])].sort()).toEqual(['PL', 'UA', 'US']);
-  });
-});
-
-describe('scrapeIntervalMultiplier', () => {
-  it.each([
-    [undefined, 1],
-    ['', 1],
-    ['2', 2],
-    ['1.5', 1.5],
-    ['0.5', 1],
-    ['0', 1],
-    ['-3', 1],
-    ['abc', 1],
-  ])('%j -> %d', (raw, expected) => {
-    expect(scrapeIntervalMultiplier({ SCRAPE_INTERVAL_MULTIPLIER: raw })).toBe(expected);
-  });
-  it('defaults to 1 for an empty env', () => {
-    expect(scrapeIntervalMultiplier({})).toBe(1);
   });
 });
