@@ -285,7 +285,8 @@
     "skillsPlaceholder": "Введите навык и нажмите Enter",
     "salaryAny": "Без минимума",
     "salaryFrom": "от {amount}",
-    "sourcesRecommended": "Выбрать основные"
+    "sourcesRecommended": "Выбрать основные",
+    "nameHint": "Только для вас — как подписать этот поиск. На результаты не влияет."
   },
   "board": {
     "title": "Доска откликов",

@@ -45,8 +45,8 @@ describe('buildSourceQueries', () => {
     expect(bySource('dou').map((s) => s.params).filter((p) => p.search)).toEqual(
       searchTerms({ keywords: ['Full Stack', 'React Developer'], skills: ['React', 'Node.js'] }).map((search) => ({ search })),
     );
-    expect(bySource('dou').filter((s) => s.params.search)).toHaveLength(5);
-    expect(bySource('robotaua')).toHaveLength(5);
+    expect(bySource('dou').filter((s) => s.params.search)).toHaveLength(6);
+    expect(bySource('robotaua')).toHaveLength(6);
     expect(bySource('himalayas')[0]!.params).toEqual({ q: 'full stack' });
   });
   it('maps skills to djinni primary keywords', () => {
@@ -121,9 +121,14 @@ describe('DOU categories', () => {
 });
 
 describe('searchTerms', () => {
-  it('uses all keywords plus job-title variants, capped at 6', () => {
+  it('uses all keywords plus job-title variants and spellings, capped at 8', () => {
     expect(searchTerms({ keywords: ['full stack', 'react', 'node.js', 'next.js', 'frontend'], skills: ['TypeScript'] })).toEqual([
-      'full stack', 'react', 'node.js', 'next.js', 'frontend', 'full stack developer',
+      'full stack', 'react', 'node.js', 'next.js', 'frontend', 'full stack developer', 'fullstack', 'react developer',
+    ]);
+  });
+  it('brings the other spellings of full stack and front end', () => {
+    expect(searchTerms({ keywords: ['full stack engineer', 'frontend'], skills: [] })).toEqual([
+      'full stack engineer', 'frontend', 'full stack developer', 'fullstack', 'frontend developer', 'front-end',
     ]);
   });
   it('adds title variants for short profiles', () => {

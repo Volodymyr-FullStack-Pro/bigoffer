@@ -285,7 +285,8 @@
     "skillsPlaceholder": "Type a skill and press Enter",
     "salaryAny": "No minimum",
     "salaryFrom": "from {amount}",
-    "sourcesRecommended": "Use main boards"
+    "sourcesRecommended": "Use main boards",
+    "nameHint": "Just a label for you; it does not change the results."
   },
   "board": {
     "title": "Application board",

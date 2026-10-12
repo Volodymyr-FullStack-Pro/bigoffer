@@ -94,6 +94,7 @@ export function SearchProfileForm({ values, cvSkills = [] }: { values: SearchPro
           <label className="flex flex-col gap-1.5">
             <span className="text-xs text-muted-foreground">{t('name')}</span>
             <input name="name" defaultValue={values.name} aria-invalid={invalid.has('name')} className={cn(field, invalid.has('name') && 'border-danger')} />
+            <span className="text-xs text-muted-foreground">{t('nameHint')}</span>
           </label>
           <fieldset className="flex flex-col gap-2" data-testid="target-roles">
             <legend className="mb-1.5 text-xs text-muted-foreground">{t('targetRoles')}</legend>
