@@ -122,7 +122,7 @@ export async function recruiterNote(
   const [{ data: job }, cv, { data: me }] = await Promise.all([
     supabase.from('jobs').select('title, description_text, companies(name)').eq('id', jobId).maybeSingle(),
     loadPrimaryCv(supabase),
-    supabase.from('profiles').select('contacts').eq('id', userId).single(),
+    supabase.from('profiles').select('contacts, full_name').eq('id', userId).single(),
   ]);
   if (!job) return { ok: false, error: 'not_found' };
   if (!cv?.parsed) return { ok: false, error: 'no_cv' };
@@ -137,6 +137,7 @@ export async function recruiterNote(
       job: { title: job.title, company: job.companies?.name ?? '', description: job.description_text },
       cv: cv.parsed,
       recruiterName: name,
+      candidateName: me?.full_name?.trim() || cv.parsed.fullName?.trim() || null,
       lang,
       tone: 'shorter',
       previous: [],

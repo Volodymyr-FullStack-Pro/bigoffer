@@ -23,6 +23,8 @@ export async function recruiterMessage(
     job: { title: string; company: string; description: string | null };
     cv: ParsedCv;
     recruiterName: string | null;
+    /** The candidate's own name, to introduce themselves and sign with. */
+    candidateName?: string | null;
     lang: string;
     tone: 'default' | 'shorter' | 'formal';
     previous: string[];
@@ -44,6 +46,9 @@ export async function recruiterMessage(
         : 'It is a first message: who the candidate is, one or two concrete matches with the job, a clear ask.',
       `Hard limit: ${limit} characters for the body. ${input.tone === 'shorter' ? 'Be very brief.' : input.tone === 'formal' ? 'Formal tone.' : 'Friendly professional tone.'}`,
       'Use only facts from the CV. No placeholders like [Name] — if the recruiter name is unknown, use a neutral greeting.',
+      input.candidateName
+        ? 'Introduce the candidate by name once ("I\'m <name>, a ...") and sign off with the name.'
+        : 'The candidate name is unknown: introduce them by role ("I\'m a ..."), never "My name is" without a name, and no signature name.',
     ].join('\n'),
     prompt: [
       `Job: ${input.job.title} at ${input.job.company}`,
@@ -51,6 +56,7 @@ export async function recruiterMessage(
       input.job.description ? input.job.description.slice(0, 2500) : '',
       '</job_posting>',
       `Recruiter: ${input.recruiterName ?? 'unknown'}`,
+      `Candidate name: ${input.candidateName ?? 'unknown'}`,
       '',
       'Candidate CV:',
       cvToPrompt(input.cv),
