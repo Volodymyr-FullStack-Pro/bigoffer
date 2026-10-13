@@ -35,6 +35,10 @@ test('deletes the CV: the block empties and the stored file is gone', async ({ c
   await page.getByTestId('cv-upload').click();
   await expect(page.getByTestId('cv-status')).toContainText('CV read');
   await page.reload();
+  await page.getByTestId('cv-fill-contacts').click();
+  await expect(page.getByText('Contacts updated.')).toBeVisible();
+  await page.reload();
+  await expect(page.getByLabel('LinkedIn')).toHaveValue('https://www.linkedin.com/in/test-user');
   const href = await page.getByTestId('cv-link').getAttribute('href');
   expect(href).toBeTruthy();
   expect((await page.request.get(href!)).status()).toBe(200);
@@ -45,6 +49,8 @@ test('deletes the CV: the block empties and the stored file is gone', async ({ c
   await expect(page.getByTestId('cv-delete')).toHaveCount(0);
   await page.reload();
   await expect(page.getByTestId('cv-headline')).toHaveCount(0);
+  // Fields the CV filled in are cleared with it.
+  await expect(page.getByLabel('LinkedIn')).toHaveValue('');
   expect((await page.request.get(href!)).ok()).toBe(false);
   // The search built from that CV went with it.
   await page.goto('/en/search');

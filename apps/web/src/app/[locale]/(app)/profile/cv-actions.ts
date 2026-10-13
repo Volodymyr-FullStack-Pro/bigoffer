@@ -1,6 +1,6 @@
 'use server';
 
-import { parseCv } from '@jp/ai';
+import { type ParsedCv, parseCv } from '@jp/ai';
 import { revalidatePath } from 'next/cache';
 import { getLocale } from 'next-intl/server';
 import { redirect } from '@/i18n/navigation';
@@ -130,6 +130,22 @@ export async function retryCvParse(): Promise<CvState> {
   return result;
 }
 
+/** Clears profile fields that still hold what the CV filled in; anything the user typed differently stays. */
+async function forgetCvFields(supabase: Supabase, userId: string, cv: ParsedCv): Promise<void> {
+  const { data: profile } = await supabase.from('profiles').select('contacts, full_name').eq('id', userId).single();
+  if (!profile) return;
+  const same = (a: unknown, b: string | null | undefined) => typeof a === 'string' && !!b && a.trim().toLowerCase() === b.trim().toLowerCase();
+  const fromCv = cv.contacts as Record<string, string | null | undefined>;
+  const contacts: Record<string, string> = Object.fromEntries(
+    Object.entries((profile.contacts ?? {}) as Record<string, unknown>).filter((e): e is [string, string] => typeof e[1] === 'string' && !same(e[1], fromCv[e[0]])),
+  );
+  const { error } = await supabase
+    .from('profiles')
+    .update({ contacts, ...(same(profile.full_name, cv.fullName) ? { full_name: '' } : {}) })
+    .eq('id', userId);
+  if (error) console.error('cv: could not clear CV fields', error.code ?? 'unknown');
+}
+
 export async function deleteCv(): Promise<{ ok: boolean }> {
   const userId = await getUserId();
   if (!userId) return { ok: false };
@@ -147,6 +163,10 @@ export async function deleteCv(): Promise<{ ok: boolean }> {
     return { ok: false };
   }
   await dropSearch(supabase, userId);
+  if (cv.parsed) await forgetCvFields(supabase, userId, cv.parsed);
+  // Letters and answers written from that CV would speak for the old one.
+  const { error: kitError } = await supabase.from('apply_kits').delete().eq('user_id', userId);
+  if (kitError) console.error('cv: could not drop apply kits', kitError.code ?? 'unknown');
   revalidatePath('/[locale]/profile', 'page');
   revalidatePath('/[locale]/search', 'page');
   return { ok: true };
