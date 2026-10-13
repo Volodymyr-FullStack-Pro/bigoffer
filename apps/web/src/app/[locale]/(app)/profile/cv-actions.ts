@@ -1,8 +1,6 @@
 'use server';
 
-import { parseCv, searchProfileFromCv } from '@jp/ai';
-import { detectRoleFamilies, MAIN_SOURCE_IDS, MAX_KEYWORDS } from '@jp/core';
-import { recommendedKeywords } from '../search/suggestions';
+import { type ParsedCv, parseCv } from '@jp/ai';
 import { revalidatePath } from 'next/cache';
 import { getLocale } from 'next-intl/server';
 import { redirect } from '@/i18n/navigation';
@@ -11,7 +9,7 @@ import { type AiFailure, classifyAiFailure, describeAiFailure } from '@/lib/ai-f
 import { getUserId } from '@/lib/auth';
 import { loadPrimaryCv } from '@/lib/cv';
 import { createClient } from '@/lib/supabase/server';
-import { requestProfileSync } from '@/lib/trigger';
+import { dropSearch, replaceSearchFromCv } from '@/lib/search-from-cv';
 
 export type CvState = { status: 'idle' | 'parsed' | 'stored' | 'invalid' | 'error'; message?: 'not_pdf' | 'too_big' | 'ai_limit' | AiFailure };
 
@@ -63,7 +61,23 @@ export async function registerCv(path: string, originalName: string): Promise<Cv
   }
   revalidatePath('/[locale]/profile', 'page');
 
-  return parseAndStore(supabase, row.id, bytes);
+  const result = await parseAndStore(supabase, row.id, bytes);
+  // A new CV means a new search: the old one (and what it found) goes.
+  if (result.status === 'parsed') await searchFollowsCv(supabase, userId, 'replace');
+  else if (previous) await dropSearch(supabase, userId);
+  return result;
+}
+
+/** Builds the search from the primary CV: 'replace' always, 'missing' only when the user has none. */
+async function searchFollowsCv(supabase: Supabase, userId: string, mode: 'replace' | 'missing'): Promise<void> {
+  if (mode === 'missing') {
+    const { count } = await supabase.from('search_profiles').select('id', { count: 'exact', head: true });
+    if ((count ?? 0) > 0) return;
+  }
+  const cv = await loadPrimaryCv(supabase);
+  if (cv?.parsed) await replaceSearchFromCv(supabase, userId, cv.parsed);
+  revalidatePath('/[locale]/search', 'page');
+  revalidatePath('/[locale]/today', 'page');
 }
 
 type Supabase = Awaited<ReturnType<typeof createClient>>;
@@ -102,15 +116,34 @@ async function parseAndStore(supabase: Supabase, rowId: string, bytes: Buffer): 
 
 /** Re-runs the AI parse of the primary CV (e.g. after a provider hiccup) without uploading it again. */
 export async function retryCvParse(): Promise<CvState> {
-  if (!(await getUserId())) return { status: 'error' };
+  const userId = await getUserId();
+  if (!userId) return { status: 'error' };
   const supabase = await createClient();
   const cv = await loadPrimaryCv(supabase);
   if (!cv) return { status: 'error' };
   const { data: blob, error } = await supabase.storage.from('resumes').download(cv.path);
   if (error || !blob) return { status: 'error' };
   const result = await parseAndStore(supabase, cv.id, Buffer.from(await blob.arrayBuffer()));
+  // A re-read keeps the user's edits to an existing search; it only fills in a missing one.
+  if (result.status === 'parsed') await searchFollowsCv(supabase, userId, 'missing');
   revalidatePath('/[locale]/profile', 'page');
   return result;
+}
+
+/** Clears profile fields that still hold what the CV filled in; anything the user typed differently stays. */
+async function forgetCvFields(supabase: Supabase, userId: string, cv: ParsedCv): Promise<void> {
+  const { data: profile } = await supabase.from('profiles').select('contacts, full_name').eq('id', userId).single();
+  if (!profile) return;
+  const same = (a: unknown, b: string | null | undefined) => typeof a === 'string' && !!b && a.trim().toLowerCase() === b.trim().toLowerCase();
+  const fromCv = cv.contacts as Record<string, string | null | undefined>;
+  const contacts: Record<string, string> = Object.fromEntries(
+    Object.entries((profile.contacts ?? {}) as Record<string, unknown>).filter((e): e is [string, string] => typeof e[1] === 'string' && !same(e[1], fromCv[e[0]])),
+  );
+  const { error } = await supabase
+    .from('profiles')
+    .update({ contacts, ...(same(profile.full_name, cv.fullName) ? { full_name: '' } : {}) })
+    .eq('id', userId);
+  if (error) console.error('cv: could not clear CV fields', error.code ?? 'unknown');
 }
 
 export async function deleteCv(): Promise<{ ok: boolean }> {
@@ -129,28 +162,22 @@ export async function deleteCv(): Promise<{ ok: boolean }> {
     console.error('cv: could not delete row', deleteError.code ?? 'unknown');
     return { ok: false };
   }
+  await dropSearch(supabase, userId);
+  if (cv.parsed) await forgetCvFields(supabase, userId, cv.parsed);
+  // Letters and answers written from that CV would speak for the old one.
+  const { error: kitError } = await supabase.from('apply_kits').delete().eq('user_id', userId);
+  if (kitError) console.error('cv: could not drop apply kits', kitError.code ?? 'unknown');
   revalidatePath('/[locale]/profile', 'page');
+  revalidatePath('/[locale]/search', 'page');
   return { ok: true };
 }
 
+/** "Rebuild my search from the CV": replaces the search, keeping excluded words, boards and salary. */
 export async function createSearchProfileFromCv(): Promise<void> {
   const userId = await getUserId();
   if (!userId) return;
   const supabase = await createClient();
-  const cv = await loadPrimaryCv(supabase);
-  if (!cv?.parsed) return;
-  const p = searchProfileFromCv(cv.parsed);
-  // The headline alone is one keyword: add the titles such a CV is hired under, and its role families.
-  const roles = cv.parsed.headline ? detectRoleFamilies(cv.parsed.headline) : [];
-  const keywords = [...new Set([...p.keywords, ...recommendedKeywords(cv.parsed.headline, roles, cv.parsed.skills, MAX_KEYWORDS)])].slice(0, 10);
-  const { data, error } = await supabase
-    .from('search_profiles')
-    .insert({ user_id: userId, name: p.name, keywords, target_roles: roles, skills: p.skills, seniority: p.seniority, locations: p.locations, remote_type: p.remoteType, sources: [...MAIN_SOURCE_IDS] })
-    .select('id')
-    .single();
-  if (error || !data) return;
-  await requestProfileSync(data.id);
-  revalidatePath('/[locale]/search', 'page');
+  await searchFollowsCv(supabase, userId, 'replace');
   redirect({ href: '/search', locale: await getLocale() });
 }
 
