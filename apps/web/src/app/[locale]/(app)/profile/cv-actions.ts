@@ -1,6 +1,8 @@
 'use server';
 
 import { parseCv, searchProfileFromCv } from '@jp/ai';
+import { detectRoleFamilies, MAIN_SOURCE_IDS, MAX_KEYWORDS } from '@jp/core';
+import { recommendedKeywords } from '../search/suggestions';
 import { revalidatePath } from 'next/cache';
 import { getLocale } from 'next-intl/server';
 import { redirect } from '@/i18n/navigation';
@@ -138,9 +140,12 @@ export async function createSearchProfileFromCv(): Promise<void> {
   const cv = await loadPrimaryCv(supabase);
   if (!cv?.parsed) return;
   const p = searchProfileFromCv(cv.parsed);
+  // The headline alone is one keyword: add the titles such a CV is hired under, and its role families.
+  const roles = cv.parsed.headline ? detectRoleFamilies(cv.parsed.headline) : [];
+  const keywords = [...new Set([...p.keywords, ...recommendedKeywords(cv.parsed.headline, roles, cv.parsed.skills, MAX_KEYWORDS)])].slice(0, 10);
   const { data, error } = await supabase
     .from('search_profiles')
-    .insert({ user_id: userId, name: p.name, keywords: p.keywords, skills: p.skills, seniority: p.seniority, locations: p.locations, remote_type: p.remoteType })
+    .insert({ user_id: userId, name: p.name, keywords, target_roles: roles, skills: p.skills, seniority: p.seniority, locations: p.locations, remote_type: p.remoteType, sources: [...MAIN_SOURCE_IDS] })
     .select('id')
     .single();
   if (error || !data) return;

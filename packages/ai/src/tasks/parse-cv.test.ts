@@ -57,3 +57,14 @@ describe('CV detail kept for letters', () => {
     expect(cvToPrompt(cv)).toContain('  • Bullet 10');
   });
 });
+
+describe('levelsForYears', () => {
+  it('picks the level reached and its neighbour', async () => {
+    const { levelsForYears } = await import('./parse-cv');
+    expect(levelsForYears(null)).toEqual([]);
+    expect(levelsForYears(0)).toEqual(['intern', 'junior']);
+    expect(levelsForYears(3)).toEqual(['junior', 'middle']);
+    expect(levelsForYears(6)).toEqual(['middle', 'senior']);
+    expect(levelsForYears(10)).toEqual(['senior', 'lead']);
+  });
+});
