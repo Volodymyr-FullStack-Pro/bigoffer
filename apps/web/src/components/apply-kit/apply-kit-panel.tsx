@@ -72,6 +72,7 @@ export function ApplyKitPanel({ jobId, onApplied, hidePeopleSearch }: { jobId: s
       const res = await generateKit(jobId, { lang, tone });
       if (res.ok) {
         setKit(res.kit);
+        tellGenie({ type: 'letter' });
         setLetter(res.kit.coverLetter);
         setCopied(null);
       } else setError(res.error);

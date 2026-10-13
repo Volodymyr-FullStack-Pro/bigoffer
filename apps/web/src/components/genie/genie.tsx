@@ -13,6 +13,9 @@ import { GenieAvatar, GenieLamp } from './genie-avatar';
 const MEMORY_KEY = 'bigoffer:genie:memory';
 const FOLDED_KEY = 'bigoffer:genie:folded';
 const REFRESH_MS = 5 * 60_000;
+/** How often an open tab checks whether the genie has something to say (it then speaks at most every 5 minutes). */
+const CHATTER_CHECK_MS = 60_000;
+const REPLY_CHEERS = new Set(['auto_reply', 'question', 'interview_invite', 'test_task', 'offer', 'rejection']);
 const AUTO_HIDE_MS = 14_000;
 /** Automated browsers (e2e) get no genie floating over the page, unless a test opts in. */
 const E2E_FLAG = 'bigoffer:genie:e2e';
@@ -154,12 +157,30 @@ export function Genie() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state, route, folded, show]);
 
+  // Between page visits: while the tab is open and nothing is shown, speak up when something is due (desktop only;
+  // on a phone the bubble would cover the job being read).
+  const messageShown = message !== null;
+  useEffect(() => {
+    if (!state || folded || messageShown) return;
+    const id = setInterval(() => {
+      if (document.visibilityState !== 'visible' || window.matchMedia('(max-width: 767px)').matches) return;
+      const next = pickMessage(state, route, memory.current, Date.now(), hint);
+      if (next) show(next);
+    }, CHATTER_CHECK_MS);
+    return () => clearInterval(id);
+  }, [state, route, folded, messageShown, hint, show]);
+
   useEffect(() => {
     const onEvent = (e: Event) => {
       const ev = (e as CustomEvent<GenieEvent>).detail;
       if (ev.type === 'hint') setHint({ key: ev.key, params: ev.params, action: ev.action });
       else if (ev.type === 'clearHint') setHint(null);
-      else {
+      else if (ev.type === 'reply' || ev.type === 'letter' || ev.type === 'sent') {
+        const key = ev.type === 'reply' ? `cheerReply_${REPLY_CHEERS.has(ev.kind) ? ev.kind : 'other'}` : ev.type === 'letter' ? 'cheerLetter' : 'cheerSent';
+        if (ev.type === 'reply' && ev.kind === 'interview_invite') setConfetti(true);
+        show({ id: `celebrate:${ev.type}:${Date.now()}`, kind: 'celebrate', mood: ev.type === 'reply' && ev.kind === 'rejection' ? 'neutral' : 'excited', key });
+        void refresh();
+      } else {
         void refresh().then((s) => {
           if (!s || s.mode === 'off') return;
           const done = s.appliedToday;
