@@ -19,8 +19,8 @@ describe('parseCv', () => {
 
   it('drops invalid contacts and caps lists', () => {
     const w = fakeResponder({ task: 'parse_cv' } as never) as Parameters<typeof normalizeCv>[0];
-    const cv = normalizeCv({ ...w, skills: Array.from({ length: 40 }, (_, i) => `S${i}`), contacts: { ...w.contacts, email: 'nope', github: 'javascript:alert(1)' } });
-    expect(cv.skills).toHaveLength(30);
+    const cv = normalizeCv({ ...w, skills: Array.from({ length: 70 }, (_, i) => `S${i}`), contacts: { ...w.contacts, email: 'nope', github: 'javascript:alert(1)' } });
+    expect(cv.skills).toHaveLength(60);
     expect(cv.contacts.email).toBeNull();
     expect(cv.contacts.github).toBeNull();
   });

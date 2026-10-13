@@ -9,7 +9,7 @@ export const cvWireSchema = z.object({
   headline: nullableText.describe('Main role in English, e.g. "Full Stack Developer"'),
   seniority: z.enum(SENIORITIES).nullable(),
   years_experience: z.number().nullable(),
-  skills: z.array(z.string()).describe('Up to 30 concrete skills/tools, canonical names'),
+  skills: z.array(z.string()).describe('Every concrete skill, tool, library, service and integration the CV lists (up to 60), canonical names'),
   locations: z.array(z.string()).describe('Cities/countries the candidate lives in or wants to work in'),
   languages: z.array(z.object({ language: z.string(), level: z.string() })),
   remote_preference: z.enum(['any', 'remote', 'hybrid', 'office']),
@@ -83,7 +83,8 @@ export function normalizeCv(w: z.output<typeof cvWireSchema>): ParsedCv {
     headline: clip(w.headline, 80),
     seniority: w.seniority,
     yearsExperience: years,
-    skills: dedupe(w.skills, 30, 40),
+    // All of them: a long skills section (45+ on a full-stack CV) feeds matching and the search profile.
+    skills: dedupe(w.skills, 60, 40),
     locations: dedupe(w.locations, 10, 60),
     languages: w.languages.slice(0, 8).map((l) => ({ language: l.language.trim().slice(0, 40), level: l.level.trim().slice(0, 20) })).filter((l) => l.language),
     remotePreference: w.remote_preference,
@@ -151,7 +152,7 @@ export function searchProfileFromCv(cv: ParsedCv) {
   return {
     name: role.slice(0, 80),
     keywords: [role.toLowerCase().slice(0, 60)],
-    skills: cv.skills.slice(0, 15),
+    skills: cv.skills.slice(0, 60),
     seniority: (cv.seniority ? [cv.seniority] : []) as Seniority[],
     locations: cv.locations.slice(0, 10).map((l) => l.slice(0, 60)),
     remoteType: cv.remotePreference,

@@ -1,6 +1,6 @@
 'use client';
 
-import { defaultSources, keywordForms, ROLE_FAMILIES, type RoleFamily, SEARCH_REMOTE_TYPES, SENIORITIES, SOURCE_CATALOG } from '@jp/core';
+import { defaultSources, keywordForms, MAX_KEYWORDS, ROLE_FAMILIES, type RoleFamily, SEARCH_REMOTE_TYPES, SENIORITIES, SOURCE_CATALOG } from '@jp/core';
 import { useTranslations } from 'next-intl';
 import { Lightbulb } from 'lucide-react';
 import { type ReactNode, startTransition, useActionState, useEffect, useMemo, useRef, useState } from 'react';
@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { TagInput } from '@/components/ui/tag-input';
 import { tellGenie } from '@/lib/genie/events';
-import { skillKey } from '../today/card-skills';
+import { hasSkill, skillKey } from '../today/card-skills';
 import { cn } from '@/lib/utils';
 import { deleteSearchProfile, saveSearchProfile, type SearchFormState } from './actions';
 import { profileTips } from './profile-tips';
@@ -68,7 +68,7 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
   );
 }
 
-export function SearchProfileForm({ values, cvSkills = [], cvHeadline = null }: { values: SearchProfileValues; cvSkills?: string[]; cvHeadline?: string | null }) {
+export function SearchProfileForm({ values, cvSkills = [], cvHeadline = null, demandSkills = [] }: { values: SearchProfileValues; cvSkills?: string[]; cvHeadline?: string | null; demandSkills?: string[] }) {
   const t = useTranslations('search');
   const [state, action, pending] = useActionState<SearchFormState, FormData>(saveSearchProfile, { status: 'idle' });
   const invalid = new Set(state.fields ?? []);
@@ -80,11 +80,11 @@ export function SearchProfileForm({ values, cvSkills = [], cvHeadline = null }: 
   const [skills, setSkills] = useState(values.skills);
   const [locations, setLocations] = useState(values.locations);
   const [name, setName] = useState(values.name);
-  const recommended = useMemo(() => recommendedKeywords(cvHeadline, roles, cvSkills, 6, keywords), [cvHeadline, roles, cvSkills, keywords]);
+  const recommended = useMemo(() => recommendedKeywords(cvHeadline, roles, cvSkills, 8, keywords), [cvHeadline, roles, cvSkills, keywords]);
   const nameSuggestion = profileNameSuggestion(cvHeadline, t(`remote_${(SEARCH_REMOTE_TYPES.find((r) => r === remoteType) ?? 'any') as 'any'}`));
   const tips = useMemo(
-    () => profileTips({ keywords, recommended, skills, cvSkills, roles, remoteType, locations, sources }),
-    [keywords, recommended, skills, cvSkills, roles, remoteType, locations, sources],
+    () => profileTips({ keywords, recommended, skills, cvSkills, demandSkills, roles, remoteType, locations, sources }),
+    [keywords, recommended, skills, cvSkills, demandSkills, roles, remoteType, locations, sources],
   );
   // The Offer Genie mentions the tips when the user arrives here; cleared when leaving the page.
   useEffect(() => {
@@ -167,12 +167,12 @@ export function SearchProfileForm({ values, cvSkills = [], cvHeadline = null }: 
             label={t('keywords')}
             hint={t('keywordsHint')}
             defaultValue={values.keywords}
-            suggestions={keywordSuggestions(roles)}
+            suggestions={keywordSuggestions(roles, [...cvSkills, ...skills])}
             suggestionsLabel={t('suggested')}
             recommended={recommended}
             recommendedLabel={t('recommended')}
             onChange={setKeywords}
-            max={10}
+            max={MAX_KEYWORDS}
             invalid={invalid.has('keywords')}
             placeholder={t('keywordsPlaceholder')}
             sameKey={keywordKey}
@@ -197,7 +197,8 @@ export function SearchProfileForm({ values, cvSkills = [], cvHeadline = null }: 
             defaultValue={values.skills}
             onChange={setSkills}
             max={100}
-            suggestions={skillSuggestions(roles, cvSkills)}
+            // Recomputed on every change: a skill disappears from the suggestions once the profile has it in any spelling.
+            suggestions={skillSuggestions(roles, cvSkills, demandSkills).filter((s) => !hasSkill(skills, s))}
             suggestionsLabel={cvSkills.length > 0 ? t('suggestedFromCv') : t('suggested')}
             invalid={invalid.has('skills')}
             placeholder={t('skillsPlaceholder')}

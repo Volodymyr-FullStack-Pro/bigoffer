@@ -16,12 +16,37 @@ const ALIASES: Record<string, string> = {
   reduxtoolkit: 'redux',
   amazonwebservices: 'aws',
   githubactions: 'cicd',
+  modelcontextprotocol: 'mcp',
+  sass: 'scss',
+  shadcn: 'shadcnui',
 };
 
 /** One key per technology: "Node.js" = "NodeJS" = "node", "Tailwind CSS" = "Tailwind", "REST APIs" = "REST". */
 export function skillKey(name: string): string {
   const k = name.toLowerCase().replace(/\.js\b/g, 'js').replace(/[^a-z0-9#+]/g, '');
   return ALIASES[k] ?? k;
+}
+
+/**
+ * Every key a skill name answers to: the whole name, each part of a compound ("CSS/SASS" → css, scss) and the
+ * short form in brackets ("Model Context Protocol (MCP)" → mcp).
+ */
+export function skillKeys(name: string): string[] {
+  const keys = new Set<string>([skillKey(name)]);
+  const bracket = name.match(/\(([^)]+)\)/)?.[1];
+  if (bracket) {
+    keys.add(skillKey(bracket));
+    keys.add(skillKey(name.replace(/\([^)]*\)/, '')));
+  }
+  for (const part of name.split(/\s*[/,&]\s*/)) if (part.trim().length >= 2) keys.add(skillKey(part));
+  keys.delete('');
+  return [...keys];
+}
+
+/** Whether a skill is already among `skills`, however either side spells or bundles it. */
+export function hasSkill(skills: readonly string[], name: string): boolean {
+  const have = new Set(skills.flatMap(skillKeys));
+  return skillKeys(name).some((k) => have.has(k));
 }
 
 /** Skills chips for a match card: the ones the user has first, at most `max`. */

@@ -1,6 +1,6 @@
 'use server';
 
-import { parseList, searchProfileInputSchema } from '@jp/core';
+import { MAX_KEYWORDS, parseList, searchProfileInputSchema } from '@jp/core';
 import { revalidatePath } from 'next/cache';
 import { getLocale } from 'next-intl/server';
 import { redirect } from '@/i18n/navigation';
@@ -15,7 +15,7 @@ export async function saveSearchProfile(_prev: SearchFormState, formData: FormDa
   const parsed = searchProfileInputSchema.safeParse({
     id: String(formData.get('id') ?? '') || undefined,
     name: String(formData.get('name') ?? ''),
-    keywords: parseList(String(formData.get('keywords') ?? ''), 10),
+    keywords: parseList(String(formData.get('keywords') ?? ''), MAX_KEYWORDS),
     targetRoles: formData.getAll('targetRoles').map(String),
     skills: parseList(String(formData.get('skills') ?? ''), 100),
     excludeKeywords: parseList(String(formData.get('excludeKeywords') ?? '')),
