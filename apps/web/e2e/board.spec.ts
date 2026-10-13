@@ -268,6 +268,13 @@ test('a recruiter question makes it your move until you answer', async ({ contex
   await visible(page, 'reply-body').fill('Yes, happy to do it.');
   await visible(page, 'reply-save').click();
   await expect(visible(page, 'msg-item').last()).toHaveAttribute('data-direction', 'out');
+  // A message logged by mistake can be removed.
+  page.once('dialog', (d) => void d.accept());
+  await visible(page, 'msg-item').last().getByTestId('msg-delete').click();
+  await expect(visible(page, 'msg-item')).toHaveCount(1);
+  await expect(visible(page, 'panel-next-step')).toHaveAttribute('data-urgency', 'your_move');
+  await visible(page, 'reply-body').fill('Yes, happy to do it.');
+  await visible(page, 'reply-save').click();
   await expect(visible(page, 'panel-next-step')).toHaveCount(0);
   await page.keyboard.press('Escape');
   await expect(card(page, title).getByTestId('card-urgency')).toHaveCount(0);

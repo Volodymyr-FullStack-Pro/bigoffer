@@ -69,10 +69,11 @@ export async function logSentMessage(applicationId: string, channel: ReplyChanne
 export async function listMessages(applicationId: string) {
   if (!(await getUserId()) || !UUID.test(applicationId)) return [];
   const supabase = await createClient();
-  const { data } = await supabase.from('application_messages').select('direction, channel, author, body, sent_at, ai_classification, ai_extracted').eq('application_id', applicationId).order('sent_at', { ascending: false }).limit(50);
+  const { data } = await supabase.from('application_messages').select('id, direction, channel, author, body, sent_at, ai_classification, ai_extracted').eq('application_id', applicationId).order('sent_at', { ascending: false }).limit(50);
   return (data ?? []).map((m) => {
     const extracted = (m.ai_extracted ?? {}) as { summary?: unknown; link?: unknown };
     return {
+      id: m.id,
       direction: m.direction as 'in' | 'out',
       channel: m.channel,
       body: m.body,
@@ -177,6 +178,29 @@ export async function logReply(
   if (eErr) console.error('logReply event failed', eErr.name ?? 'unknown');
   revalidatePath('/[locale]/board', 'page');
   return next;
+}
+
+/**
+ * Removes one message from the conversation (pasted by mistake or in the wrong order). The card's reply tag follows
+ * the latest remaining reply from the company.
+ */
+export async function deleteMessage(applicationId: string, messageId: string): Promise<{ replyKind: ReplyKind | null } | null> {
+  if (!(await getUserId()) || !UUID.test(applicationId) || !UUID.test(messageId)) return null;
+  const supabase = await createClient();
+  const { data, error } = await supabase.from('application_messages').delete().eq('id', messageId).eq('application_id', applicationId).select('id');
+  if (error || (data?.length ?? 0) === 0) return null;
+  const { data: latest } = await supabase
+    .from('application_messages')
+    .select('ai_classification')
+    .eq('application_id', applicationId)
+    .eq('direction', 'in')
+    .order('sent_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  const replyKind = isReplyKind(latest?.ai_classification) ? latest.ai_classification : null;
+  await supabase.from('applications').update({ reply_kind: replyKind }).eq('id', applicationId);
+  revalidatePath('/[locale]/board', 'page');
+  return { replyKind };
 }
 
 /** Changes the reply kind shown on the card without logging a message (e.g. the AI guessed wrong). */

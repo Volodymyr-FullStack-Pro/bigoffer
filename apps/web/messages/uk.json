@@ -489,7 +489,9 @@
     "replyMine": "Моя відповідь",
     "replyChannelMine": "Куди я відповів",
     "replyPlaceholderMine": "Вставте, що ви відповіли…",
-    "replySaveMine": "Зберегти мою відповідь"
+    "replySaveMine": "Зберегти мою відповідь",
+    "conversationDelete": "Видалити повідомлення",
+    "conversationDeleteConfirm": "Видалити це повідомлення з листування?"
   },
   "cv": {
     "title": "Ваше CV",

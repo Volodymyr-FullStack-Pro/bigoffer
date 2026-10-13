@@ -2,16 +2,16 @@
 
 import { useFormatter, useNow, useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
-import { listMessages } from './message-actions';
+import { deleteMessage, listMessages } from './message-actions';
 import { REPLY_STYLE } from './reply-kinds';
 
 type Message = Awaited<ReturnType<typeof listMessages>>[number];
 
 /** The whole conversation with the company as a chat: theirs on the left, yours on the right, oldest first. */
-export function Conversation({ applicationId, version }: { applicationId: string; version: number }) {
+export function Conversation({ applicationId, version, onDeleted }: { applicationId: string; version: number; onDeleted: (r: { replyKind: Message['kind']; left: Message[] }) => void }) {
   const t = useTranslations('board');
   const format = useFormatter();
-  const now = useNow();
+  const clock = useNow({ updateInterval: 60_000 });
   const [messages, setMessages] = useState<Message[] | null>(null);
   const [open, setOpen] = useState<Set<number>>(new Set());
 
@@ -30,9 +30,12 @@ export function Conversation({ applicationId, version }: { applicationId: string
           const style = m.kind ? REPLY_STYLE[m.kind] : null;
           const long = m.body.length > 280;
           const expanded = open.has(i);
+          // A message saved a moment ago must not read "in 2 minutes" when the browser clock lags behind the server.
+          const at = new Date(m.sentAt);
+          const now = at > clock ? at : clock;
           return (
             <li
-              key={i}
+              key={m.id}
               data-testid="msg-item"
               data-direction={m.direction}
               className={`flex max-w-[92%] flex-col gap-1 rounded-2xl border px-3 py-2 text-sm ${mine ? 'self-end rounded-br-sm border-brand/40 bg-brand/10' : 'self-start rounded-bl-sm border-border bg-card'}`}
@@ -41,7 +44,24 @@ export function Conversation({ applicationId, version }: { applicationId: string
               <span className="flex flex-wrap items-center gap-x-2 gap-y-0.5 font-mono text-[11px] text-muted-foreground">
                 <span className="font-semibold text-foreground">{mine ? t('conversationMe') : (m.author ?? t('conversationThem'))}</span>
                 <span>· {t(`channel_${m.channel}` as never)}</span>
-                <span suppressHydrationWarning>· {format.relativeTime(new Date(m.sentAt), now)}</span>
+                <span suppressHydrationWarning>· {format.relativeTime(at, now)}</span>
+                <button
+                  type="button"
+                  data-testid="msg-delete"
+                  aria-label={t('conversationDelete')}
+                  title={t('conversationDelete')}
+                  onClick={async () => {
+                    if (!window.confirm(t('conversationDeleteConfirm'))) return;
+                    const res = await deleteMessage(applicationId, m.id).catch(() => null);
+                    if (!res) return;
+                    const left = messages.filter((x) => x.id !== m.id);
+                    setMessages(left);
+                    onDeleted({ replyKind: res.replyKind, left });
+                  }}
+                  className="ml-auto grid size-5 place-items-center rounded-full hover:bg-muted"
+                >
+                  ×
+                </button>
                 {m.kind && style && (
                   <span className="rounded-full px-1.5 text-[10px] font-semibold" style={{ background: style.bg, color: style.fg }}>
                     {t(`reply_${m.kind}` as never)}

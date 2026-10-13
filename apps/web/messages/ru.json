@@ -489,7 +489,9 @@
     "replyMine": "Мой ответ",
     "replyChannelMine": "Куда я ответил",
     "replyPlaceholderMine": "Вставьте, что вы ответили…",
-    "replySaveMine": "Сохранить мой ответ"
+    "replySaveMine": "Сохранить мой ответ",
+    "conversationDelete": "Удалить сообщение",
+    "conversationDeleteConfirm": "Удалить это сообщение из переписки?"
   },
   "cv": {
     "title": "Ваше CV",
