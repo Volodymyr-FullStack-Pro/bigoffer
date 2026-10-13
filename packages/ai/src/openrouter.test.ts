@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import { LlmError } from './errors';
-import { LlmInvalidOutputError } from './errors';
+import { LlmInvalidOutputError, LlmRateLimitError } from './errors';
 import { createOpenRouterClient, REASONING_HEADROOM_TOKENS, withRoutes } from './openrouter';
 import { FakeLlmClient } from './testing';
 
@@ -95,5 +95,32 @@ describe('schema retry', () => {
   it('gives up after the second broken answer', async () => {
     const f = (async () => new Response(JSON.stringify({ choices: [{ message: { content: 'nope' } }] }), { status: 200 })) as unknown as typeof fetch;
     await expect(createOpenRouterClient({ apiKey: 'k', model: 'm', fetch: f }).generateJson(req)).rejects.toBeInstanceOf(LlmInvalidOutputError);
+  });
+});
+
+describe('free tier first for public data', () => {
+  const pub = { ...req, tier: undefined, sensitivity: 'public' as const };
+  it('uses the free tier, falls to the paid model on 429 and skips the free tier until its retry time', async () => {
+    let t = 0;
+    let freeCalls = 0;
+    const free = new FakeLlmClient(() => {
+      freeCalls += 1;
+      if (freeCalls === 2) throw new LlmRateLimitError('quota', 30_000);
+      return { a: 'free' };
+    }, ['private', 'public']);
+    const paid = new FakeLlmClient(() => ({ a: 'paid' }), ['public']);
+    const client = withRoutes(free, { public: paid, publicFreeFirst: true, now: () => t });
+    expect((await client.generateJson(pub)).data).toEqual({ a: 'free' });
+    expect((await client.generateJson(pub)).data).toEqual({ a: 'paid' });
+    t = 10_000;
+    expect((await client.generateJson(pub)).data).toEqual({ a: 'paid' });
+    expect(freeCalls).toBe(2);
+    t = 31_000;
+    expect((await client.generateJson(pub)).data).toEqual({ a: 'free' });
+  });
+  it('never sends personal data to the free tier', async () => {
+    const free = new FakeLlmClient(() => ({ a: 'free' }), ['private', 'public']);
+    const client = withRoutes(free, { writer: new FakeLlmClient(() => ({ a: 'writer' }), ['private']), public: new FakeLlmClient(() => ({ a: 'paid' }), ['public']), publicFreeFirst: true });
+    expect((await client.generateJson(req)).data).toEqual({ a: 'writer' });
   });
 });

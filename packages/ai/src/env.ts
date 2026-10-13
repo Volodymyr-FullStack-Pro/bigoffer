@@ -17,6 +17,8 @@ const aiEnvSchema = z.object({
   AI_MODEL_LETTER: z.string().min(1).optional(),
   /** OpenRouter model for public-data tasks (job enrichment); "off" keeps them on the Gemini key. */
   AI_MODEL_PUBLIC_OPENROUTER: z.string().min(1).default('google/gemini-2.5-flash-lite'),
+  /** "off" sends public data straight to OpenRouter; by default the free Gemini tier is tried first. */
+  AI_PUBLIC_FREE_FIRST: z.string().optional(),
   ALLOW_FAKE_AI: z.string().optional(),
 });
 export type AiEnv = z.infer<typeof aiEnvSchema>;
@@ -42,6 +44,7 @@ export function readAiEnv(env: Record<string, string | undefined> = process.env)
     AI_MODEL_WRITER: pick('AI_MODEL_WRITER'),
     AI_MODEL_LETTER: pick('AI_MODEL_LETTER'),
     AI_MODEL_PUBLIC_OPENROUTER: pick('AI_MODEL_PUBLIC_OPENROUTER'),
+    AI_PUBLIC_FREE_FIRST: pick('AI_PUBLIC_FREE_FIRST'),
     ALLOW_FAKE_AI: pick('ALLOW_FAKE_AI'),
   });
   assertFakeAllowed(parsed, env.NODE_ENV || process.env.NODE_ENV);
@@ -80,6 +83,7 @@ export function createLlmClient(env: AiEnv): LlmClient {
                   model: env.AI_MODEL_PUBLIC_OPENROUTER,
                 })
               : null,
+          publicFreeFirst: env.AI_PUBLIC_FREE_FIRST !== 'off',
         },
       );
   }

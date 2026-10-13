@@ -18,8 +18,19 @@ describe('splitDouTitle', () => {
       title: 'Front-end Developer (React + TypeScript)',
       company: 'ІНФОТЕХ',
       location: 'Київ, віддалено',
+      salary: null,
     });
-    expect(splitDouTitle('QA в Acme')).toEqual({ title: 'QA', company: 'Acme', location: null });
+    expect(splitDouTitle('QA в Acme')).toEqual({ title: 'QA', company: 'Acme', location: null, salary: null });
+  });
+  it('takes the salary out of the location list and keeps a legal-form tail in the company', () => {
+    expect(splitDouTitle('Junior Frontend Developer в TenThousand, $400–800, Київ')).toMatchObject({
+      company: 'TenThousand',
+      salary: '$400–800',
+      location: 'Київ',
+    });
+    expect(splitDouTitle('Full-Stack Developer в Blocksport, від&nbsp;$3500, віддалено')).toMatchObject({ salary: 'від $3500', location: 'віддалено' });
+    expect(splitDouTitle('Engineer в P-Product, Inc., віддалено')).toMatchObject({ company: 'P-Product, Inc.', location: 'віддалено', salary: null });
+    expect(splitDouTitle('Dev в Acme, до 40000 грн, Львів, віддалено')).toMatchObject({ salary: 'до 40000 грн', location: 'Львів, віддалено' });
   });
 });
 
