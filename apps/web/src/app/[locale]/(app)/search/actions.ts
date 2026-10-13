@@ -56,6 +56,9 @@ export async function saveSearchProfile(_prev: SearchFormState, formData: FormDa
     ? await supabase.from('search_profiles').update(row).eq('id', id).select('id').single()
     : await supabase.from('search_profiles').insert(row).select('id').single();
   if (error) return { status: 'error' };
+  // Left over from when several searches were allowed: only the one just saved stays.
+  const { error: extraError } = await supabase.from('search_profiles').delete().eq('user_id', userId).neq('id', data.id);
+  if (extraError) console.error('saveSearchProfile: could not drop older searches', extraError.code ?? 'unknown');
 
   await requestProfileSync(data.id);
   revalidatePath('/[locale]/search', 'page');
