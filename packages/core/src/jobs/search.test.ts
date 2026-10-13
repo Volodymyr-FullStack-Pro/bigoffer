@@ -93,12 +93,14 @@ describe('DOU categories', () => {
 });
 
 describe('searchTerms', () => {
-  it('uses all keywords, their other spellings, then job-title variants, capped at 14', () => {
+  it('uses all keywords, their other spellings, then job-title variants, capped at 18', () => {
     expect(searchTerms({ keywords: ['full stack', 'react', 'node.js', 'next.js', 'frontend'], skills: ['TypeScript'] })).toEqual([
       'full stack', 'react', 'node.js', 'next.js', 'frontend',
       'fullstack', 'full-stack', 'фулстек', 'front-end', 'front end', 'фронтенд',
-      'full stack developer', 'react developer', 'frontend developer',
+      'full stack developer', 'react developer', 'frontend developer', 'node.js developer', 'next.js developer', 'typescript developer',
     ]);
+    const many = searchTerms({ keywords: Array.from({ length: 15 }, (_, i) => `title ${i}`), skills: ['React', 'TypeScript'] });
+    expect(many).toHaveLength(18);
   });
   it('brings the other spellings of full stack and front end', () => {
     expect(searchTerms({ keywords: ['full stack engineer', 'frontend'], skills: [] })).toEqual([
