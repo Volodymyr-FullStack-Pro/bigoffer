@@ -37,16 +37,16 @@ function mostAsked(skills: string[], max = 40): string[] {
   return [...counts.values()].filter((c) => c.n >= 2).sort((a, b) => b.n - a.n).slice(0, max).map((c) => c.name);
 }
 
-export default async function SearchPage({ searchParams }: { searchParams: Promise<{ new?: string }> }) {
+export default async function SearchPage() {
   await requireUserId();
-  const { new: addNew } = await searchParams;
   const t = await getTranslations('search');
   const supabase = await createClient();
   const [{ data }, cv, { data: matched }] = await Promise.all([
     supabase
       .from('search_profiles')
       .select('id, name, keywords, target_roles, skills, exclude_keywords, seniority, locations, remote_type, sources, salary_min_usd, is_active')
-      .order('created_at'),
+      .order('updated_at', { ascending: false })
+      .limit(1),
     loadPrimaryCv(supabase),
     supabase.from('job_matches').select('jobs!inner(skills)').in('state', ['new', 'seen', 'saved']).order('score', { ascending: false }).limit(300),
   ]);
@@ -56,7 +56,8 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
   const cvSkills = cv?.parsed ? mainSkills(cv.parsed) : [];
   const cvHeadline = cv?.parsed?.headline ?? null;
 
-  const profiles: SearchProfileValues[] = (data ?? []).map((p) => ({
+  // One search per user (it follows the CV).
+  const [profile]: SearchProfileValues[] = (data ?? []).map((p) => ({
     id: p.id,
     name: p.name,
     keywords: p.keywords,
@@ -74,7 +75,6 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
     salaryMinUsd: p.salary_min_usd,
     isActive: p.is_active,
   }));
-  const showNew = profiles.length === 0 || addNew === '1';
 
   return (
     <section className="flex max-w-4xl flex-col gap-6">
@@ -82,15 +82,16 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
         <h1 className="text-3xl font-semibold md:text-4xl">{t('title')}</h1>
         <p className="mt-2 text-muted-foreground">{t('intro')}</p>
       </div>
-      {profiles.map((p) => (
-        <SearchProfileForm key={p.id} values={p} cvSkills={cvSkills} cvHeadline={cvHeadline} demandSkills={demandSkills} />
-      ))}
-      {showNew ? (
-        <SearchProfileForm values={{ ...EMPTY, name: profileNameSuggestion(cvHeadline, t('remote_any')) ?? t('newProfile') }} cvSkills={cvSkills} cvHeadline={cvHeadline} demandSkills={demandSkills} />
+      {!profile && !cv?.parsed && (
+        <p data-testid="search-from-cv-hint" className="brutal bg-card p-4 text-sm">
+          {t('fromCvHint')}{' '}
+          <Link href="/profile" className="font-semibold underline">{t('fromCvLink')}</Link>
+        </p>
+      )}
+      {profile ? (
+        <SearchProfileForm key={profile.id} values={profile} cvSkills={cvSkills} cvHeadline={cvHeadline} demandSkills={demandSkills} />
       ) : (
-        <Link href="/search?new=1" className="brutal brutal-press self-start px-4 py-2 font-semibold" data-testid="search-add">
-          + {t('add')}
-        </Link>
+        <SearchProfileForm values={{ ...EMPTY, name: profileNameSuggestion(cvHeadline, t('remote_any')) ?? t('newProfile') }} cvSkills={cvSkills} cvHeadline={cvHeadline} demandSkills={demandSkills} />
       )}
     </section>
   );

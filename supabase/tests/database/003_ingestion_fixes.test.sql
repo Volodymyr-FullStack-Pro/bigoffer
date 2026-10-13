@@ -62,7 +62,7 @@ select public.upsert_job_matches('[
 select is((select state || ':' || score from public.job_matches where job_id = 'd0000000-0000-0000-0000-000000000001'),
   'hidden:70', 'new match is rescored and hidden by an exclude rule');
 
--- deleting the profile drops its 'new' matches and keeps the rest
+-- deleting the profile drops its new and seen matches and keeps the user's hidden ones
 update public.job_matches set state = 'new', breakdown = '{"excludedBy":null}'
   where job_id = 'd0000000-0000-0000-0000-000000000001';
 delete from public.search_profiles where id = 'e0000000-0000-0000-0000-000000000001';
@@ -70,8 +70,8 @@ select is((select count(*)::int from public.job_matches
   where user_id = '11111111-1111-1111-1111-111111111111' and state = 'new'), 0, 'profile delete removes new matches');
 select is((select array_agg(job_id order by job_id)::text from public.job_matches
   where user_id = '11111111-1111-1111-1111-111111111111'),
-  '{d0000000-0000-0000-0000-000000000002,d0000000-0000-0000-0000-000000000003}',
-  'profile delete keeps seen and user-hidden matches');
+  '{d0000000-0000-0000-0000-000000000003}',
+  'profile delete drops seen matches and keeps user-hidden ones');
 
 -- ---------- F6: search profile limits ----------
 set local role authenticated;

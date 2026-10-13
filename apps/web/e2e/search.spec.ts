@@ -12,8 +12,8 @@ test('creates a search profile and keeps it after reload', async ({ context, pag
   await page.getByLabel('Work format').selectOption('remote');
   await page.getByTestId('sources-recommended').click();
   await page.getByTestId('search-save').click();
-  // the "new profile" form is replaced by the saved profile's form + an "add" link
-  await expect(page.getByTestId('search-add')).toBeVisible();
+  // the blank form is replaced by the stored search (it can now be deleted)
+  await expect(page.getByTestId('search-delete')).toBeVisible();
   await page.reload();
   // Keywords are chips now: a comma list typed into the field becomes one chip per term.
   await expect(page.getByTestId('tag-chip').filter({ hasText: /^full stack$/ }).first()).toBeVisible();
@@ -23,22 +23,16 @@ test('creates a search profile and keeps it after reload', async ({ context, pag
   await expect(page.getByRole('status').first()).toContainText('Saved');
 });
 
-test('adding a second profile returns to the plain search URL', async ({ context, page }) => {
-  await loginAs(context, uniqueEmail('search-second'));
+test('there is one search: no "add another", the saved form stays the only one', async ({ context, page }) => {
+  await loginAs(context, uniqueEmail('search-one'));
   await page.goto('/en/search');
   await page.getByLabel('Role keywords').fill('full stack');
   await page.getByTestId('source-dou').check();
   await page.getByTestId('search-save').click();
-  await expect(page.getByTestId('search-add')).toBeVisible();
-  await page.getByTestId('search-add').click();
-  await expect(page).toHaveURL(/\/en\/search\?new=1$/);
-  await page.getByLabel('Role keywords').last().fill('react developer');
-  await page.getByTestId('source-djinni').last().check();
-  await page.getByTestId('search-save').last().click();
-  // a new profile redirects to /search, so a reload or a second click cannot create a duplicate
-  await expect(page).toHaveURL(/\/en\/search$/);
-  await expect(page.getByTestId('search-add')).toBeVisible();
-  await expect(page.getByLabel('Role keywords')).toHaveCount(2);
+  await expect(page.getByTestId('search-delete')).toBeVisible();
+  await expect(page.getByTestId('search-add')).toHaveCount(0);
+  await page.reload();
+  await expect(page.getByLabel('Role keywords')).toHaveCount(1);
 });
 
 test('rejects a profile without keywords', async ({ context, page }) => {
@@ -57,7 +51,7 @@ test('saves a chosen subset of job boards', async ({ context, page }) => {
   await page.getByTestId('source-dou').check();
   await page.getByTestId('source-robotaua').check();
   await page.getByTestId('search-save').click();
-  await expect(page.getByTestId('search-add')).toBeVisible();
+  await expect(page.getByTestId('search-delete')).toBeVisible();
   await page.reload();
   await expect(page.getByTestId('source-robotaua').first()).toBeChecked();
   await expect(page.getByTestId('source-djinni').first()).not.toBeChecked();
@@ -115,7 +109,7 @@ test('chips: suggestions add a term, × removes it, salary is picked from a list
   await page.getByTestId('salary-select').selectOption('2000');
   await page.getByTestId('source-dou').check();
   await page.getByTestId('search-save').click();
-  await expect(page.getByTestId('search-add')).toBeVisible();
+  await expect(page.getByTestId('search-delete')).toBeVisible();
   await page.reload();
   const chips = page.getByTestId('tag-chip');
   await expect(chips.filter({ hasText: /^react developer$/ })).toHaveCount(1);
@@ -132,7 +126,7 @@ test('an unchecked board stays off after saving, saving again and reloading', as
   await page.getByLabel('Role keywords').fill('react');
   for (const id of ['dou', 'djinni', 'robotaua']) await page.getByTestId(`source-${id}`).check();
   await page.getByTestId('search-save').click();
-  await expect(page.getByTestId('search-add')).toBeVisible();
+  await expect(page.getByTestId('search-delete')).toBeVisible();
   await page.reload();
 
   await page.getByTestId('source-robotaua').first().uncheck();
