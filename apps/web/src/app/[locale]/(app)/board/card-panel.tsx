@@ -128,7 +128,15 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, companyC
           {kitOpen && <ApplyKitPanel jobId={card.jobId} locale={locale} onApplied={onApplied} />}
         </div>
       )}
-      <Conversation applicationId={card.id} version={messagesVersion} />
+      <Conversation
+        applicationId={card.id}
+        version={messagesVersion}
+        onDeleted={({ replyKind, left }) => {
+          setMessagesVersion((v) => v + 1);
+          const last = left.at(-1);
+          onChanged({ replyKind, messageCount: left.length, lastMessage: last ? { direction: last.direction, at: last.sentAt } : null });
+        }}
+      />
       <ReplyInbox
         card={card}
         defaultAuthor={card.contactName ?? companyContact?.name ?? ''}
