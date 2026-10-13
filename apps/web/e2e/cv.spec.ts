@@ -17,8 +17,14 @@ test('uploads a CV, reads it with AI and creates a search from it', async ({ con
   await expect(page.getByText('Contacts updated.')).toBeVisible();
   await page.reload();
   await expect(page.getByLabel('LinkedIn')).toHaveValue('https://www.linkedin.com/in/test-user');
+  // The upload already built the search from the CV; the button rebuilds it.
+  await page.goto('/en/search');
+  await expect(page.getByLabel('Profile name')).toHaveValue('Full Stack Developer');
+  await expect(page.getByTestId('search-delete')).toBeVisible();
+  await page.goto('/en/profile');
   await page.getByTestId('cv-create-search').click();
   await expect(page).toHaveURL(/\/en\/search$/);
+  await expect(page.getByLabel('Profile name')).toHaveCount(1);
   await expect(page.getByLabel('Profile name')).toHaveValue('Full Stack Developer');
 });
 
@@ -40,6 +46,10 @@ test('deletes the CV: the block empties and the stored file is gone', async ({ c
   await page.reload();
   await expect(page.getByTestId('cv-headline')).toHaveCount(0);
   expect((await page.request.get(href!)).ok()).toBe(false);
+  // The search built from that CV went with it.
+  await page.goto('/en/search');
+  await expect(page.getByTestId('search-delete')).toHaveCount(0);
+  await expect(page.getByTestId('search-from-cv-hint')).toBeVisible();
 });
 
 test('rejects a non-PDF file', async ({ context, page }) => {

@@ -49,14 +49,17 @@ export async function saveSearchProfile(_prev: SearchFormState, formData: FormDa
   };
 
   const supabase = await createClient();
-  const { data, error } = p.id
-    ? await supabase.from('search_profiles').update(row).eq('id', p.id).select('id').single()
+  // One search per user: a "new" form submitted while one exists (another tab) updates it instead.
+  const { data: existing } = p.id ? { data: null } : await supabase.from('search_profiles').select('id').order('updated_at', { ascending: false }).limit(1).maybeSingle();
+  const id = p.id ?? existing?.id;
+  const { data, error } = id
+    ? await supabase.from('search_profiles').update(row).eq('id', id).select('id').single()
     : await supabase.from('search_profiles').insert(row).select('id').single();
   if (error) return { status: 'error' };
 
   await requestProfileSync(data.id);
   revalidatePath('/[locale]/search', 'page');
-  // A new profile leaves the ?new=1 form behind, so a resubmit or reload cannot create a duplicate.
+  // The first save swaps the blank form for the stored one, so a resubmit cannot create a duplicate.
   if (!p.id) redirect({ href: '/search', locale: await getLocale() });
   return { status: 'saved' };
 }
