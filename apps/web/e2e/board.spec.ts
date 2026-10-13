@@ -106,13 +106,14 @@ test('drags a card to another column with the mouse', async ({ context, page, is
   const { title } = await seedApplication(email, { column: 'saved' });
   await page.goto('/en/board');
   const from = await card(page, title).boundingBox();
-  const to = await column(page, 'test_task').boundingBox();
+  // A column on screen at the desktop width (seven columns scroll sideways).
+  const to = await column(page, 'applied').boundingBox();
   await page.mouse.move(from!.x + 20, from!.y + 20);
   await page.mouse.down();
   await page.mouse.move(from!.x + 40, from!.y + 30, { steps: 5 });
   await page.mouse.move(to!.x + to!.width / 2, to!.y + 80, { steps: 15 });
   await page.mouse.up();
-  await expect(column(page, 'test_task').getByText(title)).toBeVisible();
+  await expect(column(page, 'applied').getByText(title)).toBeVisible();
 });
 
 test('keyboard: Enter opens the panel, Space drags to the next column', async ({ context, page, isMobile }) => {
