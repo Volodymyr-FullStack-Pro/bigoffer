@@ -28,3 +28,19 @@ describe('profileTips', () => {
     expect(profileTips({ ...base, keywords: ['full-stack software engineer', 'full stack', 'react developer'], skills: ['React', 'Docker'] })).toEqual([]);
   });
 });
+
+describe('profileTips skills', () => {
+  const base = { keywords: ['full stack developer'], recommended: [], roles: ['fullstack'], remoteType: 'remote', locations: [], sources: new Set(['dou', 'djinni', 'robotaua']) };
+  it('treats compound and bracketed CV skills as present and suggests skills the matches ask for', () => {
+    const tips = profileTips({
+      ...base,
+      skills: ['CSS', 'SASS', 'Model Context Protocol (MCP)', 'React'],
+      cvSkills: ['CSS/SASS', 'MCP', 'React', 'OpenRouter'],
+      demandSkills: ['React', 'GraphQL', 'OpenRouter', 'Docker'],
+    });
+    expect(tips).toEqual([
+      { id: 'cvSkills', items: ['OpenRouter'] },
+      { id: 'demandSkills', items: ['GraphQL', 'Docker'] },
+    ]);
+  });
+});

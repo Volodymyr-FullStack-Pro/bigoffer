@@ -47,9 +47,10 @@ export const SALARY_STEPS = [500, 750, 1000, 1500, 2000, 2500, 3000, 3500, 4000,
 
 const uniq = (xs: string[]) => [...new Map(xs.map((x) => [x.toLowerCase(), x])).values()];
 
-export function keywordSuggestions(roles: readonly RoleFamily[]): string[] {
+/** All titles of the user's roles, then titles of their own frameworks (CV or profile skills). */
+export function keywordSuggestions(roles: readonly RoleFamily[], skills: readonly string[] = []): string[] {
   const families = roles.length > 0 ? roles : (['frontend', 'fullstack', 'backend'] as const);
-  return uniq(families.flatMap((f) => KEYWORDS[f]));
+  return uniq([...families.flatMap((f) => KEYWORDS[f]), ...skillTitles(skills)]);
 }
 
 /** CV skills first (what the user actually has), then the families' popular ones. */
@@ -57,13 +58,14 @@ export function keywordSuggestions(roles: readonly RoleFamily[]): string[] {
  * CV skills first, then the families' skills interleaved by rank (the top of each role before the long tail), with
  * spelling variants counted once (Tailwind = Tailwind CSS, React.js = React).
  */
-export function skillSuggestions(roles: readonly RoleFamily[], cvSkills: readonly string[]): string[] {
+export function skillSuggestions(roles: readonly RoleFamily[], cvSkills: readonly string[], demandSkills: readonly string[] = []): string[] {
   const families = roles.length > 0 ? roles : (['frontend', 'fullstack'] as const);
   const lists = families.map((f) => SKILLS[f]);
   const interleaved: string[] = [];
   for (let i = 0; i < Math.max(...lists.map((l) => l.length)); i++) for (const l of lists) if (l[i]) interleaved.push(l[i]!);
   const seen = new Set<string>();
-  return [...cvSkills, ...interleaved].filter((s) => {
+  // CV skills, then what the user's own matches ask for most, then the roles' usual stacks.
+  return [...cvSkills, ...demandSkills, ...interleaved].filter((s) => {
     const k = skillKey(s);
     if (!k || seen.has(k)) return false;
     seen.add(k);
@@ -72,18 +74,36 @@ export function skillSuggestions(roles: readonly RoleFamily[], cvSkills: readonl
 }
 
 /** Keywords from a skill the user has: a React developer is also searched as one. */
-const SKILL_TITLES: [RegExp, string][] = [
-  [/^react(\.?js)?$/i, 'react developer'],
-  [/^angular/i, 'angular developer'],
-  [/^vue/i, 'vue developer'],
-  [/^next(\.?js)?$/i, 'react developer'],
+const SKILL_TITLES: [RegExp, string[]][] = [
+  [/^react(\.?js)?$/i, ['react developer', 'frontend developer']],
+  [/^next(\.?js)?$/i, ['next.js developer', 'react developer']],
+  [/^(typescript|ts)$/i, ['typescript developer']],
+  [/^(javascript|js)$/i, ['javascript developer']],
+  [/^node(\.?js)?$/i, ['node.js developer', 'backend developer']],
+  [/^nest(\.?js)?$/i, ['node.js developer']],
+  [/^angular/i, ['angular developer']],
+  [/^vue/i, ['vue developer']],
+  [/^react native$/i, ['react native developer', 'mobile developer']],
+  [/^python$/i, ['python developer']],
+  [/^(openai|anthropic)/i, ['ai engineer']],
 ];
+
+const skillTitles = (skills: readonly string[]) => skills.flatMap((s) => SKILL_TITLES.find(([re]) => re.test(s.trim()))?.[1] ?? []);
+
+/** A CV headline also searched in its common spellings: "Full Stack Developer" → full stack engineer, full stack. */
+function headlineVariants(headline: string): string[] {
+  const h = headline.toLowerCase();
+  if (/full[\s-]?stack/.test(h)) return ['full stack developer', 'full stack engineer', 'full stack'];
+  if (/front[\s-]?end/.test(h)) return ['frontend developer', 'frontend engineer', 'frontend'];
+  if (/back[\s-]?end/.test(h)) return ['backend developer', 'backend engineer'];
+  return [];
+}
 
 /**
  * The best keywords for this user: their CV headline, the most used titles of their roles (checked roles, else the
  * ones the headline names) and titles of their main frameworks. Spellings of one word count once.
  */
-export function recommendedKeywords(headline: string | null, roles: readonly RoleFamily[], cvSkills: readonly string[], max = 6, chosen: readonly string[] = []): string[] {
+export function recommendedKeywords(headline: string | null, roles: readonly RoleFamily[], cvSkills: readonly string[], max = 8, chosen: readonly string[] = []): string[] {
   const families = roles.length > 0 ? roles : headline ? detectRoleFamilies(headline) : [];
   const out: string[] = [];
   const seen = new Set<string>();
@@ -101,12 +121,9 @@ export function recommendedKeywords(headline: string | null, roles: readonly Rol
   const pushNew = (k: string) => {
     if (!coveredBy.some((c) => words(k).includes(c))) push(k);
   };
-  if (headline) pushNew(headline);
-  for (const f of families) KEYWORDS[f].slice(0, 4).forEach(pushNew);
-  for (const skill of cvSkills.slice(0, 10)) {
-    const title = SKILL_TITLES.find(([re]) => re.test(skill.trim()))?.[1];
-    if (title) pushNew(title);
-  }
+  if (headline) [headline, ...headlineVariants(headline)].forEach(pushNew);
+  for (const f of families) KEYWORDS[f].slice(0, 5).forEach(pushNew);
+  skillTitles(cvSkills.slice(0, 20)).forEach(pushNew);
   return out;
 }
 

@@ -87,8 +87,8 @@ select throws_ok($$ insert into public.search_profiles (user_id, name, keywords)
   'P0001', 'search profile limit reached', 'sixth profile is rejected');
 delete from public.search_profiles where name = 'P5';
 select throws_ok($$ insert into public.search_profiles (user_id, name, keywords)
-  values ('11111111-1111-1111-1111-111111111111', 'Eleven kw', '{a,b,c,d,e,f,g,h,i,j,k}') $$,
-  '23514', null, 'eleven keywords are rejected');
+  values ('11111111-1111-1111-1111-111111111111', 'Sixteen kw', '{a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p}') $$,
+  '23514', null, 'sixteen keywords are rejected');
 select throws_ok($$ insert into public.search_profiles (user_id, name, keywords)
   values ('11111111-1111-1111-1111-111111111111', 'No kw', '{}') $$,
   '23514', null, 'zero keywords are rejected');
