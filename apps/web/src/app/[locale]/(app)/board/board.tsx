@@ -68,6 +68,8 @@ export function Board({ columns, cards: initial, labels: initialLabels, rules, n
             firstResponseAt: c.firstResponseAt ? new Date(c.firstResponseAt) : null,
             lastActivityAt: c.lastActivityAt ? new Date(c.lastActivityAt) : null,
             nextActionAt: c.nextActionAt ? new Date(c.nextActionAt) : null,
+            lastMessage: c.lastMessage ? { direction: c.lastMessage.direction, at: new Date(c.lastMessage.at) } : null,
+            replyKind: c.replyKind,
           },
           now,
           rules,
@@ -174,6 +176,16 @@ export function Board({ columns, cards: initial, labels: initialLabels, rules, n
     }
   };
 
+  // Recruiters remembered per company: a new card from the same company is offered the known contact.
+  const companyContacts = useMemo(() => {
+    const map = new Map<string, { name: string; url: string | null }>();
+    for (const c of [...cards].sort((a, b) => ((a.lastActivityAt ?? '') < (b.lastActivityAt ?? '') ? 1 : -1))) {
+      const key = c.company.trim().toLowerCase();
+      if (key && c.contactName && !map.has(key)) map.set(key, { name: c.contactName, url: c.contactUrl });
+    }
+    return map;
+  }, [cards]);
+
   const lost = columns.find((c) => c.kind === 'lost');
   const open = views.find((c) => c.id === openId) ?? null;
   const active = views.find((c) => c.id === activeId) ?? null;
@@ -234,6 +246,7 @@ export function Board({ columns, cards: initial, labels: initialLabels, rules, n
           columns={columns}
           labels={labels}
           labelName={labelName}
+          companyContact={open.contactName ? null : (companyContacts.get(open.company.trim().toLowerCase()) ?? null)}
           onClose={() => setOpenId(null)}
           onMove={(columnId) => requestMove(open.id, columnId, endRank(columnId, open.id))}
           onDelete={async () => {
