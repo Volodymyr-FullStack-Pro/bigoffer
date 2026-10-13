@@ -1,6 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
+import { tellGenie } from '@/lib/genie/events';
 import { useState } from 'react';
 import type { BoardCardView, BoardColumn } from './board-types';
 import { logReply, type ReplyChannel, setReplyKind, suggestReplyKind } from './message-actions';
@@ -66,6 +67,7 @@ export function ReplyInbox({ card, defaultAuthor, columns, timeZone, lang, onLog
       const res = await logReply(card.id, { channel, body, kind, summary, interviewAt, author, link });
       if (!res) return setError('failed');
       onLogged({ replyKind: kind, ...res }, moveTo);
+      tellGenie({ type: 'reply', kind });
       setBody('');
       setKind(null);
       setWhen('');

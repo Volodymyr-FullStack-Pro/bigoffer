@@ -3,6 +3,7 @@
 import { MESSAGE_FORMATS, MESSAGE_LIMITS, type MessageFormat } from '@jp/ai';
 import { useFormatter, useNow, useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
+import { tellGenie } from '@/lib/genie/events';
 import { generateRecruiterMessage, listMessages, logSentMessage } from './message-actions';
 import { REPLY_STYLE } from './reply-kinds';
 
@@ -90,6 +91,7 @@ export function RecruiterMessage({ applicationId, defaultLang, version = 0, onSe
               setKind('follow_up');
               setHistory(await listMessages(applicationId));
               onSent();
+              tellGenie({ type: 'sent' });
             } catch {
               setError('failed');
             }

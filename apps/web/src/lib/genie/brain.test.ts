@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { type GenieMemory, type GenieState, pickMessage, routeOf, streaks } from './brain';
+import { chatter, type GenieMemory, type GenieState, pickMessage, routeOf, streaks } from './brain';
 
 const NOW = Date.parse('2026-10-12T10:00:00Z');
 const fresh: GenieMemory = { shown: {}, lastMotivationAt: 0 };
 const ok: GenieState = {
   mode: 'on', goal: 5, appliedToday: 1, streak: 0, idleDays: 0, hour: 12, hasProfile: true, profileActive: true,
   staleSources: [], lastRunMinutes: 12, newMatches24h: 14, hotMatches: 0, ruleHidden: 0, waitingReplies: 0, firstName: '',
-  hasCv: true, interviewsSoon: 0, savedWaiting: 0, telegramLinked: true,
+  hasCv: true, interviewsSoon: 0, savedWaiting: 0, telegramLinked: true, yourMove: 0,
 };
 
 describe('routeOf', () => {
@@ -89,5 +89,28 @@ describe('actions and greeting', () => {
     const mem = { ...fresh, shown: { 'health:ok:2026-10-12': NOW } };
     expect(pickMessage(tg, 'today', mem, NOW)?.key).toBe('connectTelegram');
     expect(pickMessage(tg, 'today', { ...mem, shown: { ...mem.shown, 'weekly:telegram': NOW - 3 * 24 * 3600_000 } }, NOW)?.key).not.toBe('connectTelegram');
+  });
+});
+
+describe('chatter', () => {
+  const SLOT = 5 * 60_000;
+  it('rotates a motto, a BigOffer tip and the day\'s progress every 5 minutes', () => {
+    const at = (n: number) => n * SLOT;
+    const keys = [0, 1, 2].map((k) => chatter(ok, at(3 * 7 + k)).key);
+    expect(keys[0]).toMatch(/^motto\d+$/);
+    expect(keys[1]).toMatch(/^feat\d+$/);
+    expect(chatter(ok, at(23))).toMatchObject({ key: 'progress', params: { done: 1, goal: 5, left: 4 } });
+    expect(chatter({ ...ok, appliedToday: 5 }, at(23)).key).toBe('progressDone');
+  });
+
+  it('speaks again 5 minutes after the last light line', () => {
+    const mem = { shown: { [`health:ok:${new Date(NOW).toISOString().slice(0, 10)}`]: NOW }, lastMotivationAt: NOW };
+    expect(pickMessage(ok, 'other', mem, NOW + 4 * 60_000)).toBeNull();
+    expect(pickMessage(ok, 'other', mem, NOW + 5 * 60_000)?.kind).toBe('motivation');
+  });
+
+  it('puts a waiting recruiter first after setup problems', () => {
+    const mem = { shown: {}, lastMotivationAt: 0 };
+    expect(pickMessage({ ...ok, yourMove: 2 }, 'today', mem, NOW)).toMatchObject({ key: 'yourMove', params: { count: 2 } });
   });
 });
