@@ -22,10 +22,13 @@ export const SEARCH_REMOTE_TYPES = ['any', 'remote', 'hybrid', 'office'] as cons
 
 const term = z.string().trim().min(1).max(60);
 
+/** Job titles a search profile may list (each is searched on DOU and robota.ua). */
+export const MAX_KEYWORDS = 15;
+
 export const searchProfileInputSchema = z.object({
   id: z.uuid().optional(),
   name: z.string().trim().min(1).max(80),
-  keywords: z.array(term).min(1).max(10),
+  keywords: z.array(term).min(1).max(MAX_KEYWORDS),
   /** Job families to show; empty = derived from the keywords (see targetRoleFamilies). */
   targetRoles: z.array(z.enum(ROLE_FAMILIES)).max(ROLE_FAMILIES.length).default([]),
   skills: z.array(term).max(100),
@@ -124,7 +127,8 @@ const SEARCH_SOURCES: [SourceId, string][] = [
   ['robotaua', 'keyWords'],
 ];
 
-const MAX_TERMS = 14;
+// Keywords first, then their spellings and title variants; at most this many searches per board and profile.
+const MAX_TERMS = 18;
 /** Job-title variants that job boards match better than bare technology names. */
 // Bare role words also search their usual job titles; other spellings come from keywordSearchVariants.
 const TITLE_VARIANTS: [RegExp, string[]][] = [

@@ -38,3 +38,17 @@ describe('skill matching for the job tech block', () => {
     ]);
   });
 });
+
+describe('hasSkill', () => {
+  it('matches compounds, bracketed short forms and spellings', async () => {
+    const { hasSkill } = await import('./card-skills');
+    const profile = ['CSS', 'SASS', 'Model Context Protocol (MCP)', 'Tailwind', 'Node.js'];
+    expect(hasSkill(profile, 'CSS/SASS')).toBe(true);
+    expect(hasSkill(profile, 'MCP')).toBe(true);
+    expect(hasSkill(profile, 'Tailwind CSS')).toBe(true);
+    expect(hasSkill(profile, 'NodeJS')).toBe(true);
+    expect(hasSkill(profile, 'Shadcn/ui')).toBe(false);
+    expect(hasSkill(['shadcn'], 'Shadcn/ui')).toBe(true);
+    expect(hasSkill(profile, 'OpenRouter')).toBe(false);
+  });
+});
