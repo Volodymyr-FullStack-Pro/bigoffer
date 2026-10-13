@@ -117,7 +117,51 @@ const SYSTEM = [
 /** The CV read gets 2 minutes (the default request timeout is 60 s); the web route's maxDuration must exceed it. */
 export const PARSE_CV_TIMEOUT_MS = 120_000;
 
+/** The PDF's text layer; empty for a scanned CV or an unreadable file. */
+export async function pdfText(pdfBase64: string): Promise<string> {
+  try {
+    const { extractText, getDocumentProxy } = await import('unpdf');
+    const pdf = await getDocumentProxy(new Uint8Array(Buffer.from(pdfBase64, 'base64')));
+    const { text } = await extractText(pdf, { mergePages: true });
+    // Contacts are often links behind a word ("LinkedIn", "GitHub"): the URLs live in the link annotations.
+    const links = new Set<string>();
+    for (let n = 1; n <= Math.min(pdf.numPages, 5); n++) {
+      const page = await pdf.getPage(n);
+      for (const a of (await page.getAnnotations()) as { url?: string }[]) if (a.url && /^(https?:|mailto:)/i.test(a.url)) links.add(a.url);
+    }
+    const body = text.replace(/[ \t]+/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
+    return links.size > 0 ? `${body}\n\nLinks in the PDF:\n${[...links].slice(0, 20).join('\n')}` : body;
+  } catch {
+    return '';
+  }
+}
+
+/** Below this the PDF is probably a scan: its text layer is too thin to parse from. */
+const MIN_TEXT = 400;
+
+/**
+ * A CV with a text layer is parsed from its text by the writing model (seconds; the Gemini PDF read took 90 s and
+ * timed out, Oct 2026); a scan, or a failure there, goes to the PDF reader as before.
+ */
 export async function parseCv(llm: LlmClient, input: { pdfBase64: string }): Promise<ParsedCv> {
+  const text = await pdfText(input.pdfBase64);
+  if (text.length >= MIN_TEXT) {
+    try {
+      const res = await llm.generateJson({
+        sensitivity: 'private',
+        tier: 'writer',
+        task: 'parse_cv',
+        schema: cvWireSchema,
+        system: SYSTEM,
+        prompt: `Extract the facts from this CV (its PDF text; columns may be interleaved):\n<cv>\n${text.slice(0, 20_000)}\n</cv>`,
+        maxOutputTokens: 8000,
+        timeoutMs: 60_000,
+      });
+      return normalizeCv(res.data);
+    } catch (err) {
+      console.error('parseCv: text parse failed, reading the PDF instead', err instanceof Error ? err.name : 'unknown');
+    }
+  }
   const res = await llm.generateJson({
     sensitivity: 'private',
     task: 'parse_cv',
