@@ -8,6 +8,7 @@ import { SourceBadge } from '@/components/ui/source-badge';
 import { listMessages } from './message-actions';
 import { RecruiterMessage } from './recruiter-message';
 import { Conversation } from './conversation';
+import { columnForReply } from './reply-kinds';
 import { ReplyInbox } from './reply-inbox';
 import { useModalDialog } from './use-modal-dialog';
 import { fromZonedInput, toZonedInput } from './zoned-input';
@@ -135,6 +136,20 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, companyC
           setMessagesVersion((v) => v + 1);
           const last = left.at(-1);
           onChanged({ replyKind, messageCount: left.length, lastMessage: last ? { direction: last.direction, at: last.sentAt } : null });
+        }}
+        onKindChanged={({ kind, replyKind, firstResponseAt }) => {
+          setMessagesVersion((v) => v + 1);
+          onChanged({ replyKind, firstResponseAt });
+          const fromKey = columns.find((c) => c.id === card.columnId)?.key ?? '';
+          // Only an auto-reply after all: the card goes back to waiting for an answer.
+          if (!firstResponseAt && fromKey === 'talking') {
+            const applied = columns.find((c) => c.key === 'applied');
+            if (applied) onMove(applied.id);
+            return;
+          }
+          const want = columnForReply(kind, fromKey);
+          const col = want ? columns.find((c) => ('key' in want ? c.key === want.key : c.kind === want.kind)) : undefined;
+          if (col && col.id !== card.columnId) onMove(col.id);
         }}
       />
       <ReplyInbox

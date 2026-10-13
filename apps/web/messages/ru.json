@@ -491,7 +491,9 @@
     "replyPlaceholderMine": "Вставьте, что вы ответили…",
     "replySaveMine": "Сохранить мой ответ",
     "conversationDelete": "Удалить сообщение",
-    "conversationDeleteConfirm": "Удалить это сообщение из переписки?"
+    "conversationDeleteConfirm": "Удалить это сообщение из переписки?",
+    "conversationChangeKind": "Изменить тип ответа",
+    "conversationSetKind": "Тип?"
   },
   "cv": {
     "title": "Ваше CV",

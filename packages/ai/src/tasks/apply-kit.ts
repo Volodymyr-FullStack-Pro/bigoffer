@@ -180,13 +180,15 @@ export async function generateApplyKit(
     prompt,
     maxOutputTokens: 2000,
   };
+  // One retry each: a provider hiccup (a cut-off or invalid answer) should not reach the user as "failed".
+  const once = <S extends z.ZodType>(req: GenerateJsonRequest<S>) => llm.generateJson(req).catch(() => llm.generateJson(req));
   const writeLetter = async () => {
-    let r = await llm.generateJson(letterRequest);
+    let r = await once(letterRequest);
     const found = bannedPhrases(r.data.cover_letter);
     if (found.length > 0) r = await llm.generateJson({ ...letterRequest, prompt: letterRequest.prompt + rewriteNote(found) });
     return r.data;
   };
-  const [res, letter] = await Promise.all([llm.generateJson(request), writeLetter()]);
+  const [res, letter] = await Promise.all([once(request), writeLetter()]);
   const w = res.data;
   const code = (v: string) => (/^[a-z]{2}$/.test(v.trim().toLowerCase()) ? v.trim().toLowerCase() : null);
   const lang = code(letter.lang) ?? code(w.lang) ?? (input.lang === 'auto' ? 'en' : input.lang);

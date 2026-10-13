@@ -491,7 +491,9 @@
     "replyPlaceholderMine": "Paste what you replied…",
     "replySaveMine": "Save my reply",
     "conversationDelete": "Delete message",
-    "conversationDeleteConfirm": "Delete this message from the conversation?"
+    "conversationDeleteConfirm": "Delete this message from the conversation?",
+    "conversationChangeKind": "Change reply type",
+    "conversationSetKind": "Type?"
   },
   "cv": {
     "title": "Your CV",
