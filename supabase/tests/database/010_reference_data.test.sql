@@ -7,7 +7,7 @@ select results_eq(
   $$ select unnest(array['djinni','dou','robotaua']) $$,
   'exactly the SOURCE_IDS sources are enabled'
 );
-select is((select count(*)::int from public.sources where not enabled and id in ('linkedin','workua','telegram','ashby')), 4, 'retired sources stay as disabled rows');
+select is((select count(*)::int from public.sources where id not in ('dou','djinni','robotaua')), 0, 'only the three boards are left');
 select cmp_ok((select count(*) from public.roles), '>=', 10::bigint, 'roles are seeded by migrations');
 select cmp_ok((select count(*) from public.skills), '>=', 10::bigint, 'skills are seeded by migrations');
 
