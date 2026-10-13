@@ -685,7 +685,14 @@
     "allGoodMorning": "Good morning, {name}! ☀️ {found} new jobs in the last day, boards refreshed {minutes} min ago.",
     "allGoodDay": "Hi, {name}! {found} new jobs in the last day, boards refreshed {minutes} min ago. All good ✓",
     "allGoodEvening": "Good evening, {name}! {found} new jobs in the last day, boards refreshed {minutes} min ago.",
-    "streak": "{days} days in a row"
+    "streak": "{days} days in a row",
+    "noCv": "Upload your CV: I write letters and form answers from it, and matching gets sharper.",
+    "actCv": "Upload CV",
+    "interviewSoon": "{count, plural, one {An interview or test task} other {# interviews or test tasks}} within a day — time to prepare!",
+    "actPrepare": "Prepare",
+    "savedWaiting": "{count, plural, one {# saved job waits} other {# saved jobs wait}} 2+ days — apply while they are fresh.",
+    "connectTelegram": "Connect Telegram and I will send strong matches within minutes — the first 10 applicants get the replies.",
+    "actConnect": "Connect"
   },
   "analytics": {
     "eyebrow": "Your progress",

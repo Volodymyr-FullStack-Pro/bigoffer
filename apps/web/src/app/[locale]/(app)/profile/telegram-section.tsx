@@ -19,7 +19,7 @@ export type TelegramSettings = {
 export function TelegramSection({ botConfigured, settings }: { botConfigured: boolean; settings: TelegramSettings }) {
   const t = useTranslations('telegram');
   return (
-    <section data-testid="telegram-section" className="brutal flex max-w-2xl flex-col gap-3 p-5">
+    <section id="telegram" data-testid="telegram-section" className="brutal scroll-mt-24 flex max-w-2xl flex-col gap-3 p-5">
       <h2 className="font-display text-lg font-bold">{t('title')}</h2>
       {!botConfigured ? (
         <p data-testid="telegram-unavailable" className="text-sm text-muted-foreground">{t('notConfigured')}</p>

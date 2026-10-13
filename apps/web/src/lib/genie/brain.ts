@@ -29,6 +29,14 @@ export type GenieState = {
   waitingReplies: number;
   /** First name for a greeting; empty when unknown. */
   firstName: string;
+  /** A parsed CV is on file (letters, form answers and matching depend on it). */
+  hasCv: boolean;
+  /** Interviews or test tasks whose next step is due within 24 hours. */
+  interviewsSoon: number;
+  /** Board cards saved 2+ days ago and still not applied to. */
+  savedWaiting: number;
+  /** The Telegram bot is linked (alerts reach the user within minutes). */
+  telegramLinked: boolean;
 };
 
 export type GenieMood = 'happy' | 'neutral' | 'worried' | 'excited';
@@ -57,7 +65,8 @@ export type GeniePageHint = { key: string; params?: Record<string, string | numb
 const HOUR = 3600_000;
 const DAY = 24 * HOUR;
 export const MOTIVATION_COUNT = 30;
-const MOTIVATION_EVERY = 20 * 60_000;
+// Owner's choice (2026-10-13): a motivation line every 15 minutes when nothing more useful is due.
+const MOTIVATION_EVERY = 15 * 60_000;
 
 const daily = (id: string, mem: GenieMemory, now: number, every = DAY) => now - (mem.shown[id] ?? 0) >= every;
 
@@ -89,6 +98,14 @@ export function pickMessage(
   } else if (s.staleSources.length > 0) {
     candidates.push({ id: `health:stale:${s.staleSources.join(',')}`, kind: 'health', mood: 'worried', key: 'stale', params: { sources: s.staleSources.join(', ') } });
   }
+  if (s.hasProfile && !s.hasCv) {
+    candidates.push({ id: 'setup:noCv', kind: 'health', mood: 'worried', key: 'noCv', action: { href: '/profile', labelKey: 'actCv' } });
+  }
+
+  // An interview or test task within a day beats everything but broken setup.
+  if (s.interviewsSoon > 0) {
+    candidates.push({ id: `goal:interview:${dayKey(now)}`, kind: 'goal', mood: 'excited', key: 'interviewSoon', params: { count: s.interviewsSoon }, action: { href: '/board#today-actions', labelKey: 'actPrepare' } });
+  }
 
   // 2. Daily goal.
   const left = Math.max(0, s.goal - s.appliedToday);
@@ -111,7 +128,9 @@ export function pickMessage(
   if (!quiet) {
     if (hint) candidates.push({ id: `hint:${route}:${hint.key}`, kind: 'tip', mood: 'neutral', key: hint.key, params: hint.params, action: hint.action });
     if (route === 'today' && s.ruleHidden >= 10) candidates.push({ id: 'tip:ruleHidden', kind: 'tip', mood: 'neutral', key: 'ruleHidden', params: { count: s.ruleHidden }, action: { href: '/today?view=hidden', labelKey: 'actShowHidden' } });
+    if (s.savedWaiting > 0) candidates.push({ id: 'tip:saved', kind: 'tip', mood: 'neutral', key: 'savedWaiting', params: { count: s.savedWaiting }, action: { href: '/board', labelKey: 'actBoard' } });
     if (s.waitingReplies > 0) candidates.push({ id: 'tip:followUp', kind: 'tip', mood: 'neutral', key: 'followUp', params: { count: s.waitingReplies }, action: { href: '/board#today-actions', labelKey: 'actFollowUp' } });
+    if (s.hasProfile && s.profileActive && !s.telegramLinked) candidates.push({ id: 'weekly:telegram', kind: 'tip', mood: 'neutral', key: 'connectTelegram', action: { href: '/profile#telegram', labelKey: 'actConnect' } });
   }
 
   // 5. Daily "everything works" report.
@@ -123,7 +142,15 @@ export function pickMessage(
 
   const once = { 'health:ok': DAY, goal: DAY, hint: 6 * HOUR, tip: DAY, hot: 2 * HOUR, health: 3 * HOUR } as const;
   const every = (m: GenieMessage) =>
-    m.id.startsWith('health:ok') ? once['health:ok'] : m.id.startsWith('hint') ? once.hint : m.id.startsWith('hot') ? once.hot : once[m.kind as 'goal' | 'tip' | 'health'] ?? DAY;
+    m.id.startsWith('health:ok') || m.id.startsWith('setup:')
+      ? DAY
+      : m.id.startsWith('weekly:')
+        ? 7 * DAY
+        : m.id.startsWith('hint')
+          ? once.hint
+          : m.id.startsWith('hot')
+            ? once.hot
+            : once[m.kind as 'goal' | 'tip' | 'health'] ?? DAY;
   const fresh = candidates.find((m) => daily(m.id, mem, now, every(m)));
   if (fresh) return fresh;
 

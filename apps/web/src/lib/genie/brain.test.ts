@@ -6,6 +6,7 @@ const fresh: GenieMemory = { shown: {}, lastMotivationAt: 0 };
 const ok: GenieState = {
   mode: 'on', goal: 5, appliedToday: 1, streak: 0, idleDays: 0, hour: 12, hasProfile: true, profileActive: true,
   staleSources: [], lastRunMinutes: 12, newMatches24h: 14, hotMatches: 0, ruleHidden: 0, waitingReplies: 0, firstName: '',
+  hasCv: true, interviewsSoon: 0, savedWaiting: 0, telegramLinked: true,
 };
 
 describe('routeOf', () => {
@@ -71,5 +72,22 @@ describe('actions and greeting', () => {
   });
   it('greets by name with the daily report', () => {
     expect(pickMessage({ ...ok, firstName: 'Volodymyr', hour: 9 }, 'other', fresh, NOW)).toMatchObject({ key: 'allGoodMorning', params: { name: 'Volodymyr' } });
+  });
+  it('asks for a CV once a day, even in quiet mode', () => {
+    const noCv = { ...ok, hasCv: false };
+    expect(pickMessage(noCv, 'today', fresh, NOW)?.key).toBe('noCv');
+    expect(pickMessage({ ...noCv, mode: 'quiet' }, 'today', fresh, NOW)?.key).toBe('noCv');
+    const seen = { ...fresh, shown: { 'setup:noCv': NOW - 3 * 3600_000 } };
+    expect(pickMessage(noCv, 'today', seen, NOW)?.key).not.toBe('noCv');
+  });
+  it('puts an interview within a day before the daily goal and hot matches', () => {
+    expect(pickMessage({ ...ok, interviewsSoon: 1, hotMatches: 3, appliedToday: 5 }, 'board', fresh, NOW)?.key).toBe('interviewSoon');
+  });
+  it('nudges saved jobs and a missing Telegram link, the latter weekly', () => {
+    expect(pickMessage({ ...ok, savedWaiting: 4 }, 'today', { ...fresh, shown: { [`health:ok:2026-10-12`]: NOW } }, NOW)?.key).toBe('savedWaiting');
+    const tg = { ...ok, telegramLinked: false };
+    const mem = { ...fresh, shown: { 'health:ok:2026-10-12': NOW } };
+    expect(pickMessage(tg, 'today', mem, NOW)?.key).toBe('connectTelegram');
+    expect(pickMessage(tg, 'today', { ...mem, shown: { ...mem.shown, 'weekly:telegram': NOW - 3 * 24 * 3600_000 } }, NOW)?.key).not.toBe('connectTelegram');
   });
 });
