@@ -59,8 +59,33 @@ const LANG_NAME: Record<string, string> = { en: 'English', uk: 'Ukrainian', ru: 
 
 const letterWire = z.object({
   lang: z.string().describe('ISO 639-1 code of the language you wrote the letter in'),
-  cover_letter: z.string(),
+  cover_letter: z.string().describe('Plain text with real line breaks: greeting line, empty lines between paragraphs, one bullet per line'),
 });
+
+// The greeting ends at the first comma or "!" followed by a capital letter ("Добрий день, команда Acme! Маю…").
+const GREETING = /^((?:Dear|Hi|Hello|Добрий день|Доброго дня|Вітаю|Шановна|Шановний|Здравствуйте|Добрый день|Привет)[^\n.?]{0,80}?[,!])[ \t]+(?=\p{Lu})/u;
+const CLOSING = /\s+((?:Feel free|Please feel free|I would (?:be glad|love|welcome)|I'd (?:be glad|love)|Looking forward|I look forward|Буду радий|Буду рада|Буду рад|Не соромтеся|Звертайтеся|Пишіть|Пишите)[^•]*)$/i;
+
+/**
+ * Restores the letter's layout when the model returns it as one line: the greeting on its own line, each "• "
+ * point on its own line, the close after an empty line. Forms (DOU, Djinni) keep these line breaks.
+ */
+export function formatLetter(text: string): string {
+  let t = text.replace(/\r\n/g, '\n').trim();
+  t = t.replace(GREETING, '$1\n\n');
+  // Points: each on its own line; an empty line before the first one (after the lead-in).
+  t = t.replace(/[ \t]*\n?[ \t]*•[ \t]*/g, '\n• ');
+  const first = t.indexOf('\n• ');
+  if (first > 0 && t[first - 1] !== '\n') t = `${t.slice(0, first)}\n${t.slice(first)}`;
+  // The close, if it was glued to the last point.
+  const lastPoint = t.lastIndexOf('\n• ');
+  if (lastPoint >= 0) {
+    const tail = t.slice(lastPoint);
+    const m = CLOSING.exec(tail);
+    if (m && !tail.slice(0, m.index).includes('\n\n')) t = t.slice(0, lastPoint) + tail.slice(0, m.index) + '\n\n' + m[1]!.trim();
+  }
+  return t.replace(/\n{3,}/g, '\n\n').trim();
+}
 
 /**
  * The letter has its own short brief, like asking a good writer directly: a long rule list (and sharing one answer
@@ -72,12 +97,14 @@ function letterSystem(lang: 'auto' | 'en' | 'uk' | 'ru', tone: 'default' | 'shor
     'Write a strong cover letter for this job, from this candidate, based on the job description and the CV. It decides whether the',
     'recruiter answers, so read both carefully and show clearly why the candidate fits: the stack they share, the most relevant projects,',
     'concrete results with the numbers the CV gives. A clear structure works well: greeting, a short opening, "why I am a strong fit" points, a short close.',
-    'What recruiters say gets replies: greet the recruiter or hiring manager by name when the posting gives one; let the points answer the',
+    'What recruiters say gets replies: greet the recruiter or hiring manager by name when the posting gives one, else the company\'s team',
+    '("Dear Binary Studio Team,", never a generic "Hiring Team"); let the points answer the',
     'posting\'s key requirements one by one; end by inviting them to reach out (e.g. "Feel free to reach out — I would be glad to tell you more.").',
     lang === 'auto' ? 'Write in the language of the job posting.' : `Write in ${LANG_NAME[lang]}.`,
     tone === 'shorter' ? 'Keep it short: 80–100 words.' : tone === 'formal' ? 'Formal tone, 170–230 words.' : '170–230 words.',
     'Rules: use only facts from the CV (state years of experience exactly as the CV does); never mention missing skills, fewer years or',
-    'anything the candidate lacks; plain text without markdown (bullets as "• "); no sign-off, name or contacts at the end — they are added automatically.',
+    'anything the candidate lacks; plain text without markdown, with real line breaks: the greeting on its own line, an empty line between',
+    'paragraphs, each point on its own line starting with "• "; no sign-off, name or contacts at the end — they are added automatically.',
   ].join('\n');
 }
 
@@ -170,7 +197,7 @@ export async function generateApplyKit(
       .map((r) => ({ text: r.text.trim().slice(0, 200), status: r.status, ...(r.status === 'met' && r.evidence.trim() ? { evidence: r.evidence.trim().slice(0, 300) } : {}) }))
       .filter((r) => r.text),
     redFlags: w.red_flags.map((f) => f.trim().slice(0, 200)).filter(Boolean).slice(0, 5),
-    coverLetter: `${letter.cover_letter.trim().slice(0, 5000)}\n\n${signOff(input.candidate, lang)}`,
+    coverLetter: `${formatLetter(letter.cover_letter).slice(0, 5000)}\n\n${signOff(input.candidate, lang)}`,
     shortMessage: w.short_message.trim().slice(0, 500),
     salaryHint: w.salary_hint?.trim().slice(0, 300) || null,
   };
