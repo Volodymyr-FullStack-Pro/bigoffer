@@ -18,12 +18,12 @@ async function dragRight(page: Page, steps: number) {
 }
 const column = (page: Page, key: string) => page.locator(`[data-testid="board-column"][data-column-key="${key}"]`);
 
-test('shows the six default columns with counters', async ({ context, page }) => {
+test('shows the seven default columns with counters', async ({ context, page }) => {
   const email = uniqueEmail('board-columns');
   await loginAs(context, email);
   await seedApplication(email, { column: 'saved' });
   await page.goto('/en/board');
-  await expect(page.getByTestId('board-column')).toHaveCount(6);
+  await expect(page.getByTestId('board-column')).toHaveCount(7);
   await expect(column(page, 'saved').getByTestId('column-count')).toHaveText('1');
 });
 
@@ -168,8 +168,8 @@ test('keyboard: dragging to Rejected focuses the reject dialog and Escape cancel
   const target = card(page, title);
   await target.focus();
   await page.keyboard.press('Space');
-  // applied -> interview -> test_task -> offer -> rejected
-  await dragRight(page, 4);
+  // applied -> talking -> test_task -> interview -> offer -> rejected
+  await dragRight(page, 5);
   await page.keyboard.press('Space');
   await expect(visible(page, 'reject-dialog')).toBeVisible();
   await expect(page.getByTestId('reject-stage')).toBeFocused();
@@ -180,7 +180,7 @@ test('keyboard: dragging to Rejected focuses the reject dialog and Escape cancel
 
   // Again, this time confirming with the keyboard only.
   await page.keyboard.press('Space');
-  await dragRight(page, 4);
+  await dragRight(page, 5);
   await page.keyboard.press('Space');
   await expect(page.getByTestId('reject-stage')).toBeFocused();
   await page.keyboard.press('Tab'); // by
@@ -236,8 +236,11 @@ test('a pasted auto-reply only tags the card; an interview invite moves it and s
   await visible(page, 'reply-save').click();
   await expect.poll(() => applicationColumnKey(id)).toBe('interview');
   await expect(visible(page, 'panel-history')).toContainText('Reply received');
-  await expect(visible(page, 'msg-item').first()).toContainText('Interview invite');
-  await expect(visible(page, 'msg-item').first()).toContainText('Djinni · Galina');
+  // The conversation reads oldest first: the auto-reply, then the invite from Galina on Djinni.
+  await expect(visible(page, 'msg-item')).toHaveCount(2);
+  await expect(visible(page, 'msg-item').last()).toContainText('Interview invite');
+  await expect(visible(page, 'msg-item').last()).toContainText('Galina');
+  await expect(visible(page, 'msg-item').last()).toContainText('Djinni');
   await expect(visible(page, 'panel-thread')).toHaveAttribute('href', 'https://djinni.co/my/inbox/123/');
   await page.keyboard.press('Escape');
   await expect(column(page, 'interview').locator(`[data-reply-kind="interview_invite"]`).filter({ hasText: title })).toBeVisible();
@@ -257,10 +260,14 @@ test('a recruiter question makes it your move until you answer', async ({ contex
   await visible(page, 'reply-kind').and(page.locator('[data-kind="question"]')).click();
   await visible(page, 'reply-save').click();
   await expect(visible(page, 'panel-next-step')).toHaveAttribute('data-urgency', 'your_move');
+  // A real answer moves the card from Applied to "In talks".
+  await expect(column(page, 'talking').getByText(title)).toBeVisible();
   await expect(visible(page, 'today-action').and(page.locator('[data-kind="answer"]'))).toContainText(title);
-  await visible(page, 'msg-kind').selectOption('follow_up');
-  await visible(page, 'msg-body').fill('Yes, happy to do it.');
-  await visible(page, 'msg-sent').click();
+  // Log my own answer in the conversation.
+  await visible(page, 'reply-direction').and(page.locator('[data-direction="out"]')).click();
+  await visible(page, 'reply-body').fill('Yes, happy to do it.');
+  await visible(page, 'reply-save').click();
+  await expect(visible(page, 'msg-item').last()).toHaveAttribute('data-direction', 'out');
   await expect(visible(page, 'panel-next-step')).toHaveCount(0);
   await page.keyboard.press('Escape');
   await expect(card(page, title).getByTestId('card-urgency')).toHaveCount(0);

@@ -12,7 +12,7 @@ select is((select full_name from public.profiles where id = '11111111-1111-1111-
 select is((select locale from public.profiles where id = '11111111-1111-1111-1111-111111111111'),
   'en', 'new profile defaults to English');
 select is((select count(*)::int from public.board_columns where user_id = '11111111-1111-1111-1111-111111111111'),
-  6, 'six default board columns');
+  7, 'seven default board columns');
 select is((select kind from public.board_columns where user_id = '11111111-1111-1111-1111-111111111111' and key = 'offer'),
   'won', 'offer column is won');
 select is((select count(*)::int from public.labels where user_id = '11111111-1111-1111-1111-111111111111'),
@@ -28,7 +28,7 @@ set local role authenticated;
 set local request.jwt.claims = '{"sub":"11111111-1111-1111-1111-111111111111","role":"authenticated"}';
 
 select is((select count(*)::int from public.profiles), 1, 'sees only own profile');
-select is((select count(*)::int from public.board_columns), 6, 'sees only own columns');
+select is((select count(*)::int from public.board_columns), 7, 'sees only own columns');
 select is((select count(*)::int from public.labels), 5, 'sees only own labels');
 select ok((select count(*) from public.sources) > 0, 'reads global sources');
 select is_empty(
