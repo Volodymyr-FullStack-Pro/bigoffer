@@ -11,3 +11,4 @@ export * from './tasks/parse-cv';
 export * from './tasks/apply-kit';
 export * from './tasks/form-answers';
 export * from './tasks/recruiter-message';
+export * from './tasks/classify-reply';

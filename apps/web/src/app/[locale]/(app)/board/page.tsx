@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server';
 import { parseUiPrefs } from '@/lib/ui-prefs';
 import { Board } from './board';
 import type { BoardCard, BoardColumn, BoardLabel } from './board-types';
+import { isReplyKind } from './reply-kinds';
 
 export default async function BoardPage() {
   const userId = await requireUserId();
@@ -17,7 +18,7 @@ export default async function BoardPage() {
     supabase
       .from('applications')
       .select(
-        'id, job_id, column_id, rank, title, company, url, source_id, salary, notes, contact, applied_at, next_action_at, first_response_at, last_activity_at, follow_up_count, outcome, application_labels(label_id)',
+        'id, job_id, column_id, rank, title, company, url, source_id, salary, notes, contact, applied_at, next_action_at, first_response_at, last_activity_at, follow_up_count, outcome, reply_kind, application_labels(label_id)',
       )
       .order('rank'),
     supabase.from('labels').select('id, key, name, color').order('key', { nullsFirst: false }),
@@ -52,6 +53,7 @@ export default async function BoardPage() {
       followUpCount: a.follow_up_count,
       outcome: a.outcome,
       labelIds: a.application_labels.map((l) => l.label_id),
+      replyKind: isReplyKind(a.reply_kind) ? a.reply_kind : null,
     };
   });
 

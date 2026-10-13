@@ -10,6 +10,8 @@ import { Toast, useToast } from '@/components/ui/toast';
 import { useSaveUiPrefs } from '@/lib/use-save-ui-prefs';
 import { deleteApplication, markPinged, moveApplication, rejectApplication } from './actions';
 import { AddCardDialog } from './add-card-dialog';
+import { type BoardFilter, EMPTY_FILTER, isFiltering, matchesFilter } from './board-filter';
+import { BoardFilterBar } from './board-filter-bar';
 import { BoardColumnView } from './board-column';
 import type { BoardCard, BoardCardView, BoardColumn, BoardLabel } from './board-types';
 import { CardPanel } from './card-panel';
@@ -42,6 +44,7 @@ export function Board({ columns, cards: initial, labels: initialLabels, rules, n
   const [pendingReject, setPendingReject] = useState<PendingReject | null>(null);
   const [confetti, setConfetti] = useState(false);
   const [adding, setAdding] = useState(false);
+  const [filter, setFilter] = useState<BoardFilter>(EMPTY_FILTER);
   const { toast, show, close } = useToast();
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
@@ -73,7 +76,10 @@ export function Board({ columns, cards: initial, labels: initialLabels, rules, n
     [cards, columnById, now, rules],
   );
   const inColumn = (columnId: string) => views.filter((c) => c.columnId === columnId).sort((a, b) => (a.rank < b.rank ? -1 : a.rank > b.rank ? 1 : a.id < b.id ? -1 : 1));
-  const shown = (columnId: string) => (sort[columnId] === 'smart' ? smartSort(inColumn(columnId)) : inColumn(columnId));
+  const filtering = isFiltering(filter);
+  const visible = (list: BoardCardView[]) => (filtering ? list.filter((c) => matchesFilter(c, filter)) : list);
+  const shown = (columnId: string) => visible(sort[columnId] === 'smart' ? smartSort(inColumn(columnId)) : inColumn(columnId));
+  const found = filtering ? views.filter((c) => matchesFilter(c, filter)) : views;
   const labelName = (l: BoardLabel) => (l.key ? t(`label_${l.key}` as never) : (l.name ?? ''));
 
   const patchLocal = (id: string, patch: Partial<BoardCard>) => setCards((list) => list.map((c) => (c.id === id ? { ...c, ...patch } : c)));
@@ -193,6 +199,10 @@ export function Board({ columns, cards: initial, labels: initialLabels, rules, n
         onGhosted={(id) => lost && requestMove(id, lost.id, endRank(lost.id, id), ['no_feedback'], 'ghosted')}
       />
       {cards.length === 0 && <p data-testid="board-empty" className="text-muted-foreground">{t('empty')}</p>}
+      {cards.length > 0 && (
+        <BoardFilterBar filter={filter} onChange={setFilter} cards={cards} labels={labels} labelName={labelName} found={found.length} onOpenOnly={() => found[0] && setOpenId(found[0].id)} />
+      )}
+      {filtering && found.length === 0 && <p data-testid="board-no-match" className="text-muted-foreground">{t('noMatch')}</p>}
       <DndContext id="board-dnd" sensors={sensors} collisionDetection={closestCorners} onDragStart={({ active: a }) => setActiveId(String(a.id))} onDragCancel={() => setActiveId(null)} onDragEnd={onDragEnd}>
         {/* Phones scroll one column at a time; desktops show as many as fit. */}
         <div className="-mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-4 sm:mx-0 sm:snap-none sm:px-0">
@@ -210,6 +220,7 @@ export function Board({ columns, cards: initial, labels: initialLabels, rules, n
               labels={labels}
               labelName={labelName}
               now={now}
+              timeZone={timeZone}
               onOpen={setOpenId}
             />
           ))}
@@ -242,6 +253,10 @@ export function Board({ columns, cards: initial, labels: initialLabels, rules, n
           }}
           onChanged={(patch) => patchLocal(open.id, patch)}
           onLabelCreated={(l) => setLabels((list) => [...list, l])}
+          onReplyLogged={(patch, moveTo) => {
+            patchLocal(open.id, patch);
+            if (moveTo) requestMove(open.id, moveTo.id, endRank(moveTo.id, open.id));
+          }}
           onApplied={(r) => patchLocal(open.id, { columnId: r.columnId, rank: r.rank, appliedAt: open.appliedAt ?? new Date().toISOString() })}
         />
       )}
