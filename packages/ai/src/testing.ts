@@ -51,6 +51,8 @@ export function fakeResponder(req: FakeRequest): unknown {
         experience: [{ company: 'Acme', title: 'Senior Developer', start: '2021', end: null, highlights: ['Built the payments platform'] }],
         contacts: { email: 'test.user@example.com', phone: null, linkedin: 'https://www.linkedin.com/in/test-user', github: null, portfolio: null, telegram: null },
       };
+    case 'cover_letter':
+      return { lang: 'en', cover_letter: 'Hello! I am a full stack developer with six years of React and Node.js. [fake]' };
     case 'apply_kit':
       return {
         lang: 'en',
