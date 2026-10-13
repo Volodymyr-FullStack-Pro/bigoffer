@@ -192,3 +192,51 @@ test('keyboard: dragging to Rejected focuses the reject dialog and Escape cancel
   await expect(column(page, 'rejected').getByText(title)).toBeVisible();
   await expect.poll(() => applicationColumnKey(id)).toBe('rejected');
 });
+
+test('search finds a card by company and the filter keeps drag targets', async ({ context, page }) => {
+  const email = uniqueEmail('board-search');
+  await loginAs(context, email);
+  const { title: a } = await seedApplication(email, { column: 'applied', company: 'Solidgate' });
+  const { title: b } = await seedApplication(email, { column: 'applied', company: 'Codebridge' });
+  await page.goto('/en/board');
+  await visible(page, 'board-search').fill('solid');
+  await expect(card(page, a)).toBeVisible();
+  await expect(card(page, b)).toHaveCount(0);
+  await expect(visible(page, 'board-found')).toContainText('1 card found');
+  await visible(page, 'board-search').press('Enter');
+  await expect(visible(page, 'card-panel')).toContainText('Solidgate');
+  await page.keyboard.press('Escape');
+  await visible(page, 'board-search').fill('nobody here');
+  await expect(visible(page, 'board-no-match')).toBeVisible();
+  await visible(page, 'board-filter-clear').click();
+  await expect(card(page, b)).toBeVisible();
+});
+
+test('a pasted auto-reply only tags the card; an interview invite moves it and sets the time', async ({ context, page }) => {
+  const email = uniqueEmail('board-reply');
+  await loginAs(context, email);
+  const { id, title } = await seedApplication(email, { column: 'applied', appliedDaysAgo: 3 });
+  await page.goto('/en/board');
+  await card(page, title).click();
+  await visible(page, 'reply-body').fill('Thank you! We have received your application and will review it.');
+  await visible(page, 'reply-classify').click();
+  await expect(visible(page, 'reply-kind').and(page.locator('[data-kind="auto_reply"]'))).toHaveAttribute('aria-checked', 'true');
+  await visible(page, 'reply-save').click();
+  await expect(visible(page, 'reply-saved')).toBeVisible();
+  await expect(card(page, title).getByTestId('card-reply')).toContainText('Auto-reply');
+  await expect(column(page, 'applied').getByText(title)).toBeVisible();
+
+  await visible(page, 'reply-body').fill('Please book a ReactJS interview: calendly.com/acme/react');
+  await visible(page, 'reply-classify').click();
+  await expect(visible(page, 'reply-when')).toHaveValue('2030-10-20T12:30');
+  await expect(visible(page, 'reply-save')).toContainText('Interview');
+  await visible(page, 'reply-save').click();
+  await expect.poll(() => applicationColumnKey(id)).toBe('interview');
+  await expect(visible(page, 'panel-history')).toContainText('Reply received');
+  await expect(visible(page, 'msg-item').first()).toContainText('Interview invite');
+  await page.keyboard.press('Escape');
+  await expect(column(page, 'interview').locator(`[data-reply-kind="interview_invite"]`).filter({ hasText: title })).toBeVisible();
+  await expect(card(page, title).getByTestId('card-next')).toContainText('20');
+  await visible(page, 'filter-reply').and(page.locator('[data-kind="interview_invite"]')).click();
+  await expect(card(page, title)).toBeVisible();
+});

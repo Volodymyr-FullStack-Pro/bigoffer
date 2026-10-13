@@ -113,15 +113,6 @@ export async function markPinged(id: string): Promise<boolean> {
   return done(error, 'markPinged');
 }
 
-export async function markResponse(id: string): Promise<boolean> {
-  const supabase = await client();
-  if (!supabase || !UUID.test(id)) return false;
-  const now = new Date().toISOString();
-  const { data, error } = await supabase.from('applications').update({ first_response_at: now, last_activity_at: now }).eq('id', id).select('id');
-  if (!error && data?.length) await event(supabase, id, 'response');
-  return done(error, 'markResponse', data?.length ?? 0);
-}
-
 export async function deleteApplication(id: string): Promise<boolean> {
   const supabase = await client();
   if (!supabase || !UUID.test(id)) return false;
@@ -199,6 +190,6 @@ export async function createApplication(raw: {
   return {
     id: data.id, jobId: null, columnId: input.columnId, rank: data.rank, title, company: input.company, url,
     sourceId: null, salary: input.salary, notes: null, contactName: null, contactUrl: null,
-    appliedAt, nextActionAt: null, firstResponseAt: null, lastActivityAt: null, followUpCount: 0, outcome: 'open', labelIds: [],
+    appliedAt, nextActionAt: null, firstResponseAt: null, lastActivityAt: null, followUpCount: 0, outcome: 'open', labelIds: [], replyKind: null,
   };
 }

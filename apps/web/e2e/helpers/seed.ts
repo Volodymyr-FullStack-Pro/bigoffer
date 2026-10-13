@@ -87,7 +87,7 @@ export async function countApplications(email: string): Promise<number> {
 
 export async function seedApplication(
   email: string,
-  opts: { column?: string; title?: string; appliedDaysAgo?: number; nextActionInHours?: number } = {},
+  opts: { column?: string; title?: string; company?: string; appliedDaysAgo?: number; nextActionInHours?: number } = {},
 ) {
   const db = admin();
   const userId = await userIdByEmail(email);
@@ -103,7 +103,7 @@ export async function seedApplication(
       column_id: col.id,
       rank: rankAtEnd(null),
       title,
-      company: `Acme ${tag}`,
+      company: opts.company ?? `Acme ${tag}`,
       url: `https://jobs.dou.ua/vacancies/${tag}/`,
       applied_at: opts.appliedDaysAgo != null ? new Date(Date.now() - opts.appliedDaysAgo * day).toISOString() : null,
       next_action_at: opts.nextActionInHours != null ? new Date(Date.now() + opts.nextActionInHours * 3600 * 1000).toISOString() : null,

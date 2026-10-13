@@ -8,7 +8,7 @@ import { useTranslations } from 'next-intl';
 import { BoardCardItem } from './board-card';
 import type { BoardCardView as Card, BoardColumn, BoardLabel } from './board-types';
 
-export function BoardColumnView({ column, cards, sort, onToggleSort, labels, labelName, now, onOpen }: {
+export function BoardColumnView({ column, cards, sort, onToggleSort, labels, labelName, now, timeZone, onOpen }: {
   column: BoardColumn;
   cards: Card[];
   sort: 'smart' | 'manual';
@@ -16,6 +16,7 @@ export function BoardColumnView({ column, cards, sort, onToggleSort, labels, lab
   labels: BoardLabel[];
   labelName: (l: BoardLabel) => string;
   now: Date;
+  timeZone: string;
   onOpen: (id: string) => void;
 }) {
   const t = useTranslations('board');
@@ -45,7 +46,7 @@ export function BoardColumnView({ column, cards, sort, onToggleSort, labels, lab
       <SortableContext items={cards.map((c) => c.id)} strategy={verticalListSortingStrategy}>
         <div ref={setNodeRef} className={`flex min-h-24 flex-col gap-2 rounded-brutal border-[1.5px] border-dashed p-2 ${isOver ? 'border-brand bg-brand/10' : 'border-transparent'}`}>
           {cards.map((c) => (
-            <BoardCardItem key={c.id} card={c} labels={labels} labelName={labelName} now={now} onOpen={() => onOpen(c.id)} />
+            <BoardCardItem key={c.id} card={c} labels={labels} labelName={labelName} now={now} timeZone={timeZone} onOpen={() => onOpen(c.id)} />
           ))}
         </div>
       </SortableContext>

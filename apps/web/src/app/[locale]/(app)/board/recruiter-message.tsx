@@ -4,11 +4,13 @@ import { MESSAGE_FORMATS, MESSAGE_LIMITS, type MessageFormat } from '@jp/ai';
 import { useFormatter, useNow, useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { generateRecruiterMessage, listMessages, logSentMessage } from './message-actions';
+import { REPLY_STYLE } from './reply-kinds';
 
 const CHANNEL: Record<MessageFormat, 'linkedin' | 'telegram' | 'email'> = { linkedin_note: 'linkedin', inmail: 'linkedin', telegram: 'telegram', email: 'email' };
 
-export function RecruiterMessage({ applicationId, defaultLang, onSent }: { applicationId: string; defaultLang: 'en' | 'uk' | 'ru'; onSent: () => void }) {
+export function RecruiterMessage({ applicationId, defaultLang, version = 0, onSent }: { applicationId: string; defaultLang: 'en' | 'uk' | 'ru'; /** Bumped when a reply is logged elsewhere, to reload the thread. */ version?: number; onSent: () => void }) {
   const t = useTranslations('recruiter');
+  const tb = useTranslations('board');
   const format = useFormatter();
   const now = useNow();
   const [fmt, setFmt] = useState<MessageFormat>('linkedin_note');
@@ -19,14 +21,14 @@ export function RecruiterMessage({ applicationId, defaultLang, onSent }: { appli
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
-  const [history, setHistory] = useState<{ direction: string; channel: string; body: string; sentAt: string }[]>([]);
+  const [history, setHistory] = useState<Awaited<ReturnType<typeof listMessages>>>([]);
 
   useEffect(() => {
     void listMessages(applicationId).then((h) => {
       setHistory(h);
       if (h.some((m) => m.direction === 'out')) setKind('follow_up');
     }).catch(() => setHistory([]));
-  }, [applicationId]);
+  }, [applicationId, version]);
 
   const field = 'brutal bg-card px-2 py-1 text-sm';
   const limit = MESSAGE_LIMITS[fmt];
@@ -100,8 +102,10 @@ export function RecruiterMessage({ applicationId, defaultLang, onSent }: { appli
       {history.length > 0 && (
         <ul className="flex flex-col gap-2 text-sm">
           {history.map((m, i) => (
-            <li key={i} data-testid="msg-item" className="border-l-4 border-border pl-2">
+            <li key={i} data-testid="msg-item" className="border-l-4 border-border pl-2" style={m.kind ? { borderLeftColor: REPLY_STYLE[m.kind].bg } : undefined}>
               <span className="font-mono text-xs text-muted-foreground">{t(m.direction === 'out' ? 'outgoing' : 'incoming')} · {m.channel} · <span suppressHydrationWarning>{format.relativeTime(new Date(m.sentAt), now)}</span></span>
+              {m.kind && <span className="ml-2 rounded-full px-1.5 text-[10px] font-semibold" style={{ background: REPLY_STYLE[m.kind].bg, color: REPLY_STYLE[m.kind].fg }}>{tb(`reply_${m.kind}` as never)}</span>}
+              {m.summary && <p className="text-xs italic">{m.summary}</p>}
               <p className="line-clamp-3 whitespace-pre-line">{m.body}</p>
             </li>
           ))}
