@@ -125,10 +125,13 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
   const sourceIds = [...new Set(matches.flatMap((m) => m.postings.map((p) => p.sourceId)))];
 
   return (
-    <section className="flex flex-col gap-6">
+    // Phone: a compact header, so the first jobs show on the first screen.
+    <section className="flex flex-col gap-4 md:gap-6">
       <div className="flex flex-col gap-3">
-        <span className="eyebrow">{t('eyebrow')}</span>
-        <h1 className="text-4xl md:text-5xl">{t('title')}</h1>
+        <div className="hidden md:block">
+          <span className="eyebrow">{t('eyebrow')}</span>
+        </div>
+        <h1 className="text-3xl md:text-5xl">{t('title')}</h1>
       </div>
       {me && !me.onboarded_at && (
         <Link href="/onboarding" data-testid="onboarding-banner" className="brutal brutal-press flex items-center justify-between gap-3 p-4 font-medium">

@@ -115,7 +115,16 @@ export type Routes = {
   letter?: LlmClient | null;
   /** Public data (job enrichment, explanations): no daily free-tier quota. */
   public?: LlmClient | null;
+  /**
+   * Public data goes to the base client's free tier first and to the public model only when the free tier answers
+   * 429 or fails; after a 429 the free tier is skipped until its retry time. Personal data never takes this path.
+   */
+  publicFreeFirst?: boolean;
+  now?: () => number;
 };
+
+/** A free-tier 429 without a retry hint: try the free tier again after a minute. */
+const FREE_RETRY_MS = 60_000;
 
 /**
  * Sends writer requests and public-data requests to their OpenRouter models and the rest to the base client; when a
@@ -125,6 +134,10 @@ export type Routes = {
 export function withRoutes(base: LlmClient, routes: Routes): LlmClient {
   const { writer, letter, public: publicClient } = routes;
   if (!writer && !publicClient) return base;
+  const now = routes.now ?? Date.now;
+  let freeSkipUntil = 0;
+  const freeFirst = (req: GenerateJsonRequest<z.ZodType>) =>
+    Boolean(routes.publicFreeFirst && publicClient && req.sensitivity === 'public' && !req.tier && base.isAvailable('public'));
   const pick = (req: GenerateJsonRequest<z.ZodType>): LlmClient | null | undefined =>
     req.tier === 'writer'
       ? req.task === 'apply_kit'
@@ -137,6 +150,17 @@ export function withRoutes(base: LlmClient, routes: Routes): LlmClient {
     isAvailable: (s) => (s === 'public' && publicClient ? true : base.isAvailable(s)),
     model: (s) => (s === 'public' && publicClient ? publicClient.model(s) : base.model(s)),
     async generateJson(req) {
+      if (freeFirst(req) && now() >= freeSkipUntil) {
+        try {
+          return await base.generateJson(req);
+        } catch (err) {
+          if (err instanceof LlmInvalidOutputError) throw err;
+          if (err instanceof LlmRateLimitError) freeSkipUntil = now() + (err.retryAfterMs ?? FREE_RETRY_MS);
+          // Quota or an outage on the free tier: the paid public model answers instead.
+          return publicClient!.generateJson(req);
+        }
+      }
+      if (freeFirst(req)) return publicClient!.generateJson(req);
       const routed = pick(req);
       if (!routed) return base.generateJson(req);
       try {

@@ -260,7 +260,7 @@
   },
   "search": {
     "title": "Job search settings",
-    "intro": "Tell us what you are looking for — we'll collect matching jobs from DOU, Djinni, robota.ua, remote boards and more every hour.",
+    "intro": "Tell us what you are looking for — we'll collect matching jobs from DOU, Djinni and robota.ua several times an hour.",
     "name": "Profile name",
     "keywords": "Role keywords",
     "keywordsHint": "Up to 10 job titles: pick a suggestion or type and press Enter. Other spellings (front-end, fullstack) are covered automatically.",

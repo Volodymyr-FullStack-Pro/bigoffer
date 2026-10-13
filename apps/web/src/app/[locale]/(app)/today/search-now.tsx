@@ -100,7 +100,8 @@ export function SearchNow({
               {t('progress', { done, total, found: status?.newMatches ?? 0 })}
             </p>
           ) : (
-            <p className="text-sm text-muted-foreground">
+            // The idle hint is hidden on a phone; a status after a run (cooldown, failure, result) always shows.
+            <p className={`text-sm text-muted-foreground ${message || (status?.requestedAt && total > 0) ? '' : 'hidden md:block'}`}>
               {message === 'cooldown'
                 ? t('cooldown')
                 : message === 'failed'

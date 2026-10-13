@@ -16,7 +16,7 @@ export function GenieSettings({ initial }: { initial: NonNullable<UiPrefs['genie
   const [mode, setMode] = useState(initial.mode ?? 'on');
   const [goal, setGoal] = useState(initial.goal ?? 5);
   return (
-    <section data-testid="genie-settings" className="brutal flex flex-col gap-4 p-6">
+    <section data-testid="genie-settings" className="brutal flex max-w-2xl flex-col gap-4 p-6">
       <div className="flex items-center gap-3">
         <GenieAvatar mood="happy" size={40} />
         <div>
