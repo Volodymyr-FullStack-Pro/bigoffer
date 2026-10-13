@@ -262,3 +262,21 @@ describe('keyword spellings', () => {
     }
   });
 });
+
+describe('main stack the candidate lacks', () => {
+  const js: SearchProfile = { ...profile, skills: ['TypeScript', 'JavaScript', 'React', 'Node.js', 'PostgreSQL', 'Docker', 'AWS', 'Git'] };
+  it('caps skill points for a .NET or Java full-stack job, however many tools overlap', () => {
+    const dotnet = scoreJob(js, { ...job, title: 'Senior FullStack .NET Engineer', skills: ['.NET', 'C#', 'React', 'Docker', 'Git', 'AWS', 'PostgreSQL'] })!;
+    expect(dotnet.breakdown.skills).toBe(8);
+    expect(dotnet.breakdown.missingStack).toEqual(['.NET']);
+    const java = scoreJob(js, { ...job, title: 'Senior Full Stack Engineer (Java / Vue)', skills: ['Java', 'Spring', 'TypeScript', 'Docker', 'Git', 'AWS'] })!;
+    expect(java.breakdown.missingStack).toEqual(['Java']);
+    expect(java.score).toBeLessThan(scoreJob(js, { ...job, skills: ['React', 'Node.js', 'TypeScript', 'Docker', 'Git', 'AWS'] })!.score);
+  });
+  it('keeps full points when the candidate has one of the stacks, and for JavaScript', () => {
+    const py = scoreJob({ ...js, skills: [...js.skills, 'Python'] }, { ...job, title: 'Full Stack Engineer (React + Python)', skills: ['Python', 'React'] })!;
+    expect(py.breakdown.missingStack).toBeUndefined();
+    const node = scoreJob(js, { ...job, title: 'Full Stack JavaScript Developer', skills: ['JavaScript', 'Node.js', 'React'] })!;
+    expect(node.breakdown.missingStack).toBeUndefined();
+  });
+});

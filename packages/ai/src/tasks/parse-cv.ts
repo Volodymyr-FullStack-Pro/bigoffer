@@ -191,13 +191,23 @@ export function cvToPrompt(cv: ParsedCv): string {
   return lines.join('\n').slice(0, 10_000);
 }
 
+/** Levels to search when the CV states none: by years of experience, the level reached and the one below/above. */
+export function levelsForYears(years: number | null): Seniority[] {
+  if (years === null) return [];
+  if (years < 1) return ['intern', 'junior'];
+  if (years < 5) return ['junior', 'middle'];
+  if (years < 8) return ['middle', 'senior'];
+  return ['senior', 'lead'];
+}
+
 export function searchProfileFromCv(cv: ParsedCv) {
   const role = cv.headline ?? 'Developer';
   return {
     name: role.slice(0, 80),
     keywords: [role.toLowerCase().slice(0, 60)],
     skills: cv.skills.slice(0, 60),
-    seniority: (cv.seniority ? [cv.seniority] : []) as Seniority[],
+    // No level at all searched every level: a 3-year CV filled the feed with Senior and Lead jobs.
+    seniority: (cv.seniority ? [cv.seniority] : levelsForYears(cv.yearsExperience)) as Seniority[],
     locations: cv.locations.slice(0, 10).map((l) => l.slice(0, 60)),
     remoteType: cv.remotePreference,
   };
