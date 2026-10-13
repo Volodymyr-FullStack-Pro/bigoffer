@@ -37,9 +37,11 @@ export async function getGenieState(tzRaw: string): Promise<GenieState | null> {
   const since24h = new Date(now.getTime() - 24 * 3600_000).toISOString();
   const since2h = new Date(now.getTime() - 2 * 3600_000).toISOString();
   const waitingSince = new Date(now.getTime() - 5 * 24 * 3600_000).toISOString();
+  const savedSince = new Date(now.getTime() - 2 * 24 * 3600_000).toISOString();
+  const dayAhead = new Date(now.getTime() + 24 * 3600_000).toISOString();
 
-  const [{ data: me }, { data: profiles }, { data: applied }, fresh, hot, hidden, waiting] = await Promise.all([
-    supabase.from('profiles').select('ui_prefs, timezone, full_name').eq('id', userId).maybeSingle(),
+  const [{ data: me }, { data: profiles }, { data: applied }, fresh, hot, hidden, waiting, cv, soon, saved] = await Promise.all([
+    supabase.from('profiles').select('ui_prefs, timezone, full_name, telegram_chat_id').eq('id', userId).maybeSingle(),
     supabase.from('search_profiles').select('is_active, sources'),
     supabase.from('applications').select('applied_at').gte('applied_at', since14d),
     supabase.from('job_matches').select('id', { count: 'exact', head: true }).in('state', ['new', 'seen']).gte('created_at', since24h),
@@ -59,6 +61,18 @@ export async function getGenieState(tzRaw: string): Promise<GenieState | null> {
       .eq('board_columns.key', 'applied')
       .lt('applied_at', waitingSince)
       .is('first_response_at', null),
+    supabase.from('resumes').select('id', { count: 'exact', head: true }).eq('is_primary', true).not('parsed', 'is', null),
+    supabase
+      .from('applications')
+      .select('id, board_columns!inner(key)', { count: 'exact', head: true })
+      .in('board_columns.key', ['interview', 'test_task'])
+      .gte('next_action_at', now.toISOString())
+      .lte('next_action_at', dayAhead),
+    supabase
+      .from('applications')
+      .select('id, board_columns!inner(key)', { count: 'exact', head: true })
+      .eq('board_columns.key', 'saved')
+      .lt('created_at', savedSince),
   ]);
 
   const prefs = parseUiPrefs(me?.ui_prefs).genie ?? {};
@@ -103,5 +117,9 @@ export async function getGenieState(tzRaw: string): Promise<GenieState | null> {
     ruleHidden: hidden.count ?? 0,
     waitingReplies: waiting.count ?? 0,
     firstName: (me?.full_name ?? '').trim().split(/\s+/)[0] ?? '',
+    hasCv: (cv.count ?? 0) > 0,
+    interviewsSoon: soon.count ?? 0,
+    savedWaiting: saved.count ?? 0,
+    telegramLinked: me?.telegram_chat_id != null,
   };
 }
