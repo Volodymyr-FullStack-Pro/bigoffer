@@ -87,3 +87,16 @@ describe('formatLetter', () => {
     );
   });
 });
+
+describe('generateApplyKit retries', () => {
+  it('tries a failed request once more before giving up', async () => {
+    let letterCalls = 0;
+    const llm = new FakeLlmClient((req) => {
+      if (req.task === 'cover_letter' && letterCalls++ === 0) throw new Error('cut off');
+      return fakeResponder(req);
+    }, ['private']);
+    const kit = await generateApplyKit(llm, { job, cv, lang: 'en', tone: 'default', salaryMinUsd: null });
+    expect(kit.coverLetter).toContain('[fake]');
+    expect(llm.calls.filter((c) => c.task === 'cover_letter')).toHaveLength(2);
+  });
+});

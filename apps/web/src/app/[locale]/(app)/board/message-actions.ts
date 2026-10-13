@@ -203,6 +203,40 @@ export async function deleteMessage(applicationId: string, messageId: string): P
   return { replyKind };
 }
 
+/**
+ * Changes what a logged company reply was (e.g. a plain answer that was really an auto-reply). The card follows:
+ * its tag is the latest reply's kind, and "got a response" counts only replies that are not automatic.
+ */
+export async function setMessageKind(
+  applicationId: string,
+  messageId: string,
+  kind: ReplyKind,
+): Promise<{ replyKind: ReplyKind | null; firstResponseAt: string | null } | null> {
+  if (!(await getUserId()) || !UUID.test(applicationId) || !UUID.test(messageId) || !isReplyKind(kind)) return null;
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('application_messages')
+    .update({ ai_classification: kind })
+    .eq('id', messageId)
+    .eq('application_id', applicationId)
+    .eq('direction', 'in')
+    .select('id');
+  if (error || (data?.length ?? 0) === 0) return null;
+  const { data: replies } = await supabase
+    .from('application_messages')
+    .select('ai_classification, sent_at')
+    .eq('application_id', applicationId)
+    .eq('direction', 'in')
+    .order('sent_at', { ascending: true });
+  const list = replies ?? [];
+  const latest = list.at(-1)?.ai_classification;
+  const replyKind = isReplyKind(latest) ? latest : null;
+  const firstResponseAt = list.find((r) => r.ai_classification !== 'auto_reply')?.sent_at ?? null;
+  await supabase.from('applications').update({ reply_kind: replyKind, first_response_at: firstResponseAt }).eq('id', applicationId);
+  revalidatePath('/[locale]/board', 'page');
+  return { replyKind, firstResponseAt };
+}
+
 /** Changes the reply kind shown on the card without logging a message (e.g. the AI guessed wrong). */
 export async function setReplyKind(applicationId: string, kind: ReplyKind | null): Promise<boolean> {
   if (!(await getUserId()) || !UUID.test(applicationId) || (kind !== null && !isReplyKind(kind))) return false;

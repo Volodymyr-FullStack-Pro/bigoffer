@@ -2,18 +2,25 @@
 
 import { useFormatter, useNow, useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
-import { deleteMessage, listMessages } from './message-actions';
-import { REPLY_STYLE } from './reply-kinds';
+import { deleteMessage, listMessages, setMessageKind } from './message-actions';
+import { REPLY_KINDS, REPLY_STYLE, type ReplyKind } from './reply-kinds';
 
 type Message = Awaited<ReturnType<typeof listMessages>>[number];
 
 /** The whole conversation with the company as a chat: theirs on the left, yours on the right, oldest first. */
-export function Conversation({ applicationId, version, onDeleted }: { applicationId: string; version: number; onDeleted: (r: { replyKind: Message['kind']; left: Message[] }) => void }) {
+export function Conversation({ applicationId, version, onDeleted, onKindChanged }: {
+  applicationId: string;
+  version: number;
+  onDeleted: (r: { replyKind: Message['kind']; left: Message[] }) => void;
+  /** A saved reply was re-tagged: the card's tag and "responded" follow, the panel may move the card. */
+  onKindChanged: (r: { kind: ReplyKind; replyKind: ReplyKind | null; firstResponseAt: string | null }) => void;
+}) {
   const t = useTranslations('board');
   const format = useFormatter();
   const clock = useNow({ updateInterval: 60_000 });
   const [messages, setMessages] = useState<Message[] | null>(null);
   const [open, setOpen] = useState<Set<number>>(new Set());
+  const [editing, setEditing] = useState<string | null>(null);
 
   useEffect(() => {
     listMessages(applicationId).then((m) => setMessages([...m].reverse())).catch(() => setMessages([]));
@@ -62,12 +69,46 @@ export function Conversation({ applicationId, version, onDeleted }: { applicatio
                 >
                   ×
                 </button>
-                {m.kind && style && (
-                  <span className="rounded-full px-1.5 text-[10px] font-semibold" style={{ background: style.bg, color: style.fg }}>
-                    {t(`reply_${m.kind}` as never)}
-                  </span>
+                {!mine && (
+                  <button
+                    type="button"
+                    data-testid="msg-kind-edit"
+                    title={t('conversationChangeKind')}
+                    aria-expanded={editing === m.id}
+                    onClick={() => setEditing((e) => (e === m.id ? null : m.id))}
+                    className="rounded-full px-1.5 text-[10px] font-semibold underline decoration-dotted"
+                    style={style ? { background: style.bg, color: style.fg } : undefined}
+                  >
+                    {m.kind ? t(`reply_${m.kind}` as never) : t('conversationSetKind')} ▾
+                  </button>
                 )}
               </span>
+              {editing === m.id && (
+                <span role="radiogroup" aria-label={t('conversationChangeKind')} className="flex flex-wrap gap-1">
+                  {REPLY_KINDS.map((k) => (
+                    <button
+                      key={k}
+                      type="button"
+                      role="radio"
+                      aria-checked={m.kind === k}
+                      data-testid="msg-kind-option"
+                      data-kind={k}
+                      onClick={async () => {
+                        setEditing(null);
+                        if (k === m.kind) return;
+                        const res = await setMessageKind(applicationId, m.id, k).catch(() => null);
+                        if (!res) return;
+                        setMessages((list) => list && list.map((x) => (x.id === m.id ? { ...x, kind: k } : x)));
+                        onKindChanged({ kind: k, ...res });
+                      }}
+                      className={`rounded-full border-[1.5px] px-2 py-0.5 text-[11px] font-semibold ${m.kind === k ? 'border-foreground' : 'border-transparent opacity-70 hover:opacity-100'}`}
+                      style={{ background: REPLY_STYLE[k].bg, color: REPLY_STYLE[k].fg }}
+                    >
+                      <span aria-hidden>{REPLY_STYLE[k].icon}</span> {t(`reply_${k}` as never)}
+                    </button>
+                  ))}
+                </span>
+              )}
               {m.summary && <p className="text-xs italic">{m.summary}</p>}
               <p className={`whitespace-pre-line ${long && !expanded ? 'line-clamp-5' : ''}`}>{m.body}</p>
               <span className="flex flex-wrap gap-3 font-mono text-[11px]">

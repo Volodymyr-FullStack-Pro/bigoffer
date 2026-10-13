@@ -491,7 +491,9 @@
     "replyPlaceholderMine": "Вставте, що ви відповіли…",
     "replySaveMine": "Зберегти мою відповідь",
     "conversationDelete": "Видалити повідомлення",
-    "conversationDeleteConfirm": "Видалити це повідомлення з листування?"
+    "conversationDeleteConfirm": "Видалити це повідомлення з листування?",
+    "conversationChangeKind": "Змінити тип відповіді",
+    "conversationSetKind": "Тип?"
   },
   "cv": {
     "title": "Ваше CV",

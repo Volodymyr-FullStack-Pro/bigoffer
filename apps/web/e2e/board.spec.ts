@@ -106,13 +106,14 @@ test('drags a card to another column with the mouse', async ({ context, page, is
   const { title } = await seedApplication(email, { column: 'saved' });
   await page.goto('/en/board');
   const from = await card(page, title).boundingBox();
-  const to = await column(page, 'test_task').boundingBox();
+  // A column on screen at the desktop width (seven columns scroll sideways).
+  const to = await column(page, 'applied').boundingBox();
   await page.mouse.move(from!.x + 20, from!.y + 20);
   await page.mouse.down();
   await page.mouse.move(from!.x + 40, from!.y + 30, { steps: 5 });
   await page.mouse.move(to!.x + to!.width / 2, to!.y + 80, { steps: 15 });
   await page.mouse.up();
-  await expect(column(page, 'test_task').getByText(title)).toBeVisible();
+  await expect(column(page, 'applied').getByText(title)).toBeVisible();
 });
 
 test('keyboard: Enter opens the panel, Space drags to the next column', async ({ context, page, isMobile }) => {
@@ -278,4 +279,23 @@ test('a recruiter question makes it your move until you answer', async ({ contex
   await expect(visible(page, 'panel-next-step')).toHaveCount(0);
   await page.keyboard.press('Escape');
   await expect(card(page, title).getByTestId('card-urgency')).toHaveCount(0);
+});
+
+test('a saved reply can be re-tagged; an auto-reply after all sends the card back to Applied', async ({ context, page }) => {
+  const email = uniqueEmail('board-retag');
+  await loginAs(context, email);
+  const { id, title } = await seedApplication(email, { column: 'applied', appliedDaysAgo: 1 });
+  await page.goto('/en/board');
+  await card(page, title).click();
+  await visible(page, 'reply-body').fill('Thanks for sharing your CV. We will take a look.');
+  await visible(page, 'reply-kind').and(page.locator('[data-kind="other"]')).click();
+  await visible(page, 'reply-save').click();
+  await expect.poll(() => applicationColumnKey(id)).toBe('talking');
+  await visible(page, 'msg-kind-edit').click();
+  await visible(page, 'msg-kind-option').and(page.locator('[data-kind="auto_reply"]')).click();
+  await expect.poll(() => applicationColumnKey(id)).toBe('applied');
+  await expect(visible(page, 'msg-kind-edit')).toContainText('Auto-reply');
+  // Only the tag changed: the message itself is all there.
+  await expect(visible(page, 'msg-item')).toHaveCount(1);
+  await expect(visible(page, 'msg-item')).toContainText('Thanks for sharing your CV');
 });
