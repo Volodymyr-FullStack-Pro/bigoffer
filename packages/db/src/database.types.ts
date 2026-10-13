@@ -237,6 +237,19 @@ isOneToOne: false
                   Relationships: [
                     
                   ]
+                },"health_alerts": {
+                  Row: {
+                    "key": string,"sent_at": string
+                  }
+                  Insert: {
+                    "key": string,"sent_at"?: string
+                  }
+                  Update: {
+                    "key"?: string,"sent_at"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
                 },"job_matches": {
                   Row: {
                     "breakdown": NonNullable<Json>,"created_at": string,"explained_at": string | null,"explanation": Json | null,"id": string,"job_id": string,"notified_at": string | null,"score": number,"search_profile_id": string | null,"state": string,"updated_at": string,"user_id": string
@@ -581,6 +594,9 @@ isOneToOne: false
 "create_telegram_link_token":
 { Args: { "p_token_hash": string }; Returns: undefined
                            },
+"enrich_backlog":
+{ Args: { "p_now"?: string }; Returns: number
+                           },
 "find_similar_job":
 { Args: { "p_company_id": string,"p_title": string }; Returns: string
                            },
@@ -627,6 +643,11 @@ isOneToOne: false
 "search_now_status":
 { Args: Record<PropertyKey, never>; Returns: {
               "done": number,"new_matches": number,"requested_at": string,"total": number
+            }[]
+                           },
+"source_health":
+{ Args: { "p_now"?: string }; Returns: {
+              "blocked_runs_6h": number,"found_6h": number,"last_ok_run_at": string,"new_jobs_24h": number,"newest_posted_at": string,"ok_runs_6h": number,"pct_company": number,"pct_description": number,"pct_location": number,"pct_posted": number,"pct_salary": number,"runs_6h": number,"source_id": string
             }[]
                            },
 "text_array_max_len":

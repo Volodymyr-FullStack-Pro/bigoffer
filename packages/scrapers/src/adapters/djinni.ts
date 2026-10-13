@@ -1,5 +1,5 @@
 import { kyivLocalDate, type RawJob } from '@jp/core';
-import { extractJobPostings, type JobPostingLd, ldLocation } from '../jsonld';
+import { extractJobPostings, type JobPostingLd, ldLocation, ldSalary } from '../jsonld';
 import { parseRss } from '../rss';
 import { isGoneError, type SourceAdapter } from '../types';
 
@@ -22,6 +22,7 @@ function toRawJob(p: JobPostingLd): RawJob | null {
     companyIsPlaceholder: !company,
     description: p.description ?? '',
     location: ldLocation(p),
+    ...(ldSalary(p) ?? {}),
     postedAt: p.datePosted ? kyivLocalDate(p.datePosted) : null,
     remoteHint: p.jobLocationType === 'TELECOMMUTE' ? 'remote' : undefined,
   };
