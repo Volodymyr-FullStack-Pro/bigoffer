@@ -3,6 +3,7 @@
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useFormatter, useTranslations } from 'next-intl';
+import { SourceBadge } from '@/components/ui/source-badge';
 import type { BoardCardView, BoardLabel } from './board-types';
 import { REPLY_STYLE } from './reply-kinds';
 
@@ -70,6 +71,7 @@ export function BoardCardItem({ card, labels, labelName, now, timeZone, onOpen }
         </span>
       )}
       <span className="flex flex-wrap items-center gap-2 font-mono text-xs text-muted-foreground">
+        {card.sourceId && <SourceBadge sourceId={card.sourceId} />}
         {card.appliedAt && <span suppressHydrationWarning>{t('appliedAgo', { ago: format.relativeTime(new Date(card.appliedAt), now) })}</span>}
         {card.urgency in URGENCY_STYLE && (
           <span data-testid="card-urgency" data-urgency={card.urgency} className={`rounded-sm border border-border px-1 font-bold ${URGENCY_STYLE[card.urgency]}`}>

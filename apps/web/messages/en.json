@@ -431,7 +431,7 @@
     "replyTitle": "Reply from the company",
     "replyClear": "Remove tag",
     "replyPlaceholder": "Paste the recruiter’s email or message…",
-    "replyChannel": "Channel",
+    "replyChannel": "Where the reply came from",
     "replyKind": "Reply type",
     "channel_email": "Email",
     "channel_linkedin": "LinkedIn",
@@ -456,7 +456,18 @@
     "replyErr_ai_limit": "Daily AI limit reached — pick the type yourself.",
     "replyErr_not_found": "Card not found.",
     "replyErr_failed": "That failed. Try again.",
-    "event_message_in": "Reply received"
+    "event_message_in": "Reply received",
+    "channel_dou": "DOU",
+    "channel_robotaua": "robota.ua",
+    "replyAuthor": "Recruiter (who replied)",
+    "companyContact": "{company} recruiter from another card: {name}.",
+    "companyContactUse": "Use",
+    "replyLink": "Link to the conversation",
+    "replyLinkHint_djinni": "https://djinni.co/my/inbox/…",
+    "replyLinkHint_email": "Link to the email (Gmail: ⋮ → “Copy link”)",
+    "replyLinkHint_linkedin": "https://www.linkedin.com/messaging/…",
+    "replyLinkHint_other": "https://…",
+    "openThread": "Open conversation"
   },
   "cv": {
     "title": "Your CV",

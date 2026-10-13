@@ -4,6 +4,8 @@ import { isLocale, type Locale } from '@jp/core';
 import { useFormatter, useLocale, useNow, useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { ApplyKitPanel } from '@/components/apply-kit/apply-kit-panel';
+import { SourceBadge } from '@/components/ui/source-badge';
+import { listMessages } from './message-actions';
 import { RecruiterMessage } from './recruiter-message';
 import { ReplyInbox } from './reply-inbox';
 import { useModalDialog } from './use-modal-dialog';
@@ -17,12 +19,14 @@ function eventKey(e: { type: string; payload: unknown }): string {
   return e.type === 'message' && p.direction === 'in' ? 'message_in' : e.type;
 }
 
-export function CardPanel({ card, timeZone, columns, labels, labelName, onClose, onMove, onDelete, onChanged, onLabelCreated, onApplied, onReplyLogged }: {
+export function CardPanel({ card, timeZone, columns, labels, labelName, companyContact, onClose, onMove, onDelete, onChanged, onLabelCreated, onApplied, onReplyLogged }: {
   card: BoardCardView;
   timeZone: string;
   columns: BoardColumn[];
   labels: BoardLabel[];
   labelName: (l: BoardLabel) => string;
+  /** A recruiter known from another card of the same company, offered when this card has none. */
+  companyContact: { name: string; url: string | null } | null;
   onClose: () => void;
   onMove: (columnId: string) => void;
   onDelete: () => void;
@@ -49,6 +53,11 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, onClose,
   const [newLabel, setNewLabel] = useState('');
   const [newColor, setNewColor] = useState('#C6F432');
   const [error, setError] = useState(false);
+
+  const [threadLink, setThreadLink] = useState<string | null>(null);
+  useEffect(() => {
+    listMessages(card.id).then((m) => setThreadLink(m.find((x) => x.link)?.link ?? null)).catch(() => setThreadLink(null));
+  }, [card.id, messagesVersion]);
 
   useEffect(() => {
     getApplicationEvents(card.id).then(setEvents).catch(() => setEvents([]));
@@ -84,11 +93,17 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, onClose,
       <div className="flex items-start justify-between gap-3">
         <div>
           <h2 id="panel-title" className="font-display text-xl font-semibold leading-tight">{card.title}</h2>
-          <p className="text-muted-foreground">{card.company}</p>
+          <p className="flex flex-wrap items-center gap-2 text-muted-foreground">
+            {card.company}
+            {card.sourceId && <SourceBadge sourceId={card.sourceId} />}
+          </p>
         </div>
         <button type="button" onClick={onClose} aria-label={t('close')} className="font-mono text-lg">✕</button>
       </div>
-      {card.url && <a href={card.url} target="_blank" rel="noopener" className="font-mono text-sm underline">{t('openOriginal')} ↗</a>}
+      <div className="flex flex-wrap gap-x-4 gap-y-1">
+        {card.url && <a href={card.url} target="_blank" rel="noopener" className="font-mono text-sm underline">{t('openOriginal')} ↗</a>}
+        {threadLink && <a data-testid="panel-thread" href={threadLink} target="_blank" rel="noopener noreferrer" className="font-mono text-sm font-semibold underline">{t('openThread')} ↗</a>}
+      </div>
       {card.jobId && (
         <div className="flex flex-col gap-3">
           <button type="button" data-testid="apply-kit-open" aria-expanded={kitOpen} onClick={() => setKitOpen((v) => !v)} className="brutal brutal-press self-start px-4 py-2 font-semibold">
@@ -99,12 +114,14 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, onClose,
       )}
       <ReplyInbox
         card={card}
+        defaultAuthor={card.contactName ?? companyContact?.name ?? ''}
         columns={columns}
         timeZone={timeZone}
         lang={locale}
         onLogged={(patch, moveTo) => {
           setMessagesVersion((v) => v + 1);
           if (patch.nextActionAt !== undefined) setNext(toZonedInput(patch.nextActionAt, timeZone));
+          if (patch.contactName) setContactName(patch.contactName);
           onReplyLogged(patch, moveTo);
         }}
       />
@@ -149,6 +166,14 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, onClose,
       </fieldset>
       <label className="flex flex-col gap-1 font-mono text-xs">{t('salary')}<input data-testid="panel-salary" value={salary} maxLength={120} onChange={(e) => setSalary(e.target.value)} className={field} /></label>
       <label className="flex flex-col gap-1 font-mono text-xs">{t('nextAction')}<input data-testid="panel-next-action" type="datetime-local" value={next} onChange={(e) => setNext(e.target.value)} className={field} /></label>
+      {!contactName && companyContact && (
+        <p data-testid="company-contact" className="text-sm">
+          {t('companyContact', { company: card.company, name: companyContact.name })}{' '}
+          <button type="button" data-testid="company-contact-use" onClick={() => { setContactName(companyContact.name); if (companyContact.url && !contactUrl) setContactUrl(companyContact.url); }} className="font-semibold underline">
+            {t('companyContactUse')}
+          </button>
+        </p>
+      )}
       <label className="flex flex-col gap-1 font-mono text-xs">{t('contactName')}<input value={contactName} maxLength={120} onChange={(e) => setContactName(e.target.value)} className={field} /></label>
       <label className="flex flex-col gap-1 font-mono text-xs">{t('contactUrl')}<input type="url" value={contactUrl} onChange={(e) => setContactUrl(e.target.value)} className={field} /></label>
       <label className="flex flex-col gap-1 font-mono text-xs">{t('notes')}<textarea data-testid="panel-notes" value={notes} maxLength={5000} onChange={(e) => setNotes(e.target.value)} className={`${field} min-h-24`} /></label>

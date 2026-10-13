@@ -68,9 +68,9 @@ export async function logSentMessage(applicationId: string, channel: 'email' | '
 export async function listMessages(applicationId: string) {
   if (!(await getUserId()) || !UUID.test(applicationId)) return [];
   const supabase = await createClient();
-  const { data } = await supabase.from('application_messages').select('direction, channel, body, sent_at, ai_classification, ai_extracted').eq('application_id', applicationId).order('sent_at', { ascending: false }).limit(50);
+  const { data } = await supabase.from('application_messages').select('direction, channel, author, body, sent_at, ai_classification, ai_extracted').eq('application_id', applicationId).order('sent_at', { ascending: false }).limit(50);
   return (data ?? []).map((m) => {
-    const extracted = (m.ai_extracted ?? {}) as { summary?: unknown };
+    const extracted = (m.ai_extracted ?? {}) as { summary?: unknown; link?: unknown };
     return {
       direction: m.direction as 'in' | 'out',
       channel: m.channel,
@@ -78,11 +78,24 @@ export async function listMessages(applicationId: string) {
       sentAt: m.sent_at,
       kind: isReplyKind(m.ai_classification) ? m.ai_classification : null,
       summary: typeof extracted.summary === 'string' ? extracted.summary : null,
+      link: safeLink(extracted.link),
+      author: m.author,
     };
   });
 }
 
-const REPLY_CHANNELS = ['email', 'linkedin', 'djinni', 'telegram', 'call', 'other'] as const;
+/** An http(s) link to the conversation (Djinni inbox, mail, LinkedIn), or null. */
+function safeLink(raw: unknown): string | null {
+  if (typeof raw !== 'string' || raw.length > 500) return null;
+  try {
+    const u = new URL(raw.trim());
+    return u.protocol === 'https:' || u.protocol === 'http:' ? u.toString() : null;
+  } catch {
+    return null;
+  }
+}
+
+const REPLY_CHANNELS = ['djinni', 'dou', 'robotaua', 'email', 'linkedin', 'telegram', 'call', 'other'] as const;
 export type ReplyChannel = (typeof REPLY_CHANNELS)[number];
 
 /** Asks the writing model what a pasted recruiter reply is. Spends one private AI request. */
@@ -113,25 +126,37 @@ export async function suggestReplyKind(
  */
 export async function logReply(
   applicationId: string,
-  reply: { channel: ReplyChannel; body: string; kind: ReplyKind; summary?: string | null; interviewAt?: string | null },
-): Promise<{ firstResponseAt: string | null; lastActivityAt: string | null; nextActionAt: string | null } | null> {
+  reply: { channel: ReplyChannel; body: string; kind: ReplyKind; summary?: string | null; interviewAt?: string | null; author?: string | null; link?: string | null },
+): Promise<{ firstResponseAt: string | null; lastActivityAt: string | null; nextActionAt: string | null; contactName: string | null } | null> {
   const userId = await getUserId();
   const text = reply.body.trim().slice(0, 10_000);
   const interviewAt = reply.interviewAt && !Number.isNaN(Date.parse(reply.interviewAt)) ? new Date(reply.interviewAt).toISOString() : null;
   if (!userId || !UUID.test(applicationId) || !REPLY_CHANNELS.includes(reply.channel) || !isReplyKind(reply.kind) || !text) return null;
   const supabase = await createClient();
-  const { data: app } = await supabase.from('applications').select('first_response_at, last_activity_at, next_action_at').eq('id', applicationId).maybeSingle();
+  const { data: app } = await supabase.from('applications').select('first_response_at, last_activity_at, next_action_at, contact').eq('id', applicationId).maybeSingle();
   if (!app) return null;
   const now = new Date().toISOString();
   const real = reply.kind !== 'auto_reply';
+  const author = reply.author?.trim().slice(0, 120) || null;
+  const link = safeLink(reply.link);
+  const contact = (app.contact ?? {}) as { name?: unknown; url?: unknown };
+  // The person who answered becomes the card's contact, unless one is set already.
+  const knownName = typeof contact.name === 'string' && contact.name ? contact.name : null;
   const next = {
     firstResponseAt: real ? (app.first_response_at ?? now) : app.first_response_at,
     lastActivityAt: real ? now : app.last_activity_at,
     nextActionAt: interviewAt ?? app.next_action_at,
+    contactName: knownName ?? author,
   };
   const { data, error: uErr } = await supabase
     .from('applications')
-    .update({ reply_kind: reply.kind, first_response_at: next.firstResponseAt, last_activity_at: next.lastActivityAt, next_action_at: next.nextActionAt })
+    .update({
+      reply_kind: reply.kind,
+      first_response_at: next.firstResponseAt,
+      last_activity_at: next.lastActivityAt,
+      next_action_at: next.nextActionAt,
+      ...(!knownName && author ? { contact: { ...(typeof contact.url === 'string' ? { url: contact.url } : {}), name: author } } : {}),
+    })
     .eq('id', applicationId)
     .select('id');
   if (uErr || (data?.length ?? 0) === 0) return null;
@@ -141,9 +166,10 @@ export async function logReply(
     user_id: userId,
     direction: 'in',
     channel: reply.channel,
+    author,
     body: text,
     ai_classification: reply.kind,
-    ai_extracted: { ...(summary ? { summary } : {}), ...(interviewAt ? { interviewAt } : {}) },
+    ai_extracted: { ...(summary ? { summary } : {}), ...(interviewAt ? { interviewAt } : {}), ...(link ? { link } : {}) },
   });
   if (error) return null;
   const { error: eErr } = await supabase.from('application_events').insert({ application_id: applicationId, user_id: userId, type: 'message', payload: { direction: 'in', channel: reply.channel, kind: reply.kind } });

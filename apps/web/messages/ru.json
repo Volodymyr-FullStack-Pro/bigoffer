@@ -431,7 +431,7 @@
     "replyTitle": "Ответ от компании",
     "replyClear": "Убрать отметку",
     "replyPlaceholder": "Вставьте письмо или сообщение рекрутера…",
-    "replyChannel": "Откуда",
+    "replyChannel": "Откуда пришёл ответ",
     "replyKind": "Тип ответа",
     "channel_email": "Почта",
     "channel_linkedin": "LinkedIn",
@@ -456,7 +456,18 @@
     "replyErr_ai_limit": "Дневной лимит AI исчерпан — выберите тип вручную.",
     "replyErr_not_found": "Карточка не найдена.",
     "replyErr_failed": "Не получилось. Попробуйте ещё раз.",
-    "event_message_in": "Получен ответ"
+    "event_message_in": "Получен ответ",
+    "channel_dou": "DOU",
+    "channel_robotaua": "robota.ua",
+    "replyAuthor": "Рекрутер (кто ответил)",
+    "companyContact": "Рекрутер {company} из другой карточки: {name}.",
+    "companyContactUse": "Подставить",
+    "replyLink": "Ссылка на переписку",
+    "replyLinkHint_djinni": "https://djinni.co/my/inbox/…",
+    "replyLinkHint_email": "Ссылка на письмо (Gmail: ⋮ → «Копировать ссылку»)",
+    "replyLinkHint_linkedin": "https://www.linkedin.com/messaging/…",
+    "replyLinkHint_other": "https://…",
+    "openThread": "Открыть переписку"
   },
   "cv": {
     "title": "Ваше CV",

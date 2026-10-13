@@ -431,7 +431,7 @@
     "replyTitle": "Відповідь від компанії",
     "replyClear": "Прибрати позначку",
     "replyPlaceholder": "Вставте лист або повідомлення рекрутера…",
-    "replyChannel": "Звідки",
+    "replyChannel": "Звідки прийшла відповідь",
     "replyKind": "Тип відповіді",
     "channel_email": "Пошта",
     "channel_linkedin": "LinkedIn",
@@ -456,7 +456,18 @@
     "replyErr_ai_limit": "Денний ліміт AI вичерпано — оберіть тип вручну.",
     "replyErr_not_found": "Картку не знайдено.",
     "replyErr_failed": "Не вдалося. Спробуйте ще раз.",
-    "event_message_in": "Отримано відповідь"
+    "event_message_in": "Отримано відповідь",
+    "channel_dou": "DOU",
+    "channel_robotaua": "robota.ua",
+    "replyAuthor": "Рекрутер (хто відповів)",
+    "companyContact": "Рекрутер {company} з іншої картки: {name}.",
+    "companyContactUse": "Підставити",
+    "replyLink": "Посилання на переписку",
+    "replyLinkHint_djinni": "https://djinni.co/my/inbox/…",
+    "replyLinkHint_email": "Посилання на лист (Gmail: ⋮ → «Копіювати посилання»)",
+    "replyLinkHint_linkedin": "https://www.linkedin.com/messaging/…",
+    "replyLinkHint_other": "https://…",
+    "openThread": "Відкрити переписку"
   },
   "cv": {
     "title": "Ваше CV",

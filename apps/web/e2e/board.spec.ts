@@ -226,14 +226,19 @@ test('a pasted auto-reply only tags the card; an interview invite moves it and s
   await expect(card(page, title).getByTestId('card-reply')).toContainText('Auto-reply');
   await expect(column(page, 'applied').getByText(title)).toBeVisible();
 
+  await visible(page, 'reply-channel').and(page.locator('[data-channel="djinni"]')).click();
   await visible(page, 'reply-body').fill('Please book a ReactJS interview: calendly.com/acme/react');
+  await visible(page, 'reply-link').fill('https://djinni.co/my/inbox/123/');
   await visible(page, 'reply-classify').click();
+  await expect(visible(page, 'reply-author')).toHaveValue('Galina');
   await expect(visible(page, 'reply-when')).toHaveValue('2030-10-20T12:30');
   await expect(visible(page, 'reply-save')).toContainText('Interview');
   await visible(page, 'reply-save').click();
   await expect.poll(() => applicationColumnKey(id)).toBe('interview');
   await expect(visible(page, 'panel-history')).toContainText('Reply received');
   await expect(visible(page, 'msg-item').first()).toContainText('Interview invite');
+  await expect(visible(page, 'msg-item').first()).toContainText('Djinni · Galina');
+  await expect(visible(page, 'panel-thread')).toHaveAttribute('href', 'https://djinni.co/my/inbox/123/');
   await page.keyboard.press('Escape');
   await expect(column(page, 'interview').locator(`[data-reply-kind="interview_invite"]`).filter({ hasText: title })).toBeVisible();
   await expect(card(page, title).getByTestId('card-next')).toContainText('20');

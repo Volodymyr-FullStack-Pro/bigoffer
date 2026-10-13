@@ -66,9 +66,9 @@ export function fakeResponder(req: FakeRequest): unknown {
       };
     case 'classify_reply': {
       const text = req.prompt.toLowerCase();
-      if (text.includes('calendly')) return { kind: 'interview_invite', interview_at: '2030-10-20T12:30', summary: 'Interview invite [fake]' };
-      if (text.includes('received your application')) return { kind: 'auto_reply', interview_at: null, summary: 'Automatic confirmation [fake]' };
-      return { kind: 'question', interview_at: null, summary: 'The recruiter asks a question [fake]' };
+      if (text.includes('calendly')) return { kind: 'interview_invite', interview_at: '2030-10-20T12:30', summary: 'Interview invite [fake]', recruiter_name: 'Galina' };
+      if (text.includes('received your application')) return { kind: 'auto_reply', interview_at: null, summary: 'Automatic confirmation [fake]', recruiter_name: null };
+      return { kind: 'question', interview_at: null, summary: 'The recruiter asks a question [fake]', recruiter_name: null };
     }
     case 'form_answers': {
       const count = [...req.prompt.matchAll(/^#(\d+) /gm)].length;
