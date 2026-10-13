@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { FakeLlmClient, fakeResponder } from '../testing';
-import { generateApplyKit, signOff } from './apply-kit';
+import { formatLetter, generateApplyKit, signOff } from './apply-kit';
 import { normalizeCv } from './parse-cv';
 
 const cv = normalizeCv(fakeResponder({ task: 'parse_cv' } as never) as never);
@@ -64,5 +64,26 @@ describe('generateApplyKit', () => {
     const llm = new FakeLlmClient(() => ({ ...(fakeResponder({ task: 'apply_kit' } as never) as object), short_message: 'x'.repeat(800) }), ['private']);
     const kit = await generateApplyKit(llm, { job, cv, lang: 'en', tone: 'default', salaryMinUsd: null });
     expect(kit.shortMessage).toHaveLength(500);
+  });
+});
+
+describe('formatLetter', () => {
+  it('lays out a letter that came back as one line', () => {
+    const flat =
+      'Dear Binary Studio Team, I am excited to apply. Why I am a strong fit: • Stack match: React and NestJS. • Ownership: sole developer on Contrify. Feel free to reach out — I would be glad to tell you more.';
+    expect(formatLetter(flat)).toBe(
+      'Dear Binary Studio Team,\n\nI am excited to apply. Why I am a strong fit:\n\n• Stack match: React and NestJS.\n• Ownership: sole developer on Contrify.\n\nFeel free to reach out — I would be glad to tell you more.',
+    );
+  });
+
+  it('leaves a well-formed letter as it is', () => {
+    const good = 'Hi Acme team,\n\nOpening.\n\nWhy I fit:\n\n• One.\n• Two.\n\nFeel free to reach out.';
+    expect(formatLetter(good)).toBe(good);
+  });
+
+  it('formats Ukrainian too', () => {
+    expect(formatLetter('Добрий день, команда Acme! Маю 3+ роки досвіду: • React. • NestJS. Буду радий поспілкуватися.')).toBe(
+      'Добрий день, команда Acme!\n\nМаю 3+ роки досвіду:\n\n• React.\n• NestJS.\n\nБуду радий поспілкуватися.',
+    );
   });
 });
