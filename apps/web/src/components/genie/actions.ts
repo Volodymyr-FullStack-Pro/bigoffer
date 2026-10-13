@@ -40,7 +40,7 @@ export async function getGenieState(tzRaw: string): Promise<GenieState | null> {
   const savedSince = new Date(now.getTime() - 2 * 24 * 3600_000).toISOString();
   const dayAhead = new Date(now.getTime() + 24 * 3600_000).toISOString();
 
-  const [{ data: me }, { data: profiles }, { data: applied }, fresh, hot, hidden, waiting, cv, soon, saved] = await Promise.all([
+  const [{ data: me }, { data: profiles }, { data: applied }, fresh, hot, hidden, waiting, cv, soon, saved, { data: answered }] = await Promise.all([
     supabase.from('profiles').select('ui_prefs, timezone, full_name, telegram_chat_id').eq('id', userId).maybeSingle(),
     supabase.from('search_profiles').select('is_active, sources'),
     supabase.from('applications').select('applied_at').gte('applied_at', since14d),
@@ -73,7 +73,17 @@ export async function getGenieState(tzRaw: string): Promise<GenieState | null> {
       .select('id, board_columns!inner(key)', { count: 'exact', head: true })
       .eq('board_columns.key', 'saved')
       .lt('created_at', savedSince),
+    // Open cards whose latest reply waits for the candidate; whether it still does is read from the last message below.
+    supabase.from('applications').select('id').eq('outcome', 'open').in('reply_kind', ['question', 'interview_invite', 'test_task', 'offer']).limit(200),
   ]);
+  let yourMove = 0;
+  const candidates = (answered ?? []).map((a) => a.id);
+  if (candidates.length > 0) {
+    const { data: msgs } = await supabase.from('application_messages').select('application_id, direction').in('application_id', candidates).order('sent_at', { ascending: false }).limit(1000);
+    const last = new Map<string, string>();
+    for (const m of msgs ?? []) if (!last.has(m.application_id)) last.set(m.application_id, m.direction);
+    yourMove = candidates.filter((id) => last.get(id) === 'in').length;
+  }
 
   const prefs = parseUiPrefs(me?.ui_prefs).genie ?? {};
   // The profile's time zone decides "today"; the browser's is the fallback.
@@ -121,5 +131,6 @@ export async function getGenieState(tzRaw: string): Promise<GenieState | null> {
     interviewsSoon: soon.count ?? 0,
     savedWaiting: saved.count ?? 0,
     telegramLinked: me?.telegram_chat_id != null,
+    yourMove,
   };
 }

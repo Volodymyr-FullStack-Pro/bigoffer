@@ -37,6 +37,8 @@ export type GenieState = {
   savedWaiting: number;
   /** The Telegram bot is linked (alerts reach the user within minutes). */
   telegramLinked: boolean;
+  /** Cards where the company answered and waits for the candidate (question, invite to book, test task, offer). */
+  yourMove: number;
 };
 
 export type GenieMood = 'happy' | 'neutral' | 'worried' | 'excited';
@@ -65,8 +67,19 @@ export type GeniePageHint = { key: string; params?: Record<string, string | numb
 const HOUR = 3600_000;
 const DAY = 24 * HOUR;
 export const MOTIVATION_COUNT = 30;
-// Owner's choice (2026-10-13): a motivation line every 15 minutes when nothing more useful is due.
-const MOTIVATION_EVERY = 15 * 60_000;
+/** How-to tips about BigOffer itself, shown between mottos. */
+export const FEATURE_TIP_COUNT = 12;
+const FEATURE_TIP_ACTIONS: Record<number, GenieMessage['action']> = {
+  0: { href: '/board', labelKey: 'actBoard' },
+  1: { href: '/board', labelKey: 'actBoard' },
+  3: { href: '/today?fresh=1', labelKey: 'actFresh' },
+  5: { href: '/search', labelKey: 'actSetup' },
+  8: { href: '/analytics', labelKey: 'actProgress' },
+  10: { href: '/profile#telegram', labelKey: 'actConnect' },
+};
+// Owner's choice (2026-10-13, then "more often"): something light every 5 minutes when nothing more useful is due,
+// rotating a motto, a BigOffer tip and the day's progress.
+const MOTIVATION_EVERY = 5 * 60_000;
 
 const daily = (id: string, mem: GenieMemory, now: number, every = DAY) => now - (mem.shown[id] ?? 0) >= every;
 
@@ -105,6 +118,11 @@ export function pickMessage(
   // An interview or test task within a day beats everything but broken setup.
   if (s.interviewsSoon > 0) {
     candidates.push({ id: `goal:interview:${dayKey(now)}`, kind: 'goal', mood: 'excited', key: 'interviewSoon', params: { count: s.interviewsSoon }, action: { href: '/board#today-actions', labelKey: 'actPrepare' } });
+  }
+
+  // The company waits for an answer: replying fast is the cheapest edge there is.
+  if (s.yourMove > 0) {
+    candidates.push({ id: `move:${s.yourMove}:${Math.floor(now / (3 * HOUR))}`, kind: 'goal', mood: 'excited', key: 'yourMove', params: { count: s.yourMove }, action: { href: '/board#today-actions', labelKey: 'actAnswer' } });
   }
 
   // 2. Daily goal.
@@ -154,12 +172,25 @@ export function pickMessage(
   const fresh = candidates.find((m) => daily(m.id, mem, now, every(m)));
   if (fresh) return fresh;
 
-  // 6. Motivation, when nothing else is worth saying.
-  if (!quiet && now - mem.lastMotivationAt >= MOTIVATION_EVERY) {
-    const i = Math.floor(now / MOTIVATION_EVERY) % MOTIVATION_COUNT;
-    return { id: `motivation:${i}`, kind: 'motivation', mood: 'happy', key: `motto${i}` };
-  }
+  // 6. Light chatter when nothing else is worth saying: a motto, a BigOffer tip, the day's progress in turn.
+  if (!quiet && now - mem.lastMotivationAt >= MOTIVATION_EVERY) return chatter(s, now);
   return null;
+}
+
+/** The light line for this 5-minute slot. */
+export function chatter(s: GenieState, now: number): GenieMessage {
+  const slot = Math.floor(now / MOTIVATION_EVERY);
+  const turn = slot % 3;
+  if (turn === 1) {
+    const i = Math.floor(slot / 3) % FEATURE_TIP_COUNT;
+    return { id: `motivation:feat${i}`, kind: 'motivation', mood: 'neutral', key: `feat${i}`, action: FEATURE_TIP_ACTIONS[i] };
+  }
+  if (turn === 2 && s.hasProfile) {
+    const left = Math.max(0, s.goal - s.appliedToday);
+    return { id: `motivation:progress:${slot}`, kind: 'motivation', mood: left === 0 ? 'excited' : 'happy', key: left === 0 ? 'progressDone' : s.appliedToday === 0 ? 'progressNone' : 'progress', params: { done: s.appliedToday, goal: s.goal, left }, action: left > 0 ? { href: '/today', labelKey: 'actFeed' } : undefined };
+  }
+  const i = Math.floor(slot / 3) % MOTIVATION_COUNT;
+  return { id: `motivation:${i}`, kind: 'motivation', mood: 'happy', key: `motto${i}` };
 }
 
 function dayKey(now: number): string {
