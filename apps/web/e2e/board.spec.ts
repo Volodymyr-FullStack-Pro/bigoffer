@@ -279,3 +279,22 @@ test('a recruiter question makes it your move until you answer', async ({ contex
   await page.keyboard.press('Escape');
   await expect(card(page, title).getByTestId('card-urgency')).toHaveCount(0);
 });
+
+test('a saved reply can be re-tagged; an auto-reply after all sends the card back to Applied', async ({ context, page }) => {
+  const email = uniqueEmail('board-retag');
+  await loginAs(context, email);
+  const { id, title } = await seedApplication(email, { column: 'applied', appliedDaysAgo: 1 });
+  await page.goto('/en/board');
+  await card(page, title).click();
+  await visible(page, 'reply-body').fill('Thanks for sharing your CV. We will take a look.');
+  await visible(page, 'reply-kind').and(page.locator('[data-kind="other"]')).click();
+  await visible(page, 'reply-save').click();
+  await expect.poll(() => applicationColumnKey(id)).toBe('talking');
+  await visible(page, 'msg-kind-edit').click();
+  await visible(page, 'msg-kind-option').and(page.locator('[data-kind="auto_reply"]')).click();
+  await expect.poll(() => applicationColumnKey(id)).toBe('applied');
+  await expect(visible(page, 'msg-kind-edit')).toContainText('Auto-reply');
+  // Only the tag changed: the message itself is all there.
+  await expect(visible(page, 'msg-item')).toHaveCount(1);
+  await expect(visible(page, 'msg-item')).toContainText('Thanks for sharing your CV');
+});
