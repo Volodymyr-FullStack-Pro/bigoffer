@@ -7,6 +7,7 @@ import { ApplyKitPanel } from '@/components/apply-kit/apply-kit-panel';
 import { SourceBadge } from '@/components/ui/source-badge';
 import { listMessages } from './message-actions';
 import { RecruiterMessage } from './recruiter-message';
+import { Conversation } from './conversation';
 import { ReplyInbox } from './reply-inbox';
 import { useModalDialog } from './use-modal-dialog';
 import { fromZonedInput, toZonedInput } from './zoned-input';
@@ -127,6 +128,7 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, companyC
           {kitOpen && <ApplyKitPanel jobId={card.jobId} locale={locale} onApplied={onApplied} />}
         </div>
       )}
+      <Conversation applicationId={card.id} version={messagesVersion} />
       <ReplyInbox
         card={card}
         defaultAuthor={card.contactName ?? companyContact?.name ?? ''}
@@ -137,10 +139,10 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, companyC
           setMessagesVersion((v) => v + 1);
           if (patch.nextActionAt !== undefined) setNext(toZonedInput(patch.nextActionAt, timeZone));
           if (patch.contactName) setContactName(patch.contactName);
-          onReplyLogged({ ...patch, lastMessage: { direction: 'in', at: new Date().toISOString() } }, moveTo);
+          onReplyLogged(patch, moveTo);
         }}
       />
-      <RecruiterMessage applicationId={card.id} defaultLang={locale} version={messagesVersion} onSent={() => { const at = new Date().toISOString(); onChanged({ lastActivityAt: at, lastMessage: { direction: 'out', at } }); }} />
+      <RecruiterMessage applicationId={card.id} defaultLang={locale} version={messagesVersion} onSent={() => { const at = new Date().toISOString(); setMessagesVersion((v) => v + 1); onChanged({ lastActivityAt: at, lastMessage: { direction: 'out', at } }); }} />
       <label className="flex flex-col gap-1 font-mono text-xs">
         {t('moveTo')}
         <select data-testid="panel-move" value={card.columnId} onChange={(e) => onMove(e.target.value)} className={field}>

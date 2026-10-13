@@ -477,7 +477,19 @@
     "nextStep_step_passed": "The planned step is over. Move the card on, paste the company’s reply or set a new next step.",
     "nextStep_ping": "It has been quiet. Send a short follow-up (below: “Message the recruiter” → “Follow-up”) and press “I pinged”.",
     "nextStep_overdue": "Still no answer. Follow up again or check the status on the job site.",
-    "nextStep_ghosting": "Looks like they went silent. If nothing comes, mark it as no reply."
+    "nextStep_ghosting": "Looks like they went silent. If nothing comes, mark it as no reply.",
+    "conversationTitle": "{count, plural, =0 {Conversation} one {Conversation · # message} other {Conversation · # messages}}",
+    "conversationEmpty": "The whole conversation with the company goes here: add their replies and yours.",
+    "conversationMe": "Me",
+    "conversationThem": "Company",
+    "conversationMore": "Show all",
+    "conversationLess": "Collapse",
+    "replyAddTitle": "Add to the conversation",
+    "replyTheirs": "Their reply",
+    "replyMine": "My reply",
+    "replyChannelMine": "Where I replied",
+    "replyPlaceholderMine": "Paste what you replied…",
+    "replySaveMine": "Save my reply"
   },
   "cv": {
     "title": "Your CV",

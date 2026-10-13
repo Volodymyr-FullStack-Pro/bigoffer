@@ -5,7 +5,7 @@ import type { BoardCard } from './board-types';
 const card = (over: Partial<BoardCard> = {}): BoardCard => ({
   id: '1', jobId: null, columnId: 'c', rank: 'a', title: 'Frontend Developer (React)', company: 'Solidgate', url: null, sourceId: null,
   salary: null, notes: 'Рекрутерка Анна', contactName: 'Anna K', contactUrl: null, appliedAt: null, nextActionAt: null, firstResponseAt: null,
-  lastActivityAt: null, followUpCount: 0, outcome: 'open', labelIds: ['l1'], replyKind: null, lastMessage: null, ...over,
+  lastActivityAt: null, followUpCount: 0, outcome: 'open', labelIds: ['l1'], replyKind: null, lastMessage: null, messageCount: 0, ...over,
 });
 
 describe('matchesFilter', () => {

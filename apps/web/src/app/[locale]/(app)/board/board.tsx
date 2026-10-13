@@ -264,10 +264,10 @@ export function Board({ columns, cards: initial, labels: initialLabels, rules, n
               show({ message: t('moveError'), tone: 'error' });
             }
           }}
-          onChanged={(patch) => patchLocal(open.id, patch)}
+          onChanged={(patch) => patchLocal(open.id, patch.lastMessage ? { ...patch, messageCount: open.messageCount + 1 } : patch)}
           onLabelCreated={(l) => setLabels((list) => [...list, l])}
           onReplyLogged={(patch, moveTo) => {
-            patchLocal(open.id, patch);
+            patchLocal(open.id, patch.lastMessage ? { ...patch, messageCount: open.messageCount + 1 } : patch);
             if (moveTo) requestMove(open.id, moveTo.id, endRank(moveTo.id, open.id));
           }}
           onApplied={(r) => patchLocal(open.id, { columnId: r.columnId, rank: r.rank, appliedAt: open.appliedAt ?? new Date().toISOString() })}

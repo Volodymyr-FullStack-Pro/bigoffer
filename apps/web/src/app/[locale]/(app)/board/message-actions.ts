@@ -50,14 +50,15 @@ export async function generateRecruiterMessage(
   }
 }
 
-export async function logSentMessage(applicationId: string, channel: 'email' | 'linkedin' | 'telegram' | 'other', body: string): Promise<boolean> {
+export async function logSentMessage(applicationId: string, channel: ReplyChannel, body: string, link?: string | null): Promise<boolean> {
   const userId = await getUserId();
   const text = body.trim().slice(0, 10_000);
-  if (!userId || !UUID.test(applicationId) || !['email', 'linkedin', 'telegram', 'other'].includes(channel) || !text) return false;
+  if (!userId || !UUID.test(applicationId) || !REPLY_CHANNELS.includes(channel) || !text) return false;
   const supabase = await createClient();
   const { data, error: uErr } = await supabase.from('applications').update({ last_activity_at: new Date().toISOString() }).eq('id', applicationId).select('id');
   if (uErr || (data?.length ?? 0) === 0) return false;
-  const { error } = await supabase.from('application_messages').insert({ application_id: applicationId, user_id: userId, direction: 'out', channel, body: text });
+  const url = safeLink(link);
+  const { error } = await supabase.from('application_messages').insert({ application_id: applicationId, user_id: userId, direction: 'out', channel, body: text, ...(url ? { ai_extracted: { link: url } } : {}) });
   if (error) return false;
   const { error: eErr } = await supabase.from('application_events').insert({ application_id: applicationId, user_id: userId, type: 'message', payload: { direction: 'out', channel } });
   if (eErr) console.error('logSentMessage event failed', eErr.name ?? 'unknown');

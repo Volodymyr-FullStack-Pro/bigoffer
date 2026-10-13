@@ -32,7 +32,7 @@ export function computeStats(rows: readonly AppRow[], now: Date, tz: string, day
   // Anything past "saved" was applied to, even when the card was moved without an applied date.
   const applied = rows.filter((r) => r.appliedAt || r.column !== 'saved');
   const within = (iso: string, d: number) => ms - Date.parse(iso) <= d * 86_400_000;
-  const responded = applied.filter((r) => r.firstResponseAt || INTERVIEW.has(r.column) || r.outcome === 'offer');
+  const responded = applied.filter((r) => r.firstResponseAt || r.column === 'talking' || INTERVIEW.has(r.column) || r.outcome === 'offer');
   const interview = rows.filter((r) => INTERVIEW.has(r.column) || r.outcome === 'offer');
   const offers = rows.filter((r) => r.column === 'offer' || r.outcome === 'offer');
 
