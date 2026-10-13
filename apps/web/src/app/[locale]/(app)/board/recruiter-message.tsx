@@ -1,19 +1,15 @@
 'use client';
 
 import { MESSAGE_FORMATS, MESSAGE_LIMITS, type MessageFormat } from '@jp/ai';
-import { useFormatter, useNow, useTranslations } from 'next-intl';
+import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { tellGenie } from '@/lib/genie/events';
 import { generateRecruiterMessage, listMessages, logSentMessage } from './message-actions';
-import { REPLY_STYLE } from './reply-kinds';
 
 const CHANNEL: Record<MessageFormat, 'linkedin' | 'telegram' | 'email'> = { linkedin_note: 'linkedin', inmail: 'linkedin', telegram: 'telegram', email: 'email' };
 
-export function RecruiterMessage({ applicationId, defaultLang, version = 0, onSent }: { applicationId: string; defaultLang: 'en' | 'uk' | 'ru'; /** Bumped when a reply is logged elsewhere, to reload the thread. */ version?: number; onSent: () => void }) {
+export function RecruiterMessage({ applicationId, defaultLang, version = 0, onSent }: { applicationId: string; defaultLang: 'en' | 'uk' | 'ru'; /** Bumped when a message is logged elsewhere. */ version?: number; onSent: () => void }) {
   const t = useTranslations('recruiter');
-  const tb = useTranslations('board');
-  const format = useFormatter();
-  const now = useNow();
   const [fmt, setFmt] = useState<MessageFormat>('linkedin_note');
   const [kind, setKind] = useState<'intro' | 'follow_up'>('intro');
   const [lang, setLang] = useState(defaultLang);
@@ -22,13 +18,12 @@ export function RecruiterMessage({ applicationId, defaultLang, version = 0, onSe
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
-  const [history, setHistory] = useState<Awaited<ReturnType<typeof listMessages>>>([]);
-
+  
   useEffect(() => {
+    // After a first message, the next one is a follow-up.
     void listMessages(applicationId).then((h) => {
-      setHistory(h);
       if (h.some((m) => m.direction === 'out')) setKind('follow_up');
-    }).catch(() => setHistory([]));
+    }).catch(() => undefined);
   }, [applicationId, version]);
 
   const field = 'brutal bg-card px-2 py-1 text-sm';
@@ -89,7 +84,6 @@ export function RecruiterMessage({ applicationId, defaultLang, version = 0, onSe
               if (!ok) return setError('failed');
               setSent(true);
               setKind('follow_up');
-              setHistory(await listMessages(applicationId));
               onSent();
               tellGenie({ type: 'sent' });
             } catch {
@@ -101,19 +95,6 @@ export function RecruiterMessage({ applicationId, defaultLang, version = 0, onSe
           {sent ? `✓ ${t('logged')}` : t('sent')}
         </button>
       </div>
-      {history.length > 0 && (
-        <ul className="flex flex-col gap-2 text-sm">
-          {history.map((m, i) => (
-            <li key={i} data-testid="msg-item" className="border-l-4 border-border pl-2" style={m.kind ? { borderLeftColor: REPLY_STYLE[m.kind].bg } : undefined}>
-              <span className="font-mono text-xs text-muted-foreground">{t(m.direction === 'out' ? 'outgoing' : 'incoming')} · {tb(`channel_${m.channel}` as never)}{m.author ? ` · ${m.author}` : ''} · <span suppressHydrationWarning>{format.relativeTime(new Date(m.sentAt), now)}</span></span>
-              {m.kind && <span className="ml-2 rounded-full px-1.5 text-[10px] font-semibold" style={{ background: REPLY_STYLE[m.kind].bg, color: REPLY_STYLE[m.kind].fg }}>{tb(`reply_${m.kind}` as never)}</span>}
-              {m.summary && <p className="text-xs italic">{m.summary}</p>}
-              {m.link && <a data-testid="msg-link" href={m.link} target="_blank" rel="noopener noreferrer" className="font-mono text-xs underline">{tb('openThread')} ↗</a>}
-              <p className="line-clamp-3 whitespace-pre-line">{m.body}</p>
-            </li>
-          ))}
-        </ul>
-      )}
     </section>
   );
 }

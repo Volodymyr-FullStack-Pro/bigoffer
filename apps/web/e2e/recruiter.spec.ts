@@ -15,7 +15,7 @@ test('writes a LinkedIn note, logs it as sent and switches to follow-up', async 
   await expect(visible(page, 'msg-body')).toHaveValue(/\[fake\]/);
   await expect(visible(page, 'msg-count')).toContainText('/ 300');
   await visible(page, 'msg-sent').click();
-  await expect(visible(page, 'msg-item')).toContainText('Sent');
+  await expect(visible(page, 'msg-item')).toHaveAttribute('data-direction', 'out');
   await expect(visible(page, 'msg-kind')).toHaveValue('follow_up');
   await expect(visible(page, 'panel-history')).toContainText('Message sent');
   await page.reload();

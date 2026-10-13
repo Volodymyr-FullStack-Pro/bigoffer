@@ -28,6 +28,8 @@ export type BoardCard = {
   replyKind: ReplyKind | null;
   /** The latest logged message (who spoke last decides whose move it is). */
   lastMessage: { direction: 'in' | 'out'; at: string } | null;
+  /** Logged messages both ways. */
+  messageCount: number;
 };
 
 export type BoardCardView = BoardCard & { urgency: Urgency };

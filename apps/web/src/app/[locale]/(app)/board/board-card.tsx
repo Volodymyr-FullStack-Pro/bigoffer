@@ -85,6 +85,11 @@ export function BoardCardItem({ card, labels, labelName, now, timeZone, onOpen }
       )}
       <span className="flex flex-wrap items-center gap-2 font-mono text-xs text-muted-foreground">
         {card.sourceId && <SourceBadge sourceId={card.sourceId} />}
+        {card.messageCount > 0 && (
+          <span data-testid="card-messages" title={t('conversationTitle', { count: card.messageCount })} className="rounded-full bg-muted px-1.5">
+            💬 {card.messageCount}{card.lastMessage?.direction === 'in' ? ' ←' : ''}
+          </span>
+        )}
         {card.appliedAt && <span suppressHydrationWarning>{t('appliedAgo', { ago: format.relativeTime(new Date(card.appliedAt), now) })}</span>}
         {card.urgency in URGENCY_STYLE && (
           <span data-testid="card-urgency" data-urgency={card.urgency} className={`rounded-sm border border-border px-1 font-bold ${URGENCY_STYLE[card.urgency]}`}>

@@ -26,7 +26,9 @@ export default async function BoardPage() {
     supabase.from('application_messages').select('application_id, direction, sent_at').order('sent_at', { ascending: false }).limit(2000),
   ]);
   const lastMessage = new Map<string, { direction: 'in' | 'out'; at: string }>();
+  const messageCount = new Map<string, number>();
   for (const m of messages ?? []) {
+    messageCount.set(m.application_id, (messageCount.get(m.application_id) ?? 0) + 1);
     if (!lastMessage.has(m.application_id)) lastMessage.set(m.application_id, { direction: m.direction === 'in' ? 'in' : 'out', at: m.sent_at });
   }
 
@@ -60,6 +62,7 @@ export default async function BoardPage() {
       labelIds: a.application_labels.map((l) => l.label_id),
       replyKind: isReplyKind(a.reply_kind) ? a.reply_kind : null,
       lastMessage: lastMessage.get(a.id) ?? null,
+      messageCount: messageCount.get(a.id) ?? 0,
     };
   });
 
