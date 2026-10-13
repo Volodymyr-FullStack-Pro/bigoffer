@@ -49,7 +49,11 @@ export function BoardFilterBar({ filter, onChange, cards, labels, labelName, fou
             value={filter.query}
             onChange={(e) => onChange({ ...filter, query: e.target.value })}
             onKeyDown={(e) => {
-              if (e.key === 'Enter' && found === 1) onOpenOnly();
+              if (e.key === 'Enter' && found === 1) {
+                // Without this the same key press lands on the panel's close button once it takes focus.
+                e.preventDefault();
+                onOpenOnly();
+              }
               if (e.key === 'Escape') onChange({ ...filter, query: '' });
             }}
             placeholder={t('searchPlaceholder')}
