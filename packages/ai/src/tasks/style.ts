@@ -13,7 +13,6 @@ const BANNED: readonly RegExp[] = [
   /\balign(?:s|ed)?(?: perfectly| closely)? with\b/i,
   /well[- ](?:prepared|positioned)/i,
   /I am confident that/i,
-  /I am writing to express/i,
   /for your technical requirements/i,
 ];
 

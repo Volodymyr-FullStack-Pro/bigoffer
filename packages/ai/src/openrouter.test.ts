@@ -62,7 +62,9 @@ describe('letter route', () => {
   it('sends only the cover letter to the letter model', async () => {
     const base = new FakeLlmClient(() => ({ a: 'base' }), ['private']);
     const client = withRoutes(base, { writer: new FakeLlmClient(() => ({ a: 'writer' }), ['private']), letter: new FakeLlmClient(() => ({ a: 'letter' }), ['private']) });
-    expect((await client.generateJson(req)).data).toEqual({ a: 'letter' });
+    expect((await client.generateJson({ ...req, task: 'cover_letter' })).data).toEqual({ a: 'letter' });
+    // the rest of the apply kit (requirements, short message) stays on the writer
+    expect((await client.generateJson(req)).data).toEqual({ a: 'writer' });
     expect((await client.generateJson({ ...req, task: 'form_answers' })).data).toEqual({ a: 'writer' });
   });
 });
