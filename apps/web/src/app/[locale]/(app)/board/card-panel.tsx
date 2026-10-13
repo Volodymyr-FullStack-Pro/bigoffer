@@ -5,12 +5,19 @@ import { useFormatter, useLocale, useNow, useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { ApplyKitPanel } from '@/components/apply-kit/apply-kit-panel';
 import { RecruiterMessage } from './recruiter-message';
+import { ReplyInbox } from './reply-inbox';
 import { useModalDialog } from './use-modal-dialog';
 import { fromZonedInput, toZonedInput } from './zoned-input';
-import { createLabel, getApplicationEvents, markPinged, markResponse, setApplicationLabel, updateApplication } from './actions';
+import { createLabel, getApplicationEvents, markPinged, setApplicationLabel, updateApplication } from './actions';
 import type { BoardCardView, BoardColumn, BoardLabel } from './board-types';
 
-export function CardPanel({ card, timeZone, columns, labels, labelName, onClose, onMove, onDelete, onChanged, onLabelCreated, onApplied }: {
+/** History label key: an inbound message reads "reply received", not "message sent". */
+function eventKey(e: { type: string; payload: unknown }): string {
+  const p = (e.payload ?? {}) as { direction?: unknown };
+  return e.type === 'message' && p.direction === 'in' ? 'message_in' : e.type;
+}
+
+export function CardPanel({ card, timeZone, columns, labels, labelName, onClose, onMove, onDelete, onChanged, onLabelCreated, onApplied, onReplyLogged }: {
   card: BoardCardView;
   timeZone: string;
   columns: BoardColumn[];
@@ -22,6 +29,7 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, onClose,
   onChanged: (patch: Partial<BoardCardView>) => void;
   onLabelCreated: (l: BoardLabel) => void;
   onApplied: (r: { columnId: string; rank: string }) => void;
+  onReplyLogged: (patch: Partial<BoardCardView>, moveTo: BoardColumn | null) => void;
 }) {
   const t = useTranslations('board');
   const tk = useTranslations('kit');
@@ -31,7 +39,8 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, onClose,
   const [dialogRef, onDialogCancel] = useModalDialog(onClose);
   const format = useFormatter();
   const now = useNow();
-  const [events, setEvents] = useState<{ type: string; createdAt: string }[]>([]);
+  const [events, setEvents] = useState<{ type: string; payload: unknown; createdAt: string }[]>([]);
+  const [messagesVersion, setMessagesVersion] = useState(0);
   const [salary, setSalary] = useState(card.salary ?? '');
   const [notes, setNotes] = useState(card.notes ?? '');
   const [next, setNext] = useState(toZonedInput(card.nextActionAt, timeZone));
@@ -43,7 +52,7 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, onClose,
 
   useEffect(() => {
     getApplicationEvents(card.id).then(setEvents).catch(() => setEvents([]));
-  }, [card.id, card.columnId, card.labelIds.length, card.followUpCount, card.lastActivityAt]);
+  }, [card.id, card.columnId, card.labelIds.length, card.followUpCount, card.lastActivityAt, card.replyKind, messagesVersion]);
 
   const attempt = async (fn: () => Promise<boolean>): Promise<boolean> => {
     let ok = false;
@@ -88,7 +97,18 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, onClose,
           {kitOpen && <ApplyKitPanel jobId={card.jobId} locale={locale} onApplied={onApplied} />}
         </div>
       )}
-      <RecruiterMessage applicationId={card.id} defaultLang={locale} onSent={() => onChanged({ lastActivityAt: new Date().toISOString() })} />
+      <ReplyInbox
+        card={card}
+        columns={columns}
+        timeZone={timeZone}
+        lang={locale}
+        onLogged={(patch, moveTo) => {
+          setMessagesVersion((v) => v + 1);
+          if (patch.nextActionAt !== undefined) setNext(toZonedInput(patch.nextActionAt, timeZone));
+          onReplyLogged(patch, moveTo);
+        }}
+      />
+      <RecruiterMessage applicationId={card.id} defaultLang={locale} version={messagesVersion} onSent={() => onChanged({ lastActivityAt: new Date().toISOString() })} />
       <label className="flex flex-col gap-1 font-mono text-xs">
         {t('moveTo')}
         <select data-testid="panel-move" value={card.columnId} onChange={(e) => onMove(e.target.value)} className={field}>
@@ -97,7 +117,6 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, onClose,
       </label>
       <div className="flex flex-wrap gap-2">
         <button type="button" data-testid="panel-pinged" onClick={async () => { if (await attempt(() => markPinged(card.id))) onChanged({ followUpCount: card.followUpCount + 1, lastActivityAt: new Date().toISOString() }); }} className="brutal brutal-press px-3 py-1 text-sm font-semibold">{t('actionPinged')}</button>
-        <button type="button" data-testid="panel-response" onClick={async () => { const now = new Date().toISOString(); if (await attempt(() => markResponse(card.id))) onChanged({ firstResponseAt: now, lastActivityAt: now }); }} className="brutal brutal-press px-3 py-1 text-sm font-semibold">{t('gotReply')}</button>
       </div>
       <fieldset className="flex flex-col gap-2">
         <legend className="font-mono text-xs">{t('labels')}</legend>
@@ -142,7 +161,7 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, onClose,
         <h3 className="font-mono text-xs">{t('history')}</h3>
         <ul className="flex flex-col gap-1 text-sm">
           {events.map((e, i) => (
-            <li key={i}>{t(`event_${e.type}` as never)} · <span suppressHydrationWarning className="font-mono text-xs text-muted-foreground">{format.relativeTime(new Date(e.createdAt), now)}</span></li>
+            <li key={i}>{t(`event_${eventKey(e)}` as never)} · <span suppressHydrationWarning className="font-mono text-xs text-muted-foreground">{format.relativeTime(new Date(e.createdAt), now)}</span></li>
           ))}
         </ul>
       </section>

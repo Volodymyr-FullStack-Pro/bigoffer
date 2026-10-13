@@ -1,4 +1,5 @@
 import type { Urgency } from '@jp/core';
+import type { ReplyKind } from './reply-kinds';
 
 export type BoardColumn = { id: string; key: string; title: string; kind: 'active' | 'won' | 'lost' };
 export type BoardLabel = { id: string; key: string | null; name: string | null; color: string };
@@ -23,6 +24,8 @@ export type BoardCard = {
   followUpCount: number;
   outcome: string;
   labelIds: string[];
+  /** What the latest recruiter reply was; null until one is logged. */
+  replyKind: ReplyKind | null;
 };
 
 export type BoardCardView = BoardCard & { urgency: Urgency };
