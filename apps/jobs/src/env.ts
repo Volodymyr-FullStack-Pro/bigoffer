@@ -13,6 +13,8 @@ export function jobsEnv() {
       SCRAPER_USER_AGENT: z.string().min(1).default(DEFAULT_USER_AGENT),
       TELEGRAM_BOT_TOKEN: z.string().min(1).optional(),
       SITE_URL: z.url().optional(),
+      /** The owner's Telegram chat for health alerts (the bot must have talked to it); without it they only reach the logs. */
+      OWNER_TELEGRAM_CHAT_ID: z.coerce.number().int().optional(),
       AI_DAILY_LIMIT: z.coerce.number().int().min(0).default(900),
       AI_BATCH_SIZE: z.coerce.number().int().min(1).max(200).default(30),
       AI_MIN_INTERVAL_MS: z.coerce.number().int().min(0).default(4500),
@@ -23,6 +25,7 @@ export function jobsEnv() {
       SCRAPER_USER_AGENT: process.env.SCRAPER_USER_AGENT || undefined,
       TELEGRAM_BOT_TOKEN: process.env.TELEGRAM_BOT_TOKEN || undefined,
       SITE_URL: process.env.SITE_URL || undefined,
+      OWNER_TELEGRAM_CHAT_ID: process.env.OWNER_TELEGRAM_CHAT_ID || undefined,
       AI_DAILY_LIMIT: process.env.AI_DAILY_LIMIT || (paidPublicAi ? 3000 : undefined),
       AI_BATCH_SIZE: process.env.AI_BATCH_SIZE || (freeFirst ? 30 : paidPublicAi ? 60 : undefined),
       AI_MIN_INTERVAL_MS: process.env.AI_MIN_INTERVAL_MS || (freeFirst ? 4000 : paidPublicAi ? 300 : undefined),

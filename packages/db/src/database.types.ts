@@ -237,6 +237,17 @@ isOneToOne: false
                   Relationships: [
                     
                   ]
+                },"health_alerts": {
+                  Row: {
+                    "key": string,"sent_at": string
+                  }
+                  Insert: {
+                    "key": string,"sent_at"?: string
+                  }
+                  Update: {
+                    "key"?: string,"sent_at"?: string
+                  }
+                  Relationships: []
                 },"job_matches": {
                   Row: {
                     "breakdown": NonNullable<Json>,"created_at": string,"explained_at": string | null,"explanation": Json | null,"id": string,"job_id": string,"notified_at": string | null,"score": number,"search_profile_id": string | null,"state": string,"updated_at": string,"user_id": string
@@ -592,6 +603,14 @@ isOneToOne: false
                            },
 "link_telegram":
 { Args: { "p_chat_id": number,"p_token_hash": string }; Returns: string
+                           },
+"enrich_backlog":
+{ Args: { "p_now"?: string }; Returns: number
+                           },
+"source_health":
+{ Args: { "p_now"?: string }; Returns: {
+              "source_id": string,"runs_6h": number,"ok_runs_6h": number,"blocked_runs_6h": number,"found_6h": number,"last_ok_run_at": string | null,"new_jobs_24h": number,"pct_company": number | null,"pct_description": number | null,"pct_posted": number | null,"pct_location": number | null,"pct_salary": number | null,"newest_posted_at": string | null
+            }[]
                            },
 "matches_to_explain":
 { Args: { "p_day_start": string,"p_min_score": number,"p_per_user": number,"p_user_ids"?: (string)[] }; Returns: {
