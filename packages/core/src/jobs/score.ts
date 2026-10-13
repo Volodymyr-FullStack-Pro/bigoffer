@@ -65,6 +65,16 @@ const CORE_STACKS: [string, RegExp][] = [
 ];
 
 /** Core stacks the job is built on (its title or first two skills) that none of the profile's skills belongs to. */
+/** The core stack (language or platform) a skill belongs to, e.g. "Laravel" -> "PHP"; null for everything else. */
+export function coreStackOf(skill: string): string | null {
+  return CORE_STACKS.find(([, re]) => re.test(skill))?.[0] ?? null;
+}
+
+/** Whether a text names the given core stack (by its name from `coreStackOf`). */
+export function mentionsCoreStack(text: string, stack: string): boolean {
+  return CORE_STACKS.some(([name, re]) => name === stack && re.test(text));
+}
+
 export function missingCoreStacks(jobTitle: string, jobSkills: readonly string[], profileSkills: readonly string[]): string[] {
   const where = [jobTitle, ...jobSkills.slice(0, 2)];
   const needed = CORE_STACKS.filter(([, re]) => where.some((w) => re.test(w)));
