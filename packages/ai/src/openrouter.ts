@@ -111,7 +111,7 @@ export function createOpenRouterClient(opts: OpenRouterOptions): LlmClient {
 export type Routes = {
   /** Text sent to companies (`tier: 'writer'`): cover letters, form answers, recruiter messages. */
   writer?: LlmClient | null;
-  /** The cover letter alone (task "apply_kit"), when it should get a stronger model than the other writing; else the writer. */
+  /** The cover letter alone (task "cover_letter"), when it should get a stronger model than the other writing; else the writer. */
   letter?: LlmClient | null;
   /** Public data (job enrichment, explanations): no daily free-tier quota. */
   public?: LlmClient | null;
@@ -140,7 +140,7 @@ export function withRoutes(base: LlmClient, routes: Routes): LlmClient {
     Boolean(routes.publicFreeFirst && publicClient && req.sensitivity === 'public' && !req.tier && base.isAvailable('public'));
   const pick = (req: GenerateJsonRequest<z.ZodType>): LlmClient | null | undefined =>
     req.tier === 'writer'
-      ? req.task === 'apply_kit'
+      ? req.task === 'cover_letter'
         ? (letter ?? writer)
         : writer
       : req.sensitivity === 'public'

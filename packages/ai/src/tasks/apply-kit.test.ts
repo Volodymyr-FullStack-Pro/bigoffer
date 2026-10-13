@@ -12,10 +12,15 @@ describe('generateApplyKit', () => {
     const kit = await generateApplyKit(llm, { job, cv, lang: 'auto', tone: 'default', salaryMinUsd: 4000 });
     const req = llm.calls[0]!;
     expect(req).toMatchObject({ sensitivity: 'private', task: 'apply_kit', tier: 'writer', thinking: 'low', fallback: 'fast' });
+    // The letter is its own short brief with the model's own thinking.
+    const letter = llm.calls.find((c) => c.task === 'cover_letter')!;
+    expect(letter).toMatchObject({ sensitivity: 'private', tier: 'writer' });
+    expect(letter.thinking).toBeUndefined();
+    expect(letter.system).toContain('never mention missing skills');
+    expect(letter.prompt).toBe(req.prompt);
     expect(req.prompt).toContain('Senior Developer at Acme');
     expect(req.prompt).not.toContain('template');
-    expect(req.system).toContain('the pitch facts, must-haves first');
-    expect(req.system).toContain('Never paraphrase the company');
+    expect(req.system).toContain('The cover letter is written separately');
     expect(req.prompt).toMatch(/<job_posting>[\s\S]*<\/job_posting>/);
     expect(req.system).toContain('untrusted data');
     expect(req.prompt.length).toBeLessThan(12_000);
@@ -37,7 +42,7 @@ describe('generateApplyKit', () => {
     expect(req.prompt).toContain('Candidate name: Jane Doe');
     expect(req.prompt.indexOf('Candidate name: Jane Doe')).toBeGreaterThan(req.prompt.indexOf('</job_posting>'));
     expect(req.prompt).not.toContain('+380500000000');
-    expect(req.system).toContain('Do NOT add a sign-off');
+    expect(llm.calls.find((c) => c.task === 'cover_letter')!.system).toContain('no sign-off');
     expect(kit.coverLetter.endsWith('Best regards,\nJane Doe\nPhone: +380500000000\nLinkedIn: https://linkedin.com/in/jane')).toBe(true);
     expect(kit.coverLetter).not.toContain('cv.example');
   });
@@ -50,8 +55,9 @@ describe('generateApplyKit', () => {
   it('asks for the chosen language and tone', async () => {
     const llm = new FakeLlmClient(fakeResponder, ['private']);
     await generateApplyKit(llm, { job, cv, lang: 'uk', tone: 'shorter', salaryMinUsd: null });
-    expect(llm.calls[0]!.system).toContain('Ukrainian');
-    expect(llm.calls[0]!.system).toContain('80–100 words');
+    const letter = llm.calls.find((c) => c.task === 'cover_letter')!;
+    expect(letter.system).toContain('Ukrainian');
+    expect(letter.system).toContain('80–100 words');
   });
 
   it('truncates an over-long short message', async () => {
