@@ -73,7 +73,7 @@ function letterSystem(lang: 'auto' | 'en' | 'uk' | 'ru', tone: 'default' | 'shor
     'recruiter answers, so read both carefully and show clearly why the candidate fits: the stack they share, the most relevant projects,',
     'concrete results with the numbers the CV gives. A clear structure works well: greeting, a short opening, "why I am a strong fit" points, a short close.',
     'What recruiters say gets replies: greet the recruiter or hiring manager by name when the posting gives one; let the points answer the',
-    'posting\'s key requirements one by one; end with a clear ask for a short call.',
+    'posting\'s key requirements one by one; end by inviting them to reach out (e.g. "Feel free to reach out — I would be glad to tell you more.").',
     lang === 'auto' ? 'Write in the language of the job posting.' : `Write in ${LANG_NAME[lang]}.`,
     tone === 'shorter' ? 'Keep it short: 80–100 words.' : tone === 'formal' ? 'Formal tone, 170–230 words.' : '170–230 words.',
     'Rules: use only facts from the CV (state years of experience exactly as the CV does); never mention missing skills, fewer years or',
