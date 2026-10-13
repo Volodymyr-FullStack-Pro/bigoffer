@@ -44,7 +44,38 @@ export type MatchBreakdown = {
   excludedBy: string | null;
   /** The job's remote regions when they exclude the candidate's country. */
   blockedRegions: string[] | null;
+  /** The job's main language or platform (title or first skills) when the profile has none of them. */
+  missingStack?: string[];
 };
+
+/** Main languages / platforms: a job built on one the candidate lacks is not theirs, however many tools overlap. */
+const CORE_STACKS: [string, RegExp][] = [
+  ['Java', /\bjava\b(?!\s*script)/i],
+  ['.NET', /(\.net\b|\bc#|\basp\.net|\bblazor\b|\bdotnet\b)/i],
+  ['PHP', /\b(php|laravel|symfony)\b/i],
+  ['Python', /\b(python|django|fastapi|flask)\b/i],
+  ['Go', /\b(golang|go developer|go engineer)\b|^go$/i],
+  ['Ruby', /\b(ruby|rails)\b/i],
+  ['Scala', /\bscala\b/i],
+  ['Rust', /\brust\b/i],
+  ['C++', /\bc\+\+/i],
+  ['Kotlin', /\bkotlin\b/i],
+  ['Swift', /\bswift(ui)?\b/i],
+  ['Elixir', /\belixir\b/i],
+];
+
+/** Core stacks the job is built on (its title or first two skills) that none of the profile's skills belongs to. */
+export function missingCoreStacks(jobTitle: string, jobSkills: readonly string[], profileSkills: readonly string[]): string[] {
+  const where = [jobTitle, ...jobSkills.slice(0, 2)];
+  const needed = CORE_STACKS.filter(([, re]) => where.some((w) => re.test(w)));
+  if (needed.length === 0) return [];
+  // One known core stack is enough ("Python/React" for a Python + React dev).
+  if (needed.some(([, re]) => profileSkills.some((s) => re.test(s)))) return [];
+  return needed.map(([name]) => name);
+}
+
+/** Skill points left when the job's main stack is not the candidate's. */
+const MISSING_STACK_SKILLS = 8;
 
 function escapeRegex(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -175,12 +206,15 @@ export function scoreJob(
   // Skill credit saturates at SKILLS_FOR_FULL_CREDIT matches: a long profile list (e.g. 30 skills imported from a CV)
   // must not dilute a job that uses 8 of them down to 9/35. Short lists keep their plain share.
   const skillDenominator = Math.min(profile.skills.length, SKILLS_FOR_FULL_CREDIT);
-  const skills =
+  const missingStack = profile.skills.length > 0 ? missingCoreStacks(job.title, job.skills ?? [], profile.skills) : [];
+  const fullSkills =
     profile.skills.length === 0
       ? inText
         ? 35
         : 0
       : Math.round((35 * Math.min(matchedSkills.length, skillDenominator)) / skillDenominator);
+  // A .NET or Java full-stack job shares Git, Docker and React with a JS profile; that overlap is not a fit.
+  const skills = missingStack.length > 0 ? Math.min(fullSkills, MISSING_STACK_SKILLS) : fullSkills;
   const regions = job.remoteRegions ?? [];
   const blockedRegions =
     job.remoteType === 'remote' && remoteBlockedFor(regions, profile.candidateCountry) ? regions : null;
@@ -203,6 +237,7 @@ export function scoreJob(
     // must take "Senior …" jobs out of the feed. Jobs whose title states no level stay.
     excludedBy: keywordExclusion ?? (offTarget ? 'role' : levelOff ? 'seniority' : formatOff ? 'format' : blockedRegions ? 'region' : null),
     blockedRegions,
+    ...(missingStack.length > 0 ? { missingStack } : {}),
   };
   const score = Math.min(
     100,
