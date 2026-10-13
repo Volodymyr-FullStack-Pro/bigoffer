@@ -39,6 +39,25 @@ describe('parseCv', () => {
   });
 });
 
+describe('mainSkills', () => {
+  it('drops a core stack the CV names once in passing and keeps the ones it works in', async () => {
+    const { mainSkills } = await import('./parse-cv');
+    const cv = {
+      ...normalizeCv(fakeResponder({ task: 'parse_cv' } as never) as never),
+      headline: 'Full-Stack Software Engineer',
+      summary: 'Ships TypeScript, React and Node.js apps.',
+      skills: ['TypeScript', 'React', 'PHP', 'Laravel', 'Go', 'Python', 'Docker'],
+      experience: [
+        { company: 'MOAR', title: 'Full-Stack Engineer', start: '2024', end: '2024', highlights: ['Features across React and NestJS, Go and PHP/Laravel backends'] },
+        { company: 'Data Co', title: 'Python Developer', start: '2020', end: '2022', highlights: ['ETL in Python'] },
+        { company: 'Py Lab', title: 'Engineer', start: '2019', end: '2020', highlights: ['Django services'] },
+      ],
+    };
+    expect(mainSkills(cv)).toEqual(['TypeScript', 'React', 'Python', 'Docker']);
+    expect(mainSkills({ ...cv, summary: 'PHP and React developer' })).toContain('Laravel');
+  });
+});
+
 describe('CV detail kept for letters', () => {
   it('keeps up to 12 bullets per role and cuts a long one instead of dropping it', async () => {
     const { normalizeCv, cvToPrompt } = await import('./parse-cv');

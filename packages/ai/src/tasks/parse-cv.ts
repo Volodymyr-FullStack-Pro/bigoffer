@@ -1,4 +1,4 @@
-import { SENIORITIES, type Seniority } from '@jp/core';
+import { coreStackOf, mentionsCoreStack, SENIORITIES, type Seniority } from '@jp/core';
 import { z } from 'zod';
 import type { LlmClient } from '../types';
 
@@ -200,12 +200,27 @@ export function levelsForYears(years: number | null): Seniority[] {
   return ['senior', 'lead'];
 }
 
+/**
+ * Skills to search with. A core stack (PHP, Go, .NET…) the CV names once in passing ("NestJS, Go and PHP backends"
+ * at one job) is dropped: it would rank that stack's jobs as a full fit. Kept when the headline or summary names it,
+ * or two roles mention it.
+ */
+export function mainSkills(cv: ParsedCv): string[] {
+  const roles = cv.experience.map((e) => [e.title, ...e.highlights].join(' '));
+  const lead = [cv.headline ?? '', cv.summary ?? ''].join(' ');
+  return cv.skills.filter((skill) => {
+    const stack = coreStackOf(skill);
+    if (!stack) return true;
+    return mentionsCoreStack(lead, stack) || roles.filter((r) => mentionsCoreStack(r, stack)).length >= 2;
+  });
+}
+
 export function searchProfileFromCv(cv: ParsedCv) {
   const role = cv.headline ?? 'Developer';
   return {
     name: role.slice(0, 80),
     keywords: [role.toLowerCase().slice(0, 60)],
-    skills: cv.skills.slice(0, 60),
+    skills: mainSkills(cv).slice(0, 60),
     // No level at all searched every level: a 3-year CV filled the feed with Senior and Lead jobs.
     seniority: (cv.seniority ? [cv.seniority] : levelsForYears(cv.yearsExperience)) as Seniority[],
     locations: cv.locations.slice(0, 10).map((l) => l.slice(0, 60)),

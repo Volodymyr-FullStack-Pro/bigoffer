@@ -1,3 +1,4 @@
+import { mainSkills } from '@jp/ai';
 import { defaultSources, ROLE_FAMILIES, type RoleFamily, SEARCH_REMOTE_TYPES, targetRoleFamilies } from '@jp/core';
 import { getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
@@ -51,7 +52,8 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
   ]);
   const demandSkills = mostAsked((matched ?? []).flatMap((m) => m.jobs.skills ?? []));
   // Skills the AI read from the CV are offered first in the skills field.
-  const cvSkills = cv?.parsed?.skills ?? [];
+  // Not the stacks the CV names once in passing: suggesting PHP to a TypeScript developer adds noise.
+  const cvSkills = cv?.parsed ? mainSkills(cv.parsed) : [];
   const cvHeadline = cv?.parsed?.headline ?? null;
 
   const profiles: SearchProfileValues[] = (data ?? []).map((p) => ({

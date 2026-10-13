@@ -68,7 +68,13 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
   );
 }
 
-export function SearchProfileForm({ values, cvSkills = [], cvHeadline = null, demandSkills = [] }: { values: SearchProfileValues; cvSkills?: string[]; cvHeadline?: string | null; demandSkills?: string[] }) {
+/** A skill the profile excludes jobs by ("php" hides PHP and "PHP/Laravel"), so it is not worth suggesting. */
+function excluded(skill: string, excludes: string[]): boolean {
+  const s = skill.toLowerCase();
+  return excludes.some((e) => e.trim() && s.includes(e.trim().toLowerCase()));
+}
+
+export function SearchProfileForm({ values, cvSkills = [], cvHeadline = null, demandSkills: allDemand = [] }: { values: SearchProfileValues; cvSkills?: string[]; cvHeadline?: string | null; demandSkills?: string[] }) {
   const t = useTranslations('search');
   const [state, action, pending] = useActionState<SearchFormState, FormData>(saveSearchProfile, { status: 'idle' });
   const invalid = new Set(state.fields ?? []);
@@ -78,6 +84,8 @@ export function SearchProfileForm({ values, cvSkills = [], cvHeadline = null, de
   const salary = values.salaryMinUsd;
   const [keywords, setKeywords] = useState(values.keywords);
   const [skills, setSkills] = useState(values.skills);
+  const [excludes, setExcludes] = useState(values.excludeKeywords);
+  const demandSkills = useMemo(() => allDemand.filter((s) => !excluded(s, excludes)), [allDemand, excludes]);
   const [locations, setLocations] = useState(values.locations);
   const [name, setName] = useState(values.name);
   const recommended = useMemo(() => recommendedKeywords(cvHeadline, roles, cvSkills, 8, keywords), [cvHeadline, roles, cvSkills, keywords]);
@@ -198,7 +206,7 @@ export function SearchProfileForm({ values, cvSkills = [], cvHeadline = null, de
             onChange={setSkills}
             max={100}
             // Recomputed on every change: a skill disappears from the suggestions once the profile has it in any spelling.
-            suggestions={skillSuggestions(roles, cvSkills, demandSkills).filter((s) => !hasSkill(skills, s))}
+            suggestions={skillSuggestions(roles, cvSkills, demandSkills).filter((s) => !hasSkill(skills, s) && !excluded(s, excludes))}
             suggestionsLabel={cvSkills.length > 0 ? t('suggestedFromCv') : t('suggested')}
             invalid={invalid.has('skills')}
             placeholder={t('skillsPlaceholder')}
@@ -211,6 +219,7 @@ export function SearchProfileForm({ values, cvSkills = [], cvHeadline = null, de
             label={t('exclude')}
             hint={t('excludeHint')}
             defaultValue={values.excludeKeywords}
+            onChange={setExcludes}
             suggestions={EXCLUDE_SUGGESTIONS}
             suggestionsLabel={t('suggested')}
             invalid={invalid.has('excludeKeywords')}
