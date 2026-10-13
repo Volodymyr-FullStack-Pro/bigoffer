@@ -68,6 +68,8 @@ export function Board({ columns, cards: initial, labels: initialLabels, rules, n
             firstResponseAt: c.firstResponseAt ? new Date(c.firstResponseAt) : null,
             lastActivityAt: c.lastActivityAt ? new Date(c.lastActivityAt) : null,
             nextActionAt: c.nextActionAt ? new Date(c.nextActionAt) : null,
+            lastMessage: c.lastMessage ? { direction: c.lastMessage.direction, at: new Date(c.lastMessage.at) } : null,
+            replyKind: c.replyKind,
           },
           now,
           rules,

@@ -30,7 +30,7 @@ export function TodayActions({ cards, onPinged, onOpen, onGhosted }: {
               {a.kind === 'ping' && (
                 <button type="button" onClick={() => onPinged(a.id)} className="brutal brutal-press px-3 py-1 text-sm font-semibold">{t('actionPinged')}</button>
               )}
-              {a.kind === 'interview' && (
+              {(a.kind === 'interview' || a.kind === 'answer' || a.kind === 'status') && (
                 <button type="button" onClick={() => onOpen(a.id)} className="brutal brutal-press px-3 py-1 text-sm font-semibold">{t('actionOpen')}</button>
               )}
               {a.kind === 'ghosting' && (

@@ -26,6 +26,8 @@ export type BoardCard = {
   labelIds: string[];
   /** What the latest recruiter reply was; null until one is logged. */
   replyKind: ReplyKind | null;
+  /** The latest logged message (who spoke last decides whose move it is). */
+  lastMessage: { direction: 'in' | 'out'; at: string } | null;
 };
 
 export type BoardCardView = BoardCard & { urgency: Urgency };

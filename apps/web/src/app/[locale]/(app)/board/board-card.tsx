@@ -9,10 +9,22 @@ import { REPLY_STYLE } from './reply-kinds';
 
 const URGENCY_STYLE: Record<string, string> = {
   interview_soon: 'bg-ai text-ai-foreground',
+  your_move: 'bg-[#38BDF8] text-[#0C1A24]',
+  step_passed: 'bg-warning text-brand-foreground',
   overdue: 'bg-danger text-white',
   ghosting: 'bg-foreground text-background',
   ping: 'bg-warning text-brand-foreground',
 };
+
+/** A glowing outline on cards that need the candidate now. */
+const URGENCY_RING: Record<string, string> = {
+  // outline + drop-shadow: the brutal style already owns box-shadow
+  interview_soon: 'outline-2 outline-offset-2 outline-[#F472B6] drop-shadow-[0_0_10px_#F472B680]',
+  your_move: 'outline-2 outline-offset-2 outline-[#38BDF8] drop-shadow-[0_0_10px_#38BDF880]',
+  step_passed: 'outline-2 outline-offset-2 outline-[#F59E0B] drop-shadow-[0_0_8px_#F59E0B70]',
+  overdue: 'outline-2 outline-offset-2 outline-danger',
+  ping: 'outline-1 outline-offset-2 outline-warning',
+}
 
 export function BoardCardItem({ card, labels, labelName, now, timeZone, onOpen }: {
   card: BoardCardView;
@@ -35,7 +47,8 @@ export function BoardCardItem({ card, labels, labelName, now, timeZone, onOpen }
       data-card-id={card.id}
       data-reply-kind={card.replyKind ?? undefined}
       style={{ transform: CSS.Transform.toString(transform), transition, ...(reply ? { borderLeftColor: reply.bg, borderLeftWidth: 6 } : {}) }}
-      className={`brutal flex cursor-grab flex-col gap-1.5 p-3 ${isDragging ? 'opacity-40' : ''}`}
+      data-needs-action={card.urgency in URGENCY_STYLE || undefined}
+      className={`brutal flex cursor-grab flex-col gap-1.5 p-3 ${isDragging ? 'opacity-40' : ''} ${URGENCY_RING[card.urgency] ?? ''}`}
       {...attributes}
       {...listeners}
       onClick={onOpen}

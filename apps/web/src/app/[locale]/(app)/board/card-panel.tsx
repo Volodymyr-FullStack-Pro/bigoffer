@@ -13,6 +13,16 @@ import { fromZonedInput, toZonedInput } from './zoned-input';
 import { createLabel, getApplicationEvents, markPinged, setApplicationLabel, updateApplication } from './actions';
 import type { BoardCardView, BoardColumn, BoardLabel } from './board-types';
 
+/** Cards that need something show what, in the card's urgency colour. */
+const NEXT_STEP: Record<string, string> = {
+  interview_soon: '#F472B6',
+  your_move: '#38BDF8',
+  step_passed: '#F59E0B',
+  overdue: '#EF4444',
+  ghosting: '#71717A',
+  ping: '#F59E0B',
+};
+
 /** History label key: an inbound message reads "reply received", not "message sent". */
 function eventKey(e: { type: string; payload: unknown }): string {
   const p = (e.payload ?? {}) as { direction?: unknown };
@@ -100,6 +110,11 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, companyC
         </div>
         <button type="button" onClick={onClose} aria-label={t('close')} className="font-mono text-lg">✕</button>
       </div>
+      {card.urgency in NEXT_STEP && (
+        <p data-testid="panel-next-step" data-urgency={card.urgency} className="brutal border-l-[6px] bg-card p-3 text-sm" style={{ borderLeftColor: NEXT_STEP[card.urgency] }}>
+          <span className="font-semibold">{t(`urgency_${card.urgency}` as never)}.</span> {t(`nextStep_${card.urgency}` as never)}
+        </p>
+      )}
       <div className="flex flex-wrap gap-x-4 gap-y-1">
         {card.url && <a href={card.url} target="_blank" rel="noopener" className="font-mono text-sm underline">{t('openOriginal')} ↗</a>}
         {threadLink && <a data-testid="panel-thread" href={threadLink} target="_blank" rel="noopener noreferrer" className="font-mono text-sm font-semibold underline">{t('openThread')} ↗</a>}
@@ -122,10 +137,10 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, companyC
           setMessagesVersion((v) => v + 1);
           if (patch.nextActionAt !== undefined) setNext(toZonedInput(patch.nextActionAt, timeZone));
           if (patch.contactName) setContactName(patch.contactName);
-          onReplyLogged(patch, moveTo);
+          onReplyLogged({ ...patch, lastMessage: { direction: 'in', at: new Date().toISOString() } }, moveTo);
         }}
       />
-      <RecruiterMessage applicationId={card.id} defaultLang={locale} version={messagesVersion} onSent={() => onChanged({ lastActivityAt: new Date().toISOString() })} />
+      <RecruiterMessage applicationId={card.id} defaultLang={locale} version={messagesVersion} onSent={() => { const at = new Date().toISOString(); onChanged({ lastActivityAt: at, lastMessage: { direction: 'out', at } }); }} />
       <label className="flex flex-col gap-1 font-mono text-xs">
         {t('moveTo')}
         <select data-testid="panel-move" value={card.columnId} onChange={(e) => onMove(e.target.value)} className={field}>
