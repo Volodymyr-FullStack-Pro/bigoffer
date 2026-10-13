@@ -7,11 +7,13 @@ import { logReply, type ReplyChannel, setReplyKind, suggestReplyKind } from './m
 import { columnForReply, REPLY_KINDS, REPLY_STYLE, type ReplyKind } from './reply-kinds';
 import { fromZonedInput, toZonedInput } from './zoned-input';
 
-const CHANNELS: ReplyChannel[] = ['email', 'linkedin', 'djinni', 'telegram', 'call', 'other'];
+const LINK_HINT: Partial<Record<ReplyChannel, string>> = { djinni: 'djinni', email: 'email', linkedin: 'linkedin' };
+const CHANNELS: ReplyChannel[] = ['djinni', 'dou', 'robotaua', 'email', 'linkedin', 'telegram', 'call', 'other'];
 
 /** Where the candidate pastes what a company answered: AI sorts it, the card gets a coloured tag and moves on. */
-export function ReplyInbox({ card, columns, timeZone, lang, onLogged }: {
+export function ReplyInbox({ card, defaultAuthor, columns, timeZone, lang, onLogged }: {
   card: BoardCardView;
+  defaultAuthor: string;
   columns: BoardColumn[];
   timeZone: string;
   lang: 'en' | 'uk' | 'ru';
@@ -19,10 +21,13 @@ export function ReplyInbox({ card, columns, timeZone, lang, onLogged }: {
 }) {
   const t = useTranslations('board');
   const [body, setBody] = useState('');
-  const [channel, setChannel] = useState<ReplyChannel>('email');
+  // Most replies come through the board the application went out on.
+  const [channel, setChannel] = useState<ReplyChannel>(CHANNELS.find((c) => c === card.sourceId) ?? 'email');
   const [kind, setKind] = useState<ReplyKind | null>(null);
   const [when, setWhen] = useState('');
   const [summary, setSummary] = useState<string | null>(null);
+  const [author, setAuthor] = useState(defaultAuthor);
+  const [link, setLink] = useState('');
   const [busy, setBusy] = useState<'ai' | 'save' | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
@@ -44,6 +49,7 @@ export function ReplyInbox({ card, columns, timeZone, lang, onLogged }: {
       setKind(res.kind);
       setSummary(res.summary || null);
       if (res.interviewAt) setWhen(res.interviewAt);
+      if (res.recruiterName && !author) setAuthor(res.recruiterName);
     } catch {
       setError('failed');
     } finally {
@@ -57,13 +63,14 @@ export function ReplyInbox({ card, columns, timeZone, lang, onLogged }: {
     setError(null);
     try {
       const interviewAt = kind === 'interview_invite' && when ? fromZonedInput(when, timeZone) : null;
-      const res = await logReply(card.id, { channel, body, kind, summary, interviewAt });
+      const res = await logReply(card.id, { channel, body, kind, summary, interviewAt, author, link });
       if (!res) return setError('failed');
       onLogged({ replyKind: kind, ...res }, moveTo);
       setBody('');
       setKind(null);
       setWhen('');
       setSummary(null);
+      setLink('');
       setSaved(true);
     } catch {
       setError('failed');
@@ -87,6 +94,25 @@ export function ReplyInbox({ card, columns, timeZone, lang, onLogged }: {
           </button>
         )}
       </div>
+      <div role="radiogroup" aria-label={t('replyChannel')} className="flex flex-col gap-1.5">
+        <span className="font-mono text-xs">{t('replyChannel')}</span>
+        <div className="flex flex-wrap gap-1.5">
+          {CHANNELS.map((c) => (
+            <button
+              key={c}
+              type="button"
+              role="radio"
+              aria-checked={channel === c}
+              data-testid="reply-channel"
+              data-channel={c}
+              onClick={() => setChannel(c)}
+              className={`rounded-full border-[1.5px] px-2.5 py-0.5 text-xs font-semibold ${channel === c ? 'border-foreground bg-foreground text-background' : 'border-border text-muted-foreground hover:text-foreground'}`}
+            >
+              {t(`channel_${c}` as never)}
+            </button>
+          ))}
+        </div>
+      </div>
       <textarea
         data-testid="reply-body"
         value={body}
@@ -97,9 +123,6 @@ export function ReplyInbox({ card, columns, timeZone, lang, onLogged }: {
         className={`${field} min-h-24`}
       />
       <div className="flex flex-wrap gap-2">
-        <select data-testid="reply-channel" aria-label={t('replyChannel')} value={channel} onChange={(e) => setChannel(e.target.value as ReplyChannel)} className={field}>
-          {CHANNELS.map((c) => <option key={c} value={c}>{t(`channel_${c}` as never)}</option>)}
-        </select>
         <button type="button" data-testid="reply-classify" disabled={!body.trim() || busy !== null} onClick={classify} className="brutal brutal-press bg-ai px-3 py-1 text-sm font-semibold text-ai-foreground disabled:opacity-50">
           {busy === 'ai' ? t('replyReading') : t('replyClassify')}
         </button>
@@ -121,6 +144,16 @@ export function ReplyInbox({ card, columns, timeZone, lang, onLogged }: {
             <span aria-hidden>{REPLY_STYLE[k].icon}</span> {t(`reply_${k}` as never)}
           </button>
         ))}
+      </div>
+      <div className="grid gap-2 sm:grid-cols-2">
+        <label className="flex flex-col gap-1 font-mono text-xs">
+          {t('replyAuthor')}
+          <input data-testid="reply-author" value={author} maxLength={120} onChange={(e) => setAuthor(e.target.value)} className={field} />
+        </label>
+        <label className="flex flex-col gap-1 font-mono text-xs">
+          {t('replyLink')}
+          <input data-testid="reply-link" type="url" value={link} maxLength={500} onChange={(e) => setLink(e.target.value)} placeholder={t(`replyLinkHint_${LINK_HINT[channel] ?? 'other'}` as never)} className={field} />
+        </label>
       </div>
       {kind && <p data-testid="reply-hint" className="text-xs text-muted-foreground">{t(`replyHint_${kind}` as never)}</p>}
       {kind === 'interview_invite' && (

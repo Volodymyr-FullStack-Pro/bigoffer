@@ -1,6 +1,6 @@
 import { expect, type Page, test } from '@playwright/test';
 import { loginAs, uniqueEmail } from './helpers/auth';
-import { applicationColumnKey, seedApplication } from './helpers/seed';
+import { applicationColumnKey, seedApplication, seedCv } from './helpers/seed';
 
 const visible = (page: Page, id: string) => page.getByTestId(id).filter({ visible: true });
 const card = (page: Page, title: string) => visible(page, 'board-card').filter({ hasText: title });
@@ -226,17 +226,42 @@ test('a pasted auto-reply only tags the card; an interview invite moves it and s
   await expect(card(page, title).getByTestId('card-reply')).toContainText('Auto-reply');
   await expect(column(page, 'applied').getByText(title)).toBeVisible();
 
+  await visible(page, 'reply-channel').and(page.locator('[data-channel="djinni"]')).click();
   await visible(page, 'reply-body').fill('Please book a ReactJS interview: calendly.com/acme/react');
+  await visible(page, 'reply-link').fill('https://djinni.co/my/inbox/123/');
   await visible(page, 'reply-classify').click();
+  await expect(visible(page, 'reply-author')).toHaveValue('Galina');
   await expect(visible(page, 'reply-when')).toHaveValue('2030-10-20T12:30');
   await expect(visible(page, 'reply-save')).toContainText('Interview');
   await visible(page, 'reply-save').click();
   await expect.poll(() => applicationColumnKey(id)).toBe('interview');
   await expect(visible(page, 'panel-history')).toContainText('Reply received');
   await expect(visible(page, 'msg-item').first()).toContainText('Interview invite');
+  await expect(visible(page, 'msg-item').first()).toContainText('Djinni · Galina');
+  await expect(visible(page, 'panel-thread')).toHaveAttribute('href', 'https://djinni.co/my/inbox/123/');
   await page.keyboard.press('Escape');
   await expect(column(page, 'interview').locator(`[data-reply-kind="interview_invite"]`).filter({ hasText: title })).toBeVisible();
   await expect(card(page, title).getByTestId('card-next')).toContainText('20');
   await visible(page, 'filter-reply').and(page.locator('[data-kind="interview_invite"]')).click();
   await expect(card(page, title)).toBeVisible();
+});
+
+test('a recruiter question makes it your move until you answer', async ({ context, page }) => {
+  const email = uniqueEmail('board-your-move');
+  await loginAs(context, email);
+  await seedCv(email);
+  const { title } = await seedApplication(email, { column: 'applied', appliedDaysAgo: 2 });
+  await page.goto('/en/board');
+  await card(page, title).click();
+  await visible(page, 'reply-body').fill('Hi! Are you ready for a small test task?');
+  await visible(page, 'reply-kind').and(page.locator('[data-kind="question"]')).click();
+  await visible(page, 'reply-save').click();
+  await expect(visible(page, 'panel-next-step')).toHaveAttribute('data-urgency', 'your_move');
+  await expect(visible(page, 'today-action').and(page.locator('[data-kind="answer"]'))).toContainText(title);
+  await visible(page, 'msg-kind').selectOption('follow_up');
+  await visible(page, 'msg-body').fill('Yes, happy to do it.');
+  await visible(page, 'msg-sent').click();
+  await expect(visible(page, 'panel-next-step')).toHaveCount(0);
+  await page.keyboard.press('Escape');
+  await expect(card(page, title).getByTestId('card-urgency')).toHaveCount(0);
 });

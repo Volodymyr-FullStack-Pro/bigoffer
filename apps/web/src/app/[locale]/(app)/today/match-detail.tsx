@@ -1,5 +1,6 @@
 'use client';
 
+import { SourceBadge } from '@/components/ui/source-badge';
 import { pill } from '@/components/ui/pill';
 import { isLocale, type Locale, sourceInfo } from '@jp/core';
 import { useFormatter, useLocale, useNow, useTranslations } from 'next-intl';
@@ -235,6 +236,9 @@ export function MatchDetail({
         )}
         {!match.companyIsPlaceholder && <p className="text-muted-foreground">{match.company}</p>}
         <p className="flex flex-wrap items-center gap-x-4 gap-y-1.5 font-mono text-xs text-muted-foreground">
+          {[...new Set(match.postings.map((p) => p.sourceId))].map((id) => (
+            <SourceBadge key={id} sourceId={id} />
+          ))}
           <span>{t(`remote_${match.remoteType}`)}</span>
           {match.location && <span>{match.location}</span>}
           {match.seniority && (

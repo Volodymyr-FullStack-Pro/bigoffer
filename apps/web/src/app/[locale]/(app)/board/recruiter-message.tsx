@@ -103,9 +103,10 @@ export function RecruiterMessage({ applicationId, defaultLang, version = 0, onSe
         <ul className="flex flex-col gap-2 text-sm">
           {history.map((m, i) => (
             <li key={i} data-testid="msg-item" className="border-l-4 border-border pl-2" style={m.kind ? { borderLeftColor: REPLY_STYLE[m.kind].bg } : undefined}>
-              <span className="font-mono text-xs text-muted-foreground">{t(m.direction === 'out' ? 'outgoing' : 'incoming')} · {m.channel} · <span suppressHydrationWarning>{format.relativeTime(new Date(m.sentAt), now)}</span></span>
+              <span className="font-mono text-xs text-muted-foreground">{t(m.direction === 'out' ? 'outgoing' : 'incoming')} · {tb(`channel_${m.channel}` as never)}{m.author ? ` · ${m.author}` : ''} · <span suppressHydrationWarning>{format.relativeTime(new Date(m.sentAt), now)}</span></span>
               {m.kind && <span className="ml-2 rounded-full px-1.5 text-[10px] font-semibold" style={{ background: REPLY_STYLE[m.kind].bg, color: REPLY_STYLE[m.kind].fg }}>{tb(`reply_${m.kind}` as never)}</span>}
               {m.summary && <p className="text-xs italic">{m.summary}</p>}
+              {m.link && <a data-testid="msg-link" href={m.link} target="_blank" rel="noopener noreferrer" className="font-mono text-xs underline">{tb('openThread')} ↗</a>}
               <p className="line-clamp-3 whitespace-pre-line">{m.body}</p>
             </li>
           ))}

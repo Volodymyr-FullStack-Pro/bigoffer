@@ -9,10 +9,11 @@ const wire = z.object({
   kind: z.enum(REPLY_KINDS),
   interview_at: z.string().nullable(),
   summary: z.string(),
+  recruiter_name: z.string().nullable(),
 });
 const LANG_NAME: Record<string, string> = { en: 'English', uk: 'Ukrainian', ru: 'Russian' };
 
-export type ReplyClassification = { kind: ReplyKind; interviewAt: string | null; summary: string };
+export type ReplyClassification = { kind: ReplyKind; interviewAt: string | null; summary: string; recruiterName: string | null };
 
 /** Sorts a pasted recruiter reply into one kind and pulls out the interview time, if one is set. */
 export async function classifyReply(
@@ -42,11 +43,13 @@ export async function classifyReply(
       '- other: anything else.',
       `interview_at: when the reply states a confirmed interview date and time, give it as YYYY-MM-DDTHH:mm in the ${input.timeZone} time zone`,
       `(convert if the reply uses another zone); otherwise null. It is now ${local} there.`,
+      'recruiter_name: the name of the person who wrote or signed the reply (e.g. "Galina"), as written; null for an automatic message or no name.',
       `summary: one short sentence in ${LANG_NAME[input.lang] ?? 'English'} on what the reply says and what to do next (max 160 characters).`,
     ].join('\n'),
     prompt: [`Job: ${input.job.title} at ${input.job.company}`, '<reply>', input.text.slice(0, 6000), '</reply>'].join('\n'),
     maxOutputTokens: 300,
   });
   const at = res.data.interview_at?.trim() ?? '';
-  return { kind: res.data.kind, interviewAt: LOCAL_DATETIME.test(at) ? at : null, summary: res.data.summary.trim().slice(0, 200) };
+  const name = res.data.recruiter_name?.trim().slice(0, 120) || null;
+  return { kind: res.data.kind, interviewAt: LOCAL_DATETIME.test(at) ? at : null, summary: res.data.summary.trim().slice(0, 200), recruiterName: name };
 }

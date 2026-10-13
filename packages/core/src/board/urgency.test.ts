@@ -35,11 +35,39 @@ describe('applicationUrgency', () => {
 
   it('resets after a reply or a ping', () => {
     expect(
-      applicationUrgency({ ...base, appliedAt: at('2026-09-21T12:00:00Z'), firstResponseAt: at('2026-09-22T12:00:00Z') }, now),
+      applicationUrgency({ ...base, appliedAt: at('2026-09-21T12:00:00Z'), firstResponseAt: at('2026-10-01T12:00:00Z') }, now),
     ).toBe('fresh');
+    // ...but a conversation that went quiet for a week asks for a follow-up again
+    expect(
+      applicationUrgency({ ...base, appliedAt: at('2026-09-14T12:00:00Z'), firstResponseAt: at('2026-09-22T12:00:00Z') }, now),
+    ).toBe('ping');
     expect(
       applicationUrgency({ ...base, appliedAt: at('2026-09-21T12:00:00Z'), lastActivityAt: at('2026-10-02T12:00:00Z') }, now),
     ).toBe('fresh');
+  });
+
+  it('a recruiter question, invite or test is the candidate\'s move until they answer or book', () => {
+    const replied = { ...base, appliedAt: at('2026-09-28T12:00:00Z'), firstResponseAt: at('2026-10-02T12:00:00Z'), lastActivityAt: at('2026-10-02T12:00:00Z') };
+    const theirs = { direction: 'in' as const, at: at('2026-10-02T12:00:00Z') };
+    expect(applicationUrgency({ ...replied, lastMessage: theirs, replyKind: 'question' }, now)).toBe('your_move');
+    expect(applicationUrgency({ ...replied, lastMessage: theirs, replyKind: 'interview_invite' }, now)).toBe('your_move');
+    // booked: the interview time takes over
+    expect(applicationUrgency({ ...replied, lastMessage: theirs, replyKind: 'interview_invite', nextActionAt: at('2026-10-14T09:00:00Z') }, now)).toBe('fresh');
+    // answered: now waiting on them, the follow-up clock runs from the answer
+    const early = { ...replied, firstResponseAt: at('2026-09-25T12:00:00Z'), lastActivityAt: at('2026-09-25T12:00:00Z') };
+    expect(applicationUrgency({ ...early, lastMessage: { direction: 'out', at: at('2026-09-28T12:00:00Z') }, replyKind: 'question' }, now)).toBe('ping');
+    expect(applicationUrgency({ ...replied, lastMessage: { direction: 'out', at: at('2026-10-02T12:00:00Z') }, replyKind: 'question' }, now)).toBe('fresh');
+  });
+
+  it('an auto-reply is not an answer: the follow-up clock keeps running', () => {
+    const auto = { ...base, appliedAt: at('2026-09-28T12:00:00Z'), lastMessage: { direction: 'in' as const, at: at('2026-09-28T13:00:00Z') }, replyKind: 'auto_reply' };
+    expect(applicationUrgency(auto, now)).toBe('ping');
+  });
+
+  it('a passed step with nothing logged since asks for a status update', () => {
+    const past = { ...base, appliedAt: at('2026-09-20T12:00:00Z'), firstResponseAt: at('2026-09-25T12:00:00Z'), nextActionAt: at('2026-10-02T09:00:00Z') };
+    expect(applicationUrgency({ ...past, lastActivityAt: at('2026-09-25T12:00:00Z') }, now)).toBe('step_passed');
+    expect(applicationUrgency({ ...past, lastActivityAt: at('2026-10-02T15:00:00Z') }, now)).toBe('fresh');
   });
 
   it('honours custom follow-up rules', () => {

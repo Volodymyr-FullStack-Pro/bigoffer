@@ -13,7 +13,7 @@ export default async function BoardPage() {
   const rawLocale = await getLocale();
   const locale = isLocale(rawLocale) ? rawLocale : 'en';
   const supabase = await createClient();
-  const [{ data: columns }, { data: apps }, { data: labels }, { data: profile }] = await Promise.all([
+  const [{ data: columns }, { data: apps }, { data: labels }, { data: profile }, { data: messages }] = await Promise.all([
     supabase.from('board_columns').select('id, key, title, kind').order('position'),
     supabase
       .from('applications')
@@ -23,7 +23,12 @@ export default async function BoardPage() {
       .order('rank'),
     supabase.from('labels').select('id, key, name, color').order('key', { nullsFirst: false }),
     supabase.from('profiles').select('follow_up_days, ghost_after_days, ui_prefs').eq('id', userId).single(),
+    supabase.from('application_messages').select('application_id, direction, sent_at').order('sent_at', { ascending: false }).limit(2000),
   ]);
+  const lastMessage = new Map<string, { direction: 'in' | 'out'; at: string }>();
+  for (const m of messages ?? []) {
+    if (!lastMessage.has(m.application_id)) lastMessage.set(m.application_id, { direction: m.direction === 'in' ? 'in' : 'out', at: m.sent_at });
+  }
 
   const boardColumns: BoardColumn[] = (columns ?? []).map((c) => ({
     id: c.id,
@@ -54,6 +59,7 @@ export default async function BoardPage() {
       outcome: a.outcome,
       labelIds: a.application_labels.map((l) => l.label_id),
       replyKind: isReplyKind(a.reply_kind) ? a.reply_kind : null,
+      lastMessage: lastMessage.get(a.id) ?? null,
     };
   });
 
