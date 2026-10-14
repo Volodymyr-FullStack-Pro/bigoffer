@@ -1,4 +1,4 @@
-import { ENGLISH_TAG, englishLevelOf, kyivLocalDate, type RawJob } from '@jp/core';
+import { ENGLISH_TAG, englishLevelOf, kyivLocalDate, type RawJob, YEARS_TAG } from '@jp/core';
 import { extractJobPostings, type JobPostingLd, ldLocation, ldSalary } from '../jsonld';
 import { parseRss } from '../rss';
 import { isGoneError, type SourceAdapter } from '../types';
@@ -16,7 +16,11 @@ export function toRawJob(p: JobPostingLd, pageUrl?: string): RawJob | null {
   const url = p.url ?? pageUrl;
   if (!url || !p.title || id == null) return null;
   const company = p.hiringOrganization?.name?.trim();
+  // The board's own "only from N years of experience" (monthsOfExperience) beats guessing from the text.
+  const months = typeof p.experienceRequirements === 'object' ? Number(p.experienceRequirements?.monthsOfExperience) : NaN;
+  const years = Number.isFinite(months) && months >= 12 ? Math.round(months / 12) : null;
   return {
+    ...(years ? { tags: [`${YEARS_TAG}${years}`] } : {}),
     externalId: String(id),
     url,
     title: p.title,

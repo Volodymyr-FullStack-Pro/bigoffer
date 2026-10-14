@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { FakeLlmClient, fakeResponder } from '../testing';
 import { normalizeCv } from './parse-cv';
-import { MESSAGE_LIMITS, recruiterMessage } from './recruiter-message';
+import { MESSAGE_LIMITS, recruiterMessage, REPLY_LIMIT } from './recruiter-message';
 
 const cv = normalizeCv(fakeResponder({ task: 'parse_cv' } as never) as never);
 const base = { kind: 'intro' as const, job: { title: 'Dev', company: 'Acme', description: null }, cv, recruiterName: 'Anna', lang: 'uk', tone: 'default' as const, previous: [] };
@@ -32,5 +32,26 @@ describe('recruiterMessage', () => {
     expect(llm.calls[0]!.system).toContain('sign off with the name');
     await recruiterMessage(llm, { ...base, format: 'inmail' });
     expect(llm.calls[1]!.system).toContain('never "My name is" without a name');
+  });
+  it('replies to the latest recruiter message with the thread, in their language, without a subject', async () => {
+    const llm = new FakeLlmClient(() => ({ subject: 'Re', body: 'y'.repeat(3000) }), ['private']);
+    const res = await recruiterMessage(llm, {
+      ...base,
+      format: 'email',
+      kind: 'reply',
+      lang: 'auto',
+      channel: 'email',
+      thread: [
+        { direction: 'out', author: null, body: 'My application' },
+        { direction: 'in', author: 'Alina', body: 'Are you free tomorrow at 18:00?' },
+      ],
+    });
+    expect(res.subject).toBeNull();
+    expect(res.body).toHaveLength(REPLY_LIMIT);
+    const call = llm.calls[0]!;
+    expect(call.prompt).toMatch(/<conversation>[\s\S]*Candidate: My application[\s\S]*Recruiter \(Alina\): Are you free tomorrow at 18:00\?[\s\S]*<\/conversation>/);
+    expect(call.system).toContain("the same language as the recruiter's latest message");
+    expect(call.system).toContain('confirm it by restating the day and time');
+    expect(call.system).not.toContain('first message');
   });
 });

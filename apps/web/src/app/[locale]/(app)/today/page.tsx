@@ -110,7 +110,7 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
       why: localized(m.explanation as LocalizedText | null, locale) || null,
       // Loaded when the detail opens: shipping every description made the feed page ~1 MB.
       description: '',
-      requiredYears: requiredYears(m.jobs.description_text),
+      requiredYears: requiredYears(m.jobs.description_text, m.jobs.tags ?? []),
       candidateYears: cv?.parsed?.yearsExperience ?? null,
       requiredEnglish: requiredEnglish(m.jobs.description_text, m.jobs.tags ?? []),
       candidateEnglish: myEnglish,

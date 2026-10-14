@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from 'react';
 import { ApplyKitPanel } from '@/components/apply-kit/apply-kit-panel';
 import { SourceBadge } from '@/components/ui/source-badge';
 import { listMessages } from './message-actions';
-import { RecruiterMessage } from './recruiter-message';
+import { RecruiterMessage, type RecruiterMessageHandle } from './recruiter-message';
 import { Conversation } from './conversation';
 import { columnForReply } from './reply-kinds';
 import { ReplyInbox, type RejectionSuggestion } from './reply-inbox';
@@ -58,6 +58,7 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, companyC
   const now = useNow();
   const [events, setEvents] = useState<{ type: string; payload: unknown; createdAt: string }[]>([]);
   const [messagesVersion, setMessagesVersion] = useState(0);
+  const writer = useRef<RecruiterMessageHandle>(null);
   const [salary, setSalary] = useState(card.salary ?? '');
   const [notes, setNotes] = useState(card.notes ?? '');
   const [next, setNext] = useState(toZonedInput(card.nextActionAt, timeZone));
@@ -143,6 +144,16 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, companyC
       {card.urgency in NEXT_STEP && (
         <p data-testid="panel-next-step" data-urgency={card.urgency} className="brutal border-l-[6px] bg-card p-3 text-sm" style={{ borderLeftColor: NEXT_STEP[card.urgency] }}>
           <span className="font-semibold">{t(`urgency_${card.urgency}` as never)}.</span> {t(`nextStep_${card.urgency}` as never)}
+          {card.lastMessage?.direction === 'in' && (
+            <button
+              type="button"
+              data-testid="panel-write-reply"
+              onClick={() => writer.current?.writeReply()}
+              className="brutal brutal-press mt-2 block bg-ai px-3 py-1 text-sm font-semibold text-ai-foreground"
+            >
+              ✍ {t('writeReply')}
+            </button>
+          )}
         </p>
       )}
       <div className="flex flex-wrap gap-x-4 gap-y-1">
@@ -193,7 +204,7 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, companyC
           onReplyLogged(patch, moveTo, rejection);
         }}
       />
-      <RecruiterMessage applicationId={card.id} defaultLang={locale} version={messagesVersion} onSent={() => { const at = new Date().toISOString(); setMessagesVersion((v) => v + 1); onChanged({ lastActivityAt: at, lastMessage: { direction: 'out', at } }); }} />
+      <RecruiterMessage applicationId={card.id} defaultLang={locale} version={messagesVersion} ref={writer} onSent={() => { const at = new Date().toISOString(); setMessagesVersion((v) => v + 1); onChanged({ lastActivityAt: at, lastMessage: { direction: 'out', at } }); }} />
       <label className="flex flex-col gap-1 font-mono text-xs">
         {t('moveTo')}
         <select data-testid="panel-move" value={card.columnId} onChange={(e) => onMove(e.target.value)} className={field}>

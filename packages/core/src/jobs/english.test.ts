@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { candidateEnglish, englishGap, englishLevelOf, requiredEnglish } from './english';
+import { requiredYears } from './experience';
 
 describe('english level', () => {
   it('reads codes and words', () => {
@@ -26,5 +27,12 @@ describe('english level', () => {
     expect(englishGap('C1', me)).toBe(true);
     expect(englishGap('B2', me)).toBe(false);
     expect(englishGap(null, me)).toBe(false);
+  });
+});
+
+describe('requiredYears from a board tag', () => {
+  it('prefers the board-stated years over the text', () => {
+    expect(requiredYears('2+ years of React', ['years:5'])).toBe(5);
+    expect(requiredYears('2+ years of React', [])).toBe(2);
   });
 });
