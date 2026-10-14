@@ -493,7 +493,9 @@
     "conversationDelete": "Delete message",
     "conversationDeleteConfirm": "Delete this message from the conversation?",
     "conversationChangeKind": "Change reply type",
-    "conversationSetKind": "Type?"
+    "conversationSetKind": "Type?",
+    "replyKindNew": "Type of the new message",
+    "conversationChange": "change"
   },
   "cv": {
     "title": "Your CV",
