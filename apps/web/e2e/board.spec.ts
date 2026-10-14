@@ -298,4 +298,15 @@ test('a saved reply can be re-tagged; an auto-reply after all sends the card bac
   // Only the tag changed: the message itself is all there.
   await expect(visible(page, 'msg-item')).toHaveCount(1);
   await expect(visible(page, 'msg-item')).toContainText('Thanks for sharing your CV');
+
+  // A saved message can be corrected: channel and text.
+  await visible(page, 'msg-edit').click();
+  await visible(page, 'msg-edit-channel').and(page.locator('[data-channel="email"]')).click();
+  await visible(page, 'msg-edit-body').fill('Thanks for sharing your CV. We will get back to you.');
+  await visible(page, 'msg-edit-save').click();
+  await expect(visible(page, 'msg-item')).toContainText('Email');
+  await expect(visible(page, 'msg-item')).toContainText('We will get back to you');
+  await page.reload();
+  await card(page, title).click();
+  await expect(visible(page, 'msg-item')).toContainText('We will get back to you');
 });

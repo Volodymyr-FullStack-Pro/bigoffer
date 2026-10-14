@@ -497,7 +497,8 @@
     "replyKindNew": "Type of the new message",
     "conversationChange": "change",
     "addLoading": "Reading the job from the site… (up to half a minute)",
-    "addImported": "Job read in full — the apply kit will work on this card."
+    "addImported": "Job read in full — the apply kit will work on this card.",
+    "conversationEdit": "Edit message"
   },
   "cv": {
     "title": "Your CV",

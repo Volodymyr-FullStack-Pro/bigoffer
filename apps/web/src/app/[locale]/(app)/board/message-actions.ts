@@ -1,5 +1,6 @@
 'use server';
 
+import type { Json } from '@jp/db';
 import { classifyReply, MESSAGE_FORMATS, type MessageFormat, recruiterMessage, type ReplyClassification } from '@jp/ai';
 import { revalidatePath } from 'next/cache';
 import { getTimeZone } from 'next-intl/server';
@@ -235,6 +236,31 @@ export async function setMessageKind(
   await supabase.from('applications').update({ reply_kind: replyKind, first_response_at: firstResponseAt }).eq('id', applicationId);
   revalidatePath('/[locale]/board', 'page');
   return { replyKind, firstResponseAt };
+}
+
+/** Corrects a saved message: channel, sender, text, conversation link. Direction and time stay as logged. */
+export async function updateMessage(
+  applicationId: string,
+  messageId: string,
+  patch: { channel: ReplyChannel; author: string | null; body: string; link: string | null },
+): Promise<boolean> {
+  const text = patch.body.trim().slice(0, 10_000);
+  if (!(await getUserId()) || !UUID.test(applicationId) || !UUID.test(messageId) || !REPLY_CHANNELS.includes(patch.channel) || !text) return false;
+  const supabase = await createClient();
+  const { data: current } = await supabase.from('application_messages').select('ai_extracted').eq('id', messageId).eq('application_id', applicationId).maybeSingle();
+  if (!current) return false;
+  const extracted = { ...((current.ai_extracted ?? {}) as Record<string, unknown>) };
+  const link = safeLink(patch.link);
+  if (link) extracted.link = link;
+  else delete extracted.link;
+  const { data, error } = await supabase
+    .from('application_messages')
+    .update({ channel: patch.channel, author: patch.author?.trim().slice(0, 120) || null, body: text, ai_extracted: extracted as Json })
+    .eq('id', messageId)
+    .eq('application_id', applicationId)
+    .select('id');
+  revalidatePath('/[locale]/board', 'page');
+  return !error && (data?.length ?? 0) > 0;
 }
 
 /** Changes the reply kind shown on the card without logging a message (e.g. the AI guessed wrong). */
