@@ -1,11 +1,12 @@
 'use client';
 
+import { getJobDescription } from './actions';
 import { SourceBadge } from '@/components/ui/source-badge';
 import { pill } from '@/components/ui/pill';
 import { isLocale, type Locale, sourceInfo } from '@jp/core';
 import { useFormatter, useLocale, useNow, useTranslations } from 'next-intl';
 import { Sparkles } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { TextGenerateEffect } from '@/components/aceternity/text-generate-effect';
 import { ApplyKitPanel } from '@/components/apply-kit/apply-kit-panel';
 import { PeopleSearch } from '@/components/apply-kit/people-search';
@@ -110,6 +111,69 @@ function ExperienceBadge({ required, candidate }: { required: number; candidate:
       className={`rounded-full px-2 py-0.5 font-sans font-medium ${tone}`}
     >
       {tf('expRequired', { years: required })}
+    </span>
+  );
+}
+
+// Descriptions already loaded in this tab, so switching back and forth between jobs does not refetch.
+const descriptions = new Map<string, string>();
+
+/** The posting's text, fetched when the detail opens (the feed page itself ships without descriptions). */
+function JobDescription({ jobId, initial }: { jobId: string; initial: string }) {
+  const tf = useTranslations('feed');
+  const [text, setText] = useState<string | null>(initial || descriptions.get(jobId) || null);
+  useEffect(() => {
+    if (text !== null) return;
+    let live = true;
+    getJobDescription(jobId)
+      .then((d) => {
+        if (d) descriptions.set(jobId, d);
+        if (live) setText(d ?? '');
+      })
+      .catch(() => live && setText(''));
+    return () => {
+      live = false;
+    };
+  }, [jobId, text]);
+  if (text === '') return null;
+  return (
+    <div className="flex flex-col gap-2 border-t border-border pt-3">
+      <div className="flex items-center justify-between gap-2">
+        <h3 className="text-sm font-semibold">{tf('description')}</h3>
+        {text && <CopyButton text={text} label={tf('copyDescription')} doneLabel={tf('copied')} testId="copy-description" />}
+      </div>
+      {text === null ? (
+        <div data-testid="description-loading" className="flex animate-pulse flex-col gap-2">
+          <div className="h-3 w-11/12 rounded bg-muted" />
+          <div className="h-3 w-10/12 rounded bg-muted" />
+          <div className="h-3 w-9/12 rounded bg-muted" />
+        </div>
+      ) : (
+        // Desktop: its own scroll beside the list. Phone: part of the page, so a swipe on it scrolls the page.
+        <div data-testid="job-description" className="whitespace-pre-line text-sm md:max-h-[50vh] md:overflow-y-auto">
+          {text}
+        </div>
+      )}
+    </div>
+  );
+}
+
+const CEFR = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
+
+/** "English C1": green when the CV level meets it, amber when the job asks for more. */
+export function EnglishBadge({ required, candidate }: { required: string; candidate: string | null }) {
+  const tf = useTranslations('feed');
+  const ok = candidate !== null && CEFR.indexOf(candidate) >= CEFR.indexOf(required);
+  const tone = candidate === null ? 'bg-muted text-foreground' : ok ? 'bg-success/15 text-success' : 'bg-warning/15 text-warning';
+  return (
+    <span
+      data-testid="required-english"
+      data-gap={candidate !== null && !ok ? 'true' : undefined}
+      title={candidate === null ? undefined : tf(ok ? 'englishOk' : 'englishGap', { level: candidate })}
+      className={`rounded-full px-2 py-0.5 font-sans font-medium ${tone}`}
+    >
+      {tf('englishRequired', { level: required })}
+      {candidate !== null && !ok && <span className="opacity-80"> · {tf('englishYours', { level: candidate })}</span>}
     </span>
   );
 }
@@ -234,6 +298,11 @@ export function MatchDetail({
             ✓ {tf('onBoard', { column: match.onBoard || '—' })}
           </p>
         )}
+        {match.onBoard === null && match.companyOnBoard && (
+          <p data-testid="company-on-board" className="self-start rounded-full bg-warning/15 px-2.5 py-0.5 text-xs font-medium text-warning">
+            ⚑ {tf('companyOnBoard', { title: match.companyOnBoard.title, column: match.companyOnBoard.column || '—' })}
+          </p>
+        )}
         {!match.companyIsPlaceholder && <p className="text-muted-foreground">{match.company}</p>}
         <p className="flex flex-wrap items-center gap-x-4 gap-y-1.5 font-mono text-xs text-muted-foreground">
           {[...new Set(match.postings.map((p) => p.sourceId))].map((id) => (
@@ -248,6 +317,7 @@ export function MatchDetail({
           {match.requiredYears !== null && (
             <ExperienceBadge required={match.requiredYears} candidate={match.candidateYears} />
           )}
+          {match.requiredEnglish !== null && <EnglishBadge required={match.requiredEnglish} candidate={match.candidateEnglish} />}
           <span suppressHydrationWarning>
             {format.relativeTime(new Date(match.postedAt ?? match.firstSeenAt), now)}
           </span>
@@ -290,23 +360,7 @@ export function MatchDetail({
       <ApplyKitToggle key={match.id} jobId={match.jobId} onApplied={onApplied} defaultOpen={kitOpen} />
       {onAction && <MatchActions onAction={onAction} />}
       <PeopleSearch jobId={match.jobId} />
-      {showDescription && match.description && (
-        <div className="flex flex-col gap-2 border-t border-border pt-3">
-          <div className="flex items-center justify-between gap-2">
-            <h3 className="text-sm font-semibold">{tf('description')}</h3>
-            <CopyButton
-              text={match.description}
-              label={tf('copyDescription')}
-              doneLabel={tf('copied')}
-              testId="copy-description"
-            />
-          </div>
-          {/* Desktop: its own scroll beside the list. Phone: part of the page, so a swipe on it scrolls the page. */}
-          <div className="whitespace-pre-line text-sm md:max-h-[50vh] md:overflow-y-auto">
-            {match.description}
-          </div>
-        </div>
-      )}
+      {showDescription && <JobDescription key={match.jobId} jobId={match.jobId} initial={match.description} />}
     </article>
   );
 }

@@ -48,7 +48,7 @@ export function BoardCardItem({ card, labels, labelName, now, timeZone, onOpen }
       data-reply-kind={card.replyKind ?? undefined}
       style={{ transform: CSS.Transform.toString(transform), transition, ...(reply ? { borderLeftColor: reply.bg, borderLeftWidth: 6 } : {}) }}
       data-needs-action={card.urgency in URGENCY_STYLE || undefined}
-      className={`brutal flex cursor-grab flex-col gap-1.5 p-3 ${isDragging ? 'opacity-40' : ''} ${URGENCY_RING[card.urgency] ?? ''}`}
+      className={`brutal flex min-w-0 cursor-grab flex-col gap-1.5 p-3 ${isDragging ? 'opacity-40' : ''} ${URGENCY_RING[card.urgency] ?? ''}`}
       {...attributes}
       {...listeners}
       onClick={onOpen}
@@ -76,8 +76,9 @@ export function BoardCardItem({ card, labels, labelName, now, timeZone, onOpen }
           ))}
         </span>
       )}
-      <span className="font-display font-bold leading-tight">{card.title}</span>
-      <span className="text-sm text-muted-foreground">{card.company}</span>
+      {/* Long titles like "HTML/CSS/JavaScript/React/Node.js" have no spaces to break at. */}
+      <span className="font-display font-bold leading-tight [overflow-wrap:anywhere]">{card.title}</span>
+      <span className="text-sm text-muted-foreground [overflow-wrap:anywhere]">{card.company}</span>
       {own.length > 0 && (
         <span className="flex flex-wrap gap-1">
           {own.map((l) => (

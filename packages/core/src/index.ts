@@ -14,6 +14,7 @@ export * from './jobs/search';
 export * from './jobs/score';
 export * from './jobs/roles';
 export * from './jobs/experience';
+export * from './jobs/english';
 export * from './jobs/sources';
 export * from './jobs/dates';
 export * from './jobs/salary';
