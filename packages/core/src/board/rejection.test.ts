@@ -17,5 +17,7 @@ describe('rejection taxonomy', () => {
     expect(applicationPatchSchema.safeParse(ok).success).toBe(true);
     expect(applicationPatchSchema.safeParse({ ...ok, contactUrl: 'javascript:alert(1)' }).success).toBe(false);
     expect(applicationPatchSchema.safeParse({ ...ok, nextActionAt: 'tomorrow' }).success).toBe(false);
+    expect(applicationPatchSchema.safeParse({ ...ok, meetingUrl: 'https://meet.google.com/abc-defg-hij' }).success).toBe(true);
+    expect(applicationPatchSchema.safeParse({ ...ok, meetingUrl: 'javascript:alert(1)' }).success).toBe(false);
   });
 });

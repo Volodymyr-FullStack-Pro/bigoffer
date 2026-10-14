@@ -23,5 +23,6 @@ export * from './board/rank';
 export * from './board/business-days';
 export * from './board/urgency';
 export * from './board/rejection';
+export * from './board/meeting';
 export * from './apply/form-questions';
 export * from './telegram';

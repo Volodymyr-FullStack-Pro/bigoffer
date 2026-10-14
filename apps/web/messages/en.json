@@ -512,7 +512,11 @@
     "rejectedByMe": "I withdrew",
     "rejectedNotMoved": "The company declined, but the card is not in Rejected yet.",
     "rejectedMove": "Move to Rejected",
-    "writeReply": "Write a reply"
+    "writeReply": "Write a reply",
+    "joinMeeting": "Join",
+    "meetingUrl": "Meeting link (Meet, Zoom)",
+    "todayAt": "today, {time}",
+    "tomorrowAt": "tomorrow, {time}"
   },
   "cv": {
     "title": "Your CV",

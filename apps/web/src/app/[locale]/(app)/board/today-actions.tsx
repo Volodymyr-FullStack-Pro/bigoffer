@@ -1,7 +1,8 @@
 'use client';
 
 import { todayActions } from '@jp/core';
-import { useFormatter, useTranslations } from 'next-intl';
+import { useFormatter, useNow, useTimeZone, useTranslations } from 'next-intl';
+import { JoinMeeting } from './join-meeting';
 import type { BoardCardView } from './board-types';
 
 export function TodayActions({ cards, onPinged, onOpen, onGhosted }: {
@@ -12,6 +13,17 @@ export function TodayActions({ cards, onPinged, onOpen, onGhosted }: {
 }) {
   const t = useTranslations('board');
   const format = useFormatter();
+  const now = useNow();
+  const timeZone = useTimeZone() ?? 'UTC';
+  const day = (d: Date) => new Intl.DateTimeFormat('en-CA', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(d);
+  const tomorrow = day(new Date(now.getTime() + 24 * 60 * 60 * 1000));
+  // "today, 18:00" / "tomorrow, 18:00" reads at a glance; a later date keeps the date.
+  const when = (at: Date) => {
+    const time = format.dateTime(at, { timeZone, hour: '2-digit', minute: '2-digit' });
+    if (day(at) === day(now)) return t('todayAt', { time });
+    if (day(at) === tomorrow) return t('tomorrowAt', { time });
+    return format.dateTime(at, { timeZone, weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+  };
   const actions = todayActions(cards.map((c) => ({ id: c.id, urgency: c.urgency, nextActionAt: c.nextActionAt ? new Date(c.nextActionAt) : null })));
   if (actions.length === 0) return null;
   const byId = new Map(cards.map((c) => [c.id, c]));
@@ -25,8 +37,9 @@ export function TodayActions({ cards, onPinged, onOpen, onGhosted }: {
             <li key={a.id} data-testid="today-action" data-kind={a.kind} className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-2 last:border-b-0">
               <span>
                 <span className="font-semibold">{t(`today_${a.kind}`)}</span>: {card.company} — {card.title}
-                {a.at && <span suppressHydrationWarning className="font-mono text-xs"> · {format.dateTime(a.at, { dateStyle: 'medium', timeStyle: 'short' })}</span>}
+                {a.at && <span data-testid="today-when" suppressHydrationWarning className="font-mono text-xs font-semibold"> · {when(a.at)}</span>}
               </span>
+              {a.kind === 'interview' && card.meetingUrl && <JoinMeeting url={card.meetingUrl} label={t('joinMeeting')} testId="today-join" />}
               {a.kind === 'ping' && (
                 <button type="button" onClick={() => onPinged(a.id)} className="brutal brutal-press px-3 py-1 text-sm font-semibold">{t('actionPinged')}</button>
               )}

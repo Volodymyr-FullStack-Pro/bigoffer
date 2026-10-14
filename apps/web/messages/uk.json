@@ -512,7 +512,11 @@
     "rejectedByMe": "Я відмовився",
     "rejectedNotMoved": "Компанія відмовила, але картка ще не у «Відмова».",
     "rejectedMove": "Перемістити у «Відмова»",
-    "writeReply": "Згенерувати відповідь"
+    "writeReply": "Згенерувати відповідь",
+    "joinMeeting": "Приєднатися",
+    "meetingUrl": "Посилання на зустріч (Meet, Zoom)",
+    "todayAt": "сьогодні, {time}",
+    "tomorrowAt": "завтра, {time}"
   },
   "cv": {
     "title": "Ваше CV",

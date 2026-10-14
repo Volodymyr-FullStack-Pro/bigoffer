@@ -63,21 +63,32 @@ export async function updateApplication(id: string, patch: ApplicationPatch): Pr
   const parsed = applicationPatchSchema.safeParse(patch);
   if (!supabase || !parsed.success || !UUID.test(id)) return false;
   const p = parsed.data;
-  const { data: current } = await supabase.from('applications').select('notes').eq('id', id).maybeSingle();
+  const { data: current } = await supabase.from('applications').select('notes, contact').eq('id', id).maybeSingle();
   if (!current) return false;
+  // An older client that does not send the meeting link keeps the stored one.
+  const meet = p.meetingUrl === undefined ? meetOf(current.contact) : p.meetingUrl;
   const { data, error } = await supabase
     .from('applications')
     .update({
       salary: p.salary || null,
       notes: p.notes || null,
       next_action_at: p.nextActionAt,
-      contact: { ...(p.contactName ? { name: p.contactName } : {}), ...(p.contactUrl ? { url: p.contactUrl } : {}) },
+      contact: {
+        ...(p.contactName ? { name: p.contactName } : {}),
+        ...(p.contactUrl ? { url: p.contactUrl } : {}),
+        ...(meet ? { meet } : {}),
+      },
     })
     .eq('id', id)
     .select('id');
   const notesChanged = (p.notes || null) !== (current.notes || null);
   if (!error && data?.length && notesChanged) await event(supabase, id, 'note');
   return done(error, 'updateApplication', data?.length ?? 0);
+}
+
+function meetOf(contact: unknown): string | null {
+  const meet = (contact ?? {}) as { meet?: unknown };
+  return typeof meet.meet === 'string' ? meet.meet : null;
 }
 
 export async function setApplicationLabel(id: string, labelId: string, on: boolean): Promise<boolean> {
@@ -211,6 +222,6 @@ export async function createApplication(raw: {
   return {
     id: data.id, jobId: input.jobId ?? null, columnId: input.columnId, rank: data.rank, title, company: input.company, url,
     sourceId: data.source_id, salary: input.salary, notes: null, contactName: input.contactName ?? null, contactUrl: null,
-    appliedAt, nextActionAt: null, firstResponseAt: null, lastActivityAt: null, followUpCount: 0, outcome: 'open', labelIds: [], replyKind: null, lastMessage: null, messageCount: 0, rejectionReasons: [], rejectionStage: null,
+    appliedAt, nextActionAt: null, meetingUrl: null, firstResponseAt: null, lastActivityAt: null, followUpCount: 0, outcome: 'open', labelIds: [], replyKind: null, lastMessage: null, messageCount: 0, rejectionReasons: [], rejectionStage: null,
   };
 }

@@ -17,6 +17,8 @@ export type BoardCard = {
   notes: string | null;
   contactName: string | null;
   contactUrl: string | null;
+  /** The video call for the next step (Meet, Zoom…), from the invite or typed in. */
+  meetingUrl: string | null;
   appliedAt: string | null;
   nextActionAt: string | null;
   firstResponseAt: string | null;
