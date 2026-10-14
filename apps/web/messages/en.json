@@ -80,7 +80,8 @@
     "prep": "Prep",
     "profile": "Profile",
     "soon": "soon",
-    "signOut": "Sign out"
+    "signOut": "Sign out",
+    "library": "Library"
   },
   "auth": {
     "title": "Sign in",
@@ -113,6 +114,9 @@
     },
     "prep": {
       "title": "Interview prep"
+    },
+    "library": {
+      "title": "Library"
     }
   },
   "today": {
@@ -520,7 +524,8 @@
     "todayAt": "today, {time}",
     "tomorrowAt": "tomorrow, {time}",
     "todayNothing": "Nothing due today ✓",
-    "comingUp": "Coming up"
+    "comingUp": "Coming up",
+    "prepare": "Prepare for the interview"
   },
   "cv": {
     "title": "Your CV",
@@ -858,5 +863,66 @@
     "noData": "No data yet.",
     "reasons": "Rejection reasons",
     "noReasons": "No rejections with reasons yet — good!"
+  },
+  "library": {
+    "title": "Library",
+    "subtitle": "Useful links — articles, visualizers, docs — by topic, easy to find before an interview.",
+    "add": "Add a link",
+    "url": "Link",
+    "titleLabel": "Title",
+    "titleHint": "Title (taken from the page)",
+    "titleLoading": "Reading the page title…",
+    "topic": "Topic",
+    "topicHint": "Topic: JavaScript, React…",
+    "note": "Note",
+    "noteHint": "Note: what it is, why you saved it (optional)",
+    "save": "Save",
+    "saving": "Saving…",
+    "search": "Search the library",
+    "all": "All",
+    "empty": "Nothing here yet. Save your first useful link above.",
+    "edit": "Edit",
+    "delete": "Delete",
+    "deleteConfirm": "Delete this link?",
+    "cancel": "Cancel",
+    "err_invalid": "Use a link starting with https://",
+    "err_duplicate": "This link is already in your library.",
+    "err_failed": "Could not save. Try again."
+  },
+  "prep": {
+    "title": "Interview prep",
+    "subtitle": "For a job with an interview: what role you are preparing for, what they expect, topics explained from zero with code examples and questions, and how to talk about yourself based on your CV.",
+    "mine": "My preps",
+    "candidates": "Ready to prepare",
+    "noCandidates": "Cards in the Interview column of the board show up here.",
+    "start": "Prepare",
+    "planning": "Planning… (~20 s)",
+    "progress": "{done} of {total} topics",
+    "back": "All preps",
+    "preparingFor": "Preparing for the interview",
+    "expectations": "What they expect",
+    "topics": "Topics to prepare",
+    "topicsHint": "Open a topic: the explanation is written in a few seconds and kept. Mark the ones you learned.",
+    "likelyAsked": "often asked",
+    "writingLesson": "Writing the explanation…",
+    "learned": "Learned",
+    "notLearned": "Review again",
+    "concepts": "Key ideas",
+    "examples": "How it is used",
+    "pitfalls": "Common mistakes",
+    "questions": "Interview questions",
+    "pitchTitle": "How to talk about yourself",
+    "pitchHint": "From your CV: a short self-introduction and what to answer for each requirement of the job.",
+    "pitchWrite": "Write my story",
+    "pitchAgain": "Rewrite",
+    "pitchIntro": "\"Tell us about yourself\"",
+    "writing": "Writing…",
+    "delete": "Delete this prep",
+    "deleteConfirm": "Delete this prep with its lessons?",
+    "err_ai_unavailable": "AI is not available right now.",
+    "err_ai_limit": "Daily AI limit reached. Resets at 00:00 UTC.",
+    "err_no_cv": "Upload your CV in the profile first.",
+    "err_not_found": "Not found.",
+    "err_failed": "Could not write it. Try again."
   }
 }

@@ -1,6 +1,6 @@
-import { BarChart3, Columns3, Flame, GraduationCap, SlidersHorizontal, User, type LucideIcon } from 'lucide-react';
+import { BarChart3, BookMarked, Columns3, Flame, GraduationCap, SlidersHorizontal, User, type LucideIcon } from 'lucide-react';
 
-export type NavKey = 'today' | 'board' | 'search' | 'analytics' | 'prep' | 'profile';
+export type NavKey = 'today' | 'board' | 'search' | 'analytics' | 'prep' | 'library' | 'profile';
 
 export const NAV_ITEMS: {
   key: NavKey;
@@ -13,6 +13,7 @@ export const NAV_ITEMS: {
   { key: 'board', href: '/board', icon: Columns3, mobile: true },
   { key: 'search', href: '/search', icon: SlidersHorizontal, mobile: true },
   { key: 'analytics', href: '/analytics', icon: BarChart3, mobile: true },
-  { key: 'prep', href: '/prep', icon: GraduationCap, soon: true, mobile: false },
+  { key: 'prep', href: '/prep', icon: GraduationCap, mobile: false },
+  { key: 'library', href: '/library', icon: BookMarked, mobile: false },
   { key: 'profile', href: '/profile', icon: User, mobile: true },
 ];

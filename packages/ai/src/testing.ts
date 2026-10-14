@@ -80,6 +80,29 @@ export function fakeResponder(req: FakeRequest): unknown {
     }
     case 'recruiter_message':
       return { subject: null, body: 'Hi! I saw your opening and would love to connect. [fake]' };
+    case 'prep_plan':
+      return {
+        role: 'Middle Full-Stack Developer [fake]',
+        summary: 'The team builds a SaaS platform. [fake]',
+        expectations: ['Build React features', 'Design REST APIs in Node.js'],
+        topics: [
+          { title: 'React hooks', why: 'The UI is React.', from_job: true },
+          { title: 'JavaScript event loop', why: 'Asked in most JS interviews.', from_job: false },
+        ],
+      };
+    case 'prep_lesson':
+      return {
+        intro: 'Hooks let function components keep state. [fake]',
+        concepts: [{ name: 'useState', explain: 'Keeps a value between renders.' }],
+        examples: [{ title: 'A counter', explain: 'State that changes on click.', code: 'const [n, setN] = useState(0);', code_lang: 'tsx' }],
+        pitfalls: ['Calling hooks inside conditions.'],
+        questions: [{ q: 'Why can hooks not be called in a loop?', a: 'React matches hooks by call order.' }],
+      };
+    case 'prep_pitch':
+      return {
+        intro: 'I am a full-stack developer with 3 years of React and Node.js. [fake]',
+        points: [{ requirement: 'Build React features', answer: 'At Acme I built the dashboard in React. [fake]' }],
+      };
     default:
       throw new Error(`fakeResponder: unknown task ${req.task ?? '(none)'}`);
   }

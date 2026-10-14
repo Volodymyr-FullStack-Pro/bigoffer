@@ -23,6 +23,15 @@ export function privateAiAvailable(): boolean {
   }
 }
 
+/** Same as privateAiAvailable for job-only (public) requests: lessons and plans that hold no personal data. */
+export function publicAiAvailable(): boolean {
+  try {
+    return getLlm().isAvailable('public');
+  } catch {
+    return false;
+  }
+}
+
 const DEFAULT_PRIVATE_AI_DAILY_LIMIT = 100;
 
 /** Paid-AI requests one user may make per UTC day (PRIVATE_AI_DAILY_LIMIT, default 100). */
