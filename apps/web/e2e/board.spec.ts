@@ -326,4 +326,10 @@ test('a pasted rejection opens the reject dialog with the stage and reason the A
   await expect(page.locator('[data-testid="reject-reason"][value="no_reason_given"]')).toBeChecked();
   await visible(page, 'reject-confirm').click();
   await expect.poll(() => applicationColumnKey(id)).toBe('rejected');
+  // The reason shows on the card and in its panel.
+  await expect(card(page, title).getByTestId('card-reject-reasons')).toContainText('No reason given');
+  await page.reload();
+  await expect(card(page, title).getByTestId('card-reject-reasons')).toContainText('No reason given');
+  await card(page, title).click();
+  await expect(visible(page, 'panel-reject-reasons')).toContainText('No reason given');
 });

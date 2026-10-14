@@ -30,6 +30,9 @@ export type BoardCard = {
   lastMessage: { direction: 'in' | 'out'; at: string } | null;
   /** Logged messages both ways. */
   messageCount: number;
+  /** Why it ended (rejected/withdrawn cards): reasons and stage from the reject dialog. */
+  rejectionReasons: string[];
+  rejectionStage: string | null;
 };
 
 export type BoardCardView = BoardCard & { urgency: Urgency };

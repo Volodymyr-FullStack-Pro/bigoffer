@@ -112,6 +112,13 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, companyC
         </div>
         <button type="button" onClick={onClose} aria-label={t('close')} className="font-mono text-lg">✕</button>
       </div>
+      {card.rejectionReasons.length > 0 && card.outcome !== 'open' && card.outcome !== 'offer' && (
+        <p data-testid="panel-reject-reasons" className="rounded-md border border-danger/40 bg-danger/10 px-3 py-2 text-sm">
+          <span className="font-semibold">{t(card.outcome === 'withdrawn' ? 'rejectedByMe' : 'rejectedLine')}:</span>{' '}
+          {card.rejectionReasons.map((r) => t(`reason_${r}` as never)).join(', ')}
+          {card.rejectionStage && <span className="text-muted-foreground"> · {t(`stage_${card.rejectionStage}` as never)}</span>}
+        </p>
+      )}
       {card.urgency in NEXT_STEP && (
         <p data-testid="panel-next-step" data-urgency={card.urgency} className="brutal border-l-[6px] bg-card p-3 text-sm" style={{ borderLeftColor: NEXT_STEP[card.urgency] }}>
           <span className="font-semibold">{t(`urgency_${card.urgency}` as never)}.</span> {t(`nextStep_${card.urgency}` as never)}
