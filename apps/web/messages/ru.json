@@ -407,7 +407,7 @@
     "label_awaiting_interview": "Жду интервью",
     "addCard": "Добавить карточку",
     "addTitle": "Новая карточка",
-    "addUrl": "Ссылка на вакансию (необязательно)",
+    "addUrl": "Вставьте ссылку на вакансию (DOU, Djinni, robota.ua или любой сайт)",
     "addFetch": "Загрузить",
     "addPreviewFailed": "Не удалось прочитать страницу — заполните поля вручную.",
     "addJobTitle": "Должность",
@@ -495,7 +495,9 @@
     "conversationChangeKind": "Изменить тип ответа",
     "conversationSetKind": "Тип?",
     "replyKindNew": "Тип нового сообщения",
-    "conversationChange": "изменить"
+    "conversationChange": "изменить",
+    "addLoading": "Читаю вакансию с сайта… (до полуминуты)",
+    "addImported": "Вакансия прочитана полностью — на карточке будет работать «Набор для отклика»."
   },
   "cv": {
     "title": "Ваше CV",

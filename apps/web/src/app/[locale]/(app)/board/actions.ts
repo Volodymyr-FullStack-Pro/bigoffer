@@ -1,11 +1,12 @@
 'use server';
 
 import type { Json } from '@jp/db';
-import { type ApplicationPatch, applicationPatchSchema, rankAtTop, type RejectionInput, rejectionInputSchema } from '@jp/core';
+import { boardLink, type ApplicationPatch, applicationPatchSchema, rankAtTop, type RejectionInput, rejectionInputSchema } from '@jp/core';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { getUserId } from '@/lib/auth';
 import { fetchJobPreview, type JobPreview } from '@/lib/job-preview';
+import { importJobByLink } from '@/lib/trigger';
 import { createClient } from '@/lib/supabase/server';
 import type { BoardCard, BoardLabel } from './board-types';
 
@@ -140,11 +141,24 @@ const createInputSchema = z.object({
   url: z.string().trim().max(2000).regex(/^https?:\/\//i).nullable(),
   location: z.string().trim().max(200).nullable(),
   salary: z.string().trim().max(120).nullable(),
+  jobId: z.string().regex(UUID).nullable().optional(),
+  contactName: z.string().trim().max(120).nullable().optional(),
+  sourceId: z.enum(['dou', 'djinni', 'robotaua']).nullable().optional(),
 });
 
-export async function previewJob(url: string): Promise<JobPreview | null> {
+export type CardPreview = JobPreview & { jobId?: string; sourceId?: string; url?: string; recruiter?: string | null };
+
+/**
+ * What a pasted link says about the job. DOU, Djinni and robota.ua links are read by the board parsers and stored as
+ * a job (so the apply kit works on the card); any other site falls back to the page's own metadata.
+ */
+export async function previewJob(url: string): Promise<CardPreview | null> {
   const parsed = previewUrlSchema.safeParse(url);
   if (!parsed.success || !(await getUserId())) return null;
+  if (boardLink(parsed.data)) {
+    const job = await importJobByLink(parsed.data);
+    if (job) return { title: job.title, company: job.company || null, location: job.location, salary: job.salary, jobId: job.jobId, sourceId: job.sourceId, url: job.url, recruiter: job.recruiter };
+  }
   return fetchJobPreview(parsed.data);
 }
 
@@ -155,6 +169,10 @@ export async function createApplication(raw: {
   url: string | null;
   location: string | null;
   salary: string | null;
+  /** The stored job a board link was imported as (enables the apply kit). */
+  jobId?: string | null;
+  contactName?: string | null;
+  sourceId?: string | null;
 }): Promise<BoardCard | null> {
   const supabase = await client();
   const userId = await getUserId();
@@ -178,8 +196,11 @@ export async function createApplication(raw: {
       location: input.location,
       salary: input.salary,
       applied_at: appliedAt,
+      ...(input.jobId ? { job_id: input.jobId } : {}),
+      ...(input.contactName ? { contact: { name: input.contactName } } : {}),
+      ...(input.sourceId ? { source_id: input.sourceId } : {}),
     })
-    .select('id, rank')
+    .select('id, rank, source_id')
     .single();
   if (error || !data) {
     if (error) console.error('createApplication failed', error.message);
@@ -188,8 +209,8 @@ export async function createApplication(raw: {
   await event(supabase, data.id, 'created', { from: 'manual' });
   revalidatePath('/[locale]/board', 'page');
   return {
-    id: data.id, jobId: null, columnId: input.columnId, rank: data.rank, title, company: input.company, url,
-    sourceId: null, salary: input.salary, notes: null, contactName: null, contactUrl: null,
+    id: data.id, jobId: input.jobId ?? null, columnId: input.columnId, rank: data.rank, title, company: input.company, url,
+    sourceId: data.source_id, salary: input.salary, notes: null, contactName: input.contactName ?? null, contactUrl: null,
     appliedAt, nextActionAt: null, firstResponseAt: null, lastActivityAt: null, followUpCount: 0, outcome: 'open', labelIds: [], replyKind: null, lastMessage: null, messageCount: 0,
   };
 }

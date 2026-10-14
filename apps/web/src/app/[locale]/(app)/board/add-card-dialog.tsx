@@ -18,14 +18,17 @@ export function AddCardDialog({ columns, onCreated, onClose }: { columns: BoardC
   const [loading, setLoading] = useState(false);
   const [failed, setFailed] = useState(false);
   const [error, setError] = useState(false);
+  // Set when the link was read by a board parser: the card links the stored job (apply kit, source badge).
+  const [imported, setImported] = useState<{ jobId?: string; sourceId?: string; recruiter?: string | null } | null>(null);
   const field = 'brutal bg-card px-2 py-1 font-sans text-sm';
 
-  const fetchPreview = async () => {
+  const fetchPreview = async (link = url) => {
     setLoading(true);
     setFailed(false);
+    setImported(null);
     let p: Awaited<ReturnType<typeof previewJob>> = null;
     try {
-      p = await previewJob(url.trim());
+      p = await previewJob(link.trim());
     } catch {
       p = null;
     }
@@ -35,6 +38,8 @@ export function AddCardDialog({ columns, onCreated, onClose }: { columns: BoardC
     if (p.company) setCompany(p.company);
     if (p.location) setLocation(p.location);
     if (p.salary) setSalary(p.salary);
+    if (p.url) setUrl(p.url);
+    if (p.jobId) setImported({ jobId: p.jobId, sourceId: p.sourceId, recruiter: p.recruiter });
   };
 
   return (
@@ -46,7 +51,17 @@ export function AddCardDialog({ columns, onCreated, onClose }: { columns: BoardC
           setError(false);
           let card: BoardCard | null = null;
           try {
-            card = await createApplication({ columnId, title, company, url: url.trim() || null, location: location || null, salary: salary || null });
+            card = await createApplication({
+              columnId,
+              title,
+              company,
+              url: url.trim() || null,
+              location: location || null,
+              salary: salary || null,
+              jobId: imported?.jobId ?? null,
+              sourceId: imported?.sourceId ?? null,
+              contactName: imported?.recruiter ?? null,
+            });
           } catch {
             card = null;
           }
@@ -57,11 +72,30 @@ export function AddCardDialog({ columns, onCreated, onClose }: { columns: BoardC
       >
         <h2 id="add-title-h" className="font-display text-xl font-semibold">{t('addTitle')}</h2>
         <div className="flex gap-2">
-          <input data-testid="add-url" type="url" value={url} onChange={(e) => setUrl(e.target.value)} placeholder={t('addUrl')} className={`${field} flex-1`} />
-          <button type="button" data-testid="add-fetch" disabled={!url || loading} onClick={fetchPreview} className="brutal brutal-press px-3 text-sm font-semibold disabled:opacity-50">
+          <input
+            data-testid="add-url"
+            type="url"
+            value={url}
+            autoFocus
+            onChange={(e) => setUrl(e.target.value)}
+            // Pasting a link fills the card right away.
+            onPaste={(e) => {
+              const pasted = e.clipboardData.getData('text').trim();
+              if (/^https?:\/\//i.test(pasted)) {
+                e.preventDefault();
+                setUrl(pasted);
+                void fetchPreview(pasted);
+              }
+            }}
+            placeholder={t('addUrl')}
+            className={`${field} flex-1`}
+          />
+          <button type="button" data-testid="add-fetch" disabled={!url || loading} onClick={() => void fetchPreview()} className="brutal brutal-press px-3 text-sm font-semibold disabled:opacity-50">
             {loading ? '…' : t('addFetch')}
           </button>
         </div>
+        {loading && <p data-testid="add-loading" className="text-sm text-muted-foreground">{t('addLoading')}</p>}
+        {imported && <p data-testid="add-imported" className="text-sm text-success">✓ {t('addImported')}</p>}
         {failed && <p data-testid="add-preview-failed" className="text-sm text-warning">{t('addPreviewFailed')}</p>}
         <label className="flex flex-col gap-1 font-mono text-xs">{t('addJobTitle')}<input data-testid="add-title" required maxLength={300} value={title} onChange={(e) => setTitle(e.target.value)} className={field} /></label>
         <label className="flex flex-col gap-1 font-mono text-xs">{t('addCompany')}<input data-testid="add-company" maxLength={200} value={company} onChange={(e) => setCompany(e.target.value)} className={field} /></label>
