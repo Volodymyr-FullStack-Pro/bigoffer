@@ -211,6 +211,6 @@ export async function createApplication(raw: {
   return {
     id: data.id, jobId: input.jobId ?? null, columnId: input.columnId, rank: data.rank, title, company: input.company, url,
     sourceId: data.source_id, salary: input.salary, notes: null, contactName: input.contactName ?? null, contactUrl: null,
-    appliedAt, nextActionAt: null, firstResponseAt: null, lastActivityAt: null, followUpCount: 0, outcome: 'open', labelIds: [], replyKind: null, lastMessage: null, messageCount: 0,
+    appliedAt, nextActionAt: null, firstResponseAt: null, lastActivityAt: null, followUpCount: 0, outcome: 'open', labelIds: [], replyKind: null, lastMessage: null, messageCount: 0, rejectionReasons: [], rejectionStage: null,
   };
 }

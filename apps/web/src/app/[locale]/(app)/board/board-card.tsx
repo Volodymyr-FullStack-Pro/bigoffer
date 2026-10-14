@@ -67,6 +67,15 @@ export function BoardCardItem({ card, labels, labelName, now, timeZone, onOpen }
           <span aria-hidden>{reply.icon}</span> {t(`reply_${card.replyKind}` as never)}
         </span>
       )}
+      {card.rejectionReasons.length > 0 && (card.outcome === 'rejected' || card.outcome === 'withdrawn' || card.outcome === 'ghosted') && (
+        <span data-testid="card-reject-reasons" className="flex flex-wrap gap-1">
+          {card.rejectionReasons.map((r) => (
+            <span key={r} className="rounded-full border border-danger/40 bg-danger/10 px-2 py-0.5 text-[11px] font-semibold text-danger">
+              {t(`reason_${r}` as never)}
+            </span>
+          ))}
+        </span>
+      )}
       <span className="font-display font-bold leading-tight">{card.title}</span>
       <span className="text-sm text-muted-foreground">{card.company}</span>
       {own.length > 0 && (

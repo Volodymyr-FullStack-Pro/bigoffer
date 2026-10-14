@@ -500,7 +500,9 @@
     "addImported": "Job read in full — the apply kit will work on this card.",
     "conversationEdit": "Edit message",
     "rejectSuggested": "AI suggested the stage and reason from the company’s message — check and confirm.",
-    "reason_no_reason_given": "No reason given"
+    "reason_no_reason_given": "No reason given",
+    "rejectedLine": "Rejected",
+    "rejectedByMe": "I withdrew"
   },
   "cv": {
     "title": "Your CV",
