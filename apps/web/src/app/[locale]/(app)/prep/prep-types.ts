@@ -12,5 +12,5 @@ export function asPlan(raw: unknown): PrepPlan | null {
   };
 }
 
-/** Cards worth preparing for: an interview or a test task is on the way. */
-export const PREP_COLUMNS = ['talking', 'test_task', 'interview', 'offer'] as const;
+/** Cards worth preparing for: an interview is set (the owner's call: interviews only for now). */
+export const PREP_COLUMNS = ['interview'] as const;

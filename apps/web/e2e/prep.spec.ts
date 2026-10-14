@@ -10,8 +10,12 @@ test('prepares for an interview: plan, a lesson with code, progress and the pitc
   await seedCv(email);
   const { title, jobId } = await seedMatch(email, { score: 90, description: 'React, Node.js and PostgreSQL.' });
   await seedCardFromJob(email, jobId, title, 'interview');
+  // Only cards with an interview: one still in talks is not offered yet.
+  const talking = await seedMatch(email, { score: 80 });
+  await seedCardFromJob(email, talking.jobId, talking.title, 'talking');
 
   await page.goto('/en/prep');
+  await expect(visible(page, 'prep-candidate').filter({ hasText: talking.title })).toHaveCount(0);
   await visible(page, 'prep-candidate').filter({ hasText: title }).getByTestId('prep-start').click();
   await expect(page).toHaveURL(/\/en\/prep\/[0-9a-f-]{36}$/);
   await expect(visible(page, 'prep-role')).toContainText('[fake]');
