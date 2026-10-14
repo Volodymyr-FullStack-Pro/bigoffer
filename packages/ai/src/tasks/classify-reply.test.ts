@@ -24,4 +24,10 @@ describe('classifyReply', () => {
     const llm = new FakeLlmClient(() => ({ kind: 'rejection', interview_at: null, summary: 'No', recruiter_name: null, rejection_stage: 'application', rejection_reasons: ['other_candidate', 'other_candidate', 'my_decision_salary'] }), ['private']);
     expect((await classifyReply(llm, input)).rejection).toEqual({ stage: 'application', reasons: ['other_candidate'] });
   });
+  it('counts an invite that asks to confirm a slot as an interview, not a question', async () => {
+    const llm = new FakeLlmClient(() => ({ kind: 'interview_invite', interview_at: null, summary: 'Call', recruiter_name: null, rejection_stage: null, rejection_reasons: [] }), ['private']);
+    await classifyReply(llm, input);
+    expect(llm.calls[0]!.system).toContain('It wins over question when the message invites to a call');
+    expect(llm.calls[0]!.system).toContain('proposes or confirms one specific interview date');
+  });
 });

@@ -348,3 +348,21 @@ test('a click on the page around the open card closes it', async ({ context, pag
   await page.mouse.click(20, 300);
   await expect(page.getByTestId('card-panel')).toHaveCount(0);
 });
+
+test('a Meet link in the invite becomes a Join button on the card, and can be edited', async ({ context, page }) => {
+  const email = uniqueEmail('board-meet');
+  await loginAs(context, email);
+  const { title } = await seedApplication(email, { column: 'applied', appliedDaysAgo: 2 });
+  await page.goto('/en/board');
+  await card(page, title).click();
+  await visible(page, 'reply-body').fill('Here is your invite. Join Google Meet: https://meet.google.com/xcg-ekku-yjg');
+  await visible(page, 'reply-kind').and(page.locator('[data-kind="interview_invite"]')).click();
+  await visible(page, 'reply-save').click();
+  await expect(card(page, title).getByTestId('card-join')).toHaveAttribute('href', 'https://meet.google.com/xcg-ekku-yjg');
+  await expect(visible(page, 'panel-join')).toHaveAttribute('href', 'https://meet.google.com/xcg-ekku-yjg');
+  await expect(visible(page, 'panel-meeting')).toHaveValue('https://meet.google.com/xcg-ekku-yjg');
+  await visible(page, 'panel-meeting').fill('https://us02web.zoom.us/j/123');
+  await visible(page, 'panel-save').click();
+  await page.reload();
+  await expect(card(page, title).getByTestId('card-join')).toHaveAttribute('href', 'https://us02web.zoom.us/j/123');
+});

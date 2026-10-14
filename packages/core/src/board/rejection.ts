@@ -38,5 +38,7 @@ export const applicationPatchSchema = z.object({
   nextActionAt: z.iso.datetime().nullable(),
   contactName: optionalText(120),
   contactUrl: z.url({ protocol: /^https?$/ }).nullable(),
+  /** The video call for the next step (Meet, Zoom…). */
+  meetingUrl: z.url({ protocol: /^https?$/ }).max(500).nullable().optional(),
 });
 export type ApplicationPatch = z.infer<typeof applicationPatchSchema>;

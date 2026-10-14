@@ -39,7 +39,7 @@ export default async function BoardPage() {
     kind: c.kind === 'won' || c.kind === 'lost' ? c.kind : 'active',
   }));
   const cards: BoardCard[] = (apps ?? []).map((a) => {
-    const contact = (a.contact ?? {}) as { name?: unknown; url?: unknown };
+    const contact = (a.contact ?? {}) as { name?: unknown; url?: unknown; meet?: unknown };
     return {
       id: a.id,
       jobId: a.job_id,
@@ -53,6 +53,7 @@ export default async function BoardPage() {
       notes: a.notes,
       contactName: typeof contact.name === 'string' ? contact.name : null,
       contactUrl: typeof contact.url === 'string' ? contact.url : null,
+      meetingUrl: typeof contact.meet === 'string' ? contact.meet : null,
       appliedAt: a.applied_at,
       nextActionAt: a.next_action_at,
       firstResponseAt: a.first_response_at,
