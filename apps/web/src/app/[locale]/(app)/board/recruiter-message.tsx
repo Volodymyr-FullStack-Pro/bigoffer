@@ -35,6 +35,7 @@ export function RecruiterMessage({
   const section = useRef<HTMLElement>(null);
   const [subject, setSubject] = useState<string | null>(null);
   const [body, setBody] = useState('');
+  const [note, setNote] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
@@ -59,7 +60,7 @@ export function RecruiterMessage({
     setError(null);
     setSent(false);
     try {
-      const res = await generateRecruiterMessage(applicationId, { format: fmt, kind: k, lang: l, tone: 'default' });
+      const res = await generateRecruiterMessage(applicationId, { format: fmt, kind: k, lang: l, tone: 'default', note: note.trim() || undefined });
       if (res.ok) {
         setSubject(res.subject);
         setBody(res.body);
@@ -122,9 +123,24 @@ export function RecruiterMessage({
           onClick={() => void generate(kind, lang)}
           className="brutal brutal-press bg-ai px-3 py-1 text-sm font-semibold text-ai-foreground disabled:opacity-50"
         >
-          {busy ? t('writing') : t('generate')}
+          {busy ? t('writing') : body ? t('regenerate') : t('generate')}
         </button>
       </div>
+      <input
+        data-testid="msg-note"
+        value={note}
+        maxLength={500}
+        onChange={(e) => setNote(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' && !busy) {
+            e.preventDefault();
+            void generate(kind, lang);
+          }
+        }}
+        aria-label={t('note')}
+        placeholder={t('notePlaceholder')}
+        className={field}
+      />
       {error && <p data-testid="msg-error" role="alert" className="text-sm text-danger">{t(`err_${error}` as never)}</p>}
       {subject && <p className="text-sm"><span className="font-semibold">{t('subject')}:</span> {subject}</p>}
       <textarea data-testid="msg-body" value={body} maxLength={limit} onChange={(e) => { setBody(e.target.value); setSent(false); }} aria-label={t('body')} className={`${field} min-h-28`} />

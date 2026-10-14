@@ -34,6 +34,8 @@ export async function recruiterMessage(
     thread?: { direction: 'in' | 'out'; author: string | null; body: string }[];
     /** For a reply: where the recruiter wrote (djinni, email, linkedin…). */
     channel?: string | null;
+    /** The candidate's own words on what to say ("I already filled in the form"). */
+    note?: string | null;
   },
 ): Promise<{ subject: string | null; body: string }> {
   const reply = input.kind === 'reply';
@@ -84,6 +86,9 @@ export async function recruiterMessage(
         : input.candidateName
         ? 'Introduce the candidate by name once ("I\'m <name>, a ...") and sign off with the name.'
         : 'The candidate name is unknown: introduce them by role ("I\'m a ..."), never "My name is" without a name, and no signature name.',
+      ...(input.note?.trim()
+        ? ['The candidate wrote in <candidate_note> what the message must say or take into account: follow it, it overrides the defaults above (for example, if they already did what was asked, say it is done instead of promising it).']
+        : []),
     ].join('\n'),
     prompt: [
       `Job: ${input.job.title} at ${input.job.company}`,
@@ -103,6 +108,7 @@ export async function recruiterMessage(
             '</conversation>',
           ]
         : []),
+      ...(input.note?.trim() ? ['', '<candidate_note>', input.note.trim().slice(0, 500), '</candidate_note>'] : []),
       ...(!reply && input.previous.length ? ['', 'Earlier messages from the candidate:', ...input.previous.slice(-3).map((p) => `- ${p.slice(0, 600)}`)] : []),
     ].join('\n'),
     maxOutputTokens: 1200,
