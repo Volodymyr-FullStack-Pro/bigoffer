@@ -70,7 +70,7 @@ export function fakeResponder(req: FakeRequest): unknown {
       const text = req.prompt.toLowerCase();
       const none = { rejection_stage: null, rejection_reasons: [] };
       if (text.includes('calendly')) return { kind: 'interview_invite', interview_at: '2030-10-20T12:30', summary: 'Interview invite [fake]', recruiter_name: 'Galina', ...none };
-      if (text.includes('not to move forward')) return { kind: 'rejection', interview_at: null, summary: 'Rejected [fake]', recruiter_name: null, rejection_stage: 'application', rejection_reasons: ['other_candidate'] };
+      if (text.includes('not to move forward')) return { kind: 'rejection', interview_at: null, summary: 'Rejected [fake]', recruiter_name: null, rejection_stage: 'application', rejection_reasons: ['no_reason_given'] };
       if (text.includes('received your application')) return { kind: 'auto_reply', interview_at: null, summary: 'Automatic confirmation [fake]', recruiter_name: null, ...none };
       return { kind: 'question', interview_at: null, summary: 'The recruiter asks a question [fake]', recruiter_name: null, ...none };
     }

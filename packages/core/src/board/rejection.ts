@@ -14,6 +14,7 @@ export const REJECTION_REASONS = [
   'tech_interview_failed',
   'location_timezone',
   'culture_fit',
+  'no_reason_given',
   'no_feedback',
   'my_decision_salary',
   'my_decision_company',

@@ -57,8 +57,8 @@ export async function classifyReply(
       'For a rejection only (else null and []): rejection_stage — application (rejected right after applying), screening (after a',
       'recruiter call), technical, test_task, final or offer; rejection_reasons — what the reply states or clearly implies:',
       'experience_level, stack_mismatch, english, salary_expectations, position_closed (filled, closed, on hold), other_candidate',
-      '(chose someone else / a better match), test_task_failed, tech_interview_failed, location_timezone, culture_fit; "other" when',
-      'it gives no reason. A generic "we decided not to move forward" without a reason is ["other"].',
+      '(chose someone else / a better match), test_task_failed, tech_interview_failed, location_timezone, culture_fit, other (a reason',
+      'not in this list). A decline that gives no reason at all ("we decided not to move forward") is ["no_reason_given"].',
       `summary: one short sentence in ${LANG_NAME[input.lang] ?? 'English'} on what the reply says and what to do next (max 160 characters).`,
     ].join('\n'),
     prompt: [`Job: ${input.job.title} at ${input.job.company}`, '<reply>', input.text.slice(0, 6000), '</reply>'].join('\n'),
@@ -72,6 +72,6 @@ export async function classifyReply(
     interviewAt: LOCAL_DATETIME.test(at) ? at : null,
     summary: res.data.summary.trim().slice(0, 200),
     recruiterName: name,
-    rejection: res.data.kind === 'rejection' ? { stage: res.data.rejection_stage, reasons: reasons.length ? reasons : ['other'] } : null,
+    rejection: res.data.kind === 'rejection' ? { stage: res.data.rejection_stage, reasons: reasons.length ? reasons : ['no_reason_given'] } : null,
   };
 }

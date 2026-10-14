@@ -323,7 +323,7 @@ test('a pasted rejection opens the reject dialog with the stage and reason the A
   await visible(page, 'reply-save').click();
   await expect(visible(page, 'reject-suggested')).toBeVisible();
   await expect(visible(page, 'reject-stage')).toHaveValue('application');
-  await expect(page.locator('[data-testid="reject-reason"][value="other_candidate"]')).toBeChecked();
+  await expect(page.locator('[data-testid="reject-reason"][value="no_reason_given"]')).toBeChecked();
   await visible(page, 'reject-confirm').click();
   await expect.poll(() => applicationColumnKey(id)).toBe('rejected');
 });
