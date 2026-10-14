@@ -1,6 +1,6 @@
 'use server';
 
-import { type PrepLesson, type PrepPitch, type PrepPlan, prepLesson, prepPitch, prepPlan } from '@jp/ai';
+import { PREP_LEVELS, type PrepLesson, type PrepLevel, type PrepPitch, type PrepPlan, prepLesson, prepPitch, prepPlan } from '@jp/ai';
 import type { Json } from '@jp/db';
 import { revalidatePath } from 'next/cache';
 import { getLocale } from 'next-intl/server';
@@ -52,28 +52,39 @@ export async function startPrep(applicationId: string): Promise<{ ok: true; id: 
   return { ok: true, id: data.id };
 }
 
-/** The lesson on one topic of the plan, written once and kept. */
-export async function getLesson(prepId: string, key: string): Promise<{ ok: true; lesson: PrepLesson } | { ok: false; error: Err }> {
-  if (!(await getUserId()) || !UUID.test(prepId) || key.length > 80) return { ok: false, error: 'not_found' };
+/** Where a lesson is kept in `lessons`: junior under the topic key, the others under "<key>@middle" / "<key>@senior". */
+const lessonSlot = (key: string, level: PrepLevel) => (level === 'junior' ? key : `${key}@${level}`);
+
+/** The lesson on one topic of the plan at one level (each builds on the levels below it), written once and kept. */
+export async function getLesson(
+  prepId: string,
+  key: string,
+  level: PrepLevel = 'junior',
+): Promise<{ ok: true; lesson: PrepLesson } | { ok: false; error: Err }> {
+  if (!(await getUserId()) || !UUID.test(prepId) || key.length > 80 || !PREP_LEVELS.includes(level)) return { ok: false, error: 'not_found' };
   const supabase = await createClient();
   const { data: prep } = await supabase.from('interview_preps').select('lang, plan, lessons').eq('id', prepId).maybeSingle();
   const plan = prep ? asPlan(prep.plan) : null;
   const topic = plan?.topics.find((t) => t.key === key);
   if (!prep || !plan || !topic) return { ok: false, error: 'not_found' };
   const lessons = (prep.lessons ?? {}) as Record<string, PrepLesson>;
-  if (lessons[key]) return { ok: true, lesson: lessons[key] };
+  const slot = lessonSlot(key, level);
+  if (lessons[slot]) return { ok: true, lesson: lessons[slot] };
+  // A higher level builds on the lower ones: name what they covered so it is not repeated.
+  const below = PREP_LEVELS.slice(0, PREP_LEVELS.indexOf(level));
+  const covered = below.flatMap((l) => (lessons[lessonSlot(key, l)]?.concepts ?? []).map((c) => c.name));
   if (!publicAiAvailable()) return { ok: false, error: 'ai_unavailable' };
   if (!(await consumePrivateAi(supabase))) return { ok: false, error: 'ai_limit' };
   let lesson: PrepLesson;
   try {
-    lesson = await prepLesson(getLlm(), { topic: topic.title, why: topic.why, role: plan.role, lang: prep.lang });
+    lesson = await prepLesson(getLlm(), { topic: topic.title, why: topic.why, role: plan.role, lang: prep.lang, level, covered });
   } catch (err) {
     console.error('getLesson failed', err instanceof Error ? err.name : 'unknown');
     return { ok: false, error: 'failed' };
   }
   // Re-read before writing: another topic may have been written meanwhile.
   const { data: fresh } = await supabase.from('interview_preps').select('lessons').eq('id', prepId).maybeSingle();
-  const merged = { ...((fresh?.lessons ?? {}) as Record<string, unknown>), [key]: lesson };
+  const merged = { ...((fresh?.lessons ?? {}) as Record<string, unknown>), [slot]: lesson };
   await supabase.from('interview_preps').update({ lessons: merged as unknown as NonNullable<Json> }).eq('id', prepId);
   return { ok: true, lesson };
 }

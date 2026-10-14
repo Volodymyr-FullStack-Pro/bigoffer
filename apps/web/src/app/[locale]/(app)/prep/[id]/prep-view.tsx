@@ -1,6 +1,6 @@
 'use client';
 
-import type { PrepLesson, PrepPitch, PrepPlan, PrepTopic } from '@jp/ai';
+import { PREP_LEVELS, type PrepLesson, type PrepLevel, type PrepPitch, type PrepPlan, type PrepTopic } from '@jp/ai';
 import { useFormatter, useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { Link, useRouter } from '@/i18n/navigation';
@@ -31,21 +31,35 @@ export function PrepView({ prepId, card, plan, lessons: initialLessons, pitch: i
   const [pitchError, setPitchError] = useState<string | null>(null);
   const learned = plan.topics.filter((x) => done.includes(x.key)).length;
 
-  const openTopic = async (topic: PrepTopic) => {
-    if (open === topic.key) return setOpen(null);
-    setOpen(topic.key);
-    if (lessons[topic.key]) return;
-    setLoading(topic.key);
-    setErrors((all) => Object.fromEntries(Object.entries(all).filter(([k]) => k !== topic.key)));
+  // The level shown for each opened topic; a topic opens on Junior.
+  const [levels, setLevels] = useState<Record<string, PrepLevel>>({});
+  const slotOf = (key: string, level: PrepLevel) => (level === 'junior' ? key : `${key}@${level}`);
+
+  const load = async (topic: PrepTopic, level: PrepLevel) => {
+    const slot = slotOf(topic.key, level);
+    if (lessons[slot]) return;
+    setLoading(slot);
+    setErrors((all) => Object.fromEntries(Object.entries(all).filter(([k]) => k !== slot)));
     try {
-      const res = await getLesson(prepId, topic.key);
-      if (res.ok) setLessons((all) => ({ ...all, [topic.key]: res.lesson }));
-      else setErrors((all) => ({ ...all, [topic.key]: res.error }));
+      const res = await getLesson(prepId, topic.key, level);
+      if (res.ok) setLessons((all) => ({ ...all, [slot]: res.lesson }));
+      else setErrors((all) => ({ ...all, [slot]: res.error }));
     } catch {
-      setErrors((all) => ({ ...all, [topic.key]: 'failed' }));
+      setErrors((all) => ({ ...all, [slot]: 'failed' }));
     } finally {
       setLoading(null);
     }
+  };
+
+  const openTopic = async (topic: PrepTopic) => {
+    if (open === topic.key) return setOpen(null);
+    setOpen(topic.key);
+    await load(topic, levels[topic.key] ?? 'junior');
+  };
+
+  const pickLevel = (topic: PrepTopic, level: PrepLevel) => {
+    setLevels((all) => ({ ...all, [topic.key]: level }));
+    void load(topic, level);
   };
 
   const toggleDone = async (key: string) => {
@@ -107,7 +121,10 @@ export function PrepView({ prepId, card, plan, lessons: initialLessons, pitch: i
         <ol className="flex flex-col gap-2">
           {plan.topics.map((topic, i) => {
             const isOpen = open === topic.key;
-            const lesson = lessons[topic.key];
+            const level = levels[topic.key] ?? 'junior';
+            const slot = slotOf(topic.key, level);
+            const lesson = lessons[slot];
+            const basics = lessons[topic.key];
             const learnedTopic = done.includes(topic.key);
             return (
               <li key={topic.key} data-testid="prep-topic" data-key={topic.key} className={`brutal flex flex-col ${learnedTopic ? 'opacity-80' : ''}`}>
@@ -126,10 +143,28 @@ export function PrepView({ prepId, card, plan, lessons: initialLessons, pitch: i
                 </button>
                 {isOpen && (
                   <div className="flex flex-col gap-4 border-t border-border p-4">
-                    {loading === topic.key && <LessonSkeleton label={t('writingLesson')} />}
-                    {errors[topic.key] && <p role="alert" className="text-sm text-danger">{t(`err_${errors[topic.key]}` as never)}</p>}
-                    {lesson && <Lesson lesson={lesson} />}
-                    {lesson && (
+                    <div role="tablist" aria-label={t('level')} className="flex flex-wrap gap-2">
+                      {PREP_LEVELS.map((l) => (
+                        <button
+                          key={l}
+                          type="button"
+                          role="tab"
+                          data-testid="prep-level"
+                          data-level={l}
+                          aria-selected={level === l}
+                          onClick={() => pickLevel(topic, l)}
+                          className={`rounded-full border-[1.5px] border-border px-3 py-1 text-sm font-semibold ${level === l ? LEVEL_STYLE[l] : ''}`}
+                        >
+                          {lessons[slotOf(topic.key, l)] ? '✓ ' : ''}
+                          {t(`level_${l}`)}
+                        </button>
+                      ))}
+                    </div>
+                    <p className="text-xs text-muted-foreground">{t(`levelHint_${level}`)}</p>
+                    {loading === slot && <LessonSkeleton label={t(level === 'junior' ? 'writingLesson' : 'writingLevel', { level: t(`level_${level}`) })} />}
+                    {errors[slot] && <p role="alert" className="text-sm text-danger">{t(`err_${errors[slot]}` as never)}</p>}
+                    {lesson && <Lesson lesson={lesson} level={level} />}
+                    {basics && (
                       <button
                         type="button"
                         data-testid="prep-topic-done"
@@ -190,6 +225,12 @@ export function PrepView({ prepId, card, plan, lessons: initialLessons, pitch: i
   );
 }
 
+const LEVEL_STYLE: Record<PrepLevel, string> = {
+  junior: 'bg-brand text-brand-foreground',
+  middle: 'bg-[#38BDF8] text-[#0C1A24]',
+  senior: 'bg-ai text-ai-foreground',
+};
+
 function LessonSkeleton({ label }: { label: string }) {
   return (
     <div data-testid="prep-lesson-loading" className="flex flex-col gap-2" aria-busy>
@@ -199,10 +240,10 @@ function LessonSkeleton({ label }: { label: string }) {
   );
 }
 
-function Lesson({ lesson }: { lesson: PrepLesson }) {
+function Lesson({ lesson, level }: { lesson: PrepLesson; level: PrepLevel }) {
   const t = useTranslations('prep');
   return (
-    <div data-testid="prep-lesson" className="flex flex-col gap-4">
+    <div data-testid="prep-lesson" data-level={level} className="flex flex-col gap-4">
       <p className="leading-relaxed">{lesson.intro}</p>
       {lesson.concepts.length > 0 && (
         <section className="flex flex-col gap-2">
