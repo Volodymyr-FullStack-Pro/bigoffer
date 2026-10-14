@@ -509,7 +509,9 @@
     "rejectSuggested": "AI suggested the stage and reason from the company’s message — check and confirm.",
     "reason_no_reason_given": "No reason given",
     "rejectedLine": "Rejected",
-    "rejectedByMe": "I withdrew"
+    "rejectedByMe": "I withdrew",
+    "rejectedNotMoved": "The company declined, but the card is not in Rejected yet.",
+    "rejectedMove": "Move to Rejected"
   },
   "cv": {
     "title": "Your CV",

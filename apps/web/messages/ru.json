@@ -509,7 +509,9 @@
     "rejectSuggested": "Этап и причину подсказал AI по письму компании — проверьте и подтвердите.",
     "reason_no_reason_given": "Без объяснения",
     "rejectedLine": "Отказ",
-    "rejectedByMe": "Я отказался"
+    "rejectedByMe": "Я отказался",
+    "rejectedNotMoved": "Компания отказала, но карточка ещё не в «Отказ».",
+    "rejectedMove": "Переместить в «Отказ»"
   },
   "cv": {
     "title": "Ваше CV",
