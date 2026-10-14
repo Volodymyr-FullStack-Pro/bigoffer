@@ -94,10 +94,10 @@ test('a job already on the board leaves the feed', async ({ context, page }) => 
   const { title, jobId } = await seedMatch(email, { score: 91 });
   const other = await seedMatch(email, { score: 80 });
   await page.goto('/en/today');
-  await expect(page.getByText(title).first()).toBeVisible();
+  await expect(page.getByText(title).filter({ visible: true }).first()).toBeVisible();
   await seedCardFromJob(email, jobId, title, 'talking');
   await page.reload();
-  await expect(page.getByText(other.title).first()).toBeVisible();
+  await expect(page.getByText(other.title).filter({ visible: true }).first()).toBeVisible();
   await expect(page.getByText(title)).toHaveCount(0);
 });
 
