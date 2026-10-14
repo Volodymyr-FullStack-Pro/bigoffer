@@ -5,14 +5,17 @@ import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { useModalDialog } from './use-modal-dialog';
 
-export function RejectDialog({ initialReasons = [], onConfirm, onCancel }: {
+export function RejectDialog({ initialReasons = [], initialStage = 'application', suggested = false, onConfirm, onCancel }: {
   initialReasons?: RejectionReason[];
+  initialStage?: RejectionStage;
+  /** The stage and reasons were read from the company's message by AI. */
+  suggested?: boolean;
   onConfirm: (input: RejectionInput) => void;
   onCancel: () => void;
 }) {
   const t = useTranslations('board');
   const [dialogRef, onDialogCancel] = useModalDialog(onCancel);
-  const [stage, setStage] = useState<RejectionStage>('application');
+  const [stage, setStage] = useState<RejectionStage>(initialStage);
   const [by, setBy] = useState<'company' | 'me'>('company');
   const [reasons, setReasons] = useState<RejectionReason[]>(initialReasons);
   const [note, setNote] = useState('');
@@ -26,6 +29,7 @@ export function RejectDialog({ initialReasons = [], onConfirm, onCancel }: {
         }}
       >
         <h2 id="reject-title" className="font-display text-xl font-semibold">{t('rejectTitle')}</h2>
+        {suggested && <p data-testid="reject-suggested" className="rounded-md bg-ai/15 px-3 py-2 text-sm">✨ {t('rejectSuggested')}</p>}
         <label className="flex flex-col gap-1 font-mono text-xs">
           {t('rejectStage')}
           <select data-testid="reject-stage" value={stage} onChange={(e) => setStage(e.target.value as RejectionStage)} className="brutal bg-card px-2 py-1 font-sans text-sm">

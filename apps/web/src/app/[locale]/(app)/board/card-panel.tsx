@@ -9,7 +9,7 @@ import { listMessages } from './message-actions';
 import { RecruiterMessage } from './recruiter-message';
 import { Conversation } from './conversation';
 import { columnForReply } from './reply-kinds';
-import { ReplyInbox } from './reply-inbox';
+import { ReplyInbox, type RejectionSuggestion } from './reply-inbox';
 import { useModalDialog } from './use-modal-dialog';
 import { fromZonedInput, toZonedInput } from './zoned-input';
 import { createLabel, getApplicationEvents, markPinged, setApplicationLabel, updateApplication } from './actions';
@@ -45,7 +45,7 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, companyC
   onChanged: (patch: Partial<BoardCardView>) => void;
   onLabelCreated: (l: BoardLabel) => void;
   onApplied: (r: { columnId: string; rank: string }) => void;
-  onReplyLogged: (patch: Partial<BoardCardView>, moveTo: BoardColumn | null) => void;
+  onReplyLogged: (patch: Partial<BoardCardView>, moveTo: BoardColumn | null, rejection?: RejectionSuggestion | null) => void;
 }) {
   const t = useTranslations('board');
   const tk = useTranslations('kit');
@@ -158,11 +158,11 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, companyC
         columns={columns}
         timeZone={timeZone}
         lang={locale}
-        onLogged={(patch, moveTo) => {
+        onLogged={(patch, moveTo, rejection) => {
           setMessagesVersion((v) => v + 1);
           if (patch.nextActionAt !== undefined) setNext(toZonedInput(patch.nextActionAt, timeZone));
           if (patch.contactName) setContactName(patch.contactName);
-          onReplyLogged(patch, moveTo);
+          onReplyLogged(patch, moveTo, rejection);
         }}
       />
       <RecruiterMessage applicationId={card.id} defaultLang={locale} version={messagesVersion} onSent={() => { const at = new Date().toISOString(); setMessagesVersion((v) => v + 1); onChanged({ lastActivityAt: at, lastMessage: { direction: 'out', at } }); }} />
