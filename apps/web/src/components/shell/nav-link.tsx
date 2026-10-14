@@ -1,5 +1,7 @@
 'use client';
 
+import { Loader2 } from 'lucide-react';
+import { useLinkStatus } from 'next/link';
 import { Link, usePathname } from '@/i18n/navigation';
 import { NAV_ITEMS, type NavKey } from './nav-items';
 
@@ -34,7 +36,7 @@ export function NavLink({
             }`
       }
     >
-      <Icon className={compact ? 'size-5' : 'size-4'} aria-hidden />
+      <NavIcon icon={Icon} compact={compact} />
       <span>{label}</span>
       {badge && !compact && (
         <span className="ml-auto rounded-full bg-ai/15 px-2 py-0.5 text-[11px] font-medium text-ai">
@@ -43,4 +45,11 @@ export function NavLink({
       )}
     </Link>
   );
+}
+
+/** The item's icon, swapped for a spinner while its page is loading (the click is acknowledged at once). */
+function NavIcon({ icon: Icon, compact }: { icon: (typeof NAV_ITEMS)[number]['icon']; compact: boolean }) {
+  const { pending } = useLinkStatus();
+  const size = compact ? 'size-5' : 'size-4';
+  return pending ? <Loader2 data-testid="nav-pending" className={`${size} animate-spin text-link`} aria-hidden /> : <Icon className={size} aria-hidden />;
 }
