@@ -1,6 +1,6 @@
 import { expect, type Page, test } from '@playwright/test';
 import { loginAs, uniqueEmail } from './helpers/auth';
-import { seedApplication, seedCv, seedMatch } from './helpers/seed';
+import { seedApplication, seedCardFromJob, seedCv, seedMatch } from './helpers/seed';
 
 const visible = (page: Page, id: string) => page.getByTestId(id).filter({ visible: true });
 
@@ -86,6 +86,19 @@ test('a job from a company already on the board is flagged in the feed', async (
   await page.goto('/en/today');
   const detail = await openDetail(page, title, isMobile);
   await expect(detail.getByTestId('company-on-board')).toContainText('Front-End Developer elsewhere');
+});
+
+test('a job already on the board leaves the feed', async ({ context, page }) => {
+  const email = uniqueEmail('feed-on-board');
+  await loginAs(context, email);
+  const { title, jobId } = await seedMatch(email, { score: 91 });
+  const other = await seedMatch(email, { score: 80 });
+  await page.goto('/en/today');
+  await expect(page.getByText(title).first()).toBeVisible();
+  await seedCardFromJob(email, jobId, title, 'talking');
+  await page.reload();
+  await expect(page.getByText(other.title).first()).toBeVisible();
+  await expect(page.getByText(title)).toHaveCount(0);
 });
 
 test('the English a job asks for shows next to the experience, flagged when the CV level is lower', async ({ context, page, isMobile }) => {

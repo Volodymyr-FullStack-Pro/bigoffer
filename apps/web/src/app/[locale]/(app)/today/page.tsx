@@ -130,7 +130,8 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
       postings: m.jobs.job_postings.map((p) => ({ sourceId: p.source_id, url: p.url })),
     };
   };
-  const matches = mergeMatches((bestRows ?? []).map(toMatch), (freshRows ?? []).map(toMatch));
+  // A job already on the board (added by link, saved or applied elsewhere) lives there; the feed is for new decisions.
+  const matches = mergeMatches((bestRows ?? []).map(toMatch), (freshRows ?? []).map(toMatch)).filter((m) => m.onBoard === null);
   const sourceIds = [...new Set(matches.flatMap((m) => m.postings.map((p) => p.sourceId)))];
 
   return (
