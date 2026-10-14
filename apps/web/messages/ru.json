@@ -493,7 +493,9 @@
     "conversationDelete": "Удалить сообщение",
     "conversationDeleteConfirm": "Удалить это сообщение из переписки?",
     "conversationChangeKind": "Изменить тип ответа",
-    "conversationSetKind": "Тип?"
+    "conversationSetKind": "Тип?",
+    "replyKindNew": "Тип нового сообщения",
+    "conversationChange": "изменить"
   },
   "cv": {
     "title": "Ваше CV",
