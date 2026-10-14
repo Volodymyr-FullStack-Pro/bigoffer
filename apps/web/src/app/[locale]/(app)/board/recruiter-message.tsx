@@ -1,18 +1,38 @@
 'use client';
 
-import { MESSAGE_FORMATS, MESSAGE_LIMITS, type MessageFormat } from '@jp/ai';
+import { MESSAGE_FORMATS, MESSAGE_LIMITS, type MessageFormat, REPLY_LIMIT } from '@jp/ai';
 import { useTranslations } from 'next-intl';
-import { useEffect, useState } from 'react';
+import { type Ref, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { tellGenie } from '@/lib/genie/events';
-import { generateRecruiterMessage, listMessages, logSentMessage } from './message-actions';
+import { generateRecruiterMessage, listMessages, logSentMessage, type ReplyChannel } from './message-actions';
 
 const CHANNEL: Record<MessageFormat, 'linkedin' | 'telegram' | 'email'> = { linkedin_note: 'linkedin', inmail: 'linkedin', telegram: 'telegram', email: 'email' };
 
-export function RecruiterMessage({ applicationId, defaultLang, version = 0, onSent }: { applicationId: string; defaultLang: 'en' | 'uk' | 'ru'; /** Bumped when a message is logged elsewhere. */ version?: number; onSent: () => void }) {
+type Kind = 'intro' | 'follow_up' | 'reply';
+type Lang = 'en' | 'uk' | 'ru' | 'auto';
+export type RecruiterMessageHandle = { /** Switch to a reply and write it right away. */ writeReply: () => void };
+
+export function RecruiterMessage({
+  applicationId,
+  defaultLang,
+  version = 0,
+  ref,
+  onSent,
+}: {
+  applicationId: string;
+  defaultLang: 'en' | 'uk' | 'ru';
+  /** Bumped when a message is logged elsewhere. */
+  version?: number;
+  ref?: Ref<RecruiterMessageHandle>;
+  onSent: () => void;
+}) {
   const t = useTranslations('recruiter');
   const [fmt, setFmt] = useState<MessageFormat>('linkedin_note');
-  const [kind, setKind] = useState<'intro' | 'follow_up'>('intro');
-  const [lang, setLang] = useState(defaultLang);
+  const [kind, setKind] = useState<Kind>('intro');
+  const [lang, setLang] = useState<Lang>(defaultLang);
+  // Where the recruiter last wrote; a reply is logged there. Null until they write.
+  const [replyChannel, setReplyChannel] = useState<ReplyChannel | null>(null);
+  const section = useRef<HTMLElement>(null);
   const [subject, setSubject] = useState<string | null>(null);
   const [body, setBody] = useState('');
   const [busy, setBusy] = useState(false);
@@ -20,49 +40,86 @@ export function RecruiterMessage({ applicationId, defaultLang, version = 0, onSe
   const [sent, setSent] = useState(false);
   
   useEffect(() => {
-    // After a first message, the next one is a follow-up.
+    // Their message waiting for an answer: a reply. After a first message of mine: a follow-up.
     void listMessages(applicationId).then((h) => {
-      if (h.some((m) => m.direction === 'out')) setKind('follow_up');
+      const lastIn = h.find((m) => m.direction === 'in');
+      setReplyChannel(lastIn ? (lastIn.channel as ReplyChannel) : null);
+      if (h[0]?.direction === 'in') {
+        setKind('reply');
+        setLang('auto');
+      } else if (h.some((m) => m.direction === 'out')) {
+        setKind('follow_up');
+        setLang((l) => (l === 'auto' ? defaultLang : l));
+      }
     }).catch(() => undefined);
-  }, [applicationId, version]);
+  }, [applicationId, version, defaultLang]);
+
+  const generate = async (k: Kind, l: Lang) => {
+    setBusy(true);
+    setError(null);
+    setSent(false);
+    try {
+      const res = await generateRecruiterMessage(applicationId, { format: fmt, kind: k, lang: l, tone: 'default' });
+      if (res.ok) {
+        setSubject(res.subject);
+        setBody(res.body);
+        if (res.channel) setReplyChannel(res.channel);
+      } else setError(res.error);
+    } catch {
+      setError('failed');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  useImperativeHandle(ref, () => ({
+    writeReply: () => {
+      setKind('reply');
+      setLang('auto');
+      section.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      void generate('reply', 'auto');
+    },
+  }));
 
   const field = 'brutal bg-card px-2 py-1 text-sm';
-  const limit = MESSAGE_LIMITS[fmt];
+  const reply = kind === 'reply';
+  const limit = reply ? REPLY_LIMIT : MESSAGE_LIMITS[fmt];
+  const logChannel: ReplyChannel = reply ? (replyChannel ?? 'other') : CHANNEL[fmt];
 
   return (
-    <section data-testid="recruiter-message" className="flex flex-col gap-3 border-t border-border pt-3">
+    <section ref={section} data-testid="recruiter-message" className="flex flex-col gap-3 border-t border-border pt-3">
       <h3 className="font-mono text-xs">{t('title')}</h3>
       <div className="flex flex-wrap gap-2">
-        <select data-testid="msg-format" aria-label={t('format')} value={fmt} onChange={(e) => setFmt(e.target.value as MessageFormat)} className={field}>
-          {MESSAGE_FORMATS.map((f) => <option key={f} value={f}>{t(`format_${f}`)}</option>)}
-        </select>
-        <select data-testid="msg-kind" aria-label={t('kind')} value={kind} onChange={(e) => setKind(e.target.value as 'intro' | 'follow_up')} className={field}>
+        <select
+          data-testid="msg-kind"
+          aria-label={t('kind')}
+          value={kind}
+          onChange={(e) => {
+            const k = e.target.value as Kind;
+            setKind(k);
+            if (k === 'reply') setLang('auto');
+            else if (lang === 'auto') setLang(defaultLang);
+          }}
+          className={field}
+        >
+          {replyChannel && <option value="reply">{t('reply')}</option>}
           <option value="intro">{t('intro')}</option>
           <option value="follow_up">{t('followUp')}</option>
         </select>
-        <select data-testid="msg-lang" aria-label={t('lang')} value={lang} onChange={(e) => setLang(e.target.value as 'en' | 'uk' | 'ru')} className={field}>
+        {!reply && (
+          <select data-testid="msg-format" aria-label={t('format')} value={fmt} onChange={(e) => setFmt(e.target.value as MessageFormat)} className={field}>
+            {MESSAGE_FORMATS.map((f) => <option key={f} value={f}>{t(`format_${f}`)}</option>)}
+          </select>
+        )}
+        <select data-testid="msg-lang" aria-label={t('lang')} value={lang} onChange={(e) => setLang(e.target.value as Lang)} className={field}>
+          {reply && <option value="auto">{t('langAuto')}</option>}
           {(['en', 'uk', 'ru'] as const).map((l) => <option key={l} value={l}>{l.toUpperCase()}</option>)}
         </select>
         <button
           type="button"
           data-testid="msg-generate"
           disabled={busy}
-          onClick={async () => {
-            setBusy(true);
-            setError(null);
-            setSent(false);
-            try {
-              const res = await generateRecruiterMessage(applicationId, { format: fmt, kind, lang, tone: 'default' });
-              if (res.ok) {
-                setSubject(res.subject);
-                setBody(res.body);
-              } else setError(res.error);
-            } catch {
-              setError('failed');
-            } finally {
-              setBusy(false);
-            }
-          }}
+          onClick={() => void generate(kind, lang)}
           className="brutal brutal-press bg-ai px-3 py-1 text-sm font-semibold text-ai-foreground disabled:opacity-50"
         >
           {busy ? t('writing') : t('generate')}
@@ -80,10 +137,11 @@ export function RecruiterMessage({ applicationId, defaultLang, version = 0, onSe
           disabled={!body.trim() || sent}
           onClick={async () => {
             try {
-              const ok = await logSentMessage(applicationId, CHANNEL[fmt], subject ? `${subject}\n\n${body}` : body);
+              const ok = await logSentMessage(applicationId, logChannel, subject ? `${subject}\n\n${body}` : body);
               if (!ok) return setError('failed');
               setSent(true);
               setKind('follow_up');
+              if (lang === 'auto') setLang(defaultLang);
               onSent();
               tellGenie({ type: 'sent' });
             } catch {

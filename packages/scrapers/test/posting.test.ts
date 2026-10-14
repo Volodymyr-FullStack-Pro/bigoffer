@@ -25,6 +25,8 @@ describe('fetchPosting', () => {
     const n = await normalizeJob(p!.job);
     expect(n?.descriptionText).toContain('Kontrora PSA');
     expect(n?.salaryMaxUsd).toBe(8000);
+    // "Only from 3 years of experience" comes from the board's JSON-LD (monthsOfExperience: 36).
+    expect(p!.job.tags).toContain('years:3');
   });
 
   it('reads a DOU vacancy page: title, company, place and the description', async () => {

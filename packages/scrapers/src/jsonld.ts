@@ -7,6 +7,7 @@ type LdAddress = {
 type LdArea = { address?: LdAddress; name?: string };
 
 export type JobPostingLd = {
+  experienceRequirements?: { monthsOfExperience?: number | string } | string;
   '@type'?: string;
   title?: string;
   url?: string;
