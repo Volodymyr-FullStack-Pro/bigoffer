@@ -518,7 +518,9 @@
     "joinMeeting": "Join",
     "meetingUrl": "Meeting link (Meet, Zoom)",
     "todayAt": "today, {time}",
-    "tomorrowAt": "tomorrow, {time}"
+    "tomorrowAt": "tomorrow, {time}",
+    "todayNothing": "Nothing due today ✓",
+    "comingUp": "Coming up"
   },
   "cv": {
     "title": "Your CV",

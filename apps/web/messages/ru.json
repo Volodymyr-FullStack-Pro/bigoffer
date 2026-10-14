@@ -518,7 +518,9 @@
     "joinMeeting": "Подключиться",
     "meetingUrl": "Ссылка на встречу (Meet, Zoom)",
     "todayAt": "сегодня, {time}",
-    "tomorrowAt": "завтра, {time}"
+    "tomorrowAt": "завтра, {time}",
+    "todayNothing": "Сегодня ничего срочного ✓",
+    "comingUp": "В ближайшее время"
   },
   "cv": {
     "title": "Ваше CV",
