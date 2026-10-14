@@ -1,3 +1,6 @@
+/** Tag a board stores with a job when it states the years outside the text (Djinni's JSON-LD monthsOfExperience). */
+export const YEARS_TAG = 'years:';
+
 /** Years of experience a posting asks for, if it states one (en / uk / ru). */
 // A range ("2-4", "4-10+") counts as its lower bound: the second number is part of the match, not captured.
 const NUM = String.raw`(\d{1,2})(?:[.,]\d)?\s*\+?\s*(?:(?:-|–|—|to|до)\s*\d{1,2}\s*\+?\s*)?`;
@@ -18,7 +21,12 @@ const PATTERNS: RegExp[] = [
  * Node" → 3), or null. Only numbers next to an experience word count, so "20 years on the market" is ignored; values
  * above 15 are treated as noise.
  */
-export function requiredYears(raw: string): number | null {
+export function requiredYears(raw: string, tags: readonly string[] = []): number | null {
+  const tagged = tags.find((t) => t.startsWith(YEARS_TAG));
+  if (tagged) {
+    const n = Number(tagged.slice(YEARS_TAG.length));
+    if (Number.isFinite(n) && n >= 1 && n <= 15) return n;
+  }
   // "between 2 years and 6 years" / "from 3 to 5 years" → the lower bound.
   const text = raw.replace(/\b(?:between|from)\s+(\d{1,2})\s*(?:years?|yrs?)?\s+(?:and|to)\s+\d{1,2}\b/giu, '$1');
   let best: number | null = null;
