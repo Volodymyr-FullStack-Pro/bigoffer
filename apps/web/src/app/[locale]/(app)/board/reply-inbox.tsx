@@ -9,7 +9,7 @@ import { columnForReply, REPLY_KINDS, REPLY_STYLE, type ReplyKind } from './repl
 import { fromZonedInput, toZonedInput } from './zoned-input';
 
 const LINK_HINT: Partial<Record<ReplyChannel, string>> = { djinni: 'djinni', email: 'email', linkedin: 'linkedin' };
-const CHANNELS: ReplyChannel[] = ['djinni', 'dou', 'robotaua', 'email', 'linkedin', 'telegram', 'call', 'other'];
+export const CHANNELS: ReplyChannel[] = ['djinni', 'dou', 'robotaua', 'email', 'linkedin', 'telegram', 'call', 'other'];
 
 /**
  * Adds to the conversation: what the company answered (AI sorts it, the card gets a coloured tag and moves on) or what

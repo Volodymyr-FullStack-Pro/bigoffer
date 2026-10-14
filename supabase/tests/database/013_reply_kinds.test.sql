@@ -1,6 +1,6 @@
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(6);
+select plan(7);
 
 insert into auth.users (id, email) values ('a1300000-0000-0000-0000-00000000000a', 'reply-a@test.dev');
 
@@ -24,8 +24,10 @@ select throws_ok($$ update public.applications set reply_kind = 'maybe' where id
 
 select lives_ok($$ update public.application_messages set ai_classification = 'other' where application_id = 'f1300000-0000-0000-0000-000000000001' $$,
   'the owner re-tags a saved reply');
-select throws_ok($$ update public.application_messages set body = 'changed' where application_id = 'f1300000-0000-0000-0000-000000000001' $$,
-  '42501', null, 'the message text cannot be changed');
+select lives_ok($$ update public.application_messages set body = 'changed', channel = 'email' where application_id = 'f1300000-0000-0000-0000-000000000001' $$,
+  'the owner corrects the text and channel');
+select throws_ok($$ update public.application_messages set direction = 'out' where application_id = 'f1300000-0000-0000-0000-000000000001' $$,
+  '42501', null, 'the direction stays as logged');
 
 select * from finish();
 rollback;
