@@ -48,6 +48,11 @@ test('writes a reply to the recruiter in one click and logs it in their channel'
   await expect(visible(page, 'msg-kind')).toHaveValue('reply');
   await expect(visible(page, 'msg-lang')).toHaveValue('auto');
   await expect(visible(page, 'msg-format')).toHaveCount(0);
+  // With a note, the same button rewrites the reply.
+  await visible(page, 'msg-note').fill('I already filled in the form');
+  await expect(visible(page, 'msg-generate')).toContainText('Rewrite');
+  await visible(page, 'msg-note').press('Enter');
+  await expect(visible(page, 'msg-body')).toHaveValue(/\[fake\]/);
   await visible(page, 'msg-sent').click();
   await expect(visible(page, 'msg-item').last()).toHaveAttribute('data-direction', 'out');
   await expect(visible(page, 'msg-item').last()).toContainText('DOU');
