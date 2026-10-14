@@ -33,9 +33,11 @@ export function Library({ initial }: { initial: SavedLink[] }) {
     for (const l of links) counts.set(l.topic, (counts.get(l.topic) ?? 0) + 1);
     return [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
   }, [links]);
+  // A topic whose last link moved or was deleted is gone: the list falls back to all links.
+  const active = filter && topics.some(([name]) => name === filter) ? filter : null;
   const words = query.toLowerCase().split(/\s+/).filter(Boolean);
   const shown = links.filter(
-    (l) => (!filter || l.topic === filter) && words.every((w) => `${l.title} ${l.url} ${l.note ?? ''} ${l.topic}`.toLowerCase().includes(w)),
+    (l) => (!active || l.topic === active) && words.every((w) => `${l.title} ${l.url} ${l.note ?? ''} ${l.topic}`.toLowerCase().includes(w)),
   );
 
   const fillTitle = async (value: string) => {
@@ -134,7 +136,7 @@ export function Library({ initial }: { initial: SavedLink[] }) {
         <div className="flex flex-col gap-3">
           <input data-testid="link-search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t('search')} aria-label={t('search')} className={`${field} max-w-md`} />
           <div className="flex flex-wrap gap-2">
-            <button type="button" onClick={() => setFilter(null)} aria-pressed={filter === null} className={`rounded-full border border-border px-3 py-1 text-sm ${filter === null ? 'bg-foreground text-background' : ''}`}>
+            <button type="button" onClick={() => setFilter(null)} aria-pressed={active === null} className={`rounded-full border border-border px-3 py-1 text-sm ${active === null ? 'bg-foreground text-background' : ''}`}>
               {t('all')} · {links.length}
             </button>
             {topics.map(([name, count]) => (
@@ -142,9 +144,9 @@ export function Library({ initial }: { initial: SavedLink[] }) {
                 key={name}
                 type="button"
                 data-testid="link-filter"
-                onClick={() => setFilter(filter === name ? null : name)}
-                aria-pressed={filter === name}
-                className={`rounded-full border border-border px-3 py-1 text-sm ${filter === name ? 'bg-foreground text-background' : ''}`}
+                onClick={() => setFilter(active === name ? null : name)}
+                aria-pressed={active === name}
+                className={`rounded-full border border-border px-3 py-1 text-sm ${active === name ? 'bg-foreground text-background' : ''}`}
               >
                 {name} · {count}
               </button>

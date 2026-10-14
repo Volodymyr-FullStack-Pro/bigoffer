@@ -28,9 +28,7 @@ test('saves a link by topic, filters, edits and deletes it', async ({ context, p
   await item.getByTestId('link-edit').click();
   await visible(page, 'link-edit-topic').fill('Browser');
   await visible(page, 'link-edit-save').click();
-  // It moved out of the JavaScript filter into its new topic.
-  await expect(visible(page, 'link-item')).toHaveCount(0);
-  await visible(page, 'link-filter').filter({ hasText: 'Browser' }).click();
+  // Its old topic is empty now: the list falls back to all links.
   await expect(visible(page, 'link-item').filter({ hasText: 'Event loop visualizer' })).toContainText('Browser');
 
   page.once('dialog', (d) => void d.accept());
