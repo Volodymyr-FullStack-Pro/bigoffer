@@ -112,7 +112,7 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, companyC
       <div className="flex min-h-full flex-col gap-4 p-5">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h2 id="panel-title" className="font-display text-xl font-semibold leading-tight">{card.title}</h2>
+          <h2 id="panel-title" className="font-display text-xl font-semibold leading-tight [overflow-wrap:anywhere]">{card.title}</h2>
           <p className="flex flex-wrap items-center gap-2 text-muted-foreground">
             {card.company}
             {card.sourceId && <SourceBadge sourceId={card.sourceId} />}
@@ -125,6 +125,19 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, companyC
           <span className="font-semibold">{t(card.outcome === 'withdrawn' ? 'rejectedByMe' : 'rejectedLine')}:</span>{' '}
           {card.rejectionReasons.map((r) => t(`reason_${r}` as never)).join(', ')}
           {card.rejectionStage && <span className="text-muted-foreground"> · {t(`stage_${card.rejectionStage}` as never)}</span>}
+        </p>
+      )}
+      {card.replyKind === 'rejection' && columns.find((c) => c.id === card.columnId)?.kind === 'active' && (
+        <p data-testid="panel-move-rejected" className="flex flex-wrap items-center gap-2 rounded-md border border-danger/40 bg-danger/10 px-3 py-2 text-sm">
+          <span className="flex-1">{t('rejectedNotMoved')}</span>
+          <button
+            type="button"
+            data-testid="panel-move-rejected-go"
+            onClick={() => { const lost = columns.find((c) => c.kind === 'lost'); if (lost) onMove(lost.id); }}
+            className="brutal brutal-press bg-danger px-3 py-1 text-xs font-semibold text-white"
+          >
+            {t('rejectedMove')}
+          </button>
         </p>
       )}
       {card.urgency in NEXT_STEP && (

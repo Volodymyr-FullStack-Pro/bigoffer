@@ -1,4 +1,4 @@
-import { kyivLocalDate, type RawJob } from '@jp/core';
+import { ENGLISH_TAG, englishLevelOf, kyivLocalDate, type RawJob } from '@jp/core';
 import { extractJobPostings, type JobPostingLd, ldLocation, ldSalary } from '../jsonld';
 import { parseRss } from '../rss';
 import { isGoneError, type SourceAdapter } from '../types';
@@ -87,6 +87,21 @@ async function rssBackfill(
   return out;
 }
 
+/**
+ * English levels a listing page shows per job ("Англійська - C1"); the job page itself shows the level only to
+ * signed-in users. Keyed by job id.
+ */
+export function englishByJob(html: string): Map<string, string> {
+  const out = new Map<string, string>();
+  for (const part of html.split('id="job-item-').slice(1)) {
+    const id = /^(\d+)/.exec(part)?.[1];
+    const label = /(?:Англійська|Английский|English)\s*[-–:]\s*([^<·]{1,40})</.exec(part.slice(0, 20_000))?.[1];
+    const level = label ? englishLevelOf(label) : null;
+    if (id && level) out.set(id, level);
+  }
+  return out;
+}
+
 export const djinniAdapter: SourceAdapter = {
   id: 'djinni',
   async search(params, ctx) {
@@ -95,11 +110,14 @@ export const djinniAdapter: SourceAdapter = {
       const qs = new URLSearchParams();
       if (params.primary_keyword) qs.set('primary_keyword', params.primary_keyword);
       if (page > 1) qs.set('page', String(page));
-      const postings = extractJobPostings(await ctx.fetchText(`${BASE}${qs.size ? `?${qs}` : ''}`));
+      const html = await ctx.fetchText(`${BASE}${qs.size ? `?${qs}` : ''}`);
+      const postings = extractJobPostings(html);
       if (postings.length === 0) break;
+      const english = englishByJob(html);
       for (const p of postings) {
         const job = toRawJob(p);
-        if (job) out.push(job);
+        const level = job ? english.get(job.externalId) : undefined;
+        if (job) out.push(level ? { ...job, tags: [...(job.tags ?? []), `${ENGLISH_TAG}${level}`] } : job);
       }
     }
     const known = new Set(out.map((j) => j.externalId));

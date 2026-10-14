@@ -162,7 +162,7 @@ async function findJobId(db: Db, job: NormalizedJob, companyId: string): Promise
 async function backfillPatch(db: Db, jobId: string, job: NormalizedJob) {
   const { data, error } = await db
     .from('jobs')
-    .select('description_text, salary_raw, salary_min_usd, salary_max_usd, location, remote_regions')
+    .select('description_text, salary_raw, salary_min_usd, salary_max_usd, location, remote_regions, tags')
     .eq('id', jobId)
     .single();
   if (error) throw error;
@@ -173,6 +173,7 @@ async function backfillPatch(db: Db, jobId: string, job: NormalizedJob) {
     salary_max_usd?: number | null;
     location?: string;
     remote_regions?: string[];
+    tags?: string[];
   } = {};
   if (job.descriptionText.length > (data.description_text ?? '').length) patch.description_text = job.descriptionText;
   const hasSalary = data.salary_min_usd != null || data.salary_max_usd != null;
@@ -184,6 +185,9 @@ async function backfillPatch(db: Db, jobId: string, job: NormalizedJob) {
   if (data.location == null && job.location) patch.location = job.location;
   // Board-stated regions are merged with the stored ones (the stored ones may come from another board).
   if (job.remoteRegions.length > 0) patch.remote_regions = [...new Set([...(data.remote_regions ?? []), ...job.remoteRegions])];
+  // Board facts carried as tags (e.g. Djinni's English level) reach jobs stored before the board showed them.
+  const tags = [...new Set([...(data.tags ?? []), ...job.tags])];
+  if (tags.length > (data.tags ?? []).length) patch.tags = tags;
   return patch;
 }
 

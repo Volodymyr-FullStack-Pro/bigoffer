@@ -52,7 +52,8 @@ export type MatchBreakdown = {
 const CORE_STACKS: [string, RegExp][] = [
   ['Java', /\bjava\b(?!\s*script)/i],
   ['.NET', /(\.net\b|\bc#|\basp\.net|\bblazor\b|\bdotnet\b)/i],
-  ['PHP', /\b(php|laravel|symfony)\b/i],
+  // WordPress, WooCommerce, Drupal and Magento work is PHP work.
+  ['PHP', /\b(php|laravel|symfony|wordpress|woocommerce|drupal|magento)\b/i],
   ['Python', /\b(python|django|fastapi|flask)\b/i],
   ['Go', /\b(golang|go developer|go engineer)\b|^go$/i],
   ['Ruby', /\b(ruby|rails)\b/i],
@@ -73,6 +74,40 @@ export function coreStackOf(skill: string): string | null {
 /** Whether a text names the given core stack (by its name from `coreStackOf`). */
 export function mentionsCoreStack(text: string, stack: string): boolean {
   return CORE_STACKS.some(([name, re]) => name === stack && re.test(text));
+}
+
+/**
+ * Platforms and languages that define what a job is built on. A posting that names one should list it among its
+ * skills even when the AI extraction missed it (a WordPress site job tagged only "JavaScript, HTML" scored as a fit).
+ */
+const PLATFORMS: [string, RegExp][] = [
+  ['WordPress', /\bwordpress\b/i],
+  ['WooCommerce', /\bwoocommerce\b/i],
+  ['Shopify', /\bshopify\b/i],
+  ['Magento', /\bmagento\b/i],
+  ['Drupal', /\bdrupal\b/i],
+  ['PHP', /\bphp\b/i],
+  ['Laravel', /\blaravel\b/i],
+  ['Symfony', /\bsymfony\b/i],
+  ['.NET', /(?:^|[^\w])\.net\b|\basp\.net\b/i],
+  ['C#', /(?:^|\s)c#(?:\s|[,.;)]|$)/i],
+  ['Java', /\bjava\b(?!\s*script)/i],
+  ['Python', /\bpython\b/i],
+  ['Django', /\bdjango\b/i],
+  ['Ruby on Rails', /\b(?:ruby on rails|rails)\b/i],
+  ['Go', /\bgolang\b/i],
+  ['Kotlin', /\bkotlin\b/i],
+  ['Swift', /\bswift\b/i],
+  ['Flutter', /\bflutter\b/i],
+  ['1C', /(?:^|\s)1[cс](?:\s|[,.;:)]|$)/i],
+  ['Salesforce', /\bsalesforce\b/i],
+  ['SAP', /\bsap\b/i],
+];
+
+/** Platforms the text names that `skills` lacks, in a stable order (added before the AI's own list). */
+export function namedPlatforms(text: string, skills: readonly string[]): string[] {
+  const have = skills.map((s) => s.toLowerCase());
+  return PLATFORMS.filter(([name, re]) => re.test(text) && !have.some((h) => h === name.toLowerCase() || re.test(h))).map(([name]) => name);
 }
 
 export function missingCoreStacks(jobTitle: string, jobSkills: readonly string[], profileSkills: readonly string[]): string[] {

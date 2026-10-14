@@ -1,6 +1,7 @@
 import {
   LOCALES,
   type LocalizedText,
+  namedPlatforms,
   normalizeRemoteRegions,
   REMOTE_REGIONS,
   REMOTE_TYPES,
@@ -75,7 +76,9 @@ const MAX_SKILLS = 15;
 const SYSTEM = [
   'You extract structured facts from ONE job posting for a job search app.',
   'Use only information present in the posting; never guess a salary, level or region that is not stated.',
-  'Skills: concrete technologies, tools or professional skills the candidate needs, not soft-skill fluff.',
+  'Skills: concrete technologies, tools or professional skills the candidate needs, not soft-skill fluff. Put first the platform or',
+  'language the work is built on (e.g. WordPress, WooCommerce, PHP, .NET, Java, Shopify) and include every technology the posting',
+  'names as required or used; never add one the posting does not mention (no React for a WordPress site).',
   'Work format: "remote" only when the posting or location says remote / віддалено / удаленно / work from home; a city or office address',
   'without that is "office", or "hybrid" when it mentions hybrid or some office days; "unknown" only when neither is stated.',
   'Summaries: plain and factual, no marketing language, no emojis.',
@@ -143,5 +146,9 @@ export async function enrichJob(
     maxOutputTokens: 1500,
     thinking: 'low',
   });
-  return { enrichment: normalizeEnrichment(res.data), usage: res.usage, model: res.model };
+  const enrichment = normalizeEnrichment(res.data);
+  // Safety net: a platform the posting names leads the skills even when the model left it out.
+  const named = namedPlatforms(`${input.title}\n${input.descriptionText}`, enrichment.skills);
+  if (named.length > 0) enrichment.skills = [...named, ...enrichment.skills].slice(0, MAX_SKILLS);
+  return { enrichment, usage: res.usage, model: res.model };
 }
