@@ -366,3 +366,12 @@ test('a Meet link in the invite becomes a Join button on the card, and can be ed
   await page.reload();
   await expect(card(page, title).getByTestId('card-join')).toHaveAttribute('href', 'https://us02web.zoom.us/j/123');
 });
+
+test("an interview tomorrow is listed as coming up, not as today's task", async ({ context, page }) => {
+  const email = uniqueEmail('board-coming-up');
+  await loginAs(context, email);
+  const { title } = await seedApplication(email, { column: 'interview', appliedDaysAgo: 3, nextActionInHours: 30 });
+  await page.goto('/en/board');
+  await expect(visible(page, 'today-title')).toHaveText('Nothing due today ✓');
+  await expect(visible(page, 'coming-up')).toContainText(title);
+});
