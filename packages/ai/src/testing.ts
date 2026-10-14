@@ -98,14 +98,17 @@ export function fakeResponder(req: FakeRequest): unknown {
         pitfalls: ['Calling hooks inside conditions.'],
         questions: [{ q: 'Why can hooks not be called in a loop?', a: 'React matches hooks by call order.' }],
       };
-    case 'prep_lesson_deep':
+    case 'prep_lesson_middle':
+    case 'prep_lesson_senior': {
+      const level = req.task === 'prep_lesson_middle' ? 'middle' : 'senior';
       return {
-        intro: 'At the senior level, types become a design tool. [fake deep]',
-        concepts: [{ name: 'Utility types', explain: 'Partial, Pick, Omit and Record build new types from existing ones.' }],
+        intro: `At the ${level} level, types become a design tool. [fake ${level}]`,
+        concepts: [{ name: `Utility types (${level})`, explain: 'Partial, Pick, Omit and Record build new types from existing ones.' }],
         examples: [{ title: 'A typed patch', explain: 'Only some fields may change.', code: 'type Patch = Partial<Pick<User, "name" | "email">>;', code_lang: 'ts' }],
         pitfalls: ['Deep conditional types slow the compiler.'],
-        questions: [{ q: 'How does infer work?', a: 'It captures a type inside a conditional type.' }],
+        questions: [{ q: `A ${level} question`, a: 'A model answer.' }],
       };
+    }
     case 'prep_pitch':
       return {
         intro: 'I am a full-stack developer with 3 years of React and Node.js. [fake]',

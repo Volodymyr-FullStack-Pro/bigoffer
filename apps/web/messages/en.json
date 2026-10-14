@@ -924,9 +924,13 @@
     "err_no_cv": "Upload your CV in the profile first.",
     "err_not_found": "Not found.",
     "err_failed": "Could not write it. Try again.",
-    "deepOpen": "Go deeper",
-    "deepTitle": "Deeper: middle / senior level",
-    "deepHint": "Got the basics? The next level: advanced features, how it works inside, trade-offs, harder examples and middle/senior questions.",
-    "writingDeep": "Writing the deeper part (~30 s)…"
+    "level": "Level",
+    "level_junior": "Junior",
+    "level_middle": "Middle",
+    "level_senior": "Senior",
+    "levelHint_junior": "Basics from zero: what it is, why, first examples and junior questions.",
+    "levelHint_middle": "Daily work: advanced features, patterns, debugging, tests — and middle questions.",
+    "levelHint_senior": "How it works inside, architecture, trade-offs, scale — and senior questions.",
+    "writingLevel": "Writing the {level} level (~30 s)…"
   }
 }
