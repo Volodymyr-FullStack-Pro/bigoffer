@@ -144,7 +144,8 @@
     "onBoardShort": "Already on board",
     "eyebrow": "Matched for you",
     "companyOnBoardShort": "Already applied to this company",
-    "companyOnBoard": "You already applied to this company: “{title}” · {column}"
+    "companyOnBoard": "You already applied to this company: “{title}” · {column}",
+    "onBoardLeft": "still open on {platforms}"
   },
   "feed": {
     "progress": "{done} / {total}",
@@ -236,7 +237,8 @@
     "englishRequired": "English {level}",
     "englishOk": "You have {level} — fits",
     "englishGap": "You have {level} — they ask for more",
-    "englishYours": "you {level}"
+    "englishYours": "you {level}",
+    "onBoardLeft": "still open on {platforms}"
   },
   "comingSoon": {
     "badge": "Soon",
