@@ -310,3 +310,20 @@ test('a saved reply can be re-tagged; an auto-reply after all sends the card bac
   await card(page, title).click();
   await expect(visible(page, 'msg-item')).toContainText('We will get back to you');
 });
+
+test('a pasted rejection opens the reject dialog with the stage and reason the AI read', async ({ context, page }) => {
+  const email = uniqueEmail('board-reject-ai');
+  await loginAs(context, email);
+  const { id, title } = await seedApplication(email, { column: 'applied', appliedDaysAgo: 4 });
+  await page.goto('/en/board');
+  await card(page, title).click();
+  await visible(page, 'reply-body').fill('Thank you for applying. We decided not to move forward with your candidacy.');
+  await visible(page, 'reply-classify').click();
+  await expect(visible(page, 'reply-kind').and(page.locator('[data-kind="rejection"]'))).toHaveAttribute('aria-checked', 'true');
+  await visible(page, 'reply-save').click();
+  await expect(visible(page, 'reject-suggested')).toBeVisible();
+  await expect(visible(page, 'reject-stage')).toHaveValue('application');
+  await expect(page.locator('[data-testid="reject-reason"][value="no_reason_given"]')).toBeChecked();
+  await visible(page, 'reject-confirm').click();
+  await expect.poll(() => applicationColumnKey(id)).toBe('rejected');
+});

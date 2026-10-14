@@ -3,7 +3,8 @@ import { applicationPatchSchema, REJECTION_REASONS, REJECTION_STAGES, rejectionI
 
 describe('rejection taxonomy', () => {
   it('has the spec keys', () => {
-    expect(REJECTION_REASONS).toHaveLength(14);
+    expect(REJECTION_REASONS).toHaveLength(15);
+    expect(REJECTION_REASONS).toContain('no_reason_given');
     expect(REJECTION_STAGES).toEqual(['application', 'screening', 'technical', 'test_task', 'final', 'offer']);
   });
   it('validates a rejection', () => {

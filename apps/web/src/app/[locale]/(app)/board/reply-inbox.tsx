@@ -1,5 +1,6 @@
 'use client';
 
+import type { RejectionReason, RejectionStage } from '@jp/core';
 import { useTranslations } from 'next-intl';
 import { tellGenie } from '@/lib/genie/events';
 import { useState } from 'react';
@@ -7,6 +8,9 @@ import type { BoardCardView, BoardColumn } from './board-types';
 import { logReply, logSentMessage, type ReplyChannel, setReplyKind, suggestReplyKind } from './message-actions';
 import { columnForReply, REPLY_KINDS, REPLY_STYLE, type ReplyKind } from './reply-kinds';
 import { fromZonedInput, toZonedInput } from './zoned-input';
+
+/** What the AI read from a rejection, to pre-fill the reject dialog. */
+export type RejectionSuggestion = { stage: RejectionStage | null; reasons: RejectionReason[] };
 
 const LINK_HINT: Partial<Record<ReplyChannel, string>> = { djinni: 'djinni', email: 'email', linkedin: 'linkedin' };
 export const CHANNELS: ReplyChannel[] = ['djinni', 'dou', 'robotaua', 'email', 'linkedin', 'telegram', 'call', 'other'];
@@ -21,7 +25,7 @@ export function ReplyInbox({ card, defaultAuthor, columns, timeZone, lang, onLog
   columns: BoardColumn[];
   timeZone: string;
   lang: 'en' | 'uk' | 'ru';
-  onLogged: (patch: Partial<BoardCardView>, moveTo: BoardColumn | null) => void;
+  onLogged: (patch: Partial<BoardCardView>, moveTo: BoardColumn | null, rejection?: RejectionSuggestion | null) => void;
 }) {
   const t = useTranslations('board');
   const [body, setBody] = useState('');
@@ -30,6 +34,7 @@ export function ReplyInbox({ card, defaultAuthor, columns, timeZone, lang, onLog
   const [kind, setKind] = useState<ReplyKind | null>(null);
   const [when, setWhen] = useState('');
   const [summary, setSummary] = useState<string | null>(null);
+  const [rejection, setRejection] = useState<RejectionSuggestion | null>(null);
   const [author, setAuthor] = useState(defaultAuthor);
   const [link, setLink] = useState('');
   const [busy, setBusy] = useState<'ai' | 'save' | null>(null);
@@ -56,6 +61,7 @@ export function ReplyInbox({ card, defaultAuthor, columns, timeZone, lang, onLog
       if (!res.ok) return setError(res.error);
       setKind(res.kind);
       setSummary(res.summary || null);
+      setRejection(res.rejection);
       if (res.interviewAt) setWhen(res.interviewAt);
       if (res.recruiterName && !author) setAuthor(res.recruiterName);
     } catch {
@@ -70,6 +76,7 @@ export function ReplyInbox({ card, defaultAuthor, columns, timeZone, lang, onLog
     setKind(null);
     setWhen('');
     setSummary(null);
+    setRejection(null);
     setLink('');
     setSaved(true);
   };
@@ -99,7 +106,7 @@ export function ReplyInbox({ card, defaultAuthor, columns, timeZone, lang, onLog
       const interviewAt = kind === 'interview_invite' && when ? fromZonedInput(when, timeZone) : null;
       const res = await logReply(card.id, { channel, body, kind, summary, interviewAt, author, link });
       if (!res) return setError('failed');
-      onLogged({ replyKind: kind, ...res, lastMessage: { direction: 'in', at: new Date().toISOString() } }, moveTo);
+      onLogged({ replyKind: kind, ...res, lastMessage: { direction: 'in', at: new Date().toISOString() } }, moveTo, kind === 'rejection' ? rejection : null);
       tellGenie({ type: 'reply', kind });
       reset();
     } catch {
