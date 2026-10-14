@@ -5,6 +5,8 @@ import { useFormatter, useLocale, useNow, useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 import { ApplyKitPanel } from '@/components/apply-kit/apply-kit-panel';
 import { SourceBadge } from '@/components/ui/source-badge';
+import { Link } from '@/i18n/navigation';
+import { PREP_COLUMNS } from '../prep/prep-types';
 import { listMessages } from './message-actions';
 import { RecruiterMessage, type RecruiterMessageHandle } from './recruiter-message';
 import { JoinMeeting } from './join-meeting';
@@ -17,6 +19,8 @@ import { createLabel, getApplicationEvents, markPinged, setApplicationLabel, upd
 import type { BoardCardView, BoardColumn, BoardLabel } from './board-types';
 
 /** Cards that need something show what, in the card's urgency colour. */
+const PREP_KEYS: ReadonlySet<string> = new Set(PREP_COLUMNS);
+
 const NEXT_STEP: Record<string, string> = {
   interview_soon: '#F472B6',
   your_move: '#38BDF8',
@@ -162,6 +166,9 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, companyC
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
         {card.meetingUrl && <JoinMeeting url={card.meetingUrl} label={t('joinMeeting')} testId="panel-join" />}
         {card.url && <a href={card.url} target="_blank" rel="noopener" className="font-mono text-sm underline">{t('openOriginal')} ↗</a>}
+        {PREP_KEYS.has(columns.find((c) => c.id === card.columnId)?.key ?? '') && (
+          <Link href={`/prep?start=${card.id}`} data-testid="panel-prep" className="font-mono text-sm font-semibold underline">🎓 {t('prepare')}</Link>
+        )}
         {threadLink && <a data-testid="panel-thread" href={threadLink} target="_blank" rel="noopener noreferrer" className="font-mono text-sm font-semibold underline">{t('openThread')} ↗</a>}
       </div>
       {card.jobId && (
