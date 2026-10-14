@@ -54,4 +54,12 @@ describe('recruiterMessage', () => {
     expect(call.system).toContain('confirm it by restating the day and time');
     expect(call.system).not.toContain('first message');
   });
+  it("follows the candidate's note over the defaults", async () => {
+    const llm = new FakeLlmClient(fakeResponder, ['private']);
+    await recruiterMessage(llm, { ...base, format: 'email', kind: 'reply', lang: 'auto', thread: [{ direction: 'in', author: null, body: 'Please fill in the form' }], note: 'I already filled in the form' });
+    expect(llm.calls[0]!.prompt).toMatch(/<candidate_note>\nI already filled in the form\n<\/candidate_note>/);
+    expect(llm.calls[0]!.system).toContain('it overrides the defaults');
+    await recruiterMessage(llm, { ...base, format: 'email' });
+    expect(llm.calls[1]!.prompt).not.toContain('<candidate_note>');
+  });
 });

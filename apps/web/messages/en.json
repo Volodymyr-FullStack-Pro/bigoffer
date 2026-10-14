@@ -678,7 +678,10 @@
     "err_failed": "Couldn't write the message. Try again.",
     "reply": "Reply to their message",
     "langAuto": "Same as the recruiter",
-    "err_nothing_to_answer": "The recruiter has not written yet — add their message to the conversation first."
+    "err_nothing_to_answer": "The recruiter has not written yet — add their message to the conversation first.",
+    "regenerate": "Rewrite",
+    "note": "What to include",
+    "notePlaceholder": "What to include (optional): e.g. \"I already filled in the form\", \"suggest another time\""
   },
   "telegram": {
     "title": "Telegram",

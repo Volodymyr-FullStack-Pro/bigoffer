@@ -14,7 +14,7 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export async function generateRecruiterMessage(
   applicationId: string,
-  opts: { format: MessageFormat; kind: 'intro' | 'follow_up' | 'reply'; lang: 'en' | 'uk' | 'ru' | 'auto'; tone: 'default' | 'shorter' | 'formal' },
+  opts: { format: MessageFormat; kind: 'intro' | 'follow_up' | 'reply'; lang: 'en' | 'uk' | 'ru' | 'auto'; tone: 'default' | 'shorter' | 'formal'; note?: string },
 ): Promise<
   | { ok: true; subject: string | null; body: string; channel: ReplyChannel | null }
   | { ok: false; error: 'ai_unavailable' | 'ai_limit' | 'no_cv' | 'not_found' | 'nothing_to_answer' | 'failed' }
@@ -52,6 +52,7 @@ export async function generateRecruiterMessage(
       previous: thread.filter((m) => m.direction === 'out').map((m) => m.body).slice(-5),
       thread: opts.kind === 'reply' ? thread : undefined,
       channel: opts.kind === 'reply' ? channel : null,
+      note: typeof opts.note === 'string' ? opts.note.slice(0, 500) : null,
     });
     return { ok: true, ...res, channel: opts.kind === 'reply' ? channel : null };
   } catch (err) {
