@@ -2,7 +2,8 @@
 
 import { useFormatter, useNow, useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
-import { deleteMessage, listMessages, setMessageKind } from './message-actions';
+import { deleteMessage, listMessages, type ReplyChannel, setMessageKind, updateMessage } from './message-actions';
+import { CHANNELS } from './reply-inbox';
 import { REPLY_KINDS, REPLY_STYLE, type ReplyKind } from './reply-kinds';
 
 type Message = Awaited<ReturnType<typeof listMessages>>[number];
@@ -21,6 +22,9 @@ export function Conversation({ applicationId, version, onDeleted, onKindChanged 
   const [messages, setMessages] = useState<Message[] | null>(null);
   const [open, setOpen] = useState<Set<number>>(new Set());
   const [editing, setEditing] = useState<string | null>(null);
+  // The message being corrected (channel, sender, text, link) and its draft.
+  const [draft, setDraft] = useState<{ id: string; channel: ReplyChannel; author: string; body: string; link: string } | null>(null);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     listMessages(applicationId).then((m) => setMessages([...m].reverse())).catch(() => setMessages([]));
@@ -54,6 +58,16 @@ export function Conversation({ applicationId, version, onDeleted, onKindChanged 
                 <span suppressHydrationWarning>· {format.relativeTime(at, now)}</span>
                 <button
                   type="button"
+                  data-testid="msg-edit"
+                  aria-label={t('conversationEdit')}
+                  title={t('conversationEdit')}
+                  onClick={() => setDraft(draft?.id === m.id ? null : { id: m.id, channel: m.channel as ReplyChannel, author: m.author ?? '', body: m.body, link: m.link ?? '' })}
+                  className="ml-auto grid size-5 place-items-center rounded-full hover:bg-muted"
+                >
+                  ✎
+                </button>
+                <button
+                  type="button"
                   data-testid="msg-delete"
                   aria-label={t('conversationDelete')}
                   title={t('conversationDelete')}
@@ -65,7 +79,7 @@ export function Conversation({ applicationId, version, onDeleted, onKindChanged 
                     setMessages(left);
                     onDeleted({ replyKind: res.replyKind, left });
                   }}
-                  className="ml-auto grid size-5 place-items-center rounded-full hover:bg-muted"
+                  className="grid size-5 place-items-center rounded-full hover:bg-muted"
                 >
                   ×
                 </button>
@@ -110,6 +124,47 @@ export function Conversation({ applicationId, version, onDeleted, onKindChanged 
                   ))}
                 </span>
               )}
+              {draft?.id === m.id ? (
+                <span data-testid="msg-edit-form" className="flex flex-col gap-2">
+                  <span className="flex flex-wrap gap-1">
+                    {CHANNELS.map((c) => (
+                      <button
+                        key={c}
+                        type="button"
+                        data-testid="msg-edit-channel"
+                        data-channel={c}
+                        aria-pressed={draft.channel === c}
+                        onClick={() => setDraft({ ...draft, channel: c })}
+                        className={`rounded-full border px-2 py-0.5 text-[11px] font-semibold ${draft.channel === c ? 'border-foreground bg-foreground text-background' : 'border-border text-muted-foreground'}`}
+                      >
+                        {t(`channel_${c}` as never)}
+                      </button>
+                    ))}
+                  </span>
+                  {!mine && <input data-testid="msg-edit-author" value={draft.author} maxLength={120} placeholder={t('replyAuthor')} onChange={(e) => setDraft({ ...draft, author: e.target.value })} className="brutal bg-card px-2 py-1 text-sm" />}
+                  <input data-testid="msg-edit-link" type="url" value={draft.link} maxLength={500} placeholder={t('replyLink')} onChange={(e) => setDraft({ ...draft, link: e.target.value })} className="brutal bg-card px-2 py-1 text-sm" />
+                  <textarea data-testid="msg-edit-body" value={draft.body} maxLength={10_000} onChange={(e) => setDraft({ ...draft, body: e.target.value })} className="brutal min-h-24 bg-card px-2 py-1 text-sm" />
+                  <span className="flex gap-2">
+                    <button
+                      type="button"
+                      data-testid="msg-edit-save"
+                      disabled={saving || !draft.body.trim()}
+                      onClick={async () => {
+                        setSaving(true);
+                        const ok = await updateMessage(applicationId, m.id, { channel: draft.channel, author: draft.author, body: draft.body, link: draft.link }).catch(() => false);
+                        setSaving(false);
+                        if (!ok) return;
+                        setMessages((list) => list && list.map((x) => (x.id === m.id ? { ...x, channel: draft.channel, author: mine ? x.author : draft.author.trim() || null, body: draft.body.trim(), link: draft.link.trim() || null } : x)));
+                        setDraft(null);
+                      }}
+                      className="brutal brutal-press bg-brand px-3 py-1 text-xs font-semibold text-brand-foreground disabled:opacity-50"
+                    >
+                      {t('save')}
+                    </button>
+                    <button type="button" onClick={() => setDraft(null)} className="px-2 text-xs underline">{t('cancel')}</button>
+                  </span>
+                </span>
+              ) : (<>
               {m.summary && <p className="text-xs italic">{m.summary}</p>}
               <p className={`whitespace-pre-line ${long && !expanded ? 'line-clamp-5' : ''}`}>{m.body}</p>
               <span className="flex flex-wrap gap-3 font-mono text-[11px]">
@@ -120,6 +175,7 @@ export function Conversation({ applicationId, version, onDeleted, onKindChanged 
                 )}
                 {m.link && <a data-testid="msg-link" href={m.link} target="_blank" rel="noopener noreferrer" className="underline">{t('openThread')} ↗</a>}
               </span>
+              </>)}
             </li>
           );
         })}
