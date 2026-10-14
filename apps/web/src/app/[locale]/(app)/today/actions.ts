@@ -64,3 +64,11 @@ export async function restoreMatch(matchId: string, applicationId: string | null
   revalidatePath('/[locale]/board', 'page');
   return !error;
 }
+
+/** A job's full description, loaded when its detail opens (the feed itself ships without them). */
+export async function getJobDescription(jobId: string): Promise<string | null> {
+  if (!UUID.test(jobId) || !(await getUserId())) return null;
+  const supabase = await createClient();
+  const { data } = await supabase.from('jobs').select('description_text').eq('id', jobId).maybeSingle();
+  return data?.description_text?.slice(0, 8000) ?? null;
+}

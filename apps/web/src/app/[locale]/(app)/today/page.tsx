@@ -108,7 +108,8 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
       salaryMaxUsd: m.jobs.salary_max_usd,
       summary: localized(m.jobs.summary as LocalizedText | null, locale) || null,
       why: localized(m.explanation as LocalizedText | null, locale) || null,
-      description: m.jobs.description_text.slice(0, 8000),
+      // Loaded when the detail opens: shipping every description made the feed page ~1 MB.
+      description: '',
       requiredYears: requiredYears(m.jobs.description_text),
       candidateYears: cv?.parsed?.yearsExperience ?? null,
       requiredEnglish: requiredEnglish(m.jobs.description_text, m.jobs.tags ?? []),
