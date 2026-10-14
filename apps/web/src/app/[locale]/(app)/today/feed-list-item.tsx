@@ -1,5 +1,6 @@
 'use client';
 
+import { sourceInfo } from '@jp/core';
 import { useFormatter, useNow, useTranslations } from 'next-intl';
 import { ScoreMeter } from '@/components/ui/score-meter';
 import { LevelBadge, TechChip } from '@/components/ui/tech-chip';
@@ -46,6 +47,7 @@ export function FeedListItem({
           className="self-start rounded-full bg-brand/15 px-2 py-0.5 text-[11px] font-medium text-link"
         >
           ✓ {t('onBoardShort')}
+          {match.onBoardLeft.length > 0 && <> · {t('onBoardLeft', { platforms: match.onBoardLeft.map((s) => sourceInfo(s)?.name ?? s).join(', ') })}</>}
         </span>
       )}
       {match.requiredEnglish !== null && match.candidateEnglish !== null && ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'].indexOf(match.candidateEnglish) < ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'].indexOf(match.requiredEnglish) && (

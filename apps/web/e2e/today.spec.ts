@@ -101,6 +101,20 @@ test('a job already on the board leaves the feed', async ({ context, page }) => 
   await expect(page.getByText(title)).toHaveCount(0);
 });
 
+test('the same vacancy stays in the feed until it is on the board from every platform', async ({ context, page, isMobile }) => {
+  const email = uniqueEmail('feed-platforms');
+  await loginAs(context, email);
+  const { title, company } = await seedMatch(email, { score: 91, sourceId: 'dou' });
+  // Applied to the same vacancy on Djinni: the DOU posting is still worth applying to.
+  await seedApplication(email, { column: 'applied', title, company, sourceId: 'djinni', appliedDaysAgo: 1 });
+  await page.goto('/en/today');
+  const detail = await openDetail(page, title, isMobile);
+  await expect(detail.getByTestId('on-board')).toContainText('still open on DOU');
+  await seedApplication(email, { column: 'applied', title, company, sourceId: 'dou', appliedDaysAgo: 0 });
+  await page.reload();
+  await expect(page.getByText(title)).toHaveCount(0);
+});
+
 test('the English a job asks for shows next to the experience, flagged when the CV level is lower', async ({ context, page, isMobile }) => {
   const email = uniqueEmail('feed-english');
   await loginAs(context, email);

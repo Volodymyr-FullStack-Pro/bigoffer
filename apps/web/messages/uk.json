@@ -144,7 +144,8 @@
     "onBoardShort": "Вже на дошці",
     "eyebrow": "Підібрано для вас",
     "companyOnBoardShort": "Вже відгук у цю компанію",
-    "companyOnBoard": "Ви вже подавалися в цю компанію: «{title}» · {column}"
+    "companyOnBoard": "Ви вже подавалися в цю компанію: «{title}» · {column}",
+    "onBoardLeft": "ще можна на {platforms}"
   },
   "feed": {
     "progress": "{done} / {total}",
@@ -236,7 +237,8 @@
     "englishRequired": "English {level}",
     "englishOk": "У вас {level} — підходить",
     "englishGap": "У вас {level} — просять вище",
-    "englishYours": "у вас {level}"
+    "englishYours": "у вас {level}",
+    "onBoardLeft": "ще можна на {platforms}"
   },
   "comingSoon": {
     "badge": "Скоро",
