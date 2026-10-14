@@ -407,7 +407,7 @@
     "label_awaiting_interview": "Awaiting interview",
     "addCard": "Add card",
     "addTitle": "New card",
-    "addUrl": "Job link (optional)",
+    "addUrl": "Paste the job link (DOU, Djinni, robota.ua or any site)",
     "addFetch": "Fetch",
     "addPreviewFailed": "Couldn't read that page — fill in the fields yourself.",
     "addJobTitle": "Job title",
@@ -493,7 +493,9 @@
     "conversationDelete": "Delete message",
     "conversationDeleteConfirm": "Delete this message from the conversation?",
     "conversationChangeKind": "Change reply type",
-    "conversationSetKind": "Type?"
+    "conversationSetKind": "Type?",
+    "addLoading": "Reading the job from the site… (up to half a minute)",
+    "addImported": "Job read in full — the apply kit will work on this card."
   },
   "cv": {
     "title": "Your CV",

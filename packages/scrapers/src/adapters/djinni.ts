@@ -10,13 +10,15 @@ const RSS_BACKFILL_MS = 4 * 24 * 3600 * 1000;
 const MAX_BACKFILL = 20;
 const DETAIL_CONCURRENCY = 3;
 
-function toRawJob(p: JobPostingLd): RawJob | null {
+/** A posting's JSON-LD as a raw job; `pageUrl` stands in when the posting's own page omits its url. */
+export function toRawJob(p: JobPostingLd, pageUrl?: string): RawJob | null {
   const id = typeof p.identifier === 'object' ? p.identifier?.value : p.identifier;
-  if (!p.url || !p.title || id == null) return null;
+  const url = p.url ?? pageUrl;
+  if (!url || !p.title || id == null) return null;
   const company = p.hiringOrganization?.name?.trim();
   return {
     externalId: String(id),
-    url: p.url,
+    url,
     title: p.title,
     company: company || 'Djinni',
     companyIsPlaceholder: !company,
@@ -62,7 +64,7 @@ async function rssBackfill(
     const batch = await Promise.all(
       missing.slice(i, i + DETAIL_CONCURRENCY).map(async (item): Promise<RawJob | null> => {
         try {
-          const job = extractJobPostings(await ctx.fetchText(item.link)).map(toRawJob).find((j) => j !== null);
+          const job = extractJobPostings(await ctx.fetchText(item.link)).map((p) => toRawJob(p, item.link)).find((j) => j !== null);
           if (job) return job;
         } catch {
           // fall back to the feed entry

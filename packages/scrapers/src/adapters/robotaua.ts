@@ -16,7 +16,7 @@ type RabotaResponse = {
   }[];
 };
 
-function salaryRaw(d: RabotaResponse['documents'][number]): string | null {
+export function salaryRaw(d: Pick<RabotaResponse['documents'][number], 'salary' | 'salaryFrom' | 'salaryTo'>): string | null {
   if (d.salaryFrom && d.salaryTo) return `${d.salaryFrom} - ${d.salaryTo} грн`;
   if (d.salaryFrom) return `від ${d.salaryFrom} грн`;
   if (d.salary) return `${d.salary} грн`;
