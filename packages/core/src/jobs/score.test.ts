@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { SearchProfile } from './search';
-import { isTechTitle, scoreJob, type ScorableJob, wantedByAnyProfile } from './score';
+import { isTechTitle, missingCoreStacks, namedPlatforms, scoreJob, type ScorableJob, wantedByAnyProfile } from './score';
 
 describe('isTechTitle', () => {
   it('keeps engineering roles and drops the rest', () => {
@@ -278,5 +278,18 @@ describe('main stack the candidate lacks', () => {
     expect(py.breakdown.missingStack).toBeUndefined();
     const node = scoreJob(js, { ...job, title: 'Full Stack JavaScript Developer', skills: ['JavaScript', 'Node.js', 'React'] })!;
     expect(node.breakdown.missingStack).toBeUndefined();
+  });
+});
+
+describe('namedPlatforms', () => {
+  it('finds the platforms a posting names that the skills lack', () => {
+    const text = 'Our site is built on WordPress. Build the catalog using WooCommerce, custom plugins in PHP and JavaScript.';
+    expect(namedPlatforms(text, ['JavaScript', 'React', 'HTML'])).toEqual(['WordPress', 'WooCommerce', 'PHP']);
+    expect(namedPlatforms(text, ['wordpress', 'WooCommerce', 'PHP'])).toEqual([]);
+    expect(namedPlatforms('Strong JavaScript and React', [])).toEqual([]);
+  });
+
+  it('counts WordPress work as the PHP stack', () => {
+    expect(missingCoreStacks('Web developer', ['WordPress', 'JavaScript'], ['JavaScript', 'React'])).toEqual(['PHP']);
   });
 });

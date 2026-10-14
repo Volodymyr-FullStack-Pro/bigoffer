@@ -142,7 +142,9 @@
     "seniority_lead": "Lead",
     "onboardingBanner": "Завершіть налаштування: CV і типові відповіді",
     "onBoardShort": "Вже на дошці",
-    "eyebrow": "Підібрано для вас"
+    "eyebrow": "Підібрано для вас",
+    "companyOnBoardShort": "Вже відгук у цю компанію",
+    "companyOnBoard": "Ви вже подавалися в цю компанію: «{title}» · {column}"
   },
   "feed": {
     "progress": "{done} / {total}",
@@ -229,7 +231,12 @@
     "label_urgent": "Терміново",
     "moreFilters": "Фільтри",
     "resetFilters": "Скинути фільтри",
-    "progressLabel": "переглянуто"
+    "progressLabel": "переглянуто",
+    "companyOnBoard": "Ви вже подавалися в цю компанію: «{title}» · {column}",
+    "englishRequired": "English {level}",
+    "englishOk": "У вас {level} — підходить",
+    "englishGap": "У вас {level} — просять вище",
+    "englishYours": "у вас {level}"
   },
   "comingSoon": {
     "badge": "Скоро",
@@ -502,7 +509,9 @@
     "rejectSuggested": "Етап і причину підказав AI за листом компанії — перевірте й підтвердьте.",
     "reason_no_reason_given": "Без пояснення",
     "rejectedLine": "Відмова",
-    "rejectedByMe": "Я відмовився"
+    "rejectedByMe": "Я відмовився",
+    "rejectedNotMoved": "Компанія відмовила, але картка ще не у «Відмова».",
+    "rejectedMove": "Перемістити у «Відмова»"
   },
   "cv": {
     "title": "Ваше CV",

@@ -1,6 +1,6 @@
 import { expect, type Page, test } from '@playwright/test';
 import { loginAs, uniqueEmail } from './helpers/auth';
-import { seedMatch } from './helpers/seed';
+import { seedApplication, seedCv, seedMatch } from './helpers/seed';
 
 const visible = (page: Page, id: string) => page.getByTestId(id).filter({ visible: true });
 
@@ -76,4 +76,25 @@ test('shows the AI summary, why it fits and matched skills first', async ({ cont
   card = await openDetail(page, title, isMobile);
   await expect(card.getByTestId('match-summary')).toHaveText('Фінтех-команда будує платежі.');
   await expect(card.getByTestId('match-why')).toContainText('Kafka and the senior level match your search.');
+});
+
+test('a job from a company already on the board is flagged in the feed', async ({ context, page, isMobile }) => {
+  const email = uniqueEmail('feed-company');
+  await loginAs(context, email);
+  const { title, company } = await seedMatch(email, { score: 88 });
+  await seedApplication(email, { column: 'applied', title: 'Front-End Developer elsewhere', company, appliedDaysAgo: 1 });
+  await page.goto('/en/today');
+  const detail = await openDetail(page, title, isMobile);
+  await expect(detail.getByTestId('company-on-board')).toContainText('Front-End Developer elsewhere');
+});
+
+test('the English a job asks for shows next to the experience, flagged when the CV level is lower', async ({ context, page, isMobile }) => {
+  const email = uniqueEmail('feed-english');
+  await loginAs(context, email);
+  await seedCv(email); // English B2 in the test CV
+  const { title } = await seedMatch(email, { score: 88, description: 'Fluent English (C1) is required for daily client calls.' });
+  await page.goto('/en/today');
+  const detail = await openDetail(page, title, isMobile);
+  await expect(detail.getByTestId('required-english')).toContainText('English C1');
+  await expect(detail.getByTestId('required-english')).toHaveAttribute('data-gap', 'true');
 });

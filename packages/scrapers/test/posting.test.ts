@@ -49,3 +49,12 @@ describe('fetchPosting', () => {
     expect(calls).toHaveLength(0);
   });
 });
+
+describe('djinni listing English levels', () => {
+  it('reads the level each job card shows', async () => {
+    const { englishByJob } = await import('../src/adapters/djinni');
+    const levels = englishByJob(fixture('djinni-list-english.html'));
+    expect(levels.size).toBeGreaterThan(5);
+    expect([...levels.values()].every((l) => /^[ABC][12]$/.test(l))).toBe(true);
+  });
+});

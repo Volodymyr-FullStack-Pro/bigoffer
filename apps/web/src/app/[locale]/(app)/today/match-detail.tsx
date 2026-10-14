@@ -114,6 +114,26 @@ function ExperienceBadge({ required, candidate }: { required: number; candidate:
   );
 }
 
+const CEFR = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
+
+/** "English C1": green when the CV level meets it, amber when the job asks for more. */
+export function EnglishBadge({ required, candidate }: { required: string; candidate: string | null }) {
+  const tf = useTranslations('feed');
+  const ok = candidate !== null && CEFR.indexOf(candidate) >= CEFR.indexOf(required);
+  const tone = candidate === null ? 'bg-muted text-foreground' : ok ? 'bg-success/15 text-success' : 'bg-warning/15 text-warning';
+  return (
+    <span
+      data-testid="required-english"
+      data-gap={candidate !== null && !ok ? 'true' : undefined}
+      title={candidate === null ? undefined : tf(ok ? 'englishOk' : 'englishGap', { level: candidate })}
+      className={`rounded-full px-2 py-0.5 font-sans font-medium ${tone}`}
+    >
+      {tf('englishRequired', { level: required })}
+      {candidate !== null && !ok && <span className="opacity-80"> · {tf('englishYours', { level: candidate })}</span>}
+    </span>
+  );
+}
+
 function CopyButton({
   text,
   label,
@@ -234,6 +254,11 @@ export function MatchDetail({
             ✓ {tf('onBoard', { column: match.onBoard || '—' })}
           </p>
         )}
+        {match.onBoard === null && match.companyOnBoard && (
+          <p data-testid="company-on-board" className="self-start rounded-full bg-warning/15 px-2.5 py-0.5 text-xs font-medium text-warning">
+            ⚑ {tf('companyOnBoard', { title: match.companyOnBoard.title, column: match.companyOnBoard.column || '—' })}
+          </p>
+        )}
         {!match.companyIsPlaceholder && <p className="text-muted-foreground">{match.company}</p>}
         <p className="flex flex-wrap items-center gap-x-4 gap-y-1.5 font-mono text-xs text-muted-foreground">
           {[...new Set(match.postings.map((p) => p.sourceId))].map((id) => (
@@ -248,6 +273,7 @@ export function MatchDetail({
           {match.requiredYears !== null && (
             <ExperienceBadge required={match.requiredYears} candidate={match.candidateYears} />
           )}
+          {match.requiredEnglish !== null && <EnglishBadge required={match.requiredEnglish} candidate={match.candidateEnglish} />}
           <span suppressHydrationWarning>
             {format.relativeTime(new Date(match.postedAt ?? match.firstSeenAt), now)}
           </span>
