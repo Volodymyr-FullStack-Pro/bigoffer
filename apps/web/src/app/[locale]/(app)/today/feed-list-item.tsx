@@ -48,6 +48,11 @@ export function FeedListItem({
           ✓ {t('onBoardShort')}
         </span>
       )}
+      {match.requiredEnglish !== null && match.candidateEnglish !== null && ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'].indexOf(match.candidateEnglish) < ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'].indexOf(match.requiredEnglish) && (
+        <span data-testid="english-gap-badge" className="self-start rounded-full bg-warning/15 px-2 py-0.5 text-[11px] font-medium text-warning">
+          English {match.requiredEnglish}
+        </span>
+      )}
       {match.onBoard === null && match.companyOnBoard && (
         <span
           data-testid="company-on-board-badge"

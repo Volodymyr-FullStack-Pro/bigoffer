@@ -232,7 +232,11 @@
     "moreFilters": "Filters",
     "resetFilters": "Reset filters",
     "progressLabel": "reviewed",
-    "companyOnBoard": "You already applied to this company: “{title}” · {column}"
+    "companyOnBoard": "You already applied to this company: “{title}” · {column}",
+    "englishRequired": "English {level}",
+    "englishOk": "You have {level} — fits",
+    "englishGap": "You have {level} — they ask for more",
+    "englishYours": "you {level}"
   },
   "comingSoon": {
     "badge": "Soon",

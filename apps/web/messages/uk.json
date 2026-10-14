@@ -232,7 +232,11 @@
     "moreFilters": "Фільтри",
     "resetFilters": "Скинути фільтри",
     "progressLabel": "переглянуто",
-    "companyOnBoard": "Ви вже подавалися в цю компанію: «{title}» · {column}"
+    "companyOnBoard": "Ви вже подавалися в цю компанію: «{title}» · {column}",
+    "englishRequired": "English {level}",
+    "englishOk": "У вас {level} — підходить",
+    "englishGap": "У вас {level} — просять вище",
+    "englishYours": "у вас {level}"
   },
   "comingSoon": {
     "badge": "Скоро",

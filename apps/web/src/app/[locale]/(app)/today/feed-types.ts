@@ -31,6 +31,9 @@ export type FeedMatch = {
   requiredYears: number | null;
   /** The user's years of experience from their CV, to compare with requiredYears. */
   candidateYears: number | null;
+  /** CEFR English level the job asks for (board tag or text), and the user's from the CV. */
+  requiredEnglish: string | null;
+  candidateEnglish: string | null;
   /** Why the profile rules hid it: 'seniority' | 'role' | 'format' | 'region' | an exclude word; null when shown. */
   excludedBy: string | null;
   /** Field of the vacancy (fintech, gamedev, …); 'military' = service in the armed forces. */

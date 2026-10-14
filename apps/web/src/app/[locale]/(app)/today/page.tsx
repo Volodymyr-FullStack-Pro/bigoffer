@@ -1,4 +1,4 @@
-import { detectDomains, detectPerks, isLocale, type LocalizedText, localized, normalizeCompany, normalizeTitle, requiredYears, SENIORITIES, type Seniority, sourceInfo } from '@jp/core';
+import { candidateEnglish, detectDomains, detectPerks, isLocale, requiredEnglish, type LocalizedText, localized, normalizeCompany, normalizeTitle, requiredYears, SENIORITIES, type Seniority, sourceInfo } from '@jp/core';
 import { getLocale, getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
 import { requireUserId } from '@/lib/auth';
@@ -43,7 +43,7 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
     supabase
       .from('job_matches')
       .select(
-        'id, job_id, score, created_at, breakdown, explanation, search_profile_id, jobs!inner(title, location, remote_type, seniority, salary_min_usd, salary_max_usd, posted_at, first_seen_at, summary, skills, description_text, is_job, company_is_placeholder, companies(name), job_postings(source_id, url))',
+        'id, job_id, score, created_at, breakdown, explanation, search_profile_id, jobs!inner(title, location, remote_type, seniority, salary_min_usd, salary_max_usd, posted_at, first_seen_at, summary, skills, description_text, tags, is_job, company_is_placeholder, companies(name), job_postings(source_id, url))',
       )
       .in('state', states)
       .eq('jobs.status', 'active')
@@ -88,6 +88,7 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
     const company = a.company ? normalizeCompany(a.company) : '';
     if (company && a.title && !boardByCompany.has(company)) boardByCompany.set(company, { title: a.title, column });
   }
+  const myEnglish = cv?.parsed ? candidateEnglish(cv.parsed.languages) : null;
   const toMatch = (m: NonNullable<typeof bestRows>[number]): FeedMatch => {
     const matched = matchedSkillsOf(m.breakdown);
     const wanted = m.search_profile_id ? (profileSkills.get(m.search_profile_id) ?? []) : [];
@@ -110,6 +111,8 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
       description: m.jobs.description_text.slice(0, 8000),
       requiredYears: requiredYears(m.jobs.description_text),
       candidateYears: cv?.parsed?.yearsExperience ?? null,
+      requiredEnglish: requiredEnglish(m.jobs.description_text, m.jobs.tags ?? []),
+      candidateEnglish: myEnglish,
       onBoard: boardByJob.get(m.job_id) ?? boardByName.get(nameKey(m.jobs.companies?.name ?? '', m.jobs.title)) ?? null,
       companyOnBoard: m.jobs.company_is_placeholder ? null : (boardByCompany.get(normalizeCompany(m.jobs.companies?.name ?? '')) ?? null),
       skills: cardSkills(m.jobs.skills, matched, 8, wanted),

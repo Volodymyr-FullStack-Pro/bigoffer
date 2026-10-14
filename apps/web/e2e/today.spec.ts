@@ -1,6 +1,6 @@
 import { expect, type Page, test } from '@playwright/test';
 import { loginAs, uniqueEmail } from './helpers/auth';
-import { seedApplication, seedMatch } from './helpers/seed';
+import { seedApplication, seedCv, seedMatch } from './helpers/seed';
 
 const visible = (page: Page, id: string) => page.getByTestId(id).filter({ visible: true });
 
@@ -86,4 +86,15 @@ test('a job from a company already on the board is flagged in the feed', async (
   await page.goto('/en/today');
   const detail = await openDetail(page, title, isMobile);
   await expect(detail.getByTestId('company-on-board')).toContainText('Front-End Developer elsewhere');
+});
+
+test('the English a job asks for shows next to the experience, flagged when the CV level is lower', async ({ context, page, isMobile }) => {
+  const email = uniqueEmail('feed-english');
+  await loginAs(context, email);
+  await seedCv(email); // English B2 in the test CV
+  const { title } = await seedMatch(email, { score: 88, description: 'Fluent English (C1) is required for daily client calls.' });
+  await page.goto('/en/today');
+  const detail = await openDetail(page, title, isMobile);
+  await expect(detail.getByTestId('required-english')).toContainText('English C1');
+  await expect(detail.getByTestId('required-english')).toHaveAttribute('data-gap', 'true');
 });
