@@ -923,6 +923,10 @@
     "err_ai_limit": "Daily AI limit reached. Resets at 00:00 UTC.",
     "err_no_cv": "Upload your CV in the profile first.",
     "err_not_found": "Not found.",
-    "err_failed": "Could not write it. Try again."
+    "err_failed": "Could not write it. Try again.",
+    "deepOpen": "Go deeper",
+    "deepTitle": "Deeper: middle / senior level",
+    "deepHint": "Got the basics? The next level: advanced features, how it works inside, trade-offs, harder examples and middle/senior questions.",
+    "writingDeep": "Writing the deeper part (~30 s)…"
   }
 }

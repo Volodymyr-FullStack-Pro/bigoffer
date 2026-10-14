@@ -31,6 +31,22 @@ export function PrepView({ prepId, card, plan, lessons: initialLessons, pitch: i
   const [pitchError, setPitchError] = useState<string | null>(null);
   const learned = plan.topics.filter((x) => done.includes(x.key)).length;
 
+  const loadDeep = async (topic: PrepTopic) => {
+    const slot = `${topic.key}@deep`;
+    if (lessons[slot]) return;
+    setLoading(slot);
+    setErrors((all) => Object.fromEntries(Object.entries(all).filter(([k]) => k !== slot)));
+    try {
+      const res = await getLesson(prepId, topic.key, 'deep');
+      if (res.ok) setLessons((all) => ({ ...all, [slot]: res.lesson }));
+      else setErrors((all) => ({ ...all, [slot]: res.error }));
+    } catch {
+      setErrors((all) => ({ ...all, [slot]: 'failed' }));
+    } finally {
+      setLoading(null);
+    }
+  };
+
   const openTopic = async (topic: PrepTopic) => {
     if (open === topic.key) return setOpen(null);
     setOpen(topic.key);
@@ -130,6 +146,14 @@ export function PrepView({ prepId, card, plan, lessons: initialLessons, pitch: i
                     {errors[topic.key] && <p role="alert" className="text-sm text-danger">{t(`err_${errors[topic.key]}` as never)}</p>}
                     {lesson && <Lesson lesson={lesson} />}
                     {lesson && (
+                      <DeepPart
+                        lesson={lessons[`${topic.key}@deep`]}
+                        loading={loading === `${topic.key}@deep`}
+                        error={errors[`${topic.key}@deep`]}
+                        onLoad={() => void loadDeep(topic)}
+                      />
+                    )}
+                    {lesson && (
                       <button
                         type="button"
                         data-testid="prep-topic-done"
@@ -187,6 +211,34 @@ export function PrepView({ prepId, card, plan, lessons: initialLessons, pitch: i
         {t('delete')}
       </button>
     </section>
+  );
+}
+
+/** The middle/senior part of a topic: asked for with a button, written on top of the basics. */
+function DeepPart({ lesson, loading, error, onLoad }: { lesson?: PrepLesson; loading: boolean; error?: string; onLoad: () => void }) {
+  const t = useTranslations('prep');
+  if (lesson) {
+    return (
+      <section data-testid="prep-deep" className="flex flex-col gap-3 rounded-xl border-2 border-ai/50 bg-ai/5 p-4">
+        <h3 className="font-display text-lg font-semibold">🔬 {t('deepTitle')}</h3>
+        <Lesson lesson={lesson} />
+      </section>
+    );
+  }
+  return (
+    <div className="flex flex-col gap-2 rounded-xl border border-dashed border-ai/60 p-4">
+      {loading ? (
+        <LessonSkeleton label={t('writingDeep')} />
+      ) : (
+        <>
+          <p className="text-sm text-muted-foreground">{t('deepHint')}</p>
+          <button type="button" data-testid="prep-deep-open" onClick={onLoad} className="brutal brutal-press self-start bg-ai px-3 py-1.5 text-sm font-semibold text-ai-foreground">
+            🔬 {t('deepOpen')}
+          </button>
+        </>
+      )}
+      {error && <p role="alert" className="text-sm text-danger">{t(`err_${error}` as never)}</p>}
+    </div>
   );
 }
 

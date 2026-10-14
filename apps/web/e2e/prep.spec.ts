@@ -25,7 +25,11 @@ test('prepares for an interview: plan, a lesson with code, progress and the pitc
   const first = visible(page, 'prep-topic').first();
   await first.getByTestId('prep-topic-open').click();
   await expect(first.getByTestId('prep-lesson')).toContainText('[fake]');
-  await expect(first.getByTestId('prep-code')).toContainText('useState(0)');
+  await expect(first.getByTestId('prep-code').first()).toContainText('useState(0)');
+  // The middle/senior part on top of the basics.
+  await first.getByTestId('prep-deep-open').click();
+  await expect(first.getByTestId('prep-deep')).toContainText('[fake deep]');
+  await expect(first.getByTestId('prep-deep').getByTestId('prep-code')).toContainText('Partial<Pick<User');
   await first.getByTestId('prep-topic-done').click();
   await expect(visible(page, 'prep-progress')).toHaveText('1 of 2 topics');
 
@@ -35,7 +39,8 @@ test('prepares for an interview: plan, a lesson with code, progress and the pitc
   // Kept: the lesson and the pitch come back without a new request, the list shows the progress.
   await page.reload();
   await visible(page, 'prep-topic').first().getByTestId('prep-topic-open').click();
-  await expect(visible(page, 'prep-lesson')).toBeVisible();
+  await expect(visible(page, 'prep-lesson').first()).toBeVisible();
+  await expect(visible(page, 'prep-deep')).toBeVisible();
   await expect(visible(page, 'prep-pitch-intro')).toBeVisible();
   await page.goto('/en/prep');
   await expect(visible(page, 'prep-item').filter({ hasText: title })).toContainText('1 of 2 topics');

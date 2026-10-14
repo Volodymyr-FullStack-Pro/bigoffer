@@ -35,6 +35,16 @@ describe('interview prep', () => {
     expect(llm.calls[0]!.sensitivity).toBe('public');
     expect(llm.calls[0]!.system).toContain('junior');
   });
+  it('goes deeper on top of the basics without repeating them', async () => {
+    const llm = new FakeLlmClient(fakeResponder);
+    const lesson = await prepLesson(llm, { topic: 'TypeScript', why: 'UI', role: 'Dev', lang: 'uk', depth: 'deep', covered: ['Generics', 'Interfaces'] });
+    expect(lesson.intro).toContain('[fake deep]');
+    const call = llm.calls[0]!;
+    expect(call.task).toBe('prep_lesson_deep');
+    expect(call.system).toContain('middle/senior');
+    expect(call.system).toContain('utility types');
+    expect(call.prompt).toMatch(/<covered>\n- Generics\n- Interfaces\n<\/covered>/);
+  });
   it('builds the pitch from the CV on the private route', async () => {
     const cv = normalizeCv(fakeResponder({ task: 'parse_cv' } as never) as never);
     const llm = new FakeLlmClient(fakeResponder, ['private']);
