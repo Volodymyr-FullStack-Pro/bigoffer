@@ -2,6 +2,7 @@
 
 import type { Json } from '@jp/db';
 import { classifyReply, MESSAGE_FORMATS, type MessageFormat, recruiterMessage, type ReplyClassification } from '@jp/ai';
+import { meetingLinkIn } from '@jp/core';
 import { revalidatePath } from 'next/cache';
 import { getTimeZone } from 'next-intl/server';
 import { consumePrivateAi, getLlm, privateAiAvailable } from '@/lib/ai';
@@ -140,7 +141,7 @@ export async function suggestReplyKind(
 export async function logReply(
   applicationId: string,
   reply: { channel: ReplyChannel; body: string; kind: ReplyKind; summary?: string | null; interviewAt?: string | null; author?: string | null; link?: string | null },
-): Promise<{ firstResponseAt: string | null; lastActivityAt: string | null; nextActionAt: string | null; contactName: string | null } | null> {
+): Promise<{ firstResponseAt: string | null; lastActivityAt: string | null; nextActionAt: string | null; contactName: string | null; meetingUrl: string | null } | null> {
   const userId = await getUserId();
   const text = reply.body.trim().slice(0, 10_000);
   const interviewAt = reply.interviewAt && !Number.isNaN(Date.parse(reply.interviewAt)) ? new Date(reply.interviewAt).toISOString() : null;
@@ -152,14 +153,18 @@ export async function logReply(
   const real = reply.kind !== 'auto_reply';
   const author = reply.author?.trim().slice(0, 120) || null;
   const link = safeLink(reply.link);
-  const contact = (app.contact ?? {}) as { name?: unknown; url?: unknown };
+  const contact = (app.contact ?? {}) as { name?: unknown; url?: unknown; meet?: unknown };
   // The person who answered becomes the card's contact, unless one is set already.
   const knownName = typeof contact.name === 'string' && contact.name ? contact.name : null;
+  // A Meet/Zoom link in the invite becomes the card's meeting link; a newer invite replaces an older one.
+  const meet = meetingLinkIn(text) ?? (typeof contact.meet === 'string' ? contact.meet : null);
+  const contactChanged = (!knownName && author) || meet !== (contact.meet ?? null);
   const next = {
     firstResponseAt: real ? (app.first_response_at ?? now) : app.first_response_at,
     lastActivityAt: real ? now : app.last_activity_at,
     nextActionAt: interviewAt ?? app.next_action_at,
     contactName: knownName ?? author,
+    meetingUrl: meet,
   };
   const { data, error: uErr } = await supabase
     .from('applications')
@@ -168,7 +173,7 @@ export async function logReply(
       first_response_at: next.firstResponseAt,
       last_activity_at: next.lastActivityAt,
       next_action_at: next.nextActionAt,
-      ...(!knownName && author ? { contact: { ...(typeof contact.url === 'string' ? { url: contact.url } : {}), name: author } } : {}),
+      ...(contactChanged ? { contact: { ...(contact as Record<string, Json>), ...(knownName ?? author ? { name: knownName ?? author } : {}), ...(meet ? { meet } : {}) } } : {}),
     })
     .eq('id', applicationId)
     .select('id');

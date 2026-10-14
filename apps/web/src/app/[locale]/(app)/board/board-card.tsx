@@ -5,6 +5,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { useFormatter, useTranslations } from 'next-intl';
 import { SourceBadge } from '@/components/ui/source-badge';
 import type { BoardCardView, BoardLabel } from './board-types';
+import { JoinMeeting } from './join-meeting';
 import { REPLY_STYLE } from './reply-kinds';
 
 const URGENCY_STYLE: Record<string, string> = {
@@ -88,9 +89,14 @@ export function BoardCardItem({ card, labels, labelName, now, timeZone, onOpen }
           ))}
         </span>
       )}
-      {upcoming && (
-        <span data-testid="card-next" suppressHydrationWarning className="font-mono text-xs font-semibold">
-          ⏰ {format.dateTime(upcoming, { timeZone, day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+      {(upcoming || card.meetingUrl) && (
+        <span className="flex flex-wrap items-center gap-2">
+          {upcoming && (
+            <span data-testid="card-next" suppressHydrationWarning className="font-mono text-xs font-semibold">
+              ⏰ {format.dateTime(upcoming, { timeZone, day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+            </span>
+          )}
+          {card.meetingUrl && card.outcome === 'open' && <JoinMeeting url={card.meetingUrl} label={t('joinMeeting')} testId="card-join" compact />}
         </span>
       )}
       <span className="flex flex-wrap items-center gap-2 font-mono text-xs text-muted-foreground">

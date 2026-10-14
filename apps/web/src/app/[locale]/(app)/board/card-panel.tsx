@@ -7,6 +7,7 @@ import { ApplyKitPanel } from '@/components/apply-kit/apply-kit-panel';
 import { SourceBadge } from '@/components/ui/source-badge';
 import { listMessages } from './message-actions';
 import { RecruiterMessage, type RecruiterMessageHandle } from './recruiter-message';
+import { JoinMeeting } from './join-meeting';
 import { Conversation } from './conversation';
 import { columnForReply } from './reply-kinds';
 import { ReplyInbox, type RejectionSuggestion } from './reply-inbox';
@@ -64,6 +65,7 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, companyC
   const [next, setNext] = useState(toZonedInput(card.nextActionAt, timeZone));
   const [contactName, setContactName] = useState(card.contactName ?? '');
   const [contactUrl, setContactUrl] = useState(card.contactUrl ?? '');
+  const [meeting, setMeeting] = useState(card.meetingUrl ?? '');
   const [newLabel, setNewLabel] = useState('');
   const [newColor, setNewColor] = useState('#C6F432');
   const [error, setError] = useState(false);
@@ -95,9 +97,10 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, companyC
       nextActionAt: next ? fromZonedInput(next, timeZone) : null,
       contactName: contactName.trim() || null,
       contactUrl: contactUrl.trim() || null,
+      meetingUrl: meeting.trim() || null,
     };
     const ok = await attempt(() => updateApplication(card.id, patch));
-    if (ok) onChanged({ salary: patch.salary, notes: patch.notes, nextActionAt: patch.nextActionAt, contactName: patch.contactName, contactUrl: patch.contactUrl });
+    if (ok) onChanged({ salary: patch.salary, notes: patch.notes, nextActionAt: patch.nextActionAt, contactName: patch.contactName, contactUrl: patch.contactUrl, meetingUrl: patch.meetingUrl });
   };
 
   const field = 'brutal bg-card px-2 py-1 font-sans text-sm';
@@ -156,7 +159,8 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, companyC
           )}
         </p>
       )}
-      <div className="flex flex-wrap gap-x-4 gap-y-1">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+        {card.meetingUrl && <JoinMeeting url={card.meetingUrl} label={t('joinMeeting')} testId="panel-join" />}
         {card.url && <a href={card.url} target="_blank" rel="noopener" className="font-mono text-sm underline">{t('openOriginal')} ↗</a>}
         {threadLink && <a data-testid="panel-thread" href={threadLink} target="_blank" rel="noopener noreferrer" className="font-mono text-sm font-semibold underline">{t('openThread')} ↗</a>}
       </div>
@@ -201,6 +205,7 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, companyC
           setMessagesVersion((v) => v + 1);
           if (patch.nextActionAt !== undefined) setNext(toZonedInput(patch.nextActionAt, timeZone));
           if (patch.contactName) setContactName(patch.contactName);
+          if (patch.meetingUrl) setMeeting(patch.meetingUrl);
           onReplyLogged(patch, moveTo, rejection);
         }}
       />
@@ -245,6 +250,10 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, companyC
       </fieldset>
       <label className="flex flex-col gap-1 font-mono text-xs">{t('salary')}<input data-testid="panel-salary" value={salary} maxLength={120} onChange={(e) => setSalary(e.target.value)} className={field} /></label>
       <label className="flex flex-col gap-1 font-mono text-xs">{t('nextAction')}<input data-testid="panel-next-action" type="datetime-local" value={next} onChange={(e) => setNext(e.target.value)} className={field} /></label>
+      <label className="flex flex-col gap-1 font-mono text-xs">
+        {t('meetingUrl')}
+        <input data-testid="panel-meeting" type="url" value={meeting} maxLength={500} onChange={(e) => setMeeting(e.target.value)} placeholder="https://meet.google.com/…" className={field} />
+      </label>
       {!contactName && companyContact && (
         <p data-testid="company-contact" className="text-sm">
           {t('companyContact', { company: card.company, name: companyContact.name })}{' '}

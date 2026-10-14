@@ -1,0 +1,20 @@
+'use client';
+
+/** Opens the interview call in a new tab; on a board card it must not open the panel or start a drag. */
+export function JoinMeeting({ url, label, testId, compact = false }: { url: string; label: string; testId: string; compact?: boolean }) {
+  return (
+    <a
+      href={url}
+      target="_blank"
+      rel="noopener noreferrer"
+      data-testid={testId}
+      title={url}
+      onClick={(e) => e.stopPropagation()}
+      onPointerDown={(e) => e.stopPropagation()}
+      onKeyDown={(e) => e.stopPropagation()}
+      className={`brutal brutal-press inline-flex items-center gap-1 bg-[#F472B6] font-semibold text-[#2A0A1C] ${compact ? 'px-2 py-0.5 text-xs' : 'px-3 py-1 text-sm'}`}
+    >
+      <span aria-hidden>📹</span> {label}
+    </a>
+  );
+}
