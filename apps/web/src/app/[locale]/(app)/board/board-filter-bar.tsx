@@ -60,7 +60,6 @@ export function BoardFilterBar({ filter, onChange, cards, labels, labelName, fou
             aria-label={t('search')}
             className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
           />
-          <kbd className="hidden rounded border border-border px-1 font-mono text-[10px] text-muted-foreground sm:inline">/</kbd>
         </label>
         {on && (
           <>
