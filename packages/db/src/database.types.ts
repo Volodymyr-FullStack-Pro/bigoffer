@@ -250,6 +250,31 @@ isOneToOne: false
                   Relationships: [
                     
                   ]
+                },"interview_preps": {
+                  Row: {
+                    "application_id": string,"created_at": string,"done": (string)[],"id": string,"lang": string,"lessons": NonNullable<Json>,"pitch": Json | null,"plan": NonNullable<Json>,"updated_at": string,"user_id": string
+                  }
+                  Insert: {
+                    "application_id": string,"created_at"?: string,"done"?: (string)[],"id"?: string,"lang": string,"lessons"?: NonNullable<Json>,"pitch"?: Json | null,"plan": NonNullable<Json>,"updated_at"?: string,"user_id": string
+                  }
+                  Update: {
+                    "application_id"?: string,"created_at"?: string,"done"?: (string)[],"id"?: string,"lang"?: string,"lessons"?: NonNullable<Json>,"pitch"?: Json | null,"plan"?: NonNullable<Json>,"updated_at"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "interview_preps_application_id_fkey"
+      columns: ["application_id"]
+isOneToOne: true
+      referencedRelation: "applications"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "interview_preps_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"job_matches": {
                   Row: {
                     "breakdown": NonNullable<Json>,"created_at": string,"explained_at": string | null,"explanation": Json | null,"id": string,"job_id": string,"notified_at": string | null,"score": number,"search_profile_id": string | null,"state": string,"updated_at": string,"user_id": string
@@ -426,6 +451,25 @@ isOneToOne: false
                   }
                   Relationships: [
                     
+                  ]
+                },"saved_links": {
+                  Row: {
+                    "created_at": string,"id": string,"note": string | null,"title": string,"topic": string,"url": string,"user_id": string
+                  }
+                  Insert: {
+                    "created_at"?: string,"id"?: string,"note"?: string | null,"title": string,"topic"?: string,"url": string,"user_id": string
+                  }
+                  Update: {
+                    "created_at"?: string,"id"?: string,"note"?: string | null,"title"?: string,"topic"?: string,"url"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "saved_links_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
                   ]
                 },"search_profile_queries": {
                   Row: {
