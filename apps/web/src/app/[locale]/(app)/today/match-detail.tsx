@@ -296,6 +296,7 @@ export function MatchDetail({
             className="self-start rounded-full bg-brand/15 px-2.5 py-0.5 text-xs font-medium text-link"
           >
             ✓ {tf('onBoard', { column: match.onBoard || '—' })}
+            {match.onBoardLeft.length > 0 && <> · {tf('onBoardLeft', { platforms: match.onBoardLeft.map((s) => sourceInfo(s)?.name ?? s).join(', ') })}</>}
           </p>
         )}
         {match.onBoard === null && match.companyOnBoard && (

@@ -64,7 +64,7 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
     supabase.from('profiles').select('onboarded_at, ui_prefs').eq('id', userId).maybeSingle(),
     getSearchNowStatus(),
     loadPrimaryCv(supabase),
-    supabase.from('applications').select('job_id, title, company, board_columns(key, title)'),
+    supabase.from('applications').select('job_id, title, company, source_id, board_columns(key, title)'),
   ]);
   // What the profile rules hid (level, role, format, region, exclude word): shown on demand so nothing is lost silently.
   const { data: ruleHiddenRows } = await baseQuery(['hidden'])
@@ -79,16 +79,33 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
   const nameKey = (company: string, title: string) => `${normalizeCompany(company)}|${normalizeTitle(title)}`;
   const boardByJob = new Map<string, string>();
   const boardByName = new Map<string, string>();
+  // Which platforms each vacancy was already applied on (or saved from): the same job on another board is still worth applying.
+  const sourcesByJob = new Map<string, Set<string | null>>();
+  const sourcesByName = new Map<string, Set<string | null>>();
+  const addSource = (map: Map<string, Set<string | null>>, key: string, source: string | null) => map.set(key, (map.get(key) ?? new Set()).add(source));
   // Other vacancies of the same company already on the board: applying twice to one company is worth knowing.
   const boardByCompany = new Map<string, { title: string; column: string }>();
   for (const a of apps ?? []) {
     const column = a.board_columns ? localized(a.board_columns.title as LocalizedText, locale) || a.board_columns.key : '';
-    if (a.job_id) boardByJob.set(a.job_id, column);
-    if (a.company && a.title) boardByName.set(nameKey(a.company, a.title), column);
+    if (a.job_id) {
+      boardByJob.set(a.job_id, column);
+      addSource(sourcesByJob, a.job_id, a.source_id);
+    }
+    if (a.company && a.title) {
+      boardByName.set(nameKey(a.company, a.title), column);
+      addSource(sourcesByName, nameKey(a.company, a.title), a.source_id);
+    }
     const company = a.company ? normalizeCompany(a.company) : '';
     if (company && a.title && !boardByCompany.has(company)) boardByCompany.set(company, { title: a.title, column });
   }
   const myEnglish = cv?.parsed ? candidateEnglish(cv.parsed.languages) : null;
+  /** The job's platforms that have no card yet; a card without a platform covers a job posted on one platform only. */
+  const platformsLeft = (m: NonNullable<typeof bestRows>[number]): string[] => {
+    const sources = [...new Set(m.jobs.job_postings.map((p) => p.source_id))];
+    const onBoard = new Set([...(sourcesByJob.get(m.job_id) ?? []), ...(sourcesByName.get(nameKey(m.jobs.companies?.name ?? '', m.jobs.title)) ?? [])]);
+    if (onBoard.has(null) && sourcesByJob.has(m.job_id) && sources.length === 1) return [];
+    return sources.filter((s) => !onBoard.has(s));
+  };
   const toMatch = (m: NonNullable<typeof bestRows>[number]): FeedMatch => {
     const matched = matchedSkillsOf(m.breakdown);
     const wanted = m.search_profile_id ? (profileSkills.get(m.search_profile_id) ?? []) : [];
@@ -115,6 +132,7 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
       requiredEnglish: requiredEnglish(m.jobs.description_text, m.jobs.tags ?? []),
       candidateEnglish: myEnglish,
       onBoard: boardByJob.get(m.job_id) ?? boardByName.get(nameKey(m.jobs.companies?.name ?? '', m.jobs.title)) ?? null,
+      onBoardLeft: platformsLeft(m),
       companyOnBoard: m.jobs.company_is_placeholder ? null : (boardByCompany.get(normalizeCompany(m.jobs.companies?.name ?? '')) ?? null),
       skills: cardSkills(m.jobs.skills, matched, 8, wanted),
       techs: cardSkills(m.jobs.skills, matched, 60, wanted),
@@ -130,7 +148,8 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
       postings: m.jobs.job_postings.map((p) => ({ sourceId: p.source_id, url: p.url })),
     };
   };
-  const matches = mergeMatches((bestRows ?? []).map(toMatch), (freshRows ?? []).map(toMatch));
+  // A job on the board on every platform it is posted on lives there; one still open on another platform stays to apply there too.
+  const matches = mergeMatches((bestRows ?? []).map(toMatch), (freshRows ?? []).map(toMatch)).filter((m) => m.onBoard === null || m.onBoardLeft.length > 0);
   const sourceIds = [...new Set(matches.flatMap((m) => m.postings.map((p) => p.sourceId)))];
 
   return (
