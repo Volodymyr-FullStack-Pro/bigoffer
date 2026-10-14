@@ -252,23 +252,22 @@ isOneToOne: false
                   ]
                 },"interview_preps": {
                   Row: {
-                    "application_id": string,"created_at": string,"done": string[],"id": string,"lang": string,"lessons": NonNullable<Json>,"pitch": Json | null,"plan": NonNullable<Json>,"updated_at": string,"user_id": string
+                    "application_id": string,"created_at": string,"done": (string)[],"id": string,"lang": string,"lessons": NonNullable<Json>,"pitch": Json | null,"plan": NonNullable<Json>,"updated_at": string,"user_id": string
                   }
                   Insert: {
-                    "application_id": string,"created_at"?: string,"done"?: string[],"id"?: string,"lang": string,"lessons"?: NonNullable<Json>,"pitch"?: Json | null,"plan": NonNullable<Json>,"updated_at"?: string,"user_id": string
+                    "application_id": string,"created_at"?: string,"done"?: (string)[],"id"?: string,"lang": string,"lessons"?: NonNullable<Json>,"pitch"?: Json | null,"plan": NonNullable<Json>,"updated_at"?: string,"user_id": string
                   }
                   Update: {
-                    "application_id"?: string,"created_at"?: string,"done"?: string[],"id"?: string,"lang"?: string,"lessons"?: NonNullable<Json>,"pitch"?: Json | null,"plan"?: NonNullable<Json>,"updated_at"?: string,"user_id"?: string
+                    "application_id"?: string,"created_at"?: string,"done"?: (string)[],"id"?: string,"lang"?: string,"lessons"?: NonNullable<Json>,"pitch"?: Json | null,"plan"?: NonNullable<Json>,"updated_at"?: string,"user_id"?: string
                   }
                   Relationships: [
                     {
       foreignKeyName: "interview_preps_application_id_fkey"
       columns: ["application_id"]
-isOneToOne: false
+isOneToOne: true
       referencedRelation: "applications"
       referencedColumns: ["id"]
-    },
-{
+    },{
       foreignKeyName: "interview_preps_user_id_fkey"
       columns: ["user_id"]
 isOneToOne: false
