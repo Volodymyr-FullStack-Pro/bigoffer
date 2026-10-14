@@ -14,23 +14,30 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export async function generateRecruiterMessage(
   applicationId: string,
-  opts: { format: MessageFormat; kind: 'intro' | 'follow_up'; lang: 'en' | 'uk' | 'ru'; tone: 'default' | 'shorter' | 'formal' },
-): Promise<{ ok: true; subject: string | null; body: string } | { ok: false; error: 'ai_unavailable' | 'ai_limit' | 'no_cv' | 'not_found' | 'failed' }> {
+  opts: { format: MessageFormat; kind: 'intro' | 'follow_up' | 'reply'; lang: 'en' | 'uk' | 'ru' | 'auto'; tone: 'default' | 'shorter' | 'formal' },
+): Promise<
+  | { ok: true; subject: string | null; body: string; channel: ReplyChannel | null }
+  | { ok: false; error: 'ai_unavailable' | 'ai_limit' | 'no_cv' | 'not_found' | 'nothing_to_answer' | 'failed' }
+> {
   const userId = await getUserId();
-  if (!userId || !UUID.test(applicationId) || !MESSAGE_FORMATS.includes(opts.format) || !['intro', 'follow_up'].includes(opts.kind) || !['en', 'uk', 'ru'].includes(opts.lang) || !['default', 'shorter', 'formal'].includes(opts.tone)) {
+  if (!userId || !UUID.test(applicationId) || !MESSAGE_FORMATS.includes(opts.format) || !['intro', 'follow_up', 'reply'].includes(opts.kind) || !['en', 'uk', 'ru', 'auto'].includes(opts.lang) || !['default', 'shorter', 'formal'].includes(opts.tone)) {
     return { ok: false, error: 'not_found' };
   }
   if (!privateAiAvailable()) return { ok: false, error: 'ai_unavailable' };
   const supabase = await createClient();
-  const [{ data: app }, cv, { data: previous }, { data: me }] = await Promise.all([
+  const [{ data: app }, cv, { data: history }, { data: me }] = await Promise.all([
     supabase.from('applications').select('title, company, contact, jobs(description_text)').eq('id', applicationId).maybeSingle(),
     loadPrimaryCv(supabase),
-    supabase.from('application_messages').select('body').eq('application_id', applicationId).eq('direction', 'out').order('sent_at', { ascending: false }).limit(5),
+    supabase.from('application_messages').select('direction, channel, author, body').eq('application_id', applicationId).order('sent_at', { ascending: false }).limit(10),
     supabase.from('profiles').select('full_name').eq('id', userId).maybeSingle(),
   ]);
   if (!app) return { ok: false, error: 'not_found' };
   if (!cv?.parsed) return { ok: false, error: 'no_cv' };
+  const thread = (history ?? []).reverse().map((m) => ({ direction: m.direction as 'in' | 'out', author: m.author, body: m.body, channel: m.channel }));
+  const lastIn = thread.filter((m) => m.direction === 'in').at(-1);
+  if (opts.kind === 'reply' && !lastIn) return { ok: false, error: 'nothing_to_answer' };
   const contact = (app.contact ?? {}) as { name?: unknown };
+  const channel = lastIn && REPLY_CHANNELS.includes(lastIn.channel as ReplyChannel) ? (lastIn.channel as ReplyChannel) : null;
   if (!(await consumePrivateAi(supabase))) return { ok: false, error: 'ai_limit' };
   try {
     const res = await recruiterMessage(getLlm(), {
@@ -38,13 +45,15 @@ export async function generateRecruiterMessage(
       kind: opts.kind,
       job: { title: app.title, company: app.company, description: app.jobs?.description_text ?? null },
       cv: cv.parsed,
-      recruiterName: typeof contact.name === 'string' ? contact.name : null,
+      recruiterName: (opts.kind === 'reply' ? lastIn?.author : null) || (typeof contact.name === 'string' ? contact.name : null),
       candidateName: me?.full_name?.trim() || cv.parsed.fullName?.trim() || null,
       lang: opts.lang,
       tone: opts.tone,
-      previous: (previous ?? []).map((p) => p.body).reverse(),
+      previous: thread.filter((m) => m.direction === 'out').map((m) => m.body).slice(-5),
+      thread: opts.kind === 'reply' ? thread : undefined,
+      channel: opts.kind === 'reply' ? channel : null,
     });
-    return { ok: true, ...res };
+    return { ok: true, ...res, channel: opts.kind === 'reply' ? channel : null };
   } catch (err) {
     console.error('generateRecruiterMessage failed', err instanceof Error ? err.name : 'unknown');
     return { ok: false, error: 'failed' };

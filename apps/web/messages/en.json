@@ -511,7 +511,8 @@
     "rejectedLine": "Rejected",
     "rejectedByMe": "I withdrew",
     "rejectedNotMoved": "The company declined, but the card is not in Rejected yet.",
-    "rejectedMove": "Move to Rejected"
+    "rejectedMove": "Move to Rejected",
+    "writeReply": "Write a reply"
   },
   "cv": {
     "title": "Your CV",
@@ -674,7 +675,10 @@
     "err_ai_limit": "Today's AI limit is used up. It resets at 00:00 UTC.",
     "err_no_cv": "Upload your CV in Profile first.",
     "err_not_found": "Card not found.",
-    "err_failed": "Couldn't write the message. Try again."
+    "err_failed": "Couldn't write the message. Try again.",
+    "reply": "Reply to their message",
+    "langAuto": "Same as the recruiter",
+    "err_nothing_to_answer": "The recruiter has not written yet — add their message to the conversation first."
   },
   "telegram": {
     "title": "Telegram",
