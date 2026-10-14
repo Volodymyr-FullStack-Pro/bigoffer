@@ -173,8 +173,8 @@ export function Board({ columns, cards: initial, labels: initialLabels, rules, n
     setPendingReject(null);
     const card = cards.find((c) => c.id === id);
     if (!card) return;
-    const previous = { columnId: card.columnId, rank: card.rank, outcome: card.outcome };
-    patchLocal(id, { columnId, rank, outcome });
+    const previous = { columnId: card.columnId, rank: card.rank, outcome: card.outcome, rejectionReasons: card.rejectionReasons, rejectionStage: card.rejectionStage };
+    patchLocal(id, { columnId, rank, outcome, rejectionReasons: input.reasons, rejectionStage: input.stage });
     let ok = false;
     try {
       ok = await rejectApplication(id, columnId, rank, input, outcome);
