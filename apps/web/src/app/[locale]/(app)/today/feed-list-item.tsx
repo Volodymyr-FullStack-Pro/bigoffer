@@ -48,6 +48,15 @@ export function FeedListItem({
           ✓ {t('onBoardShort')}
         </span>
       )}
+      {match.onBoard === null && match.companyOnBoard && (
+        <span
+          data-testid="company-on-board-badge"
+          title={t('companyOnBoard', { title: match.companyOnBoard.title, column: match.companyOnBoard.column })}
+          className="self-start rounded-full bg-warning/15 px-2 py-0.5 text-[11px] font-medium text-warning"
+        >
+          ⚑ {t('companyOnBoardShort')}
+        </span>
+      )}
       {(match.seniority || match.skills.length > 0) && (
         <span className="flex flex-wrap gap-1">
           {match.seniority && (

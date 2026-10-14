@@ -142,7 +142,9 @@
     "seniority_lead": "Lead",
     "onboardingBanner": "Завершите настройку: CV и типовые ответы",
     "onBoardShort": "Уже на доске",
-    "eyebrow": "Подобрано для вас"
+    "eyebrow": "Подобрано для вас",
+    "companyOnBoardShort": "Уже отклик в эту компанию",
+    "companyOnBoard": "Вы уже подавались в эту компанию: «{title}» · {column}"
   },
   "feed": {
     "progress": "{done} / {total}",
@@ -229,7 +231,8 @@
     "label_urgent": "Срочно",
     "moreFilters": "Фильтры",
     "resetFilters": "Сбросить фильтры",
-    "progressLabel": "просмотрено"
+    "progressLabel": "просмотрено",
+    "companyOnBoard": "Вы уже подавались в эту компанию: «{title}» · {column}"
   },
   "comingSoon": {
     "badge": "Скоро",

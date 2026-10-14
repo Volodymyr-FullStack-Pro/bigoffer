@@ -142,7 +142,9 @@
     "seniority_lead": "Lead",
     "onboardingBanner": "Finish setting up: your CV and typical answers",
     "onBoardShort": "Already on board",
-    "eyebrow": "Matched for you"
+    "eyebrow": "Matched for you",
+    "companyOnBoardShort": "Already applied to this company",
+    "companyOnBoard": "You already applied to this company: “{title}” · {column}"
   },
   "feed": {
     "progress": "{done} / {total}",
@@ -229,7 +231,8 @@
     "label_urgent": "Urgent",
     "moreFilters": "Filters",
     "resetFilters": "Reset filters",
-    "progressLabel": "reviewed"
+    "progressLabel": "reviewed",
+    "companyOnBoard": "You already applied to this company: “{title}” · {column}"
   },
   "comingSoon": {
     "badge": "Soon",

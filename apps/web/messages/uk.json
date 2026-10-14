@@ -142,7 +142,9 @@
     "seniority_lead": "Lead",
     "onboardingBanner": "Завершіть налаштування: CV і типові відповіді",
     "onBoardShort": "Вже на дошці",
-    "eyebrow": "Підібрано для вас"
+    "eyebrow": "Підібрано для вас",
+    "companyOnBoardShort": "Вже відгук у цю компанію",
+    "companyOnBoard": "Ви вже подавалися в цю компанію: «{title}» · {column}"
   },
   "feed": {
     "progress": "{done} / {total}",
@@ -229,7 +231,8 @@
     "label_urgent": "Терміново",
     "moreFilters": "Фільтри",
     "resetFilters": "Скинути фільтри",
-    "progressLabel": "переглянуто"
+    "progressLabel": "переглянуто",
+    "companyOnBoard": "Ви вже подавалися в цю компанію: «{title}» · {column}"
   },
   "comingSoon": {
     "badge": "Скоро",

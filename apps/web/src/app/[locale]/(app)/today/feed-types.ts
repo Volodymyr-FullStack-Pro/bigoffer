@@ -39,4 +39,6 @@ export type FeedMatch = {
   perks: JobPerk[];
   /** Board column the user already has this job in (same job, or the same company + title from another board). */
   onBoard: string | null;
+  /** Another vacancy of this company already on the board (title and column); shown when this one is not. */
+  companyOnBoard: { title: string; column: string } | null;
 };

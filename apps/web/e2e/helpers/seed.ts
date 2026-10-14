@@ -65,7 +65,7 @@ export async function seedMatch(
     .select('id')
     .single();
   if (mErr) throw mErr;
-  return { matchId: match.id, jobId: job.id, title };
+  return { matchId: match.id, jobId: job.id, title, company: `Acme ${tag}` };
 }
 
 export async function seedProfileWithNullSources(email: string, remoteType: 'hybrid' | 'office') {

@@ -25,7 +25,7 @@ const m = (id: string, over: Partial<FeedMatch> = {}): FeedMatch => ({
   postedAt: null,
   requiredYears: null,
   candidateYears: null,
-  onBoard: null,
+  onBoard: null, companyOnBoard: null,
     excludedBy: null,
     domains: [],
     perks: [],

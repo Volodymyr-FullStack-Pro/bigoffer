@@ -79,10 +79,14 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
   const nameKey = (company: string, title: string) => `${normalizeCompany(company)}|${normalizeTitle(title)}`;
   const boardByJob = new Map<string, string>();
   const boardByName = new Map<string, string>();
+  // Other vacancies of the same company already on the board: applying twice to one company is worth knowing.
+  const boardByCompany = new Map<string, { title: string; column: string }>();
   for (const a of apps ?? []) {
     const column = a.board_columns ? localized(a.board_columns.title as LocalizedText, locale) || a.board_columns.key : '';
     if (a.job_id) boardByJob.set(a.job_id, column);
     if (a.company && a.title) boardByName.set(nameKey(a.company, a.title), column);
+    const company = a.company ? normalizeCompany(a.company) : '';
+    if (company && a.title && !boardByCompany.has(company)) boardByCompany.set(company, { title: a.title, column });
   }
   const toMatch = (m: NonNullable<typeof bestRows>[number]): FeedMatch => {
     const matched = matchedSkillsOf(m.breakdown);
@@ -107,6 +111,7 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
       requiredYears: requiredYears(m.jobs.description_text),
       candidateYears: cv?.parsed?.yearsExperience ?? null,
       onBoard: boardByJob.get(m.job_id) ?? boardByName.get(nameKey(m.jobs.companies?.name ?? '', m.jobs.title)) ?? null,
+      companyOnBoard: m.jobs.company_is_placeholder ? null : (boardByCompany.get(normalizeCompany(m.jobs.companies?.name ?? '')) ?? null),
       skills: cardSkills(m.jobs.skills, matched, 8, wanted),
       techs: cardSkills(m.jobs.skills, matched, 60, wanted),
       perks: detectPerks({ title: m.jobs.title, descriptionText: m.jobs.description_text }),
