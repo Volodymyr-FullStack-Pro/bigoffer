@@ -494,6 +494,8 @@
     "conversationDeleteConfirm": "Delete this message from the conversation?",
     "conversationChangeKind": "Change reply type",
     "conversationSetKind": "Type?",
+    "replyKindNew": "Type of the new message",
+    "conversationChange": "change",
     "addLoading": "Reading the job from the site… (up to half a minute)",
     "addImported": "Job read in full — the apply kit will work on this card."
   },

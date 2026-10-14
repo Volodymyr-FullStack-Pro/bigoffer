@@ -494,6 +494,8 @@
     "conversationDeleteConfirm": "Видалити це повідомлення з листування?",
     "conversationChangeKind": "Змінити тип відповіді",
     "conversationSetKind": "Тип?",
+    "replyKindNew": "Тип нового повідомлення",
+    "conversationChange": "змінити",
     "addLoading": "Читаю вакансію з сайту… (до пів хвилини)",
     "addImported": "Вакансію прочитано повністю — на картці працюватиме «Набір для відгуку»."
   },

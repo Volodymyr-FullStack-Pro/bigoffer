@@ -494,6 +494,8 @@
     "conversationDeleteConfirm": "Удалить это сообщение из переписки?",
     "conversationChangeKind": "Изменить тип ответа",
     "conversationSetKind": "Тип?",
+    "replyKindNew": "Тип нового сообщения",
+    "conversationChange": "изменить",
     "addLoading": "Читаю вакансию с сайта… (до полуминуты)",
     "addImported": "Вакансия прочитана полностью — на карточке будет работать «Набор для отклика»."
   },
