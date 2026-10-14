@@ -35,6 +35,21 @@ describe('interview prep', () => {
     expect(llm.calls[0]!.sensitivity).toBe('public');
     expect(llm.calls[0]!.system).toContain('junior');
   });
+  it('teaches the middle and senior levels on top of the lower ones', async () => {
+    const llm = new FakeLlmClient(fakeResponder);
+    const middle = await prepLesson(llm, { topic: 'TypeScript', why: 'UI', role: 'Dev', lang: 'uk', level: 'middle', covered: ['Generics', 'Interfaces'] });
+    expect(middle.intro).toContain('[fake middle]');
+    expect(llm.calls[0]!.task).toBe('prep_lesson_middle');
+    expect(llm.calls[0]!.system).toContain('Level: MIDDLE');
+    expect(llm.calls[0]!.system).toContain('utility types');
+    expect(llm.calls[0]!.prompt).toMatch(/<covered>\n- Generics\n- Interfaces\n<\/covered>/);
+    await prepLesson(llm, { topic: 'TypeScript', why: 'UI', role: 'Dev', lang: 'uk', level: 'senior', covered: ['Generics'] });
+    expect(llm.calls[1]!.system).toContain('Level: SENIOR');
+    expect(llm.calls[1]!.system).toContain('under the hood');
+    await prepLesson(llm, { topic: 'TypeScript', why: 'UI', role: 'Dev', lang: 'uk' });
+    expect(llm.calls[2]!.system).toContain('Level: JUNIOR');
+    expect(llm.calls[2]!.prompt).not.toContain('<covered>');
+  });
   it('builds the pitch from the CV on the private route', async () => {
     const cv = normalizeCv(fakeResponder({ task: 'parse_cv' } as never) as never);
     const llm = new FakeLlmClient(fakeResponder, ['private']);

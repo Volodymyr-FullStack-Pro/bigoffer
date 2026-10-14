@@ -25,7 +25,15 @@ test('prepares for an interview: plan, a lesson with code, progress and the pitc
   const first = visible(page, 'prep-topic').first();
   await first.getByTestId('prep-topic-open').click();
   await expect(first.getByTestId('prep-lesson')).toContainText('[fake]');
-  await expect(first.getByTestId('prep-code')).toContainText('useState(0)');
+  await expect(first.getByTestId('prep-code').first()).toContainText('useState(0)');
+  // Middle and Senior are written on demand, on top of Junior.
+  await first.locator('[data-testid="prep-level"][data-level="middle"]').click();
+  await expect(first.locator('[data-testid="prep-lesson"][data-level="middle"]')).toContainText('[fake middle]');
+  await expect(first.getByTestId('prep-code')).toContainText('Partial<Pick<User');
+  await first.locator('[data-testid="prep-level"][data-level="senior"]').click();
+  await expect(first.locator('[data-testid="prep-lesson"][data-level="senior"]')).toContainText('[fake senior]');
+  await first.locator('[data-testid="prep-level"][data-level="junior"]').click();
+  await expect(first.locator('[data-testid="prep-lesson"][data-level="junior"]')).toContainText('[fake]');
   await first.getByTestId('prep-topic-done').click();
   await expect(visible(page, 'prep-progress')).toHaveText('1 of 2 topics');
 
@@ -35,7 +43,11 @@ test('prepares for an interview: plan, a lesson with code, progress and the pitc
   // Kept: the lesson and the pitch come back without a new request, the list shows the progress.
   await page.reload();
   await visible(page, 'prep-topic').first().getByTestId('prep-topic-open').click();
-  await expect(visible(page, 'prep-lesson')).toBeVisible();
+  await expect(visible(page, 'prep-lesson').first()).toBeVisible();
+  // Kept levels show a tick and open without writing again.
+  await expect(visible(page, 'prep-level').and(page.locator('[data-level="senior"]'))).toContainText('✓');
+  await visible(page, 'prep-level').and(page.locator('[data-level="senior"]')).click();
+  await expect(page.locator('[data-testid="prep-lesson"][data-level="senior"]')).toContainText('[fake senior]');
   await expect(visible(page, 'prep-pitch-intro')).toBeVisible();
   await page.goto('/en/prep');
   await expect(visible(page, 'prep-item').filter({ hasText: title })).toContainText('1 of 2 topics');

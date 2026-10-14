@@ -923,6 +923,14 @@
     "err_ai_limit": "Daily AI limit reached. Resets at 00:00 UTC.",
     "err_no_cv": "Upload your CV in the profile first.",
     "err_not_found": "Not found.",
-    "err_failed": "Could not write it. Try again."
+    "err_failed": "Could not write it. Try again.",
+    "level": "Level",
+    "level_junior": "Junior",
+    "level_middle": "Middle",
+    "level_senior": "Senior",
+    "levelHint_junior": "Basics from zero: what it is, why, first examples and junior questions.",
+    "levelHint_middle": "Daily work: advanced features, patterns, debugging, tests — and middle questions.",
+    "levelHint_senior": "How it works inside, architecture, trade-offs, scale — and senior questions.",
+    "writingLevel": "Writing the {level} level (~30 s)…"
   }
 }
