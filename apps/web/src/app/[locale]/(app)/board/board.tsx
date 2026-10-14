@@ -1,7 +1,7 @@
 'use client';
 
 import { tellGenie } from '@/lib/genie/events';
-import { applicationUrgency, type FollowUpRules, rankAtEnd, rankBetween, type RejectionInput, type RejectionReason, smartSort } from '@jp/core';
+import { applicationUrgency, type FollowUpRules, rankAtEnd, rankBetween, type RejectionInput, type RejectionReason, type RejectionStage, smartSort } from '@jp/core';
 import { closestCorners, DndContext, type DragEndEvent, DragOverlay, KeyboardSensor, PointerSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import { useTranslations } from 'next-intl';
@@ -19,7 +19,10 @@ import { Confetti } from './confetti';
 import { RejectDialog } from './reject-dialog';
 import { TodayActions } from './today-actions';
 
-type PendingReject = { id: string; columnId: string; rank: string; reasons: RejectionReason[]; outcome: 'rejected' | 'ghosted' };
+type PendingReject = { id: string; columnId: string; rank: string; reasons: RejectionReason[]; outcome: 'rejected' | 'ghosted'; stage: RejectionStage; suggested: boolean };
+
+/** The stage a rejection most likely happened at, from where the card was. */
+const STAGE_BY_COLUMN: Record<string, RejectionStage> = { saved: 'application', applied: 'application', talking: 'screening', test_task: 'test_task', interview: 'technical' };
 
 export function Board({ columns, cards: initial, labels: initialLabels, rules, now: nowIso, timeZone, savedSort }: {
   columns: BoardColumn[];
@@ -112,11 +115,19 @@ export function Board({ columns, cards: initial, labels: initialLabels, rules, n
     } else if (target.key === 'applied' && card.columnId !== columnId) tellGenie({ type: 'applied' });
   };
 
-  const requestMove = (id: string, columnId: string, rank: string, reasons: RejectionReason[] = [], outcome: 'rejected' | 'ghosted' = 'rejected') => {
+  const requestMove = (
+    id: string,
+    columnId: string,
+    rank: string,
+    reasons: RejectionReason[] = [],
+    outcome: 'rejected' | 'ghosted' = 'rejected',
+    suggestion: { stage: RejectionStage | null; suggested: boolean } = { stage: null, suggested: false },
+  ) => {
     const card = cards.find((c) => c.id === id);
     if (!card) return;
     const target = columnById.get(columnId);
-    if (target?.kind === 'lost' && card.columnId !== columnId) setPendingReject({ id, columnId, rank, reasons, outcome });
+    const stage = suggestion.stage ?? STAGE_BY_COLUMN[columnById.get(card.columnId)?.key ?? ''] ?? 'application';
+    if (target?.kind === 'lost' && card.columnId !== columnId) setPendingReject({ id, columnId, rank, reasons, outcome, stage, suggested: suggestion.suggested });
     else void commitMove(id, columnId, rank);
   };
 
@@ -266,14 +277,16 @@ export function Board({ columns, cards: initial, labels: initialLabels, rules, n
           }}
           onChanged={(patch) => patchLocal(open.id, patch.lastMessage && patch.messageCount === undefined ? { ...patch, messageCount: open.messageCount + 1 } : patch)}
           onLabelCreated={(l) => setLabels((list) => [...list, l])}
-          onReplyLogged={(patch, moveTo) => {
+          onReplyLogged={(patch, moveTo, rejection) => {
             patchLocal(open.id, patch.lastMessage ? { ...patch, messageCount: open.messageCount + 1 } : patch);
-            if (moveTo) requestMove(open.id, moveTo.id, endRank(moveTo.id, open.id));
+            if (moveTo) {
+              requestMove(open.id, moveTo.id, endRank(moveTo.id, open.id), rejection?.reasons ?? [], 'rejected', { stage: rejection?.stage ?? null, suggested: Boolean(rejection) });
+            }
           }}
           onApplied={(r) => patchLocal(open.id, { columnId: r.columnId, rank: r.rank, appliedAt: open.appliedAt ?? new Date().toISOString() })}
         />
       )}
-      {pendingReject && <RejectDialog initialReasons={pendingReject.reasons} onConfirm={confirmReject} onCancel={() => setPendingReject(null)} />}
+      {pendingReject && <RejectDialog initialReasons={pendingReject.reasons} initialStage={pendingReject.stage} suggested={pendingReject.suggested} onConfirm={confirmReject} onCancel={() => setPendingReject(null)} />}
       {adding && <AddCardDialog columns={columns} onCreated={(c) => setCards((list) => [...list, c])} onClose={() => setAdding(false)} />}
       {confetti && <Confetti onDone={() => setConfetti(false)} />}
       <Toast toast={toast} onClose={close} />

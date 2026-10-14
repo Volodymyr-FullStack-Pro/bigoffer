@@ -498,7 +498,9 @@
     "conversationChange": "change",
     "addLoading": "Reading the job from the site… (up to half a minute)",
     "addImported": "Job read in full — the apply kit will work on this card.",
-    "conversationEdit": "Edit message"
+    "conversationEdit": "Edit message",
+    "rejectSuggested": "AI suggested the stage and reason from the company’s message — check and confirm.",
+    "reason_no_reason_given": "No reason given"
   },
   "cv": {
     "title": "Your CV",
