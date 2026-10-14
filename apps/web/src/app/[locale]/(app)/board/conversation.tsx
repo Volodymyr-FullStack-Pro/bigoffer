@@ -76,10 +76,11 @@ export function Conversation({ applicationId, version, onDeleted, onKindChanged 
                     title={t('conversationChangeKind')}
                     aria-expanded={editing === m.id}
                     onClick={() => setEditing((e) => (e === m.id ? null : m.id))}
-                    className="rounded-full px-1.5 text-[10px] font-semibold underline decoration-dotted"
+                    className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold ring-1 ring-foreground/30 hover:ring-foreground"
                     style={style ? { background: style.bg, color: style.fg } : undefined}
                   >
-                    {m.kind ? t(`reply_${m.kind}` as never) : t('conversationSetKind')} ▾
+                    {m.kind ? t(`reply_${m.kind}` as never) : t('conversationSetKind')}
+                    <span className="opacity-80">· {t('conversationChange')} ▾</span>
                   </button>
                 )}
               </span>

@@ -493,7 +493,9 @@
     "conversationDelete": "Видалити повідомлення",
     "conversationDeleteConfirm": "Видалити це повідомлення з листування?",
     "conversationChangeKind": "Змінити тип відповіді",
-    "conversationSetKind": "Тип?"
+    "conversationSetKind": "Тип?",
+    "replyKindNew": "Тип нового повідомлення",
+    "conversationChange": "змінити"
   },
   "cv": {
     "title": "Ваше CV",

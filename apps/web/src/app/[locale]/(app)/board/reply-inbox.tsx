@@ -175,7 +175,8 @@ export function ReplyInbox({ card, defaultAuthor, columns, timeZone, lang, onLog
         </button>
       </div>
       {summary && <p data-testid="reply-summary" className="text-sm italic">{summary}</p>}
-      <div role="radiogroup" aria-label={t('replyKind')} className="flex flex-wrap gap-1.5">
+      <span className="font-mono text-xs">{t('replyKindNew')}</span>
+      <div role="radiogroup" aria-label={t('replyKindNew')} className="flex flex-wrap gap-1.5">
         {REPLY_KINDS.map((k) => (
           <button
             key={k}
