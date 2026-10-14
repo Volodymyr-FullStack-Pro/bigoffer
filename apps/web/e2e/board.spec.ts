@@ -333,3 +333,18 @@ test('a pasted rejection opens the reject dialog with the stage and reason the A
   await card(page, title).click();
   await expect(visible(page, 'panel-reject-reasons')).toContainText('No reason given');
 });
+
+test('a click on the page around the open card closes it', async ({ context, page, isMobile }) => {
+  test.skip(isMobile, 'on a phone the panel covers the whole screen');
+  const email = uniqueEmail('board-backdrop');
+  await loginAs(context, email);
+  const { title } = await seedApplication(email, { column: 'saved' });
+  await page.goto('/en/board');
+  await card(page, title).click();
+  await expect(visible(page, 'card-panel')).toBeVisible();
+  // A click inside the panel keeps it open.
+  await visible(page, 'card-panel').getByRole('heading', { name: title }).click();
+  await expect(visible(page, 'card-panel')).toBeVisible();
+  await page.mouse.click(20, 300);
+  await expect(page.getByTestId('card-panel')).toHaveCount(0);
+});
