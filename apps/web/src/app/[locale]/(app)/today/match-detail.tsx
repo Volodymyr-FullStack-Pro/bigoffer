@@ -5,7 +5,7 @@ import { SourceBadge } from '@/components/ui/source-badge';
 import { pill } from '@/components/ui/pill';
 import { isLocale, type Locale, sourceInfo } from '@jp/core';
 import { useFormatter, useLocale, useNow, useTranslations } from 'next-intl';
-import { Sparkles } from 'lucide-react';
+import { Flag, Sparkles } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { TextGenerateEffect } from '@/components/aceternity/text-generate-effect';
 import { ApplyKitPanel } from '@/components/apply-kit/apply-kit-panel';
@@ -293,15 +293,16 @@ export function MatchDetail({
         {match.onBoard !== null && (
           <p
             data-testid="on-board"
-            className="self-start rounded-full bg-brand/15 px-2.5 py-0.5 text-xs font-medium text-link"
+            className="self-start rounded-full bg-brand/25 ring-1 ring-inset ring-brand/45 px-2.5 py-0.5 text-xs font-semibold text-link"
           >
             ✓ {tf('onBoard', { column: match.onBoard || '—' })}
             {match.onBoardLeft.length > 0 && <> · {tf('onBoardLeft', { platforms: match.onBoardLeft.map((s) => sourceInfo(s)?.name ?? s).join(', ') })}</>}
           </p>
         )}
         {match.onBoard === null && match.companyOnBoard && (
-          <p data-testid="company-on-board" className="self-start rounded-full bg-warning/15 px-2.5 py-0.5 text-xs font-medium text-warning">
-            ⚑ {tf('companyOnBoard', { title: match.companyOnBoard.title, column: match.companyOnBoard.column || '—' })}
+          <p data-testid="company-on-board" className="self-start rounded-full bg-warning/25 ring-1 ring-inset ring-warning/45 px-2.5 py-0.5 text-xs font-semibold text-warning">
+            <Flag aria-hidden className="mr-1 inline size-3.5 -translate-y-px" />
+            {tf('companyOnBoard', { title: match.companyOnBoard.title, column: match.companyOnBoard.column || '—' })}
           </p>
         )}
         {!match.companyIsPlaceholder && <p className="text-muted-foreground">{match.company}</p>}

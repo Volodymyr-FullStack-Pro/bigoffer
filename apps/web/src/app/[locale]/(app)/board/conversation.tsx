@@ -6,6 +6,7 @@ import { deleteMessage, listMessages, type ReplyChannel, setMessageKind, updateM
 import { CHANNELS } from './reply-inbox';
 import { TONE_PILL, toneColor } from '@/components/ui/status-badge';
 import { REPLY_KINDS, REPLY_STYLE, type ReplyKind } from './reply-kinds';
+import { ReplyIcon } from './reply-icon';
 
 type Message = Awaited<ReturnType<typeof listMessages>>[number];
 
@@ -118,7 +119,7 @@ export function Conversation({ applicationId, version, onDeleted, onKindChanged 
                       }}
                       className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ring-1 ring-inset ${TONE_PILL[REPLY_STYLE[k].tone]} ${m.kind === k ? 'ring-2' : 'opacity-70 hover:opacity-100'}`}
                     >
-                      <span aria-hidden>{REPLY_STYLE[k].icon}</span> {t(`reply_${k}` as never)}
+                      <ReplyIcon kind={k} /> {t(`reply_${k}` as never)}
                     </button>
                   ))}
                 </span>

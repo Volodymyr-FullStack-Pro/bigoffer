@@ -556,7 +556,8 @@
     "section_history": "Історія",
     "actionReply": "Відповісти",
     "columnMore": "{count, plural, one {Ще # картка без змін} few {Ще # картки без змін} many {Ще # карток без змін} other {Ще # картки без змін}}",
-    "columnLess": "Згорнути спокійні"
+    "columnLess": "Згорнути спокійні",
+    "lastFromThem": "останнє повідомлення від них"
   },
   "cv": {
     "title": "Ваше CV",

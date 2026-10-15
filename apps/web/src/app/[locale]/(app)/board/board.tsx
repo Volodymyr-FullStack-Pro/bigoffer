@@ -229,7 +229,8 @@ export function Board({ columns, cards: initial, labels: initialLabels, rules, n
       {filtering && found.length === 0 && <p data-testid="board-no-match" className="text-muted-foreground">{t('noMatch')}</p>}
       <DndContext id="board-dnd" sensors={sensors} collisionDetection={closestCorners} onDragStart={({ active: a }) => setActiveId(String(a.id))} onDragCancel={() => setActiveId(null)} onDragEnd={onDragEnd}>
         {/* Phones scroll one column at a time; desktops show as many as fit. */}
-        <div className="-mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-4 sm:mx-0 sm:snap-none sm:px-0">
+        {/* On wide screens the columns run to the window's right edge instead of stopping at the page container. */}
+        <div className="-mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-4 sm:mx-0 sm:snap-none sm:px-0 sm:mr-[calc(-1*(max(0px,(100vw-80rem)/2)+1rem))] sm:pr-[calc(max(0px,(100vw-80rem)/2)+1rem)]">
           {columns.map((col) => (
             <BoardColumnView
               key={col.id}

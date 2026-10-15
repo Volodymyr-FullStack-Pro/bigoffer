@@ -22,7 +22,7 @@ test('search now: autopilot toggle sticks and a repeat run is rate-limited', asy
   await loginAs(context, email);
   await seedSearchProfile(email);
   await page.goto('/en/today');
-  const block = page.getByTestId('search-now');
+  const block = page.getByTestId('search-now').filter({ visible: true });
   await expect(block).toBeVisible();
   await expect(block.getByTestId('autopilot')).toBeChecked();
   await block.getByTestId('autopilot').uncheck();
