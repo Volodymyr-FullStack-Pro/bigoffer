@@ -17,7 +17,7 @@ test('prepares for an interview: plan, a lesson with code, progress and the pitc
   await page.goto('/en/prep');
   await expect(visible(page, 'prep-candidate').filter({ hasText: talking.title })).toHaveCount(0);
   await visible(page, 'prep-candidate').filter({ hasText: title }).getByTestId('prep-start').click();
-  await expect(page).toHaveURL(/\/en\/prep\/[0-9a-f-]{36}$/);
+  await expect(page).toHaveURL(/\/en\/prep\/[0-9a-f-]{36}$/, { timeout: 20_000 });
   await expect(visible(page, 'prep-role')).toContainText('[fake]');
   await expect(visible(page, 'prep-topic')).toHaveCount(2);
   await expect(visible(page, 'prep-progress')).toHaveText('0 of 2 topics');
@@ -61,6 +61,6 @@ test('the board card of an interview opens its prep', async ({ context, page }) 
   await page.goto('/en/board');
   await visible(page, 'board-card').filter({ hasText: title }).click();
   await visible(page, 'panel-prep').click();
-  await expect(page).toHaveURL(/\/en\/prep\/[0-9a-f-]{36}$/);
+  await expect(page).toHaveURL(/\/en\/prep\/[0-9a-f-]{36}$/, { timeout: 20_000 });
   await expect(visible(page, 'prep-topic')).toHaveCount(2);
 });

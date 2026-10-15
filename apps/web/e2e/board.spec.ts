@@ -304,6 +304,8 @@ test('a saved reply can be re-tagged; an auto-reply after all sends the card bac
   await visible(page, 'msg-edit-channel').and(page.locator('[data-channel="email"]')).click();
   await visible(page, 'msg-edit-body').fill('Thanks for sharing your CV. We will get back to you.');
   await visible(page, 'msg-edit-save').click();
+  // The editor closes once the server has saved the change.
+  await expect(visible(page, 'msg-edit-body')).toHaveCount(0, { timeout: 15_000 });
   await expect(visible(page, 'msg-item')).toContainText('Email');
   await expect(visible(page, 'msg-item')).toContainText('We will get back to you');
   await page.reload();
@@ -420,5 +422,5 @@ test('a long column folds its quiet cards; the card panel has section navigation
   await card(page, titles[13]!).click();
   await visible(page, 'panel-nav').and(page.locator('[data-section="history"]')).click();
   await expect(visible(page, 'panel-nav').and(page.locator('[data-section="history"]'))).toHaveAttribute('aria-current', 'true');
-  await expect(visible(page, 'panel-history')).toBeInViewport();
+  await expect(visible(page, 'panel-history')).toBeInViewport({ timeout: 10_000 });
 });

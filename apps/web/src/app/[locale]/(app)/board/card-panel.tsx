@@ -77,18 +77,18 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, companyC
   const [section, setSection] = useState<Section>('overview');
   const offset = () => (header.current?.offsetHeight ?? 0) + 8;
   const jump = (to: Section) => {
-    const el = anchors.current[to];
-    const box = dialogRef.current;
-    if (el && box) box.scrollTo({ top: Math.max(0, el.offsetTop - offset()), behavior: 'smooth' });
+    // scroll-margin on the anchors keeps the section clear of the pinned header.
+    anchors.current[to]?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     setSection(to);
   };
   const spy = () => {
     const box = dialogRef.current;
     if (!box) return;
+    const top = box.getBoundingClientRect().top + offset();
     let current: Section = 'overview';
     for (const s of SECTIONS) {
       const el = anchors.current[s];
-      if (el && el.offsetTop - offset() <= box.scrollTop + 4) current = s;
+      if (el && el.getBoundingClientRect().top <= top + 4) current = s;
     }
     setSection(current);
   };
@@ -198,7 +198,7 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, companyC
           ) : null}
         </div>
       </div>
-      <span ref={(el) => { anchors.current.overview = el; }} aria-hidden />
+      <span ref={(el) => { anchors.current.overview = el; }} aria-hidden className="block scroll-mt-36" />
       {card.rejectionReasons.length > 0 && card.outcome !== 'open' && card.outcome !== 'offer' && (
         <p data-testid="panel-reject-reasons" className="rounded-md border border-danger/40 bg-danger/10 px-3 py-2 text-sm">
           <span className="font-semibold">{t(card.outcome === 'withdrawn' ? 'rejectedByMe' : 'rejectedLine')}:</span>{' '}
@@ -265,7 +265,7 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, companyC
           {kitOpen && <ApplyKitPanel jobId={card.jobId} locale={locale} onApplied={onApplied} />}
         </div>
       )}
-      <span ref={(el) => { anchors.current.conversation = el; }} aria-hidden />
+      <span ref={(el) => { anchors.current.conversation = el; }} aria-hidden className="block scroll-mt-36" />
       <Conversation
         applicationId={card.id}
         version={messagesVersion}
@@ -304,7 +304,7 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, companyC
         }}
       />
       <RecruiterMessage applicationId={card.id} defaultLang={locale} version={messagesVersion} ref={writer} onSent={() => { const at = new Date().toISOString(); setMessagesVersion((v) => v + 1); onChanged({ lastActivityAt: at, lastMessage: { direction: 'out', at } }); }} />
-      <span ref={(el) => { anchors.current.details = el; }} aria-hidden />
+      <span ref={(el) => { anchors.current.details = el; }} aria-hidden className="block scroll-mt-36" />
       <label className="flex flex-col gap-1 tabular-nums text-xs">
         {t('moveTo')}
         <select data-testid="panel-move" value={card.columnId} onChange={(e) => onMove(e.target.value)} className={field}>
@@ -365,7 +365,7 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, companyC
         {error && <span role="alert" className="text-sm text-danger">{t('saveError')}</span>}
         <button type="button" data-testid="panel-delete" onClick={() => { if (window.confirm(t('deleteConfirm'))) onDelete(); }} className="ml-auto text-sm text-danger underline">{t('delete')}</button>
       </div>
-      <span ref={(el) => { anchors.current.history = el; }} aria-hidden />
+      <span ref={(el) => { anchors.current.history = el; }} aria-hidden className="block scroll-mt-36" />
       <section data-testid="panel-history" className="flex flex-col gap-1 border-t border-border pt-3">
         <h3 className="tabular-nums text-xs">{t('history')}</h3>
         <ul className="flex flex-col gap-1 text-sm">
