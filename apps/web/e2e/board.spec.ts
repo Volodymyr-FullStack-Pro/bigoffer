@@ -400,3 +400,25 @@ test('after an interview the card waits for feedback calmly, then asks for a rem
   await visible(page, 'reply-save').click();
   await expect(visible(page, 'feedback-start')).toBeVisible();
 });
+
+test('a long column folds its quiet cards; the card panel has section navigation', async ({ context, page }) => {
+  const email = uniqueEmail('board-fold');
+  await loginAs(context, email);
+  const titles: string[] = [];
+  for (let i = 0; i < 14; i++) titles.push((await seedApplication(email, { column: 'saved' })).title);
+  await page.goto('/en/board');
+  const saved = column(page, 'saved');
+  await expect(saved.getByTestId('board-card')).toHaveCount(12);
+  await expect(saved.getByTestId('column-more')).toContainText('2 more cards');
+  await saved.getByTestId('column-more').click();
+  await expect(saved.getByTestId('board-card')).toHaveCount(14);
+  // A search shows every match without folding.
+  await saved.getByTestId('column-less').click();
+  await visible(page, 'board-search').fill(titles[13]!);
+  await expect(saved.getByTestId('board-card')).toHaveCount(1);
+
+  await card(page, titles[13]!).click();
+  await visible(page, 'panel-nav').and(page.locator('[data-section="history"]')).click();
+  await expect(visible(page, 'panel-nav').and(page.locator('[data-section="history"]'))).toHaveAttribute('aria-current', 'true');
+  await expect(visible(page, 'panel-history')).toBeInViewport();
+});

@@ -21,6 +21,8 @@ import type { BoardCardView, BoardColumn, BoardLabel } from './board-types';
 
 /** Cards that need something show what, in the card's urgency colour. */
 const PREP_KEYS: ReadonlySet<string> = new Set(PREP_COLUMNS);
+const SECTIONS = ['overview', 'conversation', 'details', 'history'] as const;
+type Section = (typeof SECTIONS)[number];
 /** Columns where the card may wait for the company's verdict: after an interview or a test task sent. */
 const WAIT_KEYS: ReadonlySet<string> = new Set(['interview', 'test_task']);
 
@@ -68,6 +70,27 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, companyC
   const [events, setEvents] = useState<{ type: string; payload: unknown; createdAt: string }[]>([]);
   const [messagesVersion, setMessagesVersion] = useState(0);
   const writer = useRef<RecruiterMessageHandle>(null);
+  // Section navigation: the pinned header jumps to a section and highlights the one being read.
+  const anchors = useRef<Partial<Record<Section, HTMLElement | null>>>({});
+  const header = useRef<HTMLDivElement>(null);
+  const [section, setSection] = useState<Section>('overview');
+  const offset = () => (header.current?.offsetHeight ?? 0) + 8;
+  const jump = (to: Section) => {
+    const el = anchors.current[to];
+    const box = dialogRef.current;
+    if (el && box) box.scrollTo({ top: Math.max(0, el.offsetTop - offset()), behavior: 'smooth' });
+    setSection(to);
+  };
+  const spy = () => {
+    const box = dialogRef.current;
+    if (!box) return;
+    let current: Section = 'overview';
+    for (const s of SECTIONS) {
+      const el = anchors.current[s];
+      if (el && el.offsetTop - offset() <= box.scrollTop + 4) current = s;
+    }
+    setSection(current);
+  };
   const [salary, setSalary] = useState(card.salary ?? '');
   const [notes, setNotes] = useState(card.notes ?? '');
   const [next, setNext] = useState(toZonedInput(card.nextActionAt, timeZone));
@@ -120,18 +143,60 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, companyC
       // that ends outside does not).
       onPointerDown={(e) => { pressedOutside.current = e.target === e.currentTarget; }}
       onClick={(e) => { if (pressedOutside.current && e.target === e.currentTarget) onClose(); pressedOutside.current = false; }}
+      onScroll={spy}
       aria-labelledby="panel-title" data-testid="card-panel" className="fixed inset-y-0 right-0 left-auto m-0 h-dvh max-h-none w-full max-w-md overflow-y-auto border-l border-border bg-background p-0 text-foreground shadow-2xl backdrop:bg-black/50">
       <div className="flex min-h-full flex-col gap-4 p-5">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h2 id="panel-title" className="font-display text-xl font-semibold leading-tight [overflow-wrap:anywhere]">{card.title}</h2>
-          <p className="flex flex-wrap items-center gap-2 text-muted-foreground">
-            {card.company}
-            {card.sourceId && <SourceBadge sourceId={card.sourceId} />}
-          </p>
+      <div ref={header} className="glass sticky top-0 z-10 -mx-5 -mt-5 flex flex-col gap-2 border-b border-border px-5 pt-4 pb-2">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h2 id="panel-title" className="font-display text-xl font-semibold leading-tight [overflow-wrap:anywhere]">{card.title}</h2>
+            <p className="flex flex-wrap items-center gap-2 text-muted-foreground">
+              {card.company}
+              {card.sourceId && <SourceBadge sourceId={card.sourceId} />}
+            </p>
+          </div>
+          <button type="button" onClick={onClose} aria-label={t('close')} className="text-lg">✕</button>
         </div>
-        <button type="button" onClick={onClose} aria-label={t('close')} className="tabular-nums text-lg">✕</button>
+        <div className="flex items-center gap-2">
+          <nav aria-label={t('sections')} className="flex min-w-0 flex-1 gap-1 overflow-x-auto">
+            {SECTIONS.map((s) => (
+              <button
+                key={s}
+                type="button"
+                data-testid="panel-nav"
+                data-section={s}
+                aria-current={section === s ? 'true' : undefined}
+                onClick={() => jump(s)}
+                className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold transition-colors ${section === s ? 'bg-foreground text-background' : 'text-muted-foreground hover:bg-muted'}`}
+              >
+                {t(`section_${s}`)}
+              </button>
+            ))}
+          </nav>
+          {card.urgency === 'your_move' && card.lastMessage?.direction === 'in' ? (
+            <button
+              type="button"
+              data-testid="panel-primary"
+              onClick={() => { jump('conversation'); writer.current?.writeReply(); }}
+              className="brutal brutal-press shrink-0 bg-ai px-3 py-1 text-xs font-semibold text-ai-foreground"
+            >
+              ✍ {t('actionReply')}
+            </button>
+          ) : card.urgency === 'interview_soon' && card.meetingUrl && !card.feedbackDueAt ? (
+            <JoinMeeting url={card.meetingUrl} label={t('joinMeeting')} testId="panel-primary" compact />
+          ) : card.urgency === 'feedback_due' || card.urgency === 'ping' || card.urgency === 'overdue' ? (
+            <button
+              type="button"
+              data-testid="panel-primary"
+              onClick={async () => { if (await attempt(() => markPinged(card.id))) onChanged({ followUpCount: card.followUpCount + 1, lastActivityAt: new Date().toISOString(), feedbackDueAt: null }); }}
+              className="brutal brutal-press shrink-0 px-3 py-1 text-xs font-semibold"
+            >
+              {t('actionPinged')}
+            </button>
+          ) : null}
+        </div>
       </div>
+      <span ref={(el) => { anchors.current.overview = el; }} aria-hidden />
       {card.rejectionReasons.length > 0 && card.outcome !== 'open' && card.outcome !== 'offer' && (
         <p data-testid="panel-reject-reasons" className="rounded-md border border-danger/40 bg-danger/10 px-3 py-2 text-sm">
           <span className="font-semibold">{t(card.outcome === 'withdrawn' ? 'rejectedByMe' : 'rejectedLine')}:</span>{' '}
@@ -196,6 +261,7 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, companyC
           {kitOpen && <ApplyKitPanel jobId={card.jobId} locale={locale} onApplied={onApplied} />}
         </div>
       )}
+      <span ref={(el) => { anchors.current.conversation = el; }} aria-hidden />
       <Conversation
         applicationId={card.id}
         version={messagesVersion}
@@ -234,6 +300,7 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, companyC
         }}
       />
       <RecruiterMessage applicationId={card.id} defaultLang={locale} version={messagesVersion} ref={writer} onSent={() => { const at = new Date().toISOString(); setMessagesVersion((v) => v + 1); onChanged({ lastActivityAt: at, lastMessage: { direction: 'out', at } }); }} />
+      <span ref={(el) => { anchors.current.details = el; }} aria-hidden />
       <label className="flex flex-col gap-1 tabular-nums text-xs">
         {t('moveTo')}
         <select data-testid="panel-move" value={card.columnId} onChange={(e) => onMove(e.target.value)} className={field}>
@@ -294,6 +361,7 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, companyC
         {error && <span role="alert" className="text-sm text-danger">{t('saveError')}</span>}
         <button type="button" data-testid="panel-delete" onClick={() => { if (window.confirm(t('deleteConfirm'))) onDelete(); }} className="ml-auto text-sm text-danger underline">{t('delete')}</button>
       </div>
+      <span ref={(el) => { anchors.current.history = el; }} aria-hidden />
       <section data-testid="panel-history" className="flex flex-col gap-1 border-t border-border pt-3">
         <h3 className="tabular-nums text-xs">{t('history')}</h3>
         <ul className="flex flex-col gap-1 text-sm">

@@ -182,6 +182,8 @@ export function Feed({
   }, [act, selected, visible]);
 
   const processed = done.length;
+  // Matches the current filters (fresh only, score, level…) keep out of view.
+  const filteredOut = items.length - visible.length;
   const total = processed + visible.length;
   const savedCount = done.filter((d) => d.action !== 'hide').length;
 
@@ -212,7 +214,7 @@ export function Feed({
     <section data-testid="feed" className="flex flex-col gap-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div className="flex flex-wrap items-center gap-3">
-          <p data-testid="feed-progress" className="text-sm text-muted-foreground"><span className="tabular-nums font-bold text-foreground">{processed}/{total}</span> {t('progressLabel')}</p>
+          {total > 0 && <p data-testid="feed-progress" className="text-sm text-muted-foreground"><span className="tabular-nums font-bold text-foreground">{processed}/{total}</span> {t('progressLabel')}</p>}
           {(ruleHidden.length > 0 || showHidden) && (
             <button
               type="button"
@@ -307,10 +309,26 @@ export function Feed({
         </p>
       )}
       {visible.length === 0 ? (
-        <div data-testid="feed-empty" className="brutal flex max-w-xl flex-col gap-3 p-6">
-          <p className="font-display text-xl font-semibold">{t('empty')}</p>
-          <p className="text-muted-foreground">{t('emptyStats', { saved: savedCount, hidden: processed - savedCount })}</p>
-          <Link href="/board" className="brutal brutal-press self-start bg-brand px-4 py-2 font-semibold text-brand-foreground">{t('toBoard')}</Link>
+        // Say why it is empty: all reviewed, the filters hide matches, or nothing new yet; and offer the way out.
+        <div data-testid="feed-empty" data-reason={filteredOut > 0 ? 'filters' : processed > 0 ? 'done' : 'nothing'} className="brutal flex max-w-xl flex-col gap-3 p-6">
+          <p className="font-display text-xl font-semibold">
+            {filteredOut > 0 ? t('emptyFiltered', { count: filteredOut }) : processed > 0 ? t('empty') : t('emptyNothingNew')}
+          </p>
+          {processed > 0 && <p className="text-muted-foreground">{t('emptyStats', { saved: savedCount, hidden: processed - savedCount })}</p>}
+          {filteredOut === 0 && !showHidden && <p className="text-sm text-muted-foreground">{t('emptyCadence')}</p>}
+          <div className="flex flex-wrap gap-2">
+            {filteredOut > 0 && (
+              <button type="button" data-testid="feed-empty-show-all" onClick={() => setFilters((f) => ({ ...DEFAULT_FILTERS, sort: f.sort }))} className="brutal brutal-press bg-brand px-4 py-2 font-semibold text-brand-foreground">
+                {t('emptyShowAll', { count: filteredOut })}
+              </button>
+            )}
+            {!showHidden && hiddenItems.length > 0 && (
+              <button type="button" data-testid="feed-empty-rule-hidden" onClick={() => { setShowHidden(true); setSelectedId(null); }} className="brutal brutal-press px-4 py-2 font-semibold">
+                {t('emptyRuleHidden', { count: hiddenItems.length })}
+              </button>
+            )}
+            {filteredOut === 0 && <Link href="/board" className="brutal brutal-press px-4 py-2 font-semibold">{t('toBoard')}</Link>}
+          </div>
         </div>
       ) : (
         <>

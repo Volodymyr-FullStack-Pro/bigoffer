@@ -235,6 +235,7 @@ export function Board({ columns, cards: initial, labels: initialLabels, rules, n
               key={col.id}
               column={col}
               cards={shown(col.id)}
+              expandAll={filtering}
               sort={sort[col.id] ?? 'manual'}
               onToggleSort={() => {
                 const mode = sort[col.id] === 'smart' ? 'manual' : 'smart';
