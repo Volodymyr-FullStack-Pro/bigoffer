@@ -83,10 +83,10 @@ export function PrepView({ prepId, card, plan, lessons: initialLessons, pitch: i
 
   return (
     <section className="flex flex-col gap-6">
-      <Link href="/prep" className="font-mono text-sm underline">← {t('back')}</Link>
+      <Link href="/prep" className="tabular-nums text-sm underline">← {t('back')}</Link>
 
       <header className="brutal flex flex-col gap-3 p-5">
-        <span className="font-mono text-xs text-muted-foreground">{t('preparingFor')}</span>
+        <span className="tabular-nums text-xs text-muted-foreground">{t('preparingFor')}</span>
         <h1 className="font-display text-2xl leading-tight font-extrabold [overflow-wrap:anywhere] md:text-3xl">{card.title}</h1>
         <p className="text-muted-foreground">
           {card.company}
@@ -94,12 +94,12 @@ export function PrepView({ prepId, card, plan, lessons: initialLessons, pitch: i
         </p>
         <div className="flex flex-wrap items-center gap-3">
           {card.interviewAt && (
-            <span suppressHydrationWarning className="font-mono text-sm font-semibold">
+            <span suppressHydrationWarning className="tabular-nums text-sm font-semibold">
               ⏰ {format.dateTime(new Date(card.interviewAt), { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
             </span>
           )}
           {card.meetingUrl && <JoinMeeting url={card.meetingUrl} label={tb('joinMeeting')} testId="prep-join" />}
-          {card.url && <a href={card.url} target="_blank" rel="noopener noreferrer" className="font-mono text-sm underline">{tb('openOriginal')} ↗</a>}
+          {card.url && <a href={card.url} target="_blank" rel="noopener noreferrer" className="tabular-nums text-sm underline">{tb('openOriginal')} ↗</a>}
         </div>
         {plan.summary && <p data-testid="prep-summary" className="leading-relaxed">{plan.summary}</p>}
         {plan.expectations.length > 0 && (
@@ -115,7 +115,7 @@ export function PrepView({ prepId, card, plan, lessons: initialLessons, pitch: i
       <div className="flex flex-col gap-3">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <h2 className="font-display text-xl font-semibold">{t('topics')}</h2>
-          <span data-testid="prep-progress" className="font-mono text-sm">{t('progress', { done: learned, total: plan.topics.length })}</span>
+          <span data-testid="prep-progress" className="tabular-nums text-sm">{t('progress', { done: learned, total: plan.topics.length })}</span>
         </div>
         <p className="text-sm text-muted-foreground">{t('topicsHint')}</p>
         <ol className="flex flex-col gap-2">
@@ -129,7 +129,7 @@ export function PrepView({ prepId, card, plan, lessons: initialLessons, pitch: i
             return (
               <li key={topic.key} data-testid="prep-topic" data-key={topic.key} className={`brutal flex flex-col ${learnedTopic ? 'opacity-80' : ''}`}>
                 <button type="button" data-testid="prep-topic-open" aria-expanded={isOpen} onClick={() => void openTopic(topic)} className="flex items-start gap-3 p-4 text-left">
-                  <span className={`mt-0.5 grid size-6 shrink-0 place-items-center rounded-full border border-border font-mono text-xs ${learnedTopic ? 'bg-brand text-brand-foreground' : ''}`}>
+                  <span className={`mt-0.5 grid size-6 shrink-0 place-items-center rounded-full border border-border tabular-nums text-xs ${learnedTopic ? 'bg-brand text-brand-foreground' : ''}`}>
                     {learnedTopic ? '✓' : i + 1}
                   </span>
                   <span className="flex min-w-0 flex-1 flex-col gap-0.5">
@@ -139,7 +139,7 @@ export function PrepView({ prepId, card, plan, lessons: initialLessons, pitch: i
                     </span>
                     <span className="text-sm text-muted-foreground">{topic.why}</span>
                   </span>
-                  <span aria-hidden className="font-mono text-sm">{isOpen ? '−' : '+'}</span>
+                  <span aria-hidden className="tabular-nums text-sm">{isOpen ? '−' : '+'}</span>
                 </button>
                 {isOpen && (
                   <div className="flex flex-col gap-4 border-t border-border p-4">
@@ -227,7 +227,7 @@ export function PrepView({ prepId, card, plan, lessons: initialLessons, pitch: i
 
 const LEVEL_STYLE: Record<PrepLevel, string> = {
   junior: 'bg-brand text-brand-foreground',
-  middle: 'bg-[#38BDF8] text-[#0C1A24]',
+  middle: 'bg-status-move text-white dark:text-[#0c1a24]',
   senior: 'bg-ai text-ai-foreground',
 };
 

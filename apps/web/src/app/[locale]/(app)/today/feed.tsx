@@ -212,7 +212,7 @@ export function Feed({
     <section data-testid="feed" className="flex flex-col gap-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div className="flex flex-wrap items-center gap-3">
-          <p data-testid="feed-progress" className="text-sm text-muted-foreground"><span className="font-mono font-bold text-foreground">{processed}/{total}</span> {t('progressLabel')}</p>
+          <p data-testid="feed-progress" className="text-sm text-muted-foreground"><span className="tabular-nums font-bold text-foreground">{processed}/{total}</span> {t('progressLabel')}</p>
           {(ruleHidden.length > 0 || showHidden) && (
             <button
               type="button"
@@ -242,7 +242,7 @@ export function Feed({
           >
             <SlidersHorizontal className="size-4" aria-hidden />
             {t('moreFilters')}
-            {moreActive > 0 && <span className="rounded-full bg-brand px-1.5 font-mono text-[11px] font-bold text-brand-foreground">{moreActive}</span>}
+            {moreActive > 0 && <span className="rounded-full bg-brand px-1.5 tabular-nums text-[11px] font-bold text-brand-foreground">{moreActive}</span>}
           </button>
           <LabelsMenu
             value={labels}

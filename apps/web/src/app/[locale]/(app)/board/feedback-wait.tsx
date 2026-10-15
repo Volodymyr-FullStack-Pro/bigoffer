@@ -46,7 +46,7 @@ export function FeedbackWait({ applicationId, dueAt, timeZone, onChanged, onThan
     const due = new Date(dueAt);
     const daysLeft = Math.ceil((due.getTime() - now.getTime()) / DAY);
     return (
-      <div data-testid="feedback-wait" className="brutal flex flex-col gap-2 border-l-[6px] p-3 text-sm" style={{ borderLeftColor: '#F59E0B' }}>
+      <div data-testid="feedback-wait" className="brutal flex flex-col gap-2 border-l-[6px] p-3 text-sm" style={{ borderLeftColor: 'var(--status-wait)' }}>
         <p>
           ⏳ <span className="font-semibold">{t('feedbackWaiting')}</span>{' '}
           <span suppressHydrationWarning data-testid="feedback-due">{format.dateTime(due, { timeZone, day: 'numeric', month: 'long' })}</span>

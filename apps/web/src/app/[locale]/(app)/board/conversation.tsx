@@ -4,6 +4,7 @@ import { useFormatter, useNow, useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { deleteMessage, listMessages, type ReplyChannel, setMessageKind, updateMessage } from './message-actions';
 import { CHANNELS } from './reply-inbox';
+import { TONE_PILL, toneColor } from '@/components/ui/status-badge';
 import { REPLY_KINDS, REPLY_STYLE, type ReplyKind } from './reply-kinds';
 
 type Message = Awaited<ReturnType<typeof listMessages>>[number];
@@ -33,7 +34,7 @@ export function Conversation({ applicationId, version, onDeleted, onKindChanged 
   if (messages === null) return null;
   return (
     <section data-testid="conversation" className="flex flex-col gap-2 border-t border-border pt-3">
-      <h3 className="font-mono text-xs">{t('conversationTitle', { count: messages.length })}</h3>
+      <h3 className="tabular-nums text-xs">{t('conversationTitle', { count: messages.length })}</h3>
       {messages.length === 0 && <p className="text-sm text-muted-foreground">{t('conversationEmpty')}</p>}
       <ol className="flex flex-col gap-2">
         {messages.map((m, i) => {
@@ -50,9 +51,9 @@ export function Conversation({ applicationId, version, onDeleted, onKindChanged 
               data-testid="msg-item"
               data-direction={m.direction}
               className={`flex max-w-[92%] flex-col gap-1 rounded-2xl border px-3 py-2 text-sm ${mine ? 'self-end rounded-br-sm border-brand/40 bg-brand/10' : 'self-start rounded-bl-sm border-border bg-card'}`}
-              style={!mine && style ? { borderLeftColor: style.bg, borderLeftWidth: 4 } : undefined}
+              style={!mine && style ? { borderLeftColor: toneColor(style.tone), borderLeftWidth: 4 } : undefined}
             >
-              <span className="flex flex-wrap items-center gap-x-2 gap-y-0.5 font-mono text-[11px] text-muted-foreground">
+              <span className="flex flex-wrap items-center gap-x-2 gap-y-0.5 tabular-nums text-[11px] text-muted-foreground">
                 <span className="font-semibold text-foreground">{mine ? t('conversationMe') : (m.author ?? t('conversationThem'))}</span>
                 <span>· {t(`channel_${m.channel}` as never)}</span>
                 <span suppressHydrationWarning>· {format.relativeTime(at, now)}</span>
@@ -90,8 +91,7 @@ export function Conversation({ applicationId, version, onDeleted, onKindChanged 
                     title={t('conversationChangeKind')}
                     aria-expanded={editing === m.id}
                     onClick={() => setEditing((e) => (e === m.id ? null : m.id))}
-                    className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold ring-1 ring-foreground/30 hover:ring-foreground"
-                    style={style ? { background: style.bg, color: style.fg } : undefined}
+                    className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold ring-1 ring-inset hover:ring-2 ${style ? TONE_PILL[style.tone] : 'ring-foreground/30'}`}
                   >
                     {m.kind ? t(`reply_${m.kind}` as never) : t('conversationSetKind')}
                     <span className="opacity-80">· {t('conversationChange')} ▾</span>
@@ -116,8 +116,7 @@ export function Conversation({ applicationId, version, onDeleted, onKindChanged 
                         setMessages((list) => list && list.map((x) => (x.id === m.id ? { ...x, kind: k } : x)));
                         onKindChanged({ kind: k, ...res });
                       }}
-                      className={`rounded-full border-[1.5px] px-2 py-0.5 text-[11px] font-semibold ${m.kind === k ? 'border-foreground' : 'border-transparent opacity-70 hover:opacity-100'}`}
-                      style={{ background: REPLY_STYLE[k].bg, color: REPLY_STYLE[k].fg }}
+                      className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ring-1 ring-inset ${TONE_PILL[REPLY_STYLE[k].tone]} ${m.kind === k ? 'ring-2' : 'opacity-70 hover:opacity-100'}`}
                     >
                       <span aria-hidden>{REPLY_STYLE[k].icon}</span> {t(`reply_${k}` as never)}
                     </button>
@@ -167,7 +166,7 @@ export function Conversation({ applicationId, version, onDeleted, onKindChanged 
               ) : (<>
               {m.summary && <p className="text-xs italic">{m.summary}</p>}
               <p className={`whitespace-pre-line ${long && !expanded ? 'line-clamp-5' : ''}`}>{m.body}</p>
-              <span className="flex flex-wrap gap-3 font-mono text-[11px]">
+              <span className="flex flex-wrap gap-3 tabular-nums text-[11px]">
                 {long && (
                   <button type="button" onClick={() => setOpen((s) => { const n = new Set(s); if (n.has(i)) n.delete(i); else n.add(i); return n; })} className="underline">
                     {expanded ? t('conversationLess') : t('conversationMore')}

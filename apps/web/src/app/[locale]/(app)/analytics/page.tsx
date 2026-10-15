@@ -80,12 +80,12 @@ export default async function AnalyticsPage() {
           <div aria-hidden className="absolute inset-x-0 border-t border-dashed border-brand/60" style={{ bottom: `${(goal / peak) * 100}%` }} />
           {s.days.map((d) => (
             <div key={d.date} className="flex h-full flex-1 flex-col items-center justify-end gap-1" title={`${d.date}: ${d.count}`}>
-              <span className="font-mono text-[10px] text-muted-foreground">{d.count > 0 ? d.count : ''}</span>
+              <span className="tabular-nums text-[10px] text-muted-foreground">{d.count > 0 ? d.count : ''}</span>
               <div className={`w-full rounded-t-md ${d.count >= goal ? 'bg-brand' : 'bg-brand/40'}`} style={{ height: `${(d.count / peak) * 100}%`, minHeight: d.count > 0 ? 4 : 2 }} />
             </div>
           ))}
         </div>
-        <div className="flex justify-between font-mono text-[10px] text-muted-foreground">
+        <div className="flex justify-between tabular-nums text-[10px] text-muted-foreground">
           <span>{format.dateTime(new Date(`${s.days[0]!.date}T12:00:00Z`), { day: 'numeric', month: 'short' })}</span>
           <span>{t('today')}</span>
         </div>
@@ -98,7 +98,7 @@ export default async function AnalyticsPage() {
             <div key={key} className="flex flex-col gap-1">
               <div className="flex justify-between text-sm">
                 <span>{t(`stage_${key}`)}</span>
-                <span className="font-mono font-bold">{n}</span>
+                <span className="tabular-nums font-bold">{n}</span>
               </div>
               <div className="h-2 overflow-hidden rounded-full bg-muted">
                 <div className="h-full rounded-full bg-brand" style={{ width: `${s.funnel.saved ? (n / s.funnel.saved) * 100 : 0}%` }} />
@@ -116,7 +116,7 @@ export default async function AnalyticsPage() {
                 {s.sources.map((x) => (
                   <li key={x.id} className="flex justify-between gap-2">
                     <span>{x.id === 'manual' ? t('manual') : (sourceInfo(x.id)?.name ?? x.id)}</span>
-                    <span className="font-mono text-muted-foreground">{t('sourceLine', { applied: x.applied, responded: x.responded })}</span>
+                    <span className="tabular-nums text-muted-foreground">{t('sourceLine', { applied: x.applied, responded: x.responded })}</span>
                   </li>
                 ))}
               </ul>
@@ -130,7 +130,7 @@ export default async function AnalyticsPage() {
               <ul className="flex flex-wrap gap-1.5">
                 {s.reasons.map((r) => (
                   <li key={r.key} className="rounded-full border border-border px-2.5 py-0.5 text-xs">
-                    {tb(`reason_${r.key}` as never)} · <span className="font-mono font-bold">{r.count}</span>
+                    {tb(`reason_${r.key}` as never)} · <span className="tabular-nums font-bold">{r.count}</span>
                   </li>
                 ))}
               </ul>

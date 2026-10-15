@@ -1,16 +1,17 @@
 import { REPLY_KINDS, type ReplyKind } from '@jp/ai';
+import type { StatusTone } from '@/components/ui/status-badge';
 
 export { REPLY_KINDS, type ReplyKind };
 
-/** Card badge colours per reply kind: grey means "nothing real yet", warm colours need the candidate. */
-export const REPLY_STYLE: Record<ReplyKind, { bg: string; fg: string; icon: string }> = {
-  auto_reply: { bg: '#D4D4D8', fg: '#18181B', icon: '🤖' },
-  question: { bg: '#38BDF8', fg: '#0C1A24', icon: '❓' },
-  interview_invite: { bg: '#F472B6', fg: '#2A0A1B', icon: '📅' },
-  test_task: { bg: '#7B5CFF', fg: '#FFFFFF', icon: '🧩' },
-  offer: { bg: '#C6F432', fg: '#16200A', icon: '🎉' },
-  rejection: { bg: '#EF4444', fg: '#FFFFFF', icon: '✕' },
-  other: { bg: '#F5F5F4', fg: '#18181B', icon: '💬' },
+/** Badge tone per reply kind: neutral means "nothing real yet", colours need the candidate. */
+export const REPLY_STYLE: Record<ReplyKind, { tone: StatusTone; icon: string }> = {
+  auto_reply: { tone: 'neutral', icon: '🤖' },
+  question: { tone: 'move', icon: '❓' },
+  interview_invite: { tone: 'interview', icon: '📅' },
+  test_task: { tone: 'test', icon: '🧩' },
+  offer: { tone: 'offer', icon: '🎉' },
+  rejection: { tone: 'danger', icon: '✕' },
+  other: { tone: 'neutral', icon: '💬' },
 };
 
 export const isReplyKind = (v: unknown): v is ReplyKind => typeof v === 'string' && (REPLY_KINDS as readonly string[]).includes(v);

@@ -77,7 +77,7 @@ export function FeedListItem({
             ))}
         </span>
       )}
-      <span className="flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-xs text-muted-foreground">
+      <span className="flex flex-wrap items-center gap-x-2 gap-y-1 tabular-nums text-xs text-muted-foreground">
         {!match.companyIsPlaceholder && <span className="truncate">{match.company}</span>}
         {sourceId && <SourceBadge sourceId={sourceId} />}
         <span suppressHydrationWarning>

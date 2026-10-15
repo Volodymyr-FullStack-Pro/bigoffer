@@ -27,7 +27,7 @@ export function BoardColumnView({ column, cards, sort, onToggleSort, labels, lab
       <header className="flex items-center justify-between gap-2 px-1">
         <span className="flex min-w-0 items-center gap-2">
           <h2 className="truncate font-display text-sm font-semibold">{column.title}</h2>
-          <span data-testid="column-count" className="rounded-full bg-muted px-2 py-0.5 font-mono text-xs font-bold">
+          <span data-testid="column-count" className="rounded-full bg-muted px-2 py-0.5 tabular-nums text-xs font-bold">
             {total}{needsAction > 0 && <span className="text-danger"> · ● {needsAction}</span>}
           </span>
         </span>

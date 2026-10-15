@@ -42,7 +42,7 @@ export default async function PrepPage({ searchParams }: { searchParams: Promise
                   <Link href={`/prep/${p.id}`} data-testid="prep-item" className="brutal brutal-press flex flex-col gap-1.5 p-4">
                     <span className="font-display font-semibold leading-snug [overflow-wrap:anywhere]">{p.applications?.title}</span>
                     <span className="text-sm text-muted-foreground">{p.applications?.company}</span>
-                    <span className="flex items-center gap-2 font-mono text-xs">
+                    <span className="flex items-center gap-2 tabular-nums text-xs">
                       <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
                         <span className="block h-full bg-brand" style={{ width: `${total ? Math.round((done / total) * 100) : 0}%` }} />
                       </span>

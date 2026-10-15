@@ -226,7 +226,7 @@ function JobTechs({ techs }: { techs: FeedMatch['techs'] }) {
     <section data-testid="job-techs" aria-label={tf('techsTitle')} className="flex flex-col gap-2.5 rounded-xl border border-border bg-card/50 p-3.5">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h3 className="text-sm font-semibold">{tf('techsTitle')}</h3>
-        <span data-testid="job-techs-count" className="font-mono text-xs text-muted-foreground">
+        <span data-testid="job-techs-count" className="tabular-nums text-xs text-muted-foreground">
           {tf('techsCount', { have: have.length, total: techs.length })}
         </span>
       </div>
@@ -305,7 +305,7 @@ export function MatchDetail({
           </p>
         )}
         {!match.companyIsPlaceholder && <p className="text-muted-foreground">{match.company}</p>}
-        <p className="flex flex-wrap items-center gap-x-4 gap-y-1.5 font-mono text-xs text-muted-foreground">
+        <p className="flex flex-wrap items-center gap-x-4 gap-y-1.5 tabular-nums text-xs text-muted-foreground">
           {[...new Set(match.postings.map((p) => p.sourceId))].map((id) => (
             <SourceBadge key={id} sourceId={id} />
           ))}

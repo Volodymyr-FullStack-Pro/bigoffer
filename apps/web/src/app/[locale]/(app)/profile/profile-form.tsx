@@ -42,7 +42,7 @@ function Field({
 }) {
   return (
     <label className="flex flex-col gap-1">
-      <span className="font-mono text-xs">{label}</span>
+      <span className="tabular-nums text-xs">{label}</span>
       <input
         name={name}
         type={type}
@@ -76,7 +76,7 @@ export function ProfileForm({ fullName, timezone, contacts, country, countries, 
           ))}
         </datalist>
         <div className="flex flex-col gap-1 md:col-span-2">
-          <label htmlFor="profile-country" className="font-mono text-xs">
+          <label htmlFor="profile-country" className="tabular-nums text-xs">
             {t('country')}
           </label>
           <select
