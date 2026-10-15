@@ -174,7 +174,7 @@ export function Library({ initial }: { initial: SavedLink[] }) {
                 <a href={l.url} target="_blank" rel="noopener noreferrer" className="font-display font-semibold leading-snug underline-offset-2 [overflow-wrap:anywhere] hover:underline">
                   {l.title} ↗
                 </a>
-                <span className="flex flex-wrap items-center gap-2 font-mono text-xs text-muted-foreground">
+                <span className="flex flex-wrap items-center gap-2 tabular-nums text-xs text-muted-foreground">
                   <span data-testid="link-topic-chip" className="rounded-full bg-brand/15 px-2 py-0.5 text-link">{l.topic}</span>
                   {host(l.url)}
                 </span>

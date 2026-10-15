@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { useEffect, useRef } from 'react';
 import { type BoardFilter, EMPTY_FILTER, isFiltering } from './board-filter';
 import type { BoardCard, BoardLabel } from './board-types';
+import { TONE_PILL } from '@/components/ui/status-badge';
 import { REPLY_KINDS, REPLY_STYLE } from './reply-kinds';
 
 export function BoardFilterBar({ filter, onChange, cards, labels, labelName, found, onOpenOnly }: {
@@ -63,7 +64,7 @@ export function BoardFilterBar({ filter, onChange, cards, labels, labelName, fou
         </label>
         {on && (
           <>
-            <span data-testid="board-found" className="font-mono text-xs text-muted-foreground">{t('found', { count: found })}</span>
+            <span data-testid="board-found" className="tabular-nums text-xs text-muted-foreground">{t('found', { count: found })}</span>
             <button type="button" data-testid="board-filter-clear" onClick={() => onChange(EMPTY_FILTER)} className="inline-flex items-center gap-1 text-xs underline">
               <X className="size-3" aria-hidden />
               {t('filterClear')}
@@ -83,8 +84,7 @@ export function BoardFilterBar({ filter, onChange, cards, labels, labelName, fou
                 data-kind={k}
                 aria-pressed={active}
                 onClick={() => onChange({ ...filter, reply: active ? null : k })}
-                className={`${chip} ${active ? 'border-foreground' : 'border-transparent opacity-70 hover:opacity-100'}`}
-                style={{ background: REPLY_STYLE[k].bg, color: REPLY_STYLE[k].fg }}
+                className={`${chip} ring-1 ring-inset ${TONE_PILL[REPLY_STYLE[k].tone]} ${active ? 'ring-2' : 'border-transparent opacity-70 hover:opacity-100'}`}
               >
                 <span aria-hidden>{REPLY_STYLE[k].icon}</span> {t(`reply_${k}` as never)}
               </button>

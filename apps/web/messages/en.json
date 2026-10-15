@@ -242,7 +242,12 @@
     "englishOk": "You have {level} — fits",
     "englishGap": "You have {level} — they ask for more",
     "englishYours": "you {level}",
-    "onBoardLeft": "still open on {platforms}"
+    "onBoardLeft": "still open on {platforms}",
+    "emptyNothingNew": "Nothing new yet",
+    "emptyFiltered": "{count, plural, one {Filters hide # job} other {Filters hide # jobs}}",
+    "emptyShowAll": "Show all ({count})",
+    "emptyRuleHidden": "See the ones your rules hid ({count})",
+    "emptyCadence": "Auto-search checks Djinni and DOU every 30 minutes — new jobs show up here on their own."
   },
   "comingSoon": {
     "badge": "Soon",
@@ -543,7 +548,15 @@
     "feedbackStop": "Stop waiting",
     "feedbackThanks": "Write a thank-you for the interview",
     "feedbackBadge": "{count, plural, one {Feedback · # day} other {Feedback · # days}}",
-    "thanksNote": "Thank them for the interview: enjoyed the conversation, liked the team and the work; briefly confirm interest in the role and that I look forward to their feedback. No new questions."
+    "thanksNote": "Thank them for the interview: enjoyed the conversation, liked the team and the work; briefly confirm interest in the role and that I look forward to their feedback. No new questions.",
+    "sections": "Card sections",
+    "section_overview": "Overview",
+    "section_conversation": "Conversation",
+    "section_details": "Details",
+    "section_history": "History",
+    "actionReply": "Reply",
+    "columnMore": "{count, plural, one {# more card, nothing new} other {# more cards, nothing new}}",
+    "columnLess": "Fold quiet cards"
   },
   "cv": {
     "title": "Your CV",

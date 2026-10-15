@@ -24,9 +24,17 @@
   --glass: rgb(244 244 246 / 0.8);
   --glass-border: rgb(30 29 37 / 0.08);
   --shadow: 0 1px 2px rgb(30 29 37 / 0.05);
+  /* Card and reply states: one hue each, readable on white (600-ish) and on ink (400-ish) below. */
+  --status-interview: #db2777;
+  --status-move: #0284c7;
+  --status-wait: #d97706;
+  --status-test: #7c3aed;
+  --status-offer: #4d7c0f;
+  --status-danger: #dc2626;
+  --status-neutral: #71717a;
 }
 
-/* Mint-on-ink developer style: #1e1d25 canvas, #27262e / #2d2c31 blocks, #73f7b2 accent, mono type. */
+/* Mint-on-ink: #1e1d25 canvas, #27262e / #2d2c31 blocks, #73f7b2 accent; mono only for code. */
 .dark {
   --background: #16151b;
   --foreground: #fefdff;
@@ -47,6 +55,13 @@
   --glass: rgb(30 29 37 / 0.85);
   --glass-border: rgb(254 253 255 / 0.06);
   --shadow: none;
+  --status-interview: #f472b6;
+  --status-move: #38bdf8;
+  --status-wait: #fbbf24;
+  --status-test: #a78bfa;
+  --status-offer: #bef264;
+  --status-danger: #f87171;
+  --status-neutral: #a1a1aa;
 }
 
 @theme inline {
@@ -65,6 +80,13 @@
   --color-success: var(--success);
   --color-danger: var(--danger);
   --color-warning: var(--warning);
+  --color-status-interview: var(--status-interview);
+  --color-status-move: var(--status-move);
+  --color-status-wait: var(--status-wait);
+  --color-status-test: var(--status-test);
+  --color-status-offer: var(--status-offer);
+  --color-status-danger: var(--status-danger);
+  --color-status-neutral: var(--status-neutral);
   --font-sans: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
   --font-display: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-jetbrains), ui-monospace, SFMono-Regular, Menlo, monospace;
@@ -149,7 +171,7 @@
   .brutal-press:hover {
     filter: brightness(1.08);
   }
-  /* "● LABEL" eyebrow above a section (mono, mint pill). */
+  /* "● LABEL" eyebrow above a section (small caps, mint pill). */
   .eyebrow {
     display: inline-flex;
     align-items: center;
@@ -160,10 +182,10 @@
     color: var(--link);
     border-radius: 9999px;
     padding: 0.2rem 0.7rem;
-    font-family: var(--font-mono);
+    font-family: var(--font-sans);
     font-size: 11px;
     font-weight: 700;
-    letter-spacing: 0.14em;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
   }
   .eyebrow::before {

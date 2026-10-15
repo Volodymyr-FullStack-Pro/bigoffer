@@ -30,13 +30,13 @@ export function RejectDialog({ initialReasons = [], initialStage = 'application'
       >
         <h2 id="reject-title" className="font-display text-xl font-semibold">{t('rejectTitle')}</h2>
         {suggested && <p data-testid="reject-suggested" className="rounded-md bg-ai/15 px-3 py-2 text-sm">✨ {t('rejectSuggested')}</p>}
-        <label className="flex flex-col gap-1 font-mono text-xs">
+        <label className="flex flex-col gap-1 tabular-nums text-xs">
           {t('rejectStage')}
           <select data-testid="reject-stage" value={stage} onChange={(e) => setStage(e.target.value as RejectionStage)} className="brutal bg-card px-2 py-1 font-sans text-sm">
             {REJECTION_STAGES.map((s) => <option key={s} value={s}>{t(`stage_${s}`)}</option>)}
           </select>
         </label>
-        <label className="flex flex-col gap-1 font-mono text-xs">
+        <label className="flex flex-col gap-1 tabular-nums text-xs">
           {t('rejectBy')}
           <select data-testid="reject-by" value={by} onChange={(e) => setBy(e.target.value as 'company' | 'me')} className="brutal bg-card px-2 py-1 font-sans text-sm">
             <option value="company">{t('byCompany')}</option>
@@ -44,7 +44,7 @@ export function RejectDialog({ initialReasons = [], initialStage = 'application'
           </select>
         </label>
         <fieldset className="flex flex-col gap-1">
-          <legend className="font-mono text-xs">{t('rejectReasons')}</legend>
+          <legend className="tabular-nums text-xs">{t('rejectReasons')}</legend>
           <div className="grid grid-cols-2 gap-1">
             {REJECTION_REASONS.map((r) => (
               <label key={r} className="flex items-center gap-2 text-sm">
@@ -60,7 +60,7 @@ export function RejectDialog({ initialReasons = [], initialStage = 'application'
             ))}
           </div>
         </fieldset>
-        <label className="flex flex-col gap-1 font-mono text-xs">
+        <label className="flex flex-col gap-1 tabular-nums text-xs">
           {t('rejectNote')}
           <textarea data-testid="reject-note" value={note} maxLength={2000} onChange={(e) => setNote(e.target.value)} className="brutal min-h-20 bg-card px-2 py-1 font-sans text-sm" />
         </label>

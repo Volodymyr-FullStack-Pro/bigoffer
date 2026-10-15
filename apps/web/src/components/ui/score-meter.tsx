@@ -11,7 +11,7 @@ export function ScoreMeter({ score, label }: { score: number; label: string }) {
         <circle cx="9" cy="9" r={r} fill="none" stroke={tone} strokeWidth="2.5" strokeLinecap="round" strokeDasharray={`${(clamped / 100) * c} ${c}`} />
       </svg>
       <span>
-        <span className="font-mono font-semibold text-foreground">{score}%</span> <span className="text-muted-foreground">{label}</span>
+        <span className="tabular-nums font-semibold text-foreground">{score}%</span> <span className="text-muted-foreground">{label}</span>
       </span>
     </span>
   );

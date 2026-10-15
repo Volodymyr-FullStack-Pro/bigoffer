@@ -4,34 +4,39 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useFormatter, useTranslations } from 'next-intl';
 import { SourceBadge } from '@/components/ui/source-badge';
+import { StatusBadge, type StatusTone, toneColor } from '@/components/ui/status-badge';
 import type { BoardCardView, BoardLabel } from './board-types';
 import { JoinMeeting } from './join-meeting';
 import { REPLY_STYLE } from './reply-kinds';
 
-const URGENCY_STYLE: Record<string, string> = {
-  interview_soon: 'bg-ai text-ai-foreground',
-  your_move: 'bg-[#38BDF8] text-[#0C1A24]',
-  step_passed: 'bg-warning text-brand-foreground',
-  overdue: 'bg-danger text-white',
-  ghosting: 'bg-foreground text-background',
-  ping: 'bg-warning text-brand-foreground',
-  feedback_due: 'bg-warning text-brand-foreground',
-  awaiting_feedback: 'bg-warning/20 text-warning',
+/** Urgency → badge tone. awaiting_feedback is shown as the card's main badge instead (see below). */
+const URGENCY_TONE: Record<string, StatusTone> = {
+  interview_soon: 'interview',
+  your_move: 'move',
+  step_passed: 'wait',
+  overdue: 'danger',
+  ghosting: 'neutral',
+  ping: 'wait',
+  feedback_due: 'wait',
+  awaiting_feedback: 'wait',
 };
 
-const FEEDBACK_STYLE = { bg: '#F59E0B', fg: '#1F1300', icon: '⏳' };
-
-/** A glowing outline on cards that need the candidate now. */
+/**
+ * Outline per urgency. Only the two "act now" states glow (an interview within 48 h, the company waiting on you);
+ * the rest get a quiet ring, so a busy board does not light up like a garland.
+ */
 const URGENCY_RING: Record<string, string> = {
-  // outline + drop-shadow: the brutal style already owns box-shadow
-  interview_soon: 'outline-2 outline-offset-2 outline-[#F472B6] drop-shadow-[0_0_10px_#F472B680]',
-  your_move: 'outline-2 outline-offset-2 outline-[#38BDF8] drop-shadow-[0_0_10px_#38BDF880]',
-  step_passed: 'outline-2 outline-offset-2 outline-[#F59E0B] drop-shadow-[0_0_8px_#F59E0B70]',
-  overdue: 'outline-2 outline-offset-2 outline-danger',
-  ping: 'outline-1 outline-offset-2 outline-warning',
-  feedback_due: 'outline-2 outline-offset-2 outline-[#F59E0B] drop-shadow-[0_0_10px_#F59E0B80]',
-  awaiting_feedback: 'outline-1 outline-offset-2 outline-[#F59E0B]/50',
-}
+  // outline + drop-shadow: the card style already owns box-shadow
+  interview_soon: 'outline-2 outline-offset-2 outline-status-interview drop-shadow-[0_0_10px_color-mix(in_srgb,var(--status-interview)_45%,transparent)]',
+  your_move: 'outline-2 outline-offset-2 outline-status-move drop-shadow-[0_0_10px_color-mix(in_srgb,var(--status-move)_45%,transparent)]',
+  step_passed: 'outline-1 outline-offset-2 outline-status-wait/70',
+  overdue: 'outline-1 outline-offset-2 outline-status-danger/70',
+  ping: 'outline-1 outline-offset-2 outline-status-wait/50',
+  feedback_due: 'outline-2 outline-offset-2 outline-status-wait',
+  awaiting_feedback: 'outline-1 outline-offset-2 outline-status-wait/40',
+};
+
+const FEEDBACK_STYLE = { tone: 'wait' as StatusTone, icon: '⏳' };
 
 export function BoardCardItem({ card, labels, labelName, now, timeZone, onOpen }: {
   card: BoardCardView;
@@ -56,8 +61,8 @@ export function BoardCardItem({ card, labels, labelName, now, timeZone, onOpen }
       data-testid="board-card"
       data-card-id={card.id}
       data-reply-kind={card.replyKind ?? undefined}
-      style={{ transform: CSS.Transform.toString(transform), transition, ...(reply ? { borderLeftColor: reply.bg, borderLeftWidth: 6 } : {}) }}
-      data-needs-action={card.urgency in URGENCY_STYLE || undefined}
+      style={{ transform: CSS.Transform.toString(transform), transition, ...(reply ? { borderLeftColor: toneColor(reply.tone), borderLeftWidth: 4 } : {}) }}
+      data-needs-action={card.urgency in URGENCY_TONE || undefined}
       className={`brutal flex min-w-0 cursor-grab flex-col gap-1.5 p-3 ${isDragging ? 'opacity-40' : ''} ${URGENCY_RING[card.urgency] ?? ''}`}
       {...attributes}
       {...listeners}
@@ -73,22 +78,21 @@ export function BoardCardItem({ card, labels, labelName, now, timeZone, onOpen }
       }}
     >
       {waiting && (
-        <span data-testid="card-urgency" data-urgency={card.urgency} className="self-start rounded-full px-2 py-0.5 text-[11px] font-semibold" style={{ background: FEEDBACK_STYLE.bg, color: FEEDBACK_STYLE.fg, boxShadow: `0 0 10px -2px ${FEEDBACK_STYLE.bg}` }}>
-          <span aria-hidden>{FEEDBACK_STYLE.icon}</span>{' '}
+        <StatusBadge tone={FEEDBACK_STYLE.tone} icon={FEEDBACK_STYLE.icon} data-testid="card-urgency" data-urgency={card.urgency}>
           {card.urgency === 'awaiting_feedback' ? t('feedbackBadge', { count: daysLeft }) : t('urgency_feedback_due')}
-        </span>
+        </StatusBadge>
       )}
       {!waiting && reply && card.replyKind && (
-        <span data-testid="card-reply" className="self-start rounded-full px-2 py-0.5 text-[11px] font-semibold" style={{ background: reply.bg, color: reply.fg, boxShadow: `0 0 10px -2px ${reply.bg}` }}>
-          <span aria-hidden>{reply.icon}</span> {t(`reply_${card.replyKind}` as never)}
-        </span>
+        <StatusBadge tone={reply.tone} icon={reply.icon} data-testid="card-reply">
+          {t(`reply_${card.replyKind}` as never)}
+        </StatusBadge>
       )}
       {card.rejectionReasons.length > 0 && (card.outcome === 'rejected' || card.outcome === 'withdrawn' || card.outcome === 'ghosted') && (
         <span data-testid="card-reject-reasons" className="flex flex-wrap gap-1">
           {card.rejectionReasons.map((r) => (
-            <span key={r} className="rounded-full border border-danger/40 bg-danger/10 px-2 py-0.5 text-[11px] font-semibold text-danger">
+            <StatusBadge key={r} tone="danger">
               {t(`reason_${r}` as never)}
-            </span>
+            </StatusBadge>
           ))}
         </span>
       )}
@@ -98,7 +102,7 @@ export function BoardCardItem({ card, labels, labelName, now, timeZone, onOpen }
       {own.length > 0 && (
         <span className="flex flex-wrap gap-1">
           {own.map((l) => (
-            <span key={l.id} data-testid="card-label" className="rounded-full border border-black/20 px-2 py-0.5 text-[11px] font-semibold text-black" style={{ background: l.color, boxShadow: `0 0 8px -2px ${l.color}` }}>
+            <span key={l.id} data-testid="card-label" className="rounded-full border border-black/20 px-2 py-0.5 text-[11px] font-semibold text-black" style={{ background: l.color }}>
               {labelName(l)}
             </span>
           ))}
@@ -107,14 +111,14 @@ export function BoardCardItem({ card, labels, labelName, now, timeZone, onOpen }
       {(upcoming || (card.meetingUrl && !waiting)) && (
         <span className="flex flex-wrap items-center gap-2">
           {upcoming && (
-            <span data-testid="card-next" suppressHydrationWarning className="font-mono text-xs font-semibold">
+            <span data-testid="card-next" suppressHydrationWarning className="tabular-nums text-xs font-semibold">
               ⏰ {format.dateTime(upcoming, { timeZone, day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
             </span>
           )}
           {card.meetingUrl && card.outcome === 'open' && !waiting && <JoinMeeting url={card.meetingUrl} label={t('joinMeeting')} testId="card-join" compact />}
         </span>
       )}
-      <span className="flex flex-wrap items-center gap-2 font-mono text-xs text-muted-foreground">
+      <span className="flex flex-wrap items-center gap-2 tabular-nums text-xs text-muted-foreground">
         {card.sourceId && <SourceBadge sourceId={card.sourceId} />}
         {card.messageCount > 0 && (
           <span data-testid="card-messages" title={t('conversationTitle', { count: card.messageCount })} className="rounded-full bg-muted px-1.5">
@@ -122,10 +126,10 @@ export function BoardCardItem({ card, labels, labelName, now, timeZone, onOpen }
           </span>
         )}
         {card.appliedAt && <span suppressHydrationWarning>{t('appliedAgo', { ago: format.relativeTime(new Date(card.appliedAt), now) })}</span>}
-        {card.urgency in URGENCY_STYLE && !waiting && (
-          <span data-testid="card-urgency" data-urgency={card.urgency} className={`rounded-sm border border-border px-1 font-bold ${URGENCY_STYLE[card.urgency]}`}>
+        {card.urgency in URGENCY_TONE && !waiting && (
+          <StatusBadge tone={URGENCY_TONE[card.urgency]!} data-testid="card-urgency" data-urgency={card.urgency} className="font-sans">
             {t(`urgency_${card.urgency}` as never)}
-          </span>
+          </StatusBadge>
         )}
       </span>
     </article>

@@ -95,7 +95,7 @@ export function SearchNow({
             <p
               role="status"
               data-testid="search-now-progress"
-              className="font-mono text-sm text-muted-foreground"
+              className="tabular-nums text-sm text-muted-foreground"
             >
               {t('progress', { done, total, found: status?.newMatches ?? 0 })}
             </p>
@@ -129,7 +129,7 @@ export function SearchNow({
             >
               <Loader2 className="size-4 animate-spin" aria-hidden />
               {t('searching')}
-              <span className="font-mono text-xs opacity-80">{pct}%</span>
+              <span className="tabular-nums text-xs opacity-80">{pct}%</span>
             </span>
           ) : (
             <HoverBorderGradient data-testid="search-now-start" disabled={pending} onClick={() => void start()}>

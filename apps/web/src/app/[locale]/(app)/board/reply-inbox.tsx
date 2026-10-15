@@ -6,6 +6,7 @@ import { tellGenie } from '@/lib/genie/events';
 import { useState } from 'react';
 import type { BoardCardView, BoardColumn } from './board-types';
 import { logReply, logSentMessage, type ReplyChannel, setReplyKind, suggestReplyKind } from './message-actions';
+import { TONE_PILL } from '@/components/ui/status-badge';
 import { columnForReply, REPLY_KINDS, REPLY_STYLE, type ReplyKind } from './reply-kinds';
 import { fromZonedInput, toZonedInput } from './zoned-input';
 
@@ -119,7 +120,7 @@ export function ReplyInbox({ card, defaultAuthor, columns, timeZone, lang, onLog
   return (
     <section data-testid="reply-inbox" className="flex flex-col gap-3 border-t border-border pt-3">
       <div className="flex items-center justify-between gap-2">
-        <h3 className="font-mono text-xs">{t('replyAddTitle')}</h3>
+        <h3 className="tabular-nums text-xs">{t('replyAddTitle')}</h3>
         {card.replyKind && (
           <button
             type="button"
@@ -148,7 +149,7 @@ export function ReplyInbox({ card, defaultAuthor, columns, timeZone, lang, onLog
         ))}
       </div>
       <div role="radiogroup" aria-label={t('replyChannel')} className="flex flex-col gap-1.5">
-        <span className="font-mono text-xs">{t(mine ? 'replyChannelMine' : 'replyChannel')}</span>
+        <span className="tabular-nums text-xs">{t(mine ? 'replyChannelMine' : 'replyChannel')}</span>
         <div className="flex flex-wrap gap-1.5">
           {CHANNELS.map((c) => (
             <button
@@ -182,7 +183,7 @@ export function ReplyInbox({ card, defaultAuthor, columns, timeZone, lang, onLog
         </button>
       </div>
       {summary && <p data-testid="reply-summary" className="text-sm italic">{summary}</p>}
-      <span className="font-mono text-xs">{t('replyKindNew')}</span>
+      <span className="tabular-nums text-xs">{t('replyKindNew')}</span>
       <div role="radiogroup" aria-label={t('replyKindNew')} className="flex flex-wrap gap-1.5">
         {REPLY_KINDS.map((k) => (
           <button
@@ -193,8 +194,7 @@ export function ReplyInbox({ card, defaultAuthor, columns, timeZone, lang, onLog
             data-testid="reply-kind"
             data-kind={k}
             onClick={() => setKind(k)}
-            className={`rounded-full border-[1.5px] px-2.5 py-0.5 text-xs font-semibold ${kind === k ? 'border-foreground' : 'border-transparent opacity-60 hover:opacity-100'}`}
-            style={{ background: REPLY_STYLE[k].bg, color: REPLY_STYLE[k].fg }}
+            className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset ${TONE_PILL[REPLY_STYLE[k].tone]} ${kind === k ? 'ring-2' : 'opacity-60 hover:opacity-100'}`}
           >
             <span aria-hidden>{REPLY_STYLE[k].icon}</span> {t(`reply_${k}` as never)}
           </button>
@@ -202,18 +202,18 @@ export function ReplyInbox({ card, defaultAuthor, columns, timeZone, lang, onLog
       </div>
       </>)}
       <div className="grid gap-2 sm:grid-cols-2">
-        {!mine && <label className="flex flex-col gap-1 font-mono text-xs">
+        {!mine && <label className="flex flex-col gap-1 tabular-nums text-xs">
           {t('replyAuthor')}
           <input data-testid="reply-author" value={author} maxLength={120} onChange={(e) => setAuthor(e.target.value)} className={field} />
         </label>}
-        <label className="flex flex-col gap-1 font-mono text-xs">
+        <label className="flex flex-col gap-1 tabular-nums text-xs">
           {t('replyLink')}
           <input data-testid="reply-link" type="url" value={link} maxLength={500} onChange={(e) => setLink(e.target.value)} placeholder={t(`replyLinkHint_${LINK_HINT[channel] ?? 'other'}` as never)} className={field} />
         </label>
       </div>
       {!mine && kind && <p data-testid="reply-hint" className="text-xs text-muted-foreground">{t(`replyHint_${kind}` as never)}</p>}
       {!mine && kind === 'interview_invite' && (
-        <label className="flex flex-col gap-1 font-mono text-xs">
+        <label className="flex flex-col gap-1 tabular-nums text-xs">
           {t('replyWhen')}
           <input data-testid="reply-when" type="datetime-local" value={when || toZonedInput(card.nextActionAt, timeZone)} onChange={(e) => setWhen(e.target.value)} className={field} />
         </label>
