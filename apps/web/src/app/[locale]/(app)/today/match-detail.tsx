@@ -5,7 +5,7 @@ import { SourceBadge } from '@/components/ui/source-badge';
 import { pill } from '@/components/ui/pill';
 import { isLocale, type Locale, sourceInfo } from '@jp/core';
 import { useFormatter, useLocale, useNow, useTranslations } from 'next-intl';
-import { Sparkles } from 'lucide-react';
+import { Flag, Sparkles } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { TextGenerateEffect } from '@/components/aceternity/text-generate-effect';
 import { ApplyKitPanel } from '@/components/apply-kit/apply-kit-panel';
@@ -301,7 +301,8 @@ export function MatchDetail({
         )}
         {match.onBoard === null && match.companyOnBoard && (
           <p data-testid="company-on-board" className="self-start rounded-full bg-warning/25 ring-1 ring-inset ring-warning/45 px-2.5 py-0.5 text-xs font-semibold text-warning">
-            ⚑ {tf('companyOnBoard', { title: match.companyOnBoard.title, column: match.companyOnBoard.column || '—' })}
+            <Flag aria-hidden className="mr-1 inline size-3.5 -translate-y-px" />
+            {tf('companyOnBoard', { title: match.companyOnBoard.title, column: match.companyOnBoard.column || '—' })}
           </p>
         )}
         {!match.companyIsPlaceholder && <p className="text-muted-foreground">{match.company}</p>}

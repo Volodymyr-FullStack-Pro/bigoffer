@@ -1,5 +1,6 @@
 'use client';
 
+import { Hourglass, PenLine } from 'lucide-react';
 import { useFormatter, useNow, useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { setFeedbackWait } from './actions';
@@ -48,14 +49,16 @@ export function FeedbackWait({ applicationId, dueAt, timeZone, onChanged, onThan
     return (
       <div data-testid="feedback-wait" className="brutal flex flex-col gap-2 border-l-[6px] p-3 text-sm" style={{ borderLeftColor: 'var(--status-wait)' }}>
         <p>
-          ⏳ <span className="font-semibold">{t('feedbackWaiting')}</span>{' '}
+          <Hourglass aria-hidden className="mr-1 inline size-4 -translate-y-px text-status-wait" />
+          <span className="font-semibold">{t('feedbackWaiting')}</span>{' '}
           <span suppressHydrationWarning data-testid="feedback-due">{format.dateTime(due, { timeZone, day: 'numeric', month: 'long' })}</span>
           <span className="text-muted-foreground"> · {daysLeft > 0 ? t('feedbackDaysLeft', { count: daysLeft }) : t('feedbackOverdue')}</span>
         </p>
         <div className="flex flex-wrap gap-2">
           {justSet && (
             <button type="button" data-testid="feedback-thanks" onClick={onThanks} className="brutal brutal-press bg-ai px-3 py-1 text-xs font-semibold text-ai-foreground">
-              ✍ {t('feedbackThanks')}
+              <PenLine aria-hidden className="mr-1 inline size-3.5 -translate-y-px" />
+              {t('feedbackThanks')}
             </button>
           )}
           <button type="button" onClick={() => setPicking(true)} className="brutal brutal-press px-3 py-1 text-xs">{t('feedbackChange')}</button>

@@ -1,5 +1,6 @@
 'use client';
 
+import { AlarmClock, CircleHelp, Mic, PenLine, TriangleAlert } from 'lucide-react';
 import { PREP_LEVELS, type PrepLesson, type PrepLevel, type PrepPitch, type PrepPlan, type PrepTopic } from '@jp/ai';
 import { useFormatter, useTranslations } from 'next-intl';
 import { useState } from 'react';
@@ -95,7 +96,8 @@ export function PrepView({ prepId, card, plan, lessons: initialLessons, pitch: i
         <div className="flex flex-wrap items-center gap-3">
           {card.interviewAt && (
             <span suppressHydrationWarning className="tabular-nums text-sm font-semibold">
-              ⏰ {format.dateTime(new Date(card.interviewAt), { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+              <AlarmClock aria-hidden className="mr-1 inline size-4 -translate-y-px" />
+              {format.dateTime(new Date(card.interviewAt), { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
             </span>
           )}
           {card.meetingUrl && <JoinMeeting url={card.meetingUrl} label={tb('joinMeeting')} testId="prep-join" />}
@@ -183,7 +185,7 @@ export function PrepView({ prepId, card, plan, lessons: initialLessons, pitch: i
       </div>
 
       <div data-testid="prep-pitch" className="brutal flex flex-col gap-3 p-5">
-        <h2 className="font-display text-xl font-semibold">🗣 {t('pitchTitle')}</h2>
+        <h2 className="flex items-center gap-2 font-display text-xl font-semibold"><Mic aria-hidden className="size-5" /> {t('pitchTitle')}</h2>
         <p className="text-sm text-muted-foreground">{t('pitchHint')}</p>
         {pitch ? (
           <>
@@ -234,7 +236,7 @@ const LEVEL_STYLE: Record<PrepLevel, string> = {
 function LessonSkeleton({ label }: { label: string }) {
   return (
     <div data-testid="prep-lesson-loading" className="flex flex-col gap-2" aria-busy>
-      <span className="text-sm text-muted-foreground">✍ {label}</span>
+      <span className="flex items-center gap-1.5 text-sm text-muted-foreground"><PenLine aria-hidden className="size-3.5" /> {label}</span>
       {[90, 75, 82, 60].map((w) => <span key={w} className="h-3 animate-pulse rounded bg-muted" style={{ width: `${w}%` }} />)}
     </div>
   );
@@ -277,7 +279,7 @@ function Lesson({ lesson, level }: { lesson: PrepLesson; level: PrepLevel }) {
       )}
       {lesson.pitfalls.length > 0 && (
         <section className="flex flex-col gap-1.5">
-          <h3 className="font-semibold">⚠ {t('pitfalls')}</h3>
+          <h3 className="flex items-center gap-1.5 font-semibold"><TriangleAlert aria-hidden className="size-4 text-status-wait" /> {t('pitfalls')}</h3>
           <ul className="flex list-disc flex-col gap-1 pl-5 text-sm">
             {lesson.pitfalls.map((p) => <li key={p}>{p}</li>)}
           </ul>
@@ -285,7 +287,7 @@ function Lesson({ lesson, level }: { lesson: PrepLesson; level: PrepLevel }) {
       )}
       {lesson.questions.length > 0 && (
         <section className="flex flex-col gap-2">
-          <h3 className="font-semibold">❓ {t('questions')}</h3>
+          <h3 className="flex items-center gap-1.5 font-semibold"><CircleHelp aria-hidden className="size-4 text-status-move" /> {t('questions')}</h3>
           {lesson.questions.map((q) => (
             <details key={q.q} className="rounded-lg border border-border p-3">
               <summary className="cursor-pointer text-sm font-semibold">{q.q}</summary>

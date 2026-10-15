@@ -1,5 +1,6 @@
 'use client';
 
+import { Flag } from 'lucide-react';
 import { sourceInfo } from '@jp/core';
 import { useFormatter, useNow, useTranslations } from 'next-intl';
 import { ScoreMeter } from '@/components/ui/score-meter';
@@ -61,7 +62,8 @@ export function FeedListItem({
           title={t('companyOnBoard', { title: match.companyOnBoard.title, column: match.companyOnBoard.column })}
           className="self-start rounded-full bg-warning/25 ring-1 ring-inset ring-warning/45 px-2 py-0.5 text-xs font-semibold text-warning"
         >
-          ⚑ {t('companyOnBoardShort')}
+          <Flag aria-hidden className="mr-1 inline size-3 -translate-y-px" />
+          {t('companyOnBoardShort')}
         </span>
       )}
       {(match.seniority || match.skills.length > 0) && (

@@ -1,5 +1,6 @@
 'use client';
 
+import { GraduationCap, PenLine } from 'lucide-react';
 import { isLocale, type Locale } from '@jp/core';
 import { useFormatter, useLocale, useNow, useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
@@ -180,7 +181,8 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, companyC
               onClick={() => { jump('conversation'); writer.current?.writeReply(); }}
               className="brutal brutal-press shrink-0 bg-ai px-3 py-1 text-xs font-semibold text-ai-foreground"
             >
-              ✍ {t('actionReply')}
+              <PenLine aria-hidden className="mr-1 inline size-3.5 -translate-y-px" />
+              {t('actionReply')}
             </button>
           ) : card.urgency === 'interview_soon' && card.meetingUrl && !card.feedbackDueAt ? (
             <JoinMeeting url={card.meetingUrl} label={t('joinMeeting')} testId="panel-primary" compact />
@@ -227,7 +229,8 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, companyC
               onClick={() => writer.current?.writeReply()}
               className="brutal brutal-press mt-2 block bg-ai px-3 py-1 text-sm font-semibold text-ai-foreground"
             >
-              ✍ {t('writeReply')}
+              <PenLine aria-hidden className="mr-1 inline size-4 -translate-y-px" />
+              {t('writeReply')}
             </button>
           )}
         </p>
@@ -249,7 +252,8 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, companyC
         {card.meetingUrl && !card.feedbackDueAt && <JoinMeeting url={card.meetingUrl} label={t('joinMeeting')} testId="panel-join" />}
         {card.url && <a href={card.url} target="_blank" rel="noopener" className="tabular-nums text-sm underline">{t('openOriginal')} ↗</a>}
         {PREP_KEYS.has(columns.find((c) => c.id === card.columnId)?.key ?? '') && (
-          <Link href={`/prep?start=${card.id}`} data-testid="panel-prep" className="tabular-nums text-sm font-semibold underline">🎓 {t('prepare')}</Link>
+          <Link href={`/prep?start=${card.id}`} data-testid="panel-prep" className="tabular-nums text-sm font-semibold underline"><GraduationCap aria-hidden className="mr-1 inline size-4 -translate-y-px" />
+            {t('prepare')}</Link>
         )}
         {threadLink && <a data-testid="panel-thread" href={threadLink} target="_blank" rel="noopener noreferrer" className="tabular-nums text-sm font-semibold underline">{t('openThread')} ↗</a>}
       </div>

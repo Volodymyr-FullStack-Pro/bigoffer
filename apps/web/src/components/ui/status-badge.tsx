@@ -1,3 +1,4 @@
+import type { LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 export const STATUS_TONES = ['interview', 'move', 'wait', 'test', 'offer', 'danger', 'neutral'] as const;
@@ -17,15 +18,15 @@ export const TONE_PILL: Record<StatusTone, string> = {
 /** The tone as a CSS colour, for a card's left edge or a banner's border. */
 export const toneColor = (tone: StatusTone) => `var(--status-${tone})`;
 
-export function StatusBadge({ tone, icon, children, className = '', ...rest }: {
+export function StatusBadge({ tone, icon: Icon, children, className = '', ...rest }: {
   tone: StatusTone;
-  icon?: ReactNode;
+  icon?: LucideIcon;
   children: ReactNode;
   className?: string;
 } & Omit<React.HTMLAttributes<HTMLSpanElement>, 'children' | 'className'>) {
   return (
     <span className={`inline-flex items-center gap-1 self-start rounded-full px-2 py-0.5 text-xs font-semibold ring-1 ring-inset ${TONE_PILL[tone]} ${className}`} {...rest}>
-      {icon && <span aria-hidden>{icon}</span>}
+      {Icon && <Icon aria-hidden className="size-3.5 shrink-0" strokeWidth={2.25} />}
       {children}
     </span>
   );

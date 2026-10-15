@@ -556,7 +556,8 @@
     "section_history": "History",
     "actionReply": "Reply",
     "columnMore": "{count, plural, one {# more card, nothing new} other {# more cards, nothing new}}",
-    "columnLess": "Fold quiet cards"
+    "columnLess": "Fold quiet cards",
+    "lastFromThem": "their message is the latest"
   },
   "cv": {
     "title": "Your CV",
