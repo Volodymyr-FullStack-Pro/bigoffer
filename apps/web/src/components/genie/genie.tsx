@@ -265,11 +265,11 @@ export function Genie() {
           {pending && !message && <span data-testid="genie-dot" aria-hidden className="absolute top-0 right-0 z-10 size-3 animate-pulse rounded-full border-2 border-card bg-brand" />}
           <GenieAvatar mood={message?.mood ?? (state.appliedToday >= state.goal ? "happy" : "neutral")} size={40} />
         </button>
-        <span data-testid="genie-goal" className="absolute -bottom-1 left-1/2 -translate-x-1/2 rounded-full border border-border bg-card px-1.5 font-mono text-[10px] font-bold text-link">
+        <span data-testid="genie-goal" className="absolute -bottom-1 left-1/2 -translate-x-1/2 rounded-full border border-border bg-card px-1.5 tabular-nums text-[10px] font-bold text-link">
           {Math.min(state.appliedToday, 99)}/{state.goal}
         </span>
         {state.streak >= 2 && (
-          <span data-testid="genie-streak" title={t('streak', { days: state.streak })} className="absolute -top-1 -right-1 rounded-full border border-warning/50 bg-card px-1 font-mono text-[10px] font-bold text-warning">
+          <span data-testid="genie-streak" title={t('streak', { days: state.streak })} className="absolute -top-1 -right-1 rounded-full border border-warning/50 bg-card px-1 tabular-nums text-[10px] font-bold text-warning">
             🔥{state.streak}
           </span>
         )}

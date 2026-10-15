@@ -97,11 +97,11 @@ export function AddCardDialog({ columns, onCreated, onClose }: { columns: BoardC
         {loading && <p data-testid="add-loading" className="text-sm text-muted-foreground">{t('addLoading')}</p>}
         {imported && <p data-testid="add-imported" className="text-sm text-success">✓ {t('addImported')}</p>}
         {failed && <p data-testid="add-preview-failed" className="text-sm text-warning">{t('addPreviewFailed')}</p>}
-        <label className="flex flex-col gap-1 font-mono text-xs">{t('addJobTitle')}<input data-testid="add-title" required maxLength={300} value={title} onChange={(e) => setTitle(e.target.value)} className={field} /></label>
-        <label className="flex flex-col gap-1 font-mono text-xs">{t('addCompany')}<input data-testid="add-company" maxLength={200} value={company} onChange={(e) => setCompany(e.target.value)} className={field} /></label>
-        <label className="flex flex-col gap-1 font-mono text-xs">{t('addLocation')}<input maxLength={200} value={location} onChange={(e) => setLocation(e.target.value)} className={field} /></label>
-        <label className="flex flex-col gap-1 font-mono text-xs">{t('salary')}<input maxLength={120} value={salary} onChange={(e) => setSalary(e.target.value)} className={field} /></label>
-        <label className="flex flex-col gap-1 font-mono text-xs">
+        <label className="flex flex-col gap-1 tabular-nums text-xs">{t('addJobTitle')}<input data-testid="add-title" required maxLength={300} value={title} onChange={(e) => setTitle(e.target.value)} className={field} /></label>
+        <label className="flex flex-col gap-1 tabular-nums text-xs">{t('addCompany')}<input data-testid="add-company" maxLength={200} value={company} onChange={(e) => setCompany(e.target.value)} className={field} /></label>
+        <label className="flex flex-col gap-1 tabular-nums text-xs">{t('addLocation')}<input maxLength={200} value={location} onChange={(e) => setLocation(e.target.value)} className={field} /></label>
+        <label className="flex flex-col gap-1 tabular-nums text-xs">{t('salary')}<input maxLength={120} value={salary} onChange={(e) => setSalary(e.target.value)} className={field} /></label>
+        <label className="flex flex-col gap-1 tabular-nums text-xs">
           {t('moveTo')}
           <select data-testid="add-column" value={columnId} onChange={(e) => setColumnId(e.target.value)} className={field}>
             {columns.filter((c) => c.kind === 'active').map((c) => <option key={c.id} value={c.id}>{c.title}</option>)}

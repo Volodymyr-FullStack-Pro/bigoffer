@@ -23,7 +23,7 @@ export function LoginForm({ next }: { next?: string | undefined }) {
     <form action={action} className="flex flex-col gap-3">
       {next && <input type="hidden" name="next" value={next} />}
       <label className="flex flex-col gap-1">
-        <span className="font-mono text-xs">{t('email')}</span>
+        <span className="tabular-nums text-xs">{t('email')}</span>
         <input
           name="email"
           type="email"

@@ -36,7 +36,7 @@ export function TodayActions({ cards, onPinged, onOpen, onGhosted }: {
       <li key={a.id} data-testid="today-action" data-kind={a.kind} className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-2 last:border-b-0">
         <span>
           <span className="font-semibold">{t(`today_${a.kind}`)}</span>: {card.company} — {card.title}
-          {a.at && <span data-testid="today-when" suppressHydrationWarning className="font-mono text-xs font-semibold"> · {when(a.at)}</span>}
+          {a.at && <span data-testid="today-when" suppressHydrationWarning className="tabular-nums text-xs font-semibold"> · {when(a.at)}</span>}
         </span>
         {a.kind === 'interview' && card.meetingUrl && !card.feedbackDueAt && <JoinMeeting url={card.meetingUrl} label={t('joinMeeting')} testId="today-join" />}
         {(a.kind === 'ping' || a.kind === 'feedback') && (
@@ -59,7 +59,7 @@ export function TodayActions({ cards, onPinged, onOpen, onGhosted }: {
       {dueToday.length > 0 && <ul className="flex flex-col gap-2">{dueToday.map(item)}</ul>}
       {comingUp.length > 0 && (
         <>
-          <h3 className="mt-1 font-mono text-xs text-muted-foreground">{t('comingUp')}</h3>
+          <h3 className="mt-1 tabular-nums text-xs text-muted-foreground">{t('comingUp')}</h3>
           <ul data-testid="coming-up" className="flex flex-col gap-2">{comingUp.map(item)}</ul>
         </>
       )}

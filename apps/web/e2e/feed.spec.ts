@@ -107,3 +107,15 @@ test('details: required experience badge and copy description', async ({ context
   await detail.getByTestId('copy-description').click();
   await expect(detail.getByTestId('copy-description')).toContainText('Copied');
 });
+
+test('an empty feed says the filters hide matches and shows them in one click', async ({ context, page }) => {
+  const email = uniqueEmail('feed-filtered');
+  await loginAs(context, email);
+  const { title } = await seedMatch(email, { score: 75 });
+  await page.goto('/en/today');
+  await visible(page, 'filter-min-score').selectOption('90');
+  await expect(visible(page, 'feed-empty')).toHaveAttribute('data-reason', 'filters');
+  await expect(visible(page, 'feed-empty')).toContainText('Filters hide 1 job');
+  await visible(page, 'feed-empty-show-all').click();
+  await expect(visible(page, 'job-match').filter({ hasText: title })).toBeVisible();
+});

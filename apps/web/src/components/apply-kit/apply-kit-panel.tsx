@@ -232,7 +232,7 @@ export function ApplyKitPanel({ jobId, onApplied, hidePeopleSearch }: { jobId: s
         </button>
         {answers.map((a, i) => (
           <div key={`${i}-${a.question}`} data-testid="kit-answer" data-from-bank={a.fromBank} className="flex flex-col gap-2 rounded-xl border border-border bg-card/60 p-3">
-            <p className="text-sm font-semibold">{a.question}{a.fromBank && <span className="ml-2 font-mono text-[10px] text-muted-foreground">{t('fromBank')}</span>}</p>
+            <p className="text-sm font-semibold">{a.question}{a.fromBank && <span className="ml-2 tabular-nums text-[10px] text-muted-foreground">{t('fromBank')}</span>}</p>
             <textarea value={a.answer} onChange={(e) => setAnswers((list) => list.map((x, j) => (j === i ? { ...x, answer: e.target.value } : x)))} className={`${field} min-h-14`} aria-label={a.question} />
             <div className="flex flex-wrap items-center gap-2">
               <button type="button" data-testid="kit-copy-answer" onClick={() => void copy(`a${i}`, a.answer)} className={`${quiet} ${copied === `a${i}` ? 'border-brand/60 text-link' : ''}`}>

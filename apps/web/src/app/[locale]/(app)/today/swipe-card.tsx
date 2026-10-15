@@ -51,7 +51,7 @@ export function SwipeCard({ match, onAction, onApplied, kitOpen = false }: { mat
           {match.postings[0] && <SourceBadge sourceId={match.postings[0].sourceId} />}
         </p>
         {match.summary && <p data-testid="match-summary" className="line-clamp-2 text-sm">{match.summary}</p>}
-        <button type="button" className="self-start font-mono text-xs underline" onClick={() => setOpen((v) => !v)} aria-expanded={open}>
+        <button type="button" className="self-start tabular-nums text-xs underline" onClick={() => setOpen((v) => !v)} aria-expanded={open}>
           {open ? tf('lessDetails') : tf('moreDetails')}
         </button>
       </motion.article>

@@ -166,7 +166,7 @@ export function CvSection({
       </p>
       {cv && (
         <div className="flex flex-col gap-3">
-          <p className="font-mono text-xs text-muted-foreground">
+          <p className="tabular-nums text-xs text-muted-foreground">
             {cv.fileName}{' '}
             {cvLink && (
               <a

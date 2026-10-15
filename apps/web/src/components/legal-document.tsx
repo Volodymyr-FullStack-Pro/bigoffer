@@ -26,7 +26,7 @@ export async function LegalDocument({
       <article className="brutal flex flex-col gap-6 p-6">
         <header>
           <h1 className="font-display text-3xl font-semibold">{title}</h1>
-          <p className="mt-1 font-mono text-xs text-muted-foreground">
+          <p className="mt-1 tabular-nums text-xs text-muted-foreground">
             {t('updated', { date: LEGAL_UPDATED })}
           </p>
           <p className="mt-4">{intro}</p>
