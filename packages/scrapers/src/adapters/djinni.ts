@@ -1,4 +1,4 @@
-import { ENGLISH_TAG, englishLevelOf, kyivLocalDate, type RawJob, YEARS_TAG } from '@jp/core';
+import { ENGLISH_TAG, englishLevelOf, kyivLocalDate, type RawJob, type RemoteType, YEARS_TAG } from '@jp/core';
 import { extractJobPostings, type JobPostingLd, ldLocation, ldSalary } from '../jsonld';
 import { parseRss } from '../rss';
 import { isGoneError, type SourceAdapter } from '../types';
@@ -106,6 +106,34 @@ export function englishByJob(html: string): Map<string, string> {
   return out;
 }
 
+const FORMAT_LABELS: [RegExp, RemoteType][] = [
+  [/Тільки віддалено|Только удал[её]нно|Full Remote|Remote only/i, 'remote'],
+  [/Тільки офіс|Только офис|Office Work|Office only/i, 'office'],
+  [/Гібридний формат|Гибридный формат|Hybrid Remote|Hybrid/i, 'hybrid'],
+];
+
+/**
+ * The work format a listing card states per job: "Тільки віддалено", "Тільки офіс" or "Гібридний формат роботи".
+ * A card without a label offers several formats (the job page lists "Офіс, Віддалена робота, Гібридний формат"),
+ * remote among them, so it counts as remote. Keyed by job id.
+ */
+export function formatByJob(html: string): Map<string, RemoteType> {
+  const out = new Map<string, RemoteType>();
+  for (const part of html.split('id="job-item-').slice(1)) {
+    const id = /^(\d+)/.exec(part)?.[1];
+    if (!id) continue;
+    // The label sits in the card's meta line (location, experience, English), before the description excerpt;
+    // a card without that line says nothing about the format.
+    const start = part.indexOf('fw-medium d-flex');
+    if (start === -1 || start > 20_000) continue;
+    const end = part.indexOf('js-truncated-text', start);
+    const meta = part.slice(start, end === -1 ? start + 3_000 : Math.min(end, start + 3_000)).replace(/<[^>]+>/g, ' ');
+    const found = FORMAT_LABELS.find(([re]) => re.test(meta));
+    out.set(id, found ? found[1] : 'remote');
+  }
+  return out;
+}
+
 export const djinniAdapter: SourceAdapter = {
   id: 'djinni',
   async search(params, ctx) {
@@ -118,10 +146,18 @@ export const djinniAdapter: SourceAdapter = {
       const postings = extractJobPostings(html);
       if (postings.length === 0) break;
       const english = englishByJob(html);
+      const formats = formatByJob(html);
       for (const p of postings) {
         const job = toRawJob(p);
-        const level = job ? english.get(job.externalId) : undefined;
-        if (job) out.push(level ? { ...job, tags: [...(job.tags ?? []), `${ENGLISH_TAG}${level}`] } : job);
+        if (!job) continue;
+        const level = english.get(job.externalId);
+        const format = formats.get(job.externalId);
+        out.push({
+          ...job,
+          ...(level ? { tags: [...(job.tags ?? []), `${ENGLISH_TAG}${level}`] } : {}),
+          // The card's own label beats the JSON-LD (which marks only fully remote jobs) and any guess from the text.
+          ...(format ? { remoteHint: format } : {}),
+        });
       }
     }
     const known = new Set(out.map((j) => j.externalId));

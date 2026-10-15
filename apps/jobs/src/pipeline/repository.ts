@@ -162,7 +162,7 @@ async function findJobId(db: Db, job: NormalizedJob, companyId: string): Promise
 async function backfillPatch(db: Db, jobId: string, job: NormalizedJob) {
   const { data, error } = await db
     .from('jobs')
-    .select('description_text, salary_raw, salary_min_usd, salary_max_usd, location, remote_regions, tags')
+    .select('description_text, salary_raw, salary_min_usd, salary_max_usd, location, remote_type, remote_regions, tags')
     .eq('id', jobId)
     .single();
   if (error) throw error;
@@ -172,9 +172,15 @@ async function backfillPatch(db: Db, jobId: string, job: NormalizedJob) {
     salary_min_usd?: number | null;
     salary_max_usd?: number | null;
     location?: string;
+    remote_type?: string;
     remote_regions?: string[];
     tags?: string[];
   } = {};
+  // The board stated the format (e.g. Djinni's card label): it replaces a format guessed from the text.
+  // Only towards remote (or over unknown), so two boards that disagree cannot flip it back and forth.
+  if (job.remoteFromBoard && job.remoteType !== data.remote_type && (job.remoteType === 'remote' || data.remote_type === 'unknown')) {
+    patch.remote_type = job.remoteType;
+  }
   if (job.descriptionText.length > (data.description_text ?? '').length) patch.description_text = job.descriptionText;
   const hasSalary = data.salary_min_usd != null || data.salary_max_usd != null;
   if (!hasSalary && (job.salaryMinUsd != null || job.salaryMaxUsd != null)) {

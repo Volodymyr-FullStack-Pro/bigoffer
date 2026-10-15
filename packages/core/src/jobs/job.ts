@@ -72,6 +72,8 @@ export type NormalizedJob = {
   descriptionText: string;
   location: string | null;
   remoteType: RemoteType;
+  /** True when the board itself stated the work format (not guessed from the text): it may correct a stored guess. */
+  remoteFromBoard: boolean;
   seniority: Seniority | null;
   salaryRaw: string | null;
   salaryMinUsd: number | null;
@@ -106,6 +108,7 @@ export async function normalizeJob(raw: RawJob): Promise<NormalizedJob | null> {
     descriptionText,
     location,
     remoteType,
+    remoteFromBoard: r.remoteHint !== undefined && r.remoteHint !== 'unknown',
     seniority: detectSeniority(r.title),
     salaryRaw: r.salaryRaw,
     salaryMinUsd: salary?.minUsd ?? null,
