@@ -39,10 +39,15 @@ describe('evaluateHealth', () => {
     expect(issues).toEqual(['dou:stopped', 'djinni:empty', 'robotaua:stopped', 'robotaua:blocked']);
   });
 
-  it('flags fields that went missing (the DOU salary that landed in the location)', () => {
-    const issues = evaluateHealth([healthy('dou', { pct_salary: 0, pct_location: 40, pct_company: 50 })], 0, now);
-    expect(issues.map((i) => i.key)).toEqual(['dou:company', 'dou:location', 'dou:salary']);
-    expect(issues[2]!.text).toBe('dou: salary on 0% of new jobs (expected ≥ 2%)');
+  it('flags fields that went missing (a salary that landed in the location)', () => {
+    const issues = evaluateHealth([healthy('robotaua', { pct_salary: 0, pct_location: 40, pct_company: 50 })], 0, now);
+    expect(issues.map((i) => i.key)).toEqual(['robotaua:company', 'robotaua:location', 'robotaua:salary']);
+    expect(issues[2]!.text).toBe('robotaua: salary on 0% of new jobs (expected ≥ 15%)');
+  });
+
+  it('does not expect salaries from DOU and Djinni, which rarely publish them', () => {
+    const issues = evaluateHealth([healthy('dou', { pct_salary: 0 }), healthy('djinni', { pct_salary: 0 })], 0, now);
+    expect(issues).toEqual([]);
   });
 
   it('ignores shares on a quiet day and flags a stuck enrichment', () => {

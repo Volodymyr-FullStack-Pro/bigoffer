@@ -22,8 +22,9 @@ export type HealthIssue = { key: string; text: string };
 /** What a healthy board looks like (measured on production, Oct 2026), with room for normal variation. */
 const EXPECT: Record<string, { maxRunGapHours: number; location: number; salary: number }> = {
   // DOU postings rarely state pay (2–5% of new ones): only an empty field means a broken parser.
-  dou: { maxRunGapHours: 2, location: 80, salary: 2 },
-  djinni: { maxRunGapHours: 3, location: 50, salary: 5 },
+  // DOU and Djinni rarely publish amounts (Djinni shows only a $–$$$$ level): no salary expectation there.
+  dou: { maxRunGapHours: 2, location: 80, salary: 0 },
+  djinni: { maxRunGapHours: 3, location: 50, salary: 0 },
   robotaua: { maxRunGapHours: 3, location: 80, salary: 15 },
 };
 const DEFAULT_EXPECT = { maxRunGapHours: 3, location: 50, salary: 0 };

@@ -1,4 +1,4 @@
-import { alertLabels, alertMessage, ensureBotCommands, detectDomains, detectPerks, digestGenieLines, digestMessage, streaks, inQuietHours, overflowMessage, sourceInfo, toTgLocale, type AlertJob, type BotApi, type BotResult, type TgLocale } from '@jp/core';
+import { alertLabels, errorText, alertMessage, ensureBotCommands, detectDomains, detectPerks, digestGenieLines, digestMessage, streaks, inQuietHours, overflowMessage, sourceInfo, toTgLocale, type AlertJob, type BotApi, type BotResult, type TgLocale } from '@jp/core';
 import type { Db } from '../db';
 
 /** `onlyUserIds` restricts the run to those users (tests; never set in production). */
@@ -131,7 +131,7 @@ async function markNotified(db: Db, ids: string[], now: Date): Promise<boolean> 
 }
 
 function logFailure(what: string, err: unknown): void {
-  console.error(`[telegram] ${what} failed`, err instanceof Error ? err.message : String(err));
+  console.error(`[telegram] ${what} failed`, errorText(err));
 }
 
 export async function sendAlerts(db: Db, deps: TelegramDeps): Promise<TelegramResult> {
