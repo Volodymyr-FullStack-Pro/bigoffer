@@ -10,7 +10,7 @@ const CHANNEL: Record<MessageFormat, 'linkedin' | 'telegram' | 'email'> = { link
 
 type Kind = 'intro' | 'follow_up' | 'reply';
 type Lang = 'en' | 'uk' | 'ru' | 'auto';
-export type RecruiterMessageHandle = { /** Switch to a reply and write it right away. */ writeReply: () => void };
+export type RecruiterMessageHandle = { /** Switch to a reply and write it right away, optionally with what it must say. */ writeReply: (note?: string) => void };
 
 export function RecruiterMessage({
   applicationId,
@@ -55,12 +55,12 @@ export function RecruiterMessage({
     }).catch(() => undefined);
   }, [applicationId, version, defaultLang]);
 
-  const generate = async (k: Kind, l: Lang) => {
+  const generate = async (k: Kind, l: Lang, n: string = note) => {
     setBusy(true);
     setError(null);
     setSent(false);
     try {
-      const res = await generateRecruiterMessage(applicationId, { format: fmt, kind: k, lang: l, tone: 'default', note: note.trim() || undefined });
+      const res = await generateRecruiterMessage(applicationId, { format: fmt, kind: k, lang: l, tone: 'default', note: n.trim() || undefined });
       if (res.ok) {
         setSubject(res.subject);
         setBody(res.body);
@@ -74,11 +74,12 @@ export function RecruiterMessage({
   };
 
   useImperativeHandle(ref, () => ({
-    writeReply: () => {
+    writeReply: (withNote?: string) => {
       setKind('reply');
       setLang('auto');
+      if (withNote !== undefined) setNote(withNote);
       section.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      void generate('reply', 'auto');
+      void generate('reply', 'auto', withNote ?? note);
     },
   }));
 

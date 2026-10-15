@@ -73,6 +73,7 @@ export function Board({ columns, cards: initial, labels: initialLabels, rules, n
             nextActionAt: c.nextActionAt ? new Date(c.nextActionAt) : null,
             lastMessage: c.lastMessage ? { direction: c.lastMessage.direction, at: new Date(c.lastMessage.at) } : null,
             replyKind: c.replyKind,
+            feedbackDueAt: c.feedbackDueAt ? new Date(c.feedbackDueAt) : null,
           },
           now,
           rules,
@@ -216,7 +217,7 @@ export function Board({ columns, cards: initial, labels: initialLabels, rules, n
           } catch {
             ok = false;
           }
-          if (ok) patchLocal(id, { lastActivityAt: new Date().toISOString(), followUpCount: (cards.find((c) => c.id === id)?.followUpCount ?? 0) + 1 });
+          if (ok) patchLocal(id, { lastActivityAt: new Date().toISOString(), followUpCount: (cards.find((c) => c.id === id)?.followUpCount ?? 0) + 1, feedbackDueAt: null });
           else show({ message: t('moveError'), tone: 'error' });
         }}
         onGhosted={(id) => lost && requestMove(id, lost.id, endRank(lost.id, id), ['no_feedback'], 'ghosted')}

@@ -16,10 +16,13 @@ import { ReplyInbox, type RejectionSuggestion } from './reply-inbox';
 import { useModalDialog } from './use-modal-dialog';
 import { fromZonedInput, toZonedInput } from './zoned-input';
 import { createLabel, getApplicationEvents, markPinged, setApplicationLabel, updateApplication } from './actions';
+import { FeedbackWait } from './feedback-wait';
 import type { BoardCardView, BoardColumn, BoardLabel } from './board-types';
 
 /** Cards that need something show what, in the card's urgency colour. */
 const PREP_KEYS: ReadonlySet<string> = new Set(PREP_COLUMNS);
+/** Columns where the card may wait for the company's verdict: after an interview or a test task sent. */
+const WAIT_KEYS: ReadonlySet<string> = new Set(['interview', 'test_task']);
 
 const NEXT_STEP: Record<string, string> = {
   interview_soon: '#F472B6',
@@ -28,6 +31,7 @@ const NEXT_STEP: Record<string, string> = {
   overdue: '#EF4444',
   ghosting: '#71717A',
   ping: '#F59E0B',
+  feedback_due: '#F59E0B',
 };
 
 /** History label key: an inbound message reads "reply received", not "message sent". */
@@ -163,6 +167,18 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, companyC
           )}
         </p>
       )}
+      {WAIT_KEYS.has(columns.find((c) => c.id === card.columnId)?.key ?? '') && card.outcome === 'open' && (
+        <FeedbackWait
+          applicationId={card.id}
+          dueAt={card.feedbackDueAt}
+          timeZone={timeZone}
+          onChanged={(patch) => {
+            onChanged(patch);
+            if (patch.nextActionAt !== undefined) setNext(toZonedInput(patch.nextActionAt, timeZone));
+          }}
+          onThanks={() => writer.current?.writeReply(t('thanksNote'))}
+        />
+      )}
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
         {card.meetingUrl && <JoinMeeting url={card.meetingUrl} label={t('joinMeeting')} testId="panel-join" />}
         {card.url && <a href={card.url} target="_blank" rel="noopener" className="font-mono text-sm underline">{t('openOriginal')} ↗</a>}
@@ -224,7 +240,7 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, companyC
         </select>
       </label>
       <div className="flex flex-wrap gap-2">
-        <button type="button" data-testid="panel-pinged" onClick={async () => { if (await attempt(() => markPinged(card.id))) onChanged({ followUpCount: card.followUpCount + 1, lastActivityAt: new Date().toISOString() }); }} className="brutal brutal-press px-3 py-1 text-sm font-semibold">{t('actionPinged')}</button>
+        <button type="button" data-testid="panel-pinged" onClick={async () => { if (await attempt(() => markPinged(card.id))) onChanged({ followUpCount: card.followUpCount + 1, lastActivityAt: new Date().toISOString(), feedbackDueAt: null }); }} className="brutal brutal-press px-3 py-1 text-sm font-semibold">{t('actionPinged')}</button>
       </div>
       <fieldset className="flex flex-col gap-2">
         <legend className="font-mono text-xs">{t('labels')}</legend>

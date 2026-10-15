@@ -376,3 +376,25 @@ test("an interview tomorrow is listed as coming up, not as today's task", async 
   await expect(visible(page, 'today-title')).toHaveText('Nothing due today ✓');
   await expect(visible(page, 'coming-up')).toContainText(title);
 });
+
+test('after an interview the card waits for feedback calmly, then asks for a reminder', async ({ context, page }) => {
+  const email = uniqueEmail('board-feedback');
+  await loginAs(context, email);
+  const { title } = await seedApplication(email, { column: 'interview', appliedDaysAgo: 6 });
+  await page.goto('/en/board');
+  await card(page, title).click();
+  await visible(page, 'feedback-start').click();
+  await visible(page, 'feedback-preset').and(page.locator('[data-days="14"]')).click();
+  await expect(visible(page, 'feedback-wait')).toContainText('14 days left');
+  await expect(card(page, title).getByTestId('card-urgency')).toHaveAttribute('data-urgency', 'awaiting_feedback');
+  await expect(card(page, title).getByTestId('card-urgency')).toContainText('Feedback · 14 days');
+  await expect(visible(page, 'feedback-thanks')).toBeVisible();
+  await page.reload();
+  await expect(card(page, title).getByTestId('card-urgency')).toHaveAttribute('data-urgency', 'awaiting_feedback');
+  // Their answer ends the wait.
+  await card(page, title).click();
+  await visible(page, 'reply-body').fill('Thank you! We would like to invite you to the technical interview.');
+  await visible(page, 'reply-kind').and(page.locator('[data-kind="interview_invite"]')).click();
+  await visible(page, 'reply-save').click();
+  await expect(visible(page, 'feedback-start')).toBeVisible();
+});

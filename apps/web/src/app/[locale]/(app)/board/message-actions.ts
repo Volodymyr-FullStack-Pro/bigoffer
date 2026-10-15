@@ -141,13 +141,13 @@ export async function suggestReplyKind(
 export async function logReply(
   applicationId: string,
   reply: { channel: ReplyChannel; body: string; kind: ReplyKind; summary?: string | null; interviewAt?: string | null; author?: string | null; link?: string | null },
-): Promise<{ firstResponseAt: string | null; lastActivityAt: string | null; nextActionAt: string | null; contactName: string | null; meetingUrl: string | null } | null> {
+): Promise<{ firstResponseAt: string | null; lastActivityAt: string | null; nextActionAt: string | null; contactName: string | null; meetingUrl: string | null; feedbackDueAt: string | null } | null> {
   const userId = await getUserId();
   const text = reply.body.trim().slice(0, 10_000);
   const interviewAt = reply.interviewAt && !Number.isNaN(Date.parse(reply.interviewAt)) ? new Date(reply.interviewAt).toISOString() : null;
   if (!userId || !UUID.test(applicationId) || !REPLY_CHANNELS.includes(reply.channel) || !isReplyKind(reply.kind) || !text) return null;
   const supabase = await createClient();
-  const { data: app } = await supabase.from('applications').select('first_response_at, last_activity_at, next_action_at, contact').eq('id', applicationId).maybeSingle();
+  const { data: app } = await supabase.from('applications').select('first_response_at, last_activity_at, next_action_at, feedback_due_at, contact').eq('id', applicationId).maybeSingle();
   if (!app) return null;
   const now = new Date().toISOString();
   const real = reply.kind !== 'auto_reply';
@@ -165,6 +165,8 @@ export async function logReply(
     nextActionAt: interviewAt ?? app.next_action_at,
     contactName: knownName ?? author,
     meetingUrl: meet,
+    // Their answer ends the wait for feedback; an automatic acknowledgement does not.
+    feedbackDueAt: real ? null : app.feedback_due_at,
   };
   const { data, error: uErr } = await supabase
     .from('applications')
@@ -173,6 +175,7 @@ export async function logReply(
       first_response_at: next.firstResponseAt,
       last_activity_at: next.lastActivityAt,
       next_action_at: next.nextActionAt,
+      feedback_due_at: next.feedbackDueAt,
       ...(contactChanged ? { contact: { ...(contact as Record<string, Json>), ...(knownName ?? author ? { name: knownName ?? author } : {}), ...(meet ? { meet } : {}) } } : {}),
     })
     .eq('id', applicationId)
