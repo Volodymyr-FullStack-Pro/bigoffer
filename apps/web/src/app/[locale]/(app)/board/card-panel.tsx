@@ -76,7 +76,10 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, companyC
   const header = useRef<HTMLDivElement>(null);
   const [section, setSection] = useState<Section>('overview');
   const offset = () => (header.current?.offsetHeight ?? 0) + 8;
-  const jump = (to: Section) => {
+  // The scroll a chip click causes must not re-pick the section (a short card may hit the bottom first).
+  const jumpedAt = useRef(0);
+  const jump = (to: Section, at: number) => {
+    jumpedAt.current = at;
     const el = anchors.current[to];
     const box = dialogRef.current;
     if (el && box) {
@@ -86,9 +89,11 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, companyC
     }
     setSection(to);
   };
-  const spy = () => {
+  const spy = (at: number) => {
     const box = dialogRef.current;
-    if (!box) return;
+    if (!box || at - jumpedAt.current < 300) return;
+    // At the very bottom the last section is the one being read, even if it is too short to reach the header.
+    if (box.scrollTop > 0 && box.scrollTop + box.clientHeight >= box.scrollHeight - 4) return setSection(SECTIONS[SECTIONS.length - 1]!);
     const top = box.getBoundingClientRect().top + offset();
     let current: Section = 'overview';
     for (const s of SECTIONS) {
@@ -149,7 +154,7 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, companyC
       // that ends outside does not).
       onPointerDown={(e) => { pressedOutside.current = e.target === e.currentTarget; }}
       onClick={(e) => { if (pressedOutside.current && e.target === e.currentTarget) onClose(); pressedOutside.current = false; }}
-      onScroll={spy}
+      onScroll={(e) => spy(e.timeStamp)}
       aria-labelledby="panel-title" data-testid="card-panel" className="fixed inset-y-0 right-0 left-auto m-0 h-auto max-h-none w-full max-w-md overflow-y-auto border-l border-border bg-background p-0 text-foreground shadow-2xl backdrop:bg-black/50">
       <div className="flex min-h-full flex-col gap-4 p-5 pb-24">
       <div ref={header} className="glass sticky top-0 z-10 -mx-5 -mt-5 flex flex-col gap-2 border-b border-border px-5 pt-4 pb-2">
@@ -172,7 +177,7 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, companyC
                 data-testid="panel-nav"
                 data-section={s}
                 aria-current={section === s ? 'true' : undefined}
-                onClick={() => jump(s)}
+                onClick={(e) => jump(s, e.timeStamp)}
                 className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold transition-colors ${section === s ? 'bg-foreground text-background' : 'text-muted-foreground hover:bg-muted'}`}
               >
                 {t(`section_${s}`)}
@@ -183,7 +188,7 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, companyC
             <button
               type="button"
               data-testid="panel-primary"
-              onClick={() => { jump('conversation'); writer.current?.writeReply(); }}
+              onClick={(e) => { jump('conversation', e.timeStamp); writer.current?.writeReply(); }}
               className="brutal brutal-press shrink-0 bg-ai px-3 py-1 text-xs font-semibold text-ai-foreground"
             >
               <PenLine aria-hidden className="mr-1 inline size-3.5 -translate-y-px" />

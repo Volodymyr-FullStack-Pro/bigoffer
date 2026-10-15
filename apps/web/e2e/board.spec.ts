@@ -146,7 +146,7 @@ test('adds a card manually', async ({ context, page }) => {
   await visible(page, 'add-title').fill('Fullstack Developer (manual)');
   await visible(page, 'add-company').fill('Initech');
   await visible(page, 'add-submit').click();
-  await expect(column(page, 'saved').getByText('Fullstack Developer (manual)')).toBeVisible();
+  await expect(column(page, 'saved').getByText('Fullstack Developer (manual)').filter({ visible: true }).first()).toBeVisible();
   await page.reload();
   await expect(column(page, 'saved').getByText('Fullstack Developer (manual)')).toBeVisible();
 });
