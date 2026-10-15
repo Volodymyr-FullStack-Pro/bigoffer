@@ -293,14 +293,14 @@ export function MatchDetail({
         {match.onBoard !== null && (
           <p
             data-testid="on-board"
-            className="self-start rounded-full bg-brand/15 px-2.5 py-0.5 text-xs font-medium text-link"
+            className="self-start rounded-full bg-brand/25 ring-1 ring-inset ring-brand/45 px-2.5 py-0.5 text-xs font-semibold text-link"
           >
             ✓ {tf('onBoard', { column: match.onBoard || '—' })}
             {match.onBoardLeft.length > 0 && <> · {tf('onBoardLeft', { platforms: match.onBoardLeft.map((s) => sourceInfo(s)?.name ?? s).join(', ') })}</>}
           </p>
         )}
         {match.onBoard === null && match.companyOnBoard && (
-          <p data-testid="company-on-board" className="self-start rounded-full bg-warning/15 px-2.5 py-0.5 text-xs font-medium text-warning">
+          <p data-testid="company-on-board" className="self-start rounded-full bg-warning/25 ring-1 ring-inset ring-warning/45 px-2.5 py-0.5 text-xs font-semibold text-warning">
             ⚑ {tf('companyOnBoard', { title: match.companyOnBoard.title, column: match.companyOnBoard.column || '—' })}
           </p>
         )}

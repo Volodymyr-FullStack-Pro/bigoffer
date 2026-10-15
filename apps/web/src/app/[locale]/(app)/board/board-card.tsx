@@ -82,7 +82,8 @@ export function BoardCardItem({ card, labels, labelName, now, timeZone, onOpen }
           {card.urgency === 'awaiting_feedback' ? t('feedbackBadge', { count: daysLeft }) : t('urgency_feedback_due')}
         </StatusBadge>
       )}
-      {!waiting && reply && card.replyKind && (
+      {/* In the lost column the reasons below already say it was a rejection. */}
+      {!waiting && reply && card.replyKind && !(card.replyKind === 'rejection' && card.outcome !== 'open') && (
         <StatusBadge tone={reply.tone} icon={reply.icon} data-testid="card-reply">
           {t(`reply_${card.replyKind}` as never)}
         </StatusBadge>
