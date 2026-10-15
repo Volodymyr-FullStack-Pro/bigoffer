@@ -21,6 +21,8 @@ export type BoardCard = {
   meetingUrl: string | null;
   appliedAt: string | null;
   nextActionAt: string | null;
+  /** After an interview: when the company promised feedback; null when not waiting. */
+  feedbackDueAt: string | null;
   firstResponseAt: string | null;
   lastActivityAt: string | null;
   followUpCount: number;

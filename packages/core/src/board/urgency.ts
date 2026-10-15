@@ -1,6 +1,6 @@
 import { businessDaysBetween } from './business-days';
 
-export const URGENCIES = ['interview_soon', 'your_move', 'step_passed', 'overdue', 'ghosting', 'ping', 'fresh', 'none'] as const;
+export const URGENCIES = ['interview_soon', 'your_move', 'step_passed', 'feedback_due', 'overdue', 'ghosting', 'ping', 'awaiting_feedback', 'fresh', 'none'] as const;
 export type Urgency = (typeof URGENCIES)[number];
 
 export type UrgencyInput = {
@@ -14,6 +14,8 @@ export type UrgencyInput = {
   lastMessage?: { direction: 'in' | 'out'; at: Date } | null;
   /** What the latest recruiter reply was (auto_reply, question, interview_invite, test_task, offer, …). */
   replyKind?: string | null;
+  /** After an interview: when the company promised feedback (cleared by their reply or a reminder). */
+  feedbackDueAt?: Date | null;
 };
 
 /** Replies that wait for the candidate: an answer, a booking, a test, a decision. */
@@ -29,6 +31,7 @@ const DAY = 24 * HOUR;
  * What a card needs now, most pressing first:
  * interview_soon — the next step (interview, deadline) is within 48 hours;
  * your_move — the company answered and waits for the candidate (question, invite to book, test, offer);
+ * awaiting_feedback / feedback_due — after an interview, waiting calmly until the promised feedback date, then remind;
  * step_passed — the planned step is over and nothing was logged since: update the status;
  * ping / overdue / ghosting — waiting on the company for too long (follow-up rules, business days).
  * An automatic acknowledgement is not a reply: the follow-up clock keeps running.
@@ -38,6 +41,11 @@ export function applicationUrgency(a: UrgencyInput, now: Date, rules: FollowUpRu
   if (a.nextActionAt) {
     const until = a.nextActionAt.getTime() - now.getTime();
     if (until >= 0 && until <= 48 * HOUR) return 'interview_soon';
+  }
+  // The interview is behind: no "your move" for its invite and no ping clock until the promised date.
+  if (a.feedbackDueAt) return a.feedbackDueAt.getTime() > now.getTime() ? 'awaiting_feedback' : 'feedback_due';
+  if (a.nextActionAt) {
+    const until = a.nextActionAt.getTime() - now.getTime();
     const loggedSince = a.lastActivityAt && a.lastActivityAt > a.nextActionAt;
     if (until < -HOUR && !loggedSince) return 'step_passed';
   }
@@ -65,9 +73,9 @@ export function applicationUrgency(a: UrgencyInput, now: Date, rules: FollowUpRu
   return 'fresh';
 }
 
-export const NEEDS_ACTION: ReadonlySet<Urgency> = new Set(['interview_soon', 'your_move', 'step_passed', 'overdue', 'ghosting', 'ping']);
+export const NEEDS_ACTION: ReadonlySet<Urgency> = new Set(['interview_soon', 'your_move', 'step_passed', 'feedback_due', 'overdue', 'ghosting', 'ping']);
 
-const PRIORITY: Record<Urgency, number> = { interview_soon: 0, your_move: 1, step_passed: 2, overdue: 3, ghosting: 4, ping: 5, fresh: 6, none: 7 };
+const PRIORITY: Record<Urgency, number> = { interview_soon: 0, your_move: 1, step_passed: 2, feedback_due: 3, overdue: 4, ghosting: 5, ping: 6, awaiting_feedback: 7, fresh: 8, none: 9 };
 const byRank = (a: { rank: string }, b: { rank: string }) => (a.rank < b.rank ? -1 : a.rank > b.rank ? 1 : 0);
 
 export function smartSort<T extends { rank: string; urgency: Urgency }>(cards: T[]): T[] {
@@ -78,7 +86,7 @@ export function columnCounters(cards: { urgency: Urgency }[]): { total: number; 
   return { total: cards.length, needsAction: cards.filter((c) => NEEDS_ACTION.has(c.urgency)).length };
 }
 
-export type TodayAction = { id: string; kind: 'interview' | 'answer' | 'status' | 'ping' | 'ghosting'; urgency: Urgency; at: Date | null };
+export type TodayAction = { id: string; kind: 'interview' | 'answer' | 'status' | 'feedback' | 'ping' | 'ghosting'; urgency: Urgency; at: Date | null };
 
 export function todayActions(cards: { id: string; urgency: Urgency; nextActionAt: Date | null }[]): TodayAction[] {
   const interviews = cards
@@ -87,11 +95,12 @@ export function todayActions(cards: { id: string; urgency: Urgency; nextActionAt
     .map((c): TodayAction => ({ id: c.id, kind: 'interview', urgency: c.urgency, at: c.nextActionAt }));
   const answers = cards.filter((c) => c.urgency === 'your_move').map((c): TodayAction => ({ id: c.id, kind: 'answer', urgency: c.urgency, at: null }));
   const statuses = cards.filter((c) => c.urgency === 'step_passed').map((c): TodayAction => ({ id: c.id, kind: 'status', urgency: c.urgency, at: c.nextActionAt }));
+  const feedback = cards.filter((c) => c.urgency === 'feedback_due').map((c): TodayAction => ({ id: c.id, kind: 'feedback', urgency: c.urgency, at: null }));
   const pings = [...cards.filter((c) => c.urgency === 'overdue'), ...cards.filter((c) => c.urgency === 'ping')].map(
     (c): TodayAction => ({ id: c.id, kind: 'ping', urgency: c.urgency, at: null }),
   );
   const ghosts = cards
     .filter((c) => c.urgency === 'ghosting')
     .map((c): TodayAction => ({ id: c.id, kind: 'ghosting', urgency: c.urgency, at: null }));
-  return [...interviews, ...answers, ...statuses, ...pings, ...ghosts];
+  return [...interviews, ...answers, ...statuses, ...feedback, ...pings, ...ghosts];
 }
