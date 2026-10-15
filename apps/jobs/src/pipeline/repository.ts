@@ -121,6 +121,19 @@ export async function deferQuery(db: Db, queryId: string, until: string) {
   if (error) throw error;
 }
 
+/** New-job counts of a query's latest successful runs, newest first. */
+export async function recentInserted(db: Db, queryId: string, limit: number): Promise<number[]> {
+  const { data, error } = await db
+    .from('source_runs')
+    .select('inserted')
+    .eq('query_id', queryId)
+    .eq('status', 'ok')
+    .order('started_at', { ascending: false })
+    .limit(limit);
+  if (error) throw error;
+  return data.map((r) => r.inserted ?? 0);
+}
+
 export async function markQueryRun(db: Db, queryId: string, now: Date, intervalMinutes: number) {
   const next = new Date(now.getTime() + Math.max(intervalMinutes, 15) * 60 * 1000);
   const { error } = await db

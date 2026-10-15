@@ -1,4 +1,4 @@
-import { normalizeJob, type NormalizedJob, type ScorableJob } from '@jp/core';
+import { DEFAULT_MAX_BACKOFF, errorText, MAX_BACKOFF, normalizeJob, type NormalizedJob, queryBackoff, type ScorableJob } from '@jp/core';
 import { type AdapterContext, SourceBlockedError, type SourceAdapter } from '@jp/scrapers';
 import type { Db } from '../db';
 import { matchJobs } from './match';
@@ -11,6 +11,7 @@ import {
   DUE_WINDOW_MS,
   getScorableJobs,
   markQueryRun,
+  recentInserted,
   saveJob,
   startRun,
   updateSourceHealth,
@@ -102,7 +103,7 @@ export async function runQuery(deps: RunQueryDeps, queryId: string): Promise<Run
           status: 'error',
           found: 0,
           inserted,
-          error: err instanceof Error ? err.message : String(err),
+          error: errorText(err),
         });
         await markQueryRun(db, queryId, now, source.min_interval_minutes);
       } catch {
@@ -113,13 +114,15 @@ export async function runQuery(deps: RunQueryDeps, queryId: string): Promise<Run
 
     // Bookkeeping after a successful fetch lives outside the try so its failure can't turn an 'ok' run into 'error'.
     await finishRun(db, runId, { status: 'ok', found, inserted });
+    // Synonym searches that keep returning the same postings are checked less often (see queryBackoff).
+    const backoff = queryBackoff(await recentInserted(db, queryId, 6), MAX_BACKOFF[source.id] ?? DEFAULT_MAX_BACKOFF);
     const { alert } = await updateSourceHealth(
       db,
       source,
       found === 0 ? 'empty' : 'ok',
       now,
     );
-    await markQueryRun(db, queryId, now, source.min_interval_minutes);
+    await markQueryRun(db, queryId, now, source.min_interval_minutes * backoff);
     return { status: 'ok', found, inserted, matched, alert };
   } finally {
     await ctx.dispose?.().catch((e: unknown) => console.error('dispose failed', e));
