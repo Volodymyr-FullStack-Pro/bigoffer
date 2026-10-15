@@ -389,6 +389,8 @@ test('after an interview the card waits for feedback calmly, then asks for a rem
   await expect(card(page, title).getByTestId('card-urgency')).toHaveAttribute('data-urgency', 'awaiting_feedback');
   await expect(card(page, title).getByTestId('card-urgency')).toContainText('Feedback · 14 days');
   await expect(visible(page, 'feedback-thanks')).toBeVisible();
+  // The orange wait replaces the invite's badge.
+  await expect(card(page, title).getByTestId('card-reply')).toHaveCount(0);
   await page.reload();
   await expect(card(page, title).getByTestId('card-urgency')).toHaveAttribute('data-urgency', 'awaiting_feedback');
   // Their answer ends the wait.
