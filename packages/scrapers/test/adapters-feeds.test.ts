@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { normalizeJob } from '@jp/core';
 import { describe, expect, it } from 'vitest';
-import { djinniAdapter } from '../src/adapters/djinni';
+import { djinniAdapter, formatByJob } from '../src/adapters/djinni';
 import { douAdapter, splitDouTitle } from '../src/adapters/dou';
 import { fakeContext } from './fake-context';
 
@@ -58,6 +58,17 @@ describe('djinniAdapter', () => {
     expect(jobs).toHaveLength(3);
     expect(jobs[0]!.company).not.toBe('');
     await expectNormalizable(jobs);
+  });
+
+  it('reads the work format from each listing card; a card without a label offers remote too', () => {
+    const formats = formatByJob(fixture('djinni-list-formats.html'));
+    expect(Object.fromEntries(formats)).toEqual({
+      '853476': 'remote', // "Тільки віддалено"
+      '720738': 'office', // "Тільки офіс"
+      '849647': 'hybrid', // "Гібридний формат роботи"
+      '853424': 'remote', // no label: the page says "Офіс, Віддалена робота, Гібридний формат роботи"
+    });
+    expect(formatByJob('<div id="job-item-1">no meta line</div>').size).toBe(0);
   });
 
   it('adds recent feed postings the pages missed, read from their own page', async () => {
