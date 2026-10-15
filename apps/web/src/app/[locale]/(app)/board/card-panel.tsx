@@ -77,8 +77,13 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, companyC
   const [section, setSection] = useState<Section>('overview');
   const offset = () => (header.current?.offsetHeight ?? 0) + 8;
   const jump = (to: Section) => {
-    // scroll-margin on the anchors keeps the section clear of the pinned header.
-    anchors.current[to]?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const el = anchors.current[to];
+    const box = dialogRef.current;
+    if (el && box) {
+      // Measured against the panel itself (not offsetTop), and instant: a smooth scroll can be cut short by late content.
+      const top = box.scrollTop + el.getBoundingClientRect().top - box.getBoundingClientRect().top - offset();
+      box.scrollTo({ top: Math.max(0, top) });
+    }
     setSection(to);
   };
   const spy = () => {
@@ -145,8 +150,8 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, companyC
       onPointerDown={(e) => { pressedOutside.current = e.target === e.currentTarget; }}
       onClick={(e) => { if (pressedOutside.current && e.target === e.currentTarget) onClose(); pressedOutside.current = false; }}
       onScroll={spy}
-      aria-labelledby="panel-title" data-testid="card-panel" className="fixed inset-y-0 right-0 left-auto m-0 h-dvh max-h-none w-full max-w-md overflow-y-auto border-l border-border bg-background p-0 text-foreground shadow-2xl backdrop:bg-black/50">
-      <div className="flex min-h-full flex-col gap-4 p-5">
+      aria-labelledby="panel-title" data-testid="card-panel" className="fixed inset-y-0 right-0 left-auto m-0 h-auto max-h-none w-full max-w-md overflow-y-auto border-l border-border bg-background p-0 text-foreground shadow-2xl backdrop:bg-black/50">
+      <div className="flex min-h-full flex-col gap-4 p-5 pb-24">
       <div ref={header} className="glass sticky top-0 z-10 -mx-5 -mt-5 flex flex-col gap-2 border-b border-border px-5 pt-4 pb-2">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">

@@ -422,5 +422,7 @@ test('a long column folds its quiet cards; the card panel has section navigation
   await card(page, titles[13]!).click();
   await visible(page, 'panel-nav').and(page.locator('[data-section="history"]')).click();
   await expect(visible(page, 'panel-nav').and(page.locator('[data-section="history"]'))).toHaveAttribute('aria-current', 'true');
-  await expect(visible(page, 'panel-history')).toBeInViewport({ timeout: 10_000 });
+  // The panel scrolled down to the section (late-loading parts above can still shift it a little).
+  await expect.poll(() => page.getByTestId('card-panel').evaluate((el) => el.scrollTop), { timeout: 10_000 }).toBeGreaterThan(200);
+  await expect(visible(page, 'panel-history')).toBeInViewport({ ratio: 0.5 });
 });
