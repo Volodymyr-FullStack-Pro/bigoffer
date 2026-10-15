@@ -1,5 +1,6 @@
 'use client';
 
+import { GraduationCap, PenLine } from 'lucide-react';
 import { isLocale, type Locale } from '@jp/core';
 import { useFormatter, useLocale, useNow, useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
@@ -75,19 +76,29 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, companyC
   const header = useRef<HTMLDivElement>(null);
   const [section, setSection] = useState<Section>('overview');
   const offset = () => (header.current?.offsetHeight ?? 0) + 8;
-  const jump = (to: Section) => {
+  // The scroll a chip click causes must not re-pick the section (a short card may hit the bottom first).
+  const jumpedAt = useRef(0);
+  const jump = (to: Section, at: number) => {
+    jumpedAt.current = at;
     const el = anchors.current[to];
     const box = dialogRef.current;
-    if (el && box) box.scrollTo({ top: Math.max(0, el.offsetTop - offset()), behavior: 'smooth' });
+    if (el && box) {
+      // Measured against the panel itself (not offsetTop), and instant: a smooth scroll can be cut short by late content.
+      const top = box.scrollTop + el.getBoundingClientRect().top - box.getBoundingClientRect().top - offset();
+      box.scrollTo({ top: Math.max(0, top) });
+    }
     setSection(to);
   };
-  const spy = () => {
+  const spy = (at: number) => {
     const box = dialogRef.current;
-    if (!box) return;
+    if (!box || at - jumpedAt.current < 300) return;
+    // At the very bottom the last section is the one being read, even if it is too short to reach the header.
+    if (box.scrollTop > 0 && box.scrollTop + box.clientHeight >= box.scrollHeight - 4) return setSection(SECTIONS[SECTIONS.length - 1]!);
+    const top = box.getBoundingClientRect().top + offset();
     let current: Section = 'overview';
     for (const s of SECTIONS) {
       const el = anchors.current[s];
-      if (el && el.offsetTop - offset() <= box.scrollTop + 4) current = s;
+      if (el && el.getBoundingClientRect().top <= top + 4) current = s;
     }
     setSection(current);
   };
@@ -143,9 +154,9 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, companyC
       // that ends outside does not).
       onPointerDown={(e) => { pressedOutside.current = e.target === e.currentTarget; }}
       onClick={(e) => { if (pressedOutside.current && e.target === e.currentTarget) onClose(); pressedOutside.current = false; }}
-      onScroll={spy}
-      aria-labelledby="panel-title" data-testid="card-panel" className="fixed inset-y-0 right-0 left-auto m-0 h-dvh max-h-none w-full max-w-md overflow-y-auto border-l border-border bg-background p-0 text-foreground shadow-2xl backdrop:bg-black/50">
-      <div className="flex min-h-full flex-col gap-4 p-5">
+      onScroll={(e) => spy(e.timeStamp)}
+      aria-labelledby="panel-title" data-testid="card-panel" className="fixed inset-y-0 right-0 left-auto m-0 h-auto max-h-none w-full max-w-md overflow-y-auto border-l border-border bg-background p-0 text-foreground shadow-2xl backdrop:bg-black/50">
+      <div className="flex min-h-full flex-col gap-4 p-5 pb-24">
       <div ref={header} className="glass sticky top-0 z-10 -mx-5 -mt-5 flex flex-col gap-2 border-b border-border px-5 pt-4 pb-2">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
@@ -166,7 +177,7 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, companyC
                 data-testid="panel-nav"
                 data-section={s}
                 aria-current={section === s ? 'true' : undefined}
-                onClick={() => jump(s)}
+                onClick={(e) => jump(s, e.timeStamp)}
                 className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold transition-colors ${section === s ? 'bg-foreground text-background' : 'text-muted-foreground hover:bg-muted'}`}
               >
                 {t(`section_${s}`)}
@@ -177,10 +188,11 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, companyC
             <button
               type="button"
               data-testid="panel-primary"
-              onClick={() => { jump('conversation'); writer.current?.writeReply(); }}
+              onClick={(e) => { jump('conversation', e.timeStamp); writer.current?.writeReply(); }}
               className="brutal brutal-press shrink-0 bg-ai px-3 py-1 text-xs font-semibold text-ai-foreground"
             >
-              ✍ {t('actionReply')}
+              <PenLine aria-hidden className="mr-1 inline size-3.5 -translate-y-px" />
+              {t('actionReply')}
             </button>
           ) : card.urgency === 'interview_soon' && card.meetingUrl && !card.feedbackDueAt ? (
             <JoinMeeting url={card.meetingUrl} label={t('joinMeeting')} testId="panel-primary" compact />
@@ -196,7 +208,7 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, companyC
           ) : null}
         </div>
       </div>
-      <span ref={(el) => { anchors.current.overview = el; }} aria-hidden />
+      <span ref={(el) => { anchors.current.overview = el; }} aria-hidden className="block scroll-mt-36" />
       {card.rejectionReasons.length > 0 && card.outcome !== 'open' && card.outcome !== 'offer' && (
         <p data-testid="panel-reject-reasons" className="rounded-md border border-danger/40 bg-danger/10 px-3 py-2 text-sm">
           <span className="font-semibold">{t(card.outcome === 'withdrawn' ? 'rejectedByMe' : 'rejectedLine')}:</span>{' '}
@@ -227,7 +239,8 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, companyC
               onClick={() => writer.current?.writeReply()}
               className="brutal brutal-press mt-2 block bg-ai px-3 py-1 text-sm font-semibold text-ai-foreground"
             >
-              ✍ {t('writeReply')}
+              <PenLine aria-hidden className="mr-1 inline size-4 -translate-y-px" />
+              {t('writeReply')}
             </button>
           )}
         </p>
@@ -249,7 +262,8 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, companyC
         {card.meetingUrl && !card.feedbackDueAt && <JoinMeeting url={card.meetingUrl} label={t('joinMeeting')} testId="panel-join" />}
         {card.url && <a href={card.url} target="_blank" rel="noopener" className="tabular-nums text-sm underline">{t('openOriginal')} ↗</a>}
         {PREP_KEYS.has(columns.find((c) => c.id === card.columnId)?.key ?? '') && (
-          <Link href={`/prep?start=${card.id}`} data-testid="panel-prep" className="tabular-nums text-sm font-semibold underline">🎓 {t('prepare')}</Link>
+          <Link href={`/prep?start=${card.id}`} data-testid="panel-prep" className="tabular-nums text-sm font-semibold underline"><GraduationCap aria-hidden className="mr-1 inline size-4 -translate-y-px" />
+            {t('prepare')}</Link>
         )}
         {threadLink && <a data-testid="panel-thread" href={threadLink} target="_blank" rel="noopener noreferrer" className="tabular-nums text-sm font-semibold underline">{t('openThread')} ↗</a>}
       </div>
@@ -261,7 +275,7 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, companyC
           {kitOpen && <ApplyKitPanel jobId={card.jobId} locale={locale} onApplied={onApplied} />}
         </div>
       )}
-      <span ref={(el) => { anchors.current.conversation = el; }} aria-hidden />
+      <span ref={(el) => { anchors.current.conversation = el; }} aria-hidden className="block scroll-mt-36" />
       <Conversation
         applicationId={card.id}
         version={messagesVersion}
@@ -300,7 +314,7 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, companyC
         }}
       />
       <RecruiterMessage applicationId={card.id} defaultLang={locale} version={messagesVersion} ref={writer} onSent={() => { const at = new Date().toISOString(); setMessagesVersion((v) => v + 1); onChanged({ lastActivityAt: at, lastMessage: { direction: 'out', at } }); }} />
-      <span ref={(el) => { anchors.current.details = el; }} aria-hidden />
+      <span ref={(el) => { anchors.current.details = el; }} aria-hidden className="block scroll-mt-36" />
       <label className="flex flex-col gap-1 tabular-nums text-xs">
         {t('moveTo')}
         <select data-testid="panel-move" value={card.columnId} onChange={(e) => onMove(e.target.value)} className={field}>
@@ -361,7 +375,7 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, companyC
         {error && <span role="alert" className="text-sm text-danger">{t('saveError')}</span>}
         <button type="button" data-testid="panel-delete" onClick={() => { if (window.confirm(t('deleteConfirm'))) onDelete(); }} className="ml-auto text-sm text-danger underline">{t('delete')}</button>
       </div>
-      <span ref={(el) => { anchors.current.history = el; }} aria-hidden />
+      <span ref={(el) => { anchors.current.history = el; }} aria-hidden className="block scroll-mt-36" />
       <section data-testid="panel-history" className="flex flex-col gap-1 border-t border-border pt-3">
         <h3 className="tabular-nums text-xs">{t('history')}</h3>
         <ul className="flex flex-col gap-1 text-sm">

@@ -175,7 +175,7 @@ export function Library({ initial }: { initial: SavedLink[] }) {
                   {l.title} ↗
                 </a>
                 <span className="flex flex-wrap items-center gap-2 tabular-nums text-xs text-muted-foreground">
-                  <span data-testid="link-topic-chip" className="rounded-full bg-brand/15 px-2 py-0.5 text-link">{l.topic}</span>
+                  <span data-testid="link-topic-chip" className="rounded-full bg-brand/25 px-2 py-0.5 font-semibold text-link ring-1 ring-inset ring-brand/45">{l.topic}</span>
                   {host(l.url)}
                 </span>
                 {l.note && <p className="text-sm whitespace-pre-line text-muted-foreground">{l.note}</p>}

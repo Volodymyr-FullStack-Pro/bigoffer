@@ -1,17 +1,18 @@
 import { REPLY_KINDS, type ReplyKind } from '@jp/ai';
+import { Bot, CalendarClock, CircleHelp, CircleX, type LucideIcon, MessageCircle, PartyPopper, Puzzle } from 'lucide-react';
 import type { StatusTone } from '@/components/ui/status-badge';
 
 export { REPLY_KINDS, type ReplyKind };
 
 /** Badge tone per reply kind: neutral means "nothing real yet", colours need the candidate. */
-export const REPLY_STYLE: Record<ReplyKind, { tone: StatusTone; icon: string }> = {
-  auto_reply: { tone: 'neutral', icon: '🤖' },
-  question: { tone: 'move', icon: '❓' },
-  interview_invite: { tone: 'interview', icon: '📅' },
-  test_task: { tone: 'test', icon: '🧩' },
-  offer: { tone: 'offer', icon: '🎉' },
-  rejection: { tone: 'danger', icon: '✕' },
-  other: { tone: 'neutral', icon: '💬' },
+export const REPLY_STYLE: Record<ReplyKind, { tone: StatusTone; icon: LucideIcon }> = {
+  auto_reply: { tone: 'neutral', icon: Bot },
+  question: { tone: 'move', icon: CircleHelp },
+  interview_invite: { tone: 'interview', icon: CalendarClock },
+  test_task: { tone: 'test', icon: Puzzle },
+  offer: { tone: 'offer', icon: PartyPopper },
+  rejection: { tone: 'danger', icon: CircleX },
+  other: { tone: 'neutral', icon: MessageCircle },
 };
 
 export const isReplyKind = (v: unknown): v is ReplyKind => typeof v === 'string' && (REPLY_KINDS as readonly string[]).includes(v);

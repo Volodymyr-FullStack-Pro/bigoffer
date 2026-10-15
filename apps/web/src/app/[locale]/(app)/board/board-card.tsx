@@ -1,5 +1,6 @@
 'use client';
 
+import { AlarmClock, CornerDownLeft, Hourglass, MessageSquare } from 'lucide-react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useFormatter, useTranslations } from 'next-intl';
@@ -36,7 +37,7 @@ const URGENCY_RING: Record<string, string> = {
   awaiting_feedback: 'outline-1 outline-offset-2 outline-status-wait/40',
 };
 
-const FEEDBACK_STYLE = { tone: 'wait' as StatusTone, icon: '⏳' };
+const FEEDBACK_STYLE = { tone: 'wait' as StatusTone, icon: Hourglass };
 
 export function BoardCardItem({ card, labels, labelName, now, timeZone, onOpen }: {
   card: BoardCardView;
@@ -82,7 +83,8 @@ export function BoardCardItem({ card, labels, labelName, now, timeZone, onOpen }
           {card.urgency === 'awaiting_feedback' ? t('feedbackBadge', { count: daysLeft }) : t('urgency_feedback_due')}
         </StatusBadge>
       )}
-      {!waiting && reply && card.replyKind && (
+      {/* In the lost column the reasons below already say it was a rejection. */}
+      {!waiting && reply && card.replyKind && !(card.replyKind === 'rejection' && card.outcome !== 'open') && (
         <StatusBadge tone={reply.tone} icon={reply.icon} data-testid="card-reply">
           {t(`reply_${card.replyKind}` as never)}
         </StatusBadge>
@@ -112,7 +114,8 @@ export function BoardCardItem({ card, labels, labelName, now, timeZone, onOpen }
         <span className="flex flex-wrap items-center gap-2">
           {upcoming && (
             <span data-testid="card-next" suppressHydrationWarning className="tabular-nums text-xs font-semibold">
-              ⏰ {format.dateTime(upcoming, { timeZone, day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+              <AlarmClock aria-hidden className="mr-1 inline size-3.5 -translate-y-px" />
+              {format.dateTime(upcoming, { timeZone, day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
             </span>
           )}
           {card.meetingUrl && card.outcome === 'open' && !waiting && <JoinMeeting url={card.meetingUrl} label={t('joinMeeting')} testId="card-join" compact />}
@@ -122,7 +125,9 @@ export function BoardCardItem({ card, labels, labelName, now, timeZone, onOpen }
         {card.sourceId && <SourceBadge sourceId={card.sourceId} />}
         {card.messageCount > 0 && (
           <span data-testid="card-messages" title={t('conversationTitle', { count: card.messageCount })} className="rounded-full bg-muted px-1.5">
-            💬 {card.messageCount}{card.lastMessage?.direction === 'in' ? ' ←' : ''}
+            <MessageSquare aria-hidden className="mr-1 inline size-3.5 -translate-y-px" />
+            {card.messageCount}
+            {card.lastMessage?.direction === 'in' && <CornerDownLeft aria-label={t('lastFromThem')} className="ml-1 inline size-3 -translate-y-px" />}
           </span>
         )}
         {card.appliedAt && <span suppressHydrationWarning>{t('appliedAgo', { ago: format.relativeTime(new Date(card.appliedAt), now) })}</span>}

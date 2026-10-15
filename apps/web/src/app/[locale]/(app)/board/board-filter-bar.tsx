@@ -7,6 +7,7 @@ import { type BoardFilter, EMPTY_FILTER, isFiltering } from './board-filter';
 import type { BoardCard, BoardLabel } from './board-types';
 import { TONE_PILL } from '@/components/ui/status-badge';
 import { REPLY_KINDS, REPLY_STYLE } from './reply-kinds';
+import { ReplyIcon } from './reply-icon';
 
 export function BoardFilterBar({ filter, onChange, cards, labels, labelName, found, onOpenOnly }: {
   filter: BoardFilter;
@@ -86,7 +87,7 @@ export function BoardFilterBar({ filter, onChange, cards, labels, labelName, fou
                 onClick={() => onChange({ ...filter, reply: active ? null : k })}
                 className={`${chip} ring-1 ring-inset ${TONE_PILL[REPLY_STYLE[k].tone]} ${active ? 'ring-2' : 'border-transparent opacity-70 hover:opacity-100'}`}
               >
-                <span aria-hidden>{REPLY_STYLE[k].icon}</span> {t(`reply_${k}` as never)}
+                <ReplyIcon kind={k} /> {t(`reply_${k}` as never)}
               </button>
             );
           })}
