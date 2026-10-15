@@ -19,6 +19,8 @@ const URGENCY_STYLE: Record<string, string> = {
   awaiting_feedback: 'bg-warning/20 text-warning',
 };
 
+const FEEDBACK_STYLE = { bg: '#F59E0B', fg: '#1F1300', icon: '⏳' };
+
 /** A glowing outline on cards that need the candidate now. */
 const URGENCY_RING: Record<string, string> = {
   // outline + drop-shadow: the brutal style already owns box-shadow
@@ -43,7 +45,10 @@ export function BoardCardItem({ card, labels, labelName, now, timeZone, onOpen }
   const format = useFormatter();
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: card.id });
   const own = labels.filter((l) => card.labelIds.includes(l.id));
-  const reply = card.replyKind ? REPLY_STYLE[card.replyKind] : null;
+  // After the interview the card is about the feedback: its orange badge and edge replace the invite's pink ones.
+  const waiting = card.urgency === 'awaiting_feedback' || card.urgency === 'feedback_due';
+  const reply = waiting ? FEEDBACK_STYLE : card.replyKind ? REPLY_STYLE[card.replyKind] : null;
+  const daysLeft = card.feedbackDueAt ? Math.max(1, Math.round((new Date(card.feedbackDueAt).getTime() - now.getTime()) / 86_400_000)) : 0;
   const upcoming = card.nextActionAt && new Date(card.nextActionAt) > now ? new Date(card.nextActionAt) : null;
   return (
     <article
@@ -67,7 +72,13 @@ export function BoardCardItem({ card, labels, labelName, now, timeZone, onOpen }
         listeners?.onKeyDown?.(e);
       }}
     >
-      {reply && card.replyKind && (
+      {waiting && (
+        <span data-testid="card-urgency" data-urgency={card.urgency} className="self-start rounded-full px-2 py-0.5 text-[11px] font-semibold" style={{ background: FEEDBACK_STYLE.bg, color: FEEDBACK_STYLE.fg, boxShadow: `0 0 10px -2px ${FEEDBACK_STYLE.bg}` }}>
+          <span aria-hidden>{FEEDBACK_STYLE.icon}</span>{' '}
+          {card.urgency === 'awaiting_feedback' ? t('feedbackBadge', { count: daysLeft }) : t('urgency_feedback_due')}
+        </span>
+      )}
+      {!waiting && reply && card.replyKind && (
         <span data-testid="card-reply" className="self-start rounded-full px-2 py-0.5 text-[11px] font-semibold" style={{ background: reply.bg, color: reply.fg, boxShadow: `0 0 10px -2px ${reply.bg}` }}>
           <span aria-hidden>{reply.icon}</span> {t(`reply_${card.replyKind}` as never)}
         </span>
@@ -93,14 +104,14 @@ export function BoardCardItem({ card, labels, labelName, now, timeZone, onOpen }
           ))}
         </span>
       )}
-      {(upcoming || card.meetingUrl) && (
+      {(upcoming || (card.meetingUrl && !waiting)) && (
         <span className="flex flex-wrap items-center gap-2">
           {upcoming && (
             <span data-testid="card-next" suppressHydrationWarning className="font-mono text-xs font-semibold">
               ⏰ {format.dateTime(upcoming, { timeZone, day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
             </span>
           )}
-          {card.meetingUrl && card.outcome === 'open' && <JoinMeeting url={card.meetingUrl} label={t('joinMeeting')} testId="card-join" compact />}
+          {card.meetingUrl && card.outcome === 'open' && !waiting && <JoinMeeting url={card.meetingUrl} label={t('joinMeeting')} testId="card-join" compact />}
         </span>
       )}
       <span className="flex flex-wrap items-center gap-2 font-mono text-xs text-muted-foreground">
@@ -111,11 +122,9 @@ export function BoardCardItem({ card, labels, labelName, now, timeZone, onOpen }
           </span>
         )}
         {card.appliedAt && <span suppressHydrationWarning>{t('appliedAgo', { ago: format.relativeTime(new Date(card.appliedAt), now) })}</span>}
-        {card.urgency in URGENCY_STYLE && (
+        {card.urgency in URGENCY_STYLE && !waiting && (
           <span data-testid="card-urgency" data-urgency={card.urgency} className={`rounded-sm border border-border px-1 font-bold ${URGENCY_STYLE[card.urgency]}`}>
-            {card.urgency === 'awaiting_feedback' && card.feedbackDueAt
-              ? `⏳ ${t('feedbackBadge', { count: Math.max(1, Math.round((new Date(card.feedbackDueAt).getTime() - now.getTime()) / 86_400_000)) })}`
-              : t(`urgency_${card.urgency}` as never)}
+            {t(`urgency_${card.urgency}` as never)}
           </span>
         )}
       </span>

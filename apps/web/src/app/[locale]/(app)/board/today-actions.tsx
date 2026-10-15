@@ -38,7 +38,7 @@ export function TodayActions({ cards, onPinged, onOpen, onGhosted }: {
           <span className="font-semibold">{t(`today_${a.kind}`)}</span>: {card.company} — {card.title}
           {a.at && <span data-testid="today-when" suppressHydrationWarning className="font-mono text-xs font-semibold"> · {when(a.at)}</span>}
         </span>
-        {a.kind === 'interview' && card.meetingUrl && <JoinMeeting url={card.meetingUrl} label={t('joinMeeting')} testId="today-join" />}
+        {a.kind === 'interview' && card.meetingUrl && !card.feedbackDueAt && <JoinMeeting url={card.meetingUrl} label={t('joinMeeting')} testId="today-join" />}
         {(a.kind === 'ping' || a.kind === 'feedback') && (
           <button type="button" onClick={() => onPinged(a.id)} className="brutal brutal-press px-3 py-1 text-sm font-semibold">{t('actionPinged')}</button>
         )}

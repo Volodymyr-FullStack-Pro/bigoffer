@@ -180,7 +180,8 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, companyC
         />
       )}
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-        {card.meetingUrl && <JoinMeeting url={card.meetingUrl} label={t('joinMeeting')} testId="panel-join" />}
+        {/* The interview is over once the card waits for feedback: no call to join. */}
+        {card.meetingUrl && !card.feedbackDueAt && <JoinMeeting url={card.meetingUrl} label={t('joinMeeting')} testId="panel-join" />}
         {card.url && <a href={card.url} target="_blank" rel="noopener" className="font-mono text-sm underline">{t('openOriginal')} ↗</a>}
         {PREP_KEYS.has(columns.find((c) => c.id === card.columnId)?.key ?? '') && (
           <Link href={`/prep?start=${card.id}`} data-testid="panel-prep" className="font-mono text-sm font-semibold underline">🎓 {t('prepare')}</Link>
