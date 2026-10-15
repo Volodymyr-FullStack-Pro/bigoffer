@@ -129,3 +129,35 @@ describe('board helpers', () => {
     expect(applicationUrgency({ ...base, appliedAt: applied }, now, { followUpDays: [], ghostAfterDays: 30 })).toBe('overdue');
   });
 });
+
+describe('waiting for feedback after an interview', () => {
+  const now = new Date('2026-10-15T12:00:00Z');
+  const base: UrgencyInput = {
+    columnKind: 'active',
+    outcome: 'open',
+    appliedAt: new Date('2026-10-01T10:00:00Z'),
+    firstResponseAt: new Date('2026-10-05T10:00:00Z'),
+    lastActivityAt: new Date('2026-10-14T16:00:00Z'),
+    nextActionAt: null,
+    // The interview invite is the last message: without a feedback date it would read as "your move".
+    lastMessage: { direction: 'in', at: new Date('2026-10-14T11:00:00Z') },
+    replyKind: 'interview_invite',
+  };
+  it('waits calmly until the promised date, then asks for a reminder', () => {
+    expect(applicationUrgency({ ...base, feedbackDueAt: new Date('2026-10-29T12:00:00Z') }, now)).toBe('awaiting_feedback');
+    expect(applicationUrgency({ ...base, feedbackDueAt: new Date('2026-10-14T12:00:00Z') }, now)).toBe('feedback_due');
+    expect(applicationUrgency(base, now)).toBe('your_move');
+  });
+  it('a next interview soon still comes first', () => {
+    expect(
+      applicationUrgency({ ...base, feedbackDueAt: new Date('2026-10-29T12:00:00Z'), nextActionAt: new Date('2026-10-16T09:00:00Z') }, now),
+    ).toBe('interview_soon');
+  });
+  it('lists a due feedback among today\'s actions, not a calm wait', () => {
+    const actions = todayActions([
+      { id: 'due', urgency: 'feedback_due', nextActionAt: null },
+      { id: 'calm', urgency: 'awaiting_feedback', nextActionAt: null },
+    ]);
+    expect(actions).toEqual([{ id: 'due', kind: 'feedback', urgency: 'feedback_due', at: null }]);
+  });
+});

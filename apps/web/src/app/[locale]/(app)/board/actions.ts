@@ -91,6 +91,28 @@ function meetOf(contact: unknown): string | null {
   return typeof meet.meet === 'string' ? meet.meet : null;
 }
 
+/**
+ * After an interview: wait for feedback until `dueIso` (null stops waiting). A planned step already in the past (the
+ * interview itself) is cleared so it does not ask for a status update.
+ */
+export async function setFeedbackWait(id: string, dueIso: string | null): Promise<{ feedbackDueAt: string | null; nextActionAt: string | null } | null> {
+  const supabase = await client();
+  if (!supabase || !UUID.test(id)) return null;
+  const due = dueIso === null ? null : new Date(dueIso);
+  if (due && (Number.isNaN(due.getTime()) || due.getTime() > Date.now() + 120 * 24 * 3600 * 1000)) return null;
+  const { data: current } = await supabase.from('applications').select('next_action_at').eq('id', id).maybeSingle();
+  if (!current) return null;
+  const pastStep = current.next_action_at !== null && Date.parse(current.next_action_at) < Date.now();
+  const nextActionAt = due && pastStep ? null : current.next_action_at;
+  const { data, error } = await supabase
+    .from('applications')
+    .update({ feedback_due_at: due ? due.toISOString() : null, next_action_at: nextActionAt })
+    .eq('id', id)
+    .select('id');
+  if (!done(error, 'setFeedbackWait', data?.length ?? 0)) return null;
+  return { feedbackDueAt: due ? due.toISOString() : null, nextActionAt };
+}
+
 export async function setApplicationLabel(id: string, labelId: string, on: boolean): Promise<boolean> {
   const supabase = await client();
   if (!supabase || !UUID.test(id) || !UUID.test(labelId)) return false;
@@ -222,6 +244,6 @@ export async function createApplication(raw: {
   return {
     id: data.id, jobId: input.jobId ?? null, columnId: input.columnId, rank: data.rank, title, company: input.company, url,
     sourceId: data.source_id, salary: input.salary, notes: null, contactName: input.contactName ?? null, contactUrl: null,
-    appliedAt, nextActionAt: null, meetingUrl: null, firstResponseAt: null, lastActivityAt: null, followUpCount: 0, outcome: 'open', labelIds: [], replyKind: null, lastMessage: null, messageCount: 0, rejectionReasons: [], rejectionStage: null,
+    appliedAt, nextActionAt: null, feedbackDueAt: null, meetingUrl: null, firstResponseAt: null, lastActivityAt: null, followUpCount: 0, outcome: 'open', labelIds: [], replyKind: null, lastMessage: null, messageCount: 0, rejectionReasons: [], rejectionStage: null,
   };
 }

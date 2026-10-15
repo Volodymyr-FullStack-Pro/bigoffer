@@ -15,6 +15,8 @@ const URGENCY_STYLE: Record<string, string> = {
   overdue: 'bg-danger text-white',
   ghosting: 'bg-foreground text-background',
   ping: 'bg-warning text-brand-foreground',
+  feedback_due: 'bg-warning text-brand-foreground',
+  awaiting_feedback: 'bg-warning/20 text-warning',
 };
 
 /** A glowing outline on cards that need the candidate now. */
@@ -25,6 +27,8 @@ const URGENCY_RING: Record<string, string> = {
   step_passed: 'outline-2 outline-offset-2 outline-[#F59E0B] drop-shadow-[0_0_8px_#F59E0B70]',
   overdue: 'outline-2 outline-offset-2 outline-danger',
   ping: 'outline-1 outline-offset-2 outline-warning',
+  feedback_due: 'outline-2 outline-offset-2 outline-[#F59E0B] drop-shadow-[0_0_10px_#F59E0B80]',
+  awaiting_feedback: 'outline-1 outline-offset-2 outline-[#F59E0B]/50',
 }
 
 export function BoardCardItem({ card, labels, labelName, now, timeZone, onOpen }: {
@@ -109,7 +113,9 @@ export function BoardCardItem({ card, labels, labelName, now, timeZone, onOpen }
         {card.appliedAt && <span suppressHydrationWarning>{t('appliedAgo', { ago: format.relativeTime(new Date(card.appliedAt), now) })}</span>}
         {card.urgency in URGENCY_STYLE && (
           <span data-testid="card-urgency" data-urgency={card.urgency} className={`rounded-sm border border-border px-1 font-bold ${URGENCY_STYLE[card.urgency]}`}>
-            {t(`urgency_${card.urgency}` as never)}
+            {card.urgency === 'awaiting_feedback' && card.feedbackDueAt
+              ? `⏳ ${t('feedbackBadge', { count: Math.max(1, Math.round((new Date(card.feedbackDueAt).getTime() - now.getTime()) / 86_400_000)) })}`
+              : t(`urgency_${card.urgency}` as never)}
           </span>
         )}
       </span>

@@ -18,7 +18,7 @@ export default async function BoardPage() {
     supabase
       .from('applications')
       .select(
-        'id, job_id, column_id, rank, title, company, url, source_id, salary, notes, contact, applied_at, next_action_at, first_response_at, last_activity_at, follow_up_count, outcome, reply_kind, rejection_reasons, rejection_stage, application_labels(label_id)',
+        'id, job_id, column_id, rank, title, company, url, source_id, salary, notes, contact, applied_at, next_action_at, feedback_due_at, first_response_at, last_activity_at, follow_up_count, outcome, reply_kind, rejection_reasons, rejection_stage, application_labels(label_id)',
       )
       .order('rank'),
     supabase.from('labels').select('id, key, name, color').order('key', { nullsFirst: false }),
@@ -56,6 +56,7 @@ export default async function BoardPage() {
       meetingUrl: typeof contact.meet === 'string' ? contact.meet : null,
       appliedAt: a.applied_at,
       nextActionAt: a.next_action_at,
+      feedbackDueAt: a.feedback_due_at,
       firstResponseAt: a.first_response_at,
       lastActivityAt: a.last_activity_at,
       followUpCount: a.follow_up_count,
