@@ -187,6 +187,16 @@ export function Feed({
   const total = processed + visible.length;
   const savedCount = done.filter((d) => d.action !== 'hide').length;
 
+  const labelsMenu = (
+    <LabelsMenu
+      value={labels}
+      onChange={(next) => {
+        setLabels(next);
+        saveUiPrefs({ cardLabels: next });
+      }}
+    />
+  );
+
   const select = (testId: string, label: string, value: string, onChange: (v: string) => void, options: { value: string; label: string }[]) => (
     <label className="flex min-w-0 flex-col gap-1 text-xs text-muted-foreground">
       <span className="sr-only sm:not-sr-only">{label}</span>
@@ -246,13 +256,8 @@ export function Feed({
             {t('moreFilters')}
             {moreActive > 0 && <span className="rounded-full bg-brand px-1.5 tabular-nums text-[11px] font-bold text-brand-foreground">{moreActive}</span>}
           </button>
-          <LabelsMenu
-            value={labels}
-            onChange={(next) => {
-              setLabels(next);
-              saveUiPrefs({ cardLabels: next });
-            }}
-          />
+          {/* Phone: card labels live in the filters panel, so the bar stays one row. */}
+          <div className="hidden sm:block">{labelsMenu}</div>
         </div>
       </div>
       {/* Quick toggles: one tap, always visible. */}
@@ -289,6 +294,7 @@ export function Feed({
             ...JOB_DOMAINS.filter((d) => d !== 'military').map((d) => ({ value: d, label: t(`domain_${d}`) })),
           ])}
           {select('filter-source', t('filterSource'), filters.source, (v) => setFilters((f) => ({ ...f, source: v })), [{ value: 'all', label: t('all') }, ...sources.map((s) => ({ value: s.id, label: s.name }))])}
+          <div className="flex items-end sm:hidden">{labelsMenu}</div>
           {moreActive > 0 && (
             <button
               type="button"

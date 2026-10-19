@@ -44,7 +44,8 @@ export function BoardColumnView({ column, cards, sort, onToggleSort, labels, lab
             {total}{needsAction > 0 && <span className="text-danger"> · ● {needsAction}</span>}
           </span>
         </span>
-        <button
+        {/* Sorting means nothing until a column has two cards. */}
+        {cards.length > 1 && <button
           type="button"
           data-testid="column-sort"
           onClick={onToggleSort}
@@ -54,10 +55,13 @@ export function BoardColumnView({ column, cards, sort, onToggleSort, labels, lab
           className={`grid size-7 place-items-center rounded-full border transition-colors ${sort === 'smart' ? 'border-brand/50 bg-brand/15 text-link' : 'border-border text-muted-foreground hover:bg-muted hover:text-foreground'}`}
         >
           <ArrowDownUp className="size-3.5" aria-hidden />
-        </button>
+        </button>}
       </header>
       <SortableContext items={visible.map((c) => c.id)} strategy={verticalListSortingStrategy}>
-        <div ref={setNodeRef} className={`flex min-h-24 flex-col gap-2 rounded-brutal border-[1.5px] border-dashed p-2 ${isOver ? 'border-brand bg-brand/10' : 'border-transparent'}`}>
+        <div ref={setNodeRef} className={`flex min-h-24 flex-col gap-2 rounded-brutal border-[1.5px] border-dashed p-2 ${isOver ? 'border-brand bg-brand/10' : cards.length === 0 ? 'border-border/70' : 'border-transparent'}`}>
+          {cards.length === 0 && !isOver && (
+            <p data-testid="column-empty" className="m-auto px-2 text-center text-xs text-muted-foreground">{t('columnEmpty')}</p>
+          )}
           {visible.map((c) => (
             <BoardCardItem key={c.id} card={c} labels={labels} labelName={labelName} now={now} timeZone={timeZone} onOpen={() => onOpen(c.id)} />
           ))}

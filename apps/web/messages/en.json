@@ -361,7 +361,8 @@
     "addTyped": "+ Add “{value}”",
     "alreadyThere": "Already there: {value}",
     "fromCvHint": "Upload your CV and the search sets itself up from it. Or fill in the form yourself.",
-    "fromCvLink": "Upload CV →"
+    "fromCvLink": "Upload CV →",
+    "sectionsNav": "Search sections"
   },
   "board": {
     "title": "Application board",
@@ -580,7 +581,8 @@
     "pingAll": "Mark all as followed up",
     "pingAllConfirm": "Mark {count} cards as followed up? The count restarts from today.",
     "addToCalendar": "Add to calendar",
-    "calendarTitle": "Interview"
+    "calendarTitle": "Interview",
+    "columnEmpty": "Drag a card here"
   },
   "cv": {
     "title": "Your CV",
