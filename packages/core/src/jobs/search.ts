@@ -122,9 +122,14 @@ function djinniCategories(raw: string): string[] {
   return found;
 }
 
-const SEARCH_SOURCES: [SourceId, string][] = [
-  ['dou', 'search'],
-  ['robotaua', 'keyWords'],
+/**
+ * Text-search boards and how many searches each gets per profile. Their searches return the latest postings, so
+ * spellings of one role overlap almost fully (DOU: 27 searches a day found 18 new jobs, most of them twice): the
+ * profile's own keywords come first and the board's categories cover the rest.
+ */
+const SEARCH_SOURCES: [SourceId, string, number][] = [
+  ['dou', 'search', 4],
+  ['robotaua', 'keyWords', 3],
 ];
 
 // Keywords first, then their spellings and title variants; at most this many searches per board and profile.
@@ -177,8 +182,8 @@ export function buildSourceQueries(
     if (enabled.has(sourceId)) specs.push({ sourceId, params, queryKey: queryKey(sourceId, params) });
   };
 
-  for (const [sourceId, param] of SEARCH_SOURCES) {
-    for (const keyword of keywords) add(sourceId, { [param]: keyword });
+  for (const [sourceId, param, max] of SEARCH_SOURCES) {
+    for (const keyword of keywords.slice(0, max)) add(sourceId, { [param]: keyword });
   }
 
   const terms = [...profile.keywords, ...profile.skills].map((t) => t.toLowerCase());
