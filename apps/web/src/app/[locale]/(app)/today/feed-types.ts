@@ -47,5 +47,6 @@ export type FeedMatch = {
   /** Platforms this job is posted on that have no card on the board yet. */
   onBoardLeft: string[];
   /** Another vacancy of this company already on the board (title and column); shown when this one is not. */
-  companyOnBoard: { title: string; column: string } | null;
+  /** Another vacancy of this company on the board: its title, column and the platform it was applied on. */
+  companyOnBoard: { title: string; column: string; sourceId: string | null } | null;
 };
