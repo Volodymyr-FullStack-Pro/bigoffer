@@ -172,13 +172,25 @@ async function findJobId(db: Db, job: NormalizedJob, companyId: string): Promise
  * Fields a richer posting of an already-stored job can fill in (e.g. a LinkedIn card without a description,
  * later seen on a board with the full text and a salary). Title and company stay as first seen.
  */
+const BACKFILL_COLUMNS = 'id, description_text, salary_raw, salary_min_usd, salary_max_usd, location, remote_type, remote_regions, tags';
+type BackfillRow = {
+  description_text: string | null;
+  salary_min_usd: number | null;
+  salary_max_usd: number | null;
+  location: string | null;
+  remote_type: string;
+  remote_regions: string[] | null;
+  tags: string[] | null;
+};
+
 async function backfillPatch(db: Db, jobId: string, job: NormalizedJob) {
-  const { data, error } = await db
-    .from('jobs')
-    .select('description_text, salary_raw, salary_min_usd, salary_max_usd, location, remote_type, remote_regions, tags')
-    .eq('id', jobId)
-    .single();
+  const { data, error } = await db.from('jobs').select(BACKFILL_COLUMNS).eq('id', jobId).single();
   if (error) throw error;
+  return patchFrom(data, job);
+}
+
+/** What a newly seen posting adds to the stored job; empty when it brings nothing new. */
+function patchFrom(data: BackfillRow, job: NormalizedJob) {
   const patch: {
     description_text?: string;
     salary_raw?: string | null;
@@ -203,7 +215,8 @@ async function backfillPatch(db: Db, jobId: string, job: NormalizedJob) {
   }
   if (data.location == null && job.location) patch.location = job.location;
   // Board-stated regions are merged with the stored ones (the stored ones may come from another board).
-  if (job.remoteRegions.length > 0) patch.remote_regions = [...new Set([...(data.remote_regions ?? []), ...job.remoteRegions])];
+  const regions = [...new Set([...(data.remote_regions ?? []), ...job.remoteRegions])];
+  if (regions.length > (data.remote_regions ?? []).length) patch.remote_regions = regions;
   // Board facts carried as tags (e.g. Djinni's English level) reach jobs stored before the board showed them.
   const tags = [...new Set([...(data.tags ?? []), ...job.tags])];
   if (tags.length > (data.tags ?? []).length) patch.tags = tags;
@@ -281,6 +294,86 @@ export async function saveJob(
     );
   if (upsertError) throw upsertError;
   return { jobId, isNew };
+}
+
+const ID_CHUNK = 200;
+
+/** External ids of this board's postings that are already stored. */
+export async function knownExternalIds(db: Db, sourceId: string, externalIds: string[]): Promise<Set<string>> {
+  const known = new Set<string>();
+  for (let i = 0; i < externalIds.length; i += ID_CHUNK) {
+    const { data, error } = await db
+      .from('job_postings')
+      .select('external_id')
+      .eq('source_id', sourceId)
+      .in('external_id', externalIds.slice(i, i + ID_CHUNK));
+    if (error) throw error;
+    for (const row of data) known.add(row.external_id);
+  }
+  return known;
+}
+
+/**
+ * saveJob for a whole listing, with the same outcome but a handful of queries: most postings of a run are already
+ * stored and unchanged, and saving them one by one (four round trips each) was most of a run's time and cost.
+ * New postings and those that bring new facts (a description, salary, format, tags) still go through the full path.
+ */
+export async function saveJobs(db: Db, sourceId: string, jobs: NormalizedJob[], now: Date): Promise<{ jobId: string; isNew: boolean }[]> {
+  const nowIso = now.toISOString();
+  const unique = [...new Map(jobs.map((j) => [j.externalId, j])).values()];
+  const stored = new Map<string, string>();
+  for (let i = 0; i < unique.length; i += ID_CHUNK) {
+    const { data, error } = await db
+      .from('job_postings')
+      .select('external_id, job_id')
+      .eq('source_id', sourceId)
+      .in('external_id', unique.slice(i, i + ID_CHUNK).map((j) => j.externalId));
+    if (error) throw error;
+    for (const row of data) stored.set(row.external_id, row.job_id);
+  }
+
+  const results = new Map<string, { jobId: string; isNew: boolean }>();
+  for (const job of unique) {
+    if (!stored.has(job.externalId)) results.set(job.externalId, await saveJob(db, sourceId, job, now));
+  }
+
+  const known = unique.filter((j) => stored.has(j.externalId));
+  if (known.length > 0) {
+    const ids = [...new Set(known.map((j) => stored.get(j.externalId)!))];
+    const rows = new Map<string, BackfillRow>();
+    for (let i = 0; i < ids.length; i += ID_CHUNK) {
+      const { data, error } = await db.from('jobs').select(BACKFILL_COLUMNS).in('id', ids.slice(i, i + ID_CHUNK));
+      if (error) throw error;
+      for (const row of data) rows.set(row.id, row);
+    }
+    const plain = new Set(ids);
+    for (const job of known) {
+      const jobId = stored.get(job.externalId)!;
+      const row = rows.get(jobId);
+      const patch = row ? patchFrom(row, job) : {};
+      if (Object.keys(patch).length > 0) {
+        const { error } = await db.from('jobs').update({ last_seen_at: nowIso, status: 'active', ...patch }).eq('id', jobId);
+        if (error) throw error;
+        plain.delete(jobId);
+        // A later posting of the same job compares against what was just written.
+        if (row) rows.set(jobId, { ...row, ...patch } as BackfillRow);
+      }
+      results.set(job.externalId, { jobId, isNew: false });
+    }
+    const unchanged = [...plain];
+    for (let i = 0; i < unchanged.length; i += ID_CHUNK) {
+      const { error } = await db.from('jobs').update({ last_seen_at: nowIso, status: 'active' }).in('id', unchanged.slice(i, i + ID_CHUNK));
+      if (error) throw error;
+    }
+    for (let i = 0; i < known.length; i += ID_CHUNK) {
+      const { error } = await db.from('job_postings').upsert(
+        known.slice(i, i + ID_CHUNK).map((j) => ({ job_id: stored.get(j.externalId)!, source_id: sourceId, external_id: j.externalId, url: j.url, seen_at: nowIso })),
+        { onConflict: 'source_id,external_id' },
+      );
+      if (error) throw error;
+    }
+  }
+  return jobs.map((j) => results.get(j.externalId)!);
 }
 
 /** PostgREST caps a response at 1000 rows by default; bulk reads page through instead of silently truncating. */

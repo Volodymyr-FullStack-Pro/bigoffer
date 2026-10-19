@@ -4,7 +4,7 @@ import { SourceBlockedError } from '@jp/scrapers';
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { getDb } from '../src/db';
 import { expireJobs } from '../src/pipeline/expire';
-import { getDueQueryIds, getProfile, saveJob } from '../src/pipeline/repository';
+import { getDueQueryIds, getProfile, saveJob, saveJobs } from '../src/pipeline/repository';
 import { runQuery } from '../src/pipeline/run-query';
 import { syncAllProfiles, syncProfile } from '../src/pipeline/sync-profiles';
 
@@ -164,6 +164,36 @@ describe('runQuery', () => {
     expect((await runQuery({ db, adapters: { dou: fakeAdapter(rawJobs) }, createContext: () => ctx, now: () => now }, douQueryId)).status).toBe('ok');
     const { data: q } = await db.from('search_queries').select('next_run_at').eq('id', douQueryId).single();
     expect(new Date(q!.next_run_at).getTime()).toBe(now.getTime() + Math.max(source!.min_interval_minutes, 15) * 60 * 1000);
+  });
+});
+
+describe('saveJobs', () => {
+  it('saves a listing in bulk with the same outcome as one by one', async () => {
+    const tag = `bulk-${uniq}`;
+    const raw = (n: number, extra: Partial<RawJob> = {}): RawJob => ({
+      externalId: `${tag}-${n}`,
+      url: `https://jobs.dou.ua/vacancies/${tag}-${n}/`,
+      title: `Bulk Developer ${n} ${tag}`,
+      company: `Bulk Co ${tag}`,
+      description: 'React and Node.js.',
+      ...extra,
+    });
+    const norm = async (r: RawJob) => (await normalizeJob(r))!;
+    const first = await saveJobs(db, 'dou', [await norm(raw(1)), await norm(raw(2))], now);
+    expect(first.map((r) => r.isNew)).toEqual([true, true]);
+
+    const later = new Date(now.getTime() + 60_000);
+    // Seen again: one unchanged, one with a new fact (a tag); a duplicate in the same listing counts once.
+    const second = await saveJobs(db, 'dou', [await norm(raw(1)), await norm(raw(2, { tags: ['english:C1'] })), await norm(raw(1))], later);
+    expect(second.map((r) => r.isNew)).toEqual([false, false, false]);
+    expect(second[0]!.jobId).toBe(first[0]!.jobId);
+    expect(second[2]!.jobId).toBe(first[0]!.jobId);
+    const { data: jobs } = await db.from('jobs').select('id, last_seen_at, tags').in('id', [first[0]!.jobId, first[1]!.jobId]);
+    for (const j of jobs!) expect(new Date(j.last_seen_at).getTime()).toBe(later.getTime());
+    expect(jobs!.find((j) => j.id === first[1]!.jobId)!.tags).toContain('english:C1');
+    const { data: postings } = await db.from('job_postings').select('seen_at').like('external_id', `${tag}-%`);
+    expect(postings).toHaveLength(2);
+    for (const p of postings!) expect(new Date(p.seen_at).getTime()).toBe(later.getTime());
   });
 });
 
