@@ -12,7 +12,8 @@ import {
   getScorableJobs,
   markQueryRun,
   recentInserted,
-  saveJob,
+  knownExternalIds,
+  saveJobs,
   startRun,
   updateSourceHealth,
 } from './repository';
@@ -69,7 +70,9 @@ export async function runQuery(deps: RunQueryDeps, queryId: string): Promise<Run
     return SKIPPED;
   }
 
-  const ctx = deps.createContext(source.id);
+  const base = deps.createContext(source.id);
+  // Lets an adapter skip re-reading pages of postings it has already stored (they still count as seen).
+  const ctx: AdapterContext = { ...base, knownIds: base.knownIds ?? ((ids) => knownExternalIds(db, source.id, ids)) };
   try {
     const runId = await startRun(db, source.id, queryId, now);
     let found: number;
@@ -80,12 +83,9 @@ export async function runQuery(deps: RunQueryDeps, queryId: string): Promise<Run
       const normalized = (await Promise.all(raw.map(normalizeJob))).filter((j): j is NormalizedJob => j !== null);
       const profiles = await getProfilesForQuery(db, queryId);
 
-      const savedIds: string[] = [];
-      for (const job of normalized) {
-        const result = await saveJob(db, source.id, job, now);
-        if (result.isNew) inserted++;
-        savedIds.push(result.jobId);
-      }
+      const saved = await saveJobs(db, source.id, normalized, now);
+      inserted = saved.filter((r) => r.isNew).length;
+      const savedIds = saved.map((r) => r.jobId);
 
       // Match on what is stored (AI skills, is_job, remote_regions), not on the raw source data.
       matched = await matchJobs(db, profiles, await getScorableJobs(db, savedIds));

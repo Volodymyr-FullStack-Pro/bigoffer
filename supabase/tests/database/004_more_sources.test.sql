@@ -6,7 +6,7 @@ select is(
   (select count(*)::int from public.sources
    where id in ('dou','djinni','robotaua') and enabled),
   3, 'the three boards are enabled');
-select is((select min_interval_minutes from public.sources where id = 'dou'), 30, 'DOU is polled every 30 minutes');
+select is((select min_interval_minutes from public.sources where id = 'dou'), 60, 'DOU is polled hourly (budget: Djinni is the 30-minute source)');
 
 insert into auth.users (id, email) values ('55555555-5555-5555-5555-555555555555', 'src@test.dev');
 set local role authenticated;

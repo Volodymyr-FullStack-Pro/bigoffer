@@ -40,12 +40,11 @@ describe('buildSourceQueries', () => {
   const specs = buildSourceQueries({ keywords: ['Full Stack', 'React Developer'], skills: ['React', 'Node.js'], remoteType: 'any', sources: ['dou', 'djinni', 'robotaua'] });
   const bySource = (id: string) => specs.filter((s) => s.sourceId === id);
 
-  it('creates one query per keyword for search sources', () => {
-    expect(bySource('dou').map((s) => s.params).filter((p) => p.search)).toEqual(
-      searchTerms({ keywords: ['Full Stack', 'React Developer'], skills: ['React', 'Node.js'] }).map((search) => ({ search })),
-    );
-    expect(bySource('dou').filter((s) => s.params.search)).toHaveLength(8);
-    expect(bySource('robotaua')).toHaveLength(8);
+  it('creates a few searches per board, the profile keywords first', () => {
+    const terms = searchTerms({ keywords: ['Full Stack', 'React Developer'], skills: ['React', 'Node.js'] });
+    expect(bySource('dou').map((s) => s.params).filter((p) => p.search)).toEqual(terms.slice(0, 4).map((search) => ({ search })));
+    expect(bySource('dou').filter((s) => s.params.search)).toHaveLength(4);
+    expect(bySource('robotaua')).toHaveLength(3);
     expect(bySource('robotaua')[0]!.params).toEqual({ keyWords: 'full stack' });
   });
   it('maps skills to djinni primary keywords', () => {

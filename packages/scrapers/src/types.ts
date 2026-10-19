@@ -4,6 +4,11 @@ export interface AdapterContext {
   fetchText(url: string, init?: RequestInit): Promise<string>;
   fetchJson<T = unknown>(url: string, init?: RequestInit): Promise<T>;
   env: Record<string, string | undefined>;
+  /**
+   * External ids of this board's postings already stored. Lets an adapter skip re-reading a page it has seen; the
+   * posting is still reported so it counts as seen. Absent in tests and one-off imports: read everything.
+   */
+  knownIds?(externalIds: string[]): Promise<Set<string>>;
   /** Releases resources. Always called by the pipeline after a run. */
   dispose?(): Promise<void>;
 }

@@ -38,6 +38,20 @@ const CLOSED = /вакансі[яи] зараз неактивна|ваканс�
 
 const idOf = (url: string) => url.match(/\/jobs\/(\d+)-/)?.[1] ?? null;
 
+/** A feed entry as a raw job: no company (the feed has none), the page's other facts come from the listing or page. */
+function feedJob(item: ReturnType<typeof parseRss>[number]): RawJob {
+  return {
+    externalId: idOf(item.link)!,
+    url: item.link,
+    title: item.title,
+    company: 'Djinni',
+    companyIsPlaceholder: true,
+    description: item.description,
+    location: null,
+    postedAt: item.pubDate ? new Date(item.pubDate).toISOString() : null,
+  };
+}
+
 /**
  * Listing pages carry the company (JSON-LD) but only the latest ~30; the RSS feed lists 100 but without a company.
  * Postings from the last days that only the feed has are read from their own page (JSON-LD), or kept from the feed
@@ -56,14 +70,16 @@ async function rssBackfill(
   } catch {
     return []; // the feed is extra coverage; the pages already succeeded
   }
-  const missing = items
-    .filter((i) => {
-      const id = idOf(i.link);
-      const at = i.pubDate ? Date.parse(i.pubDate) : NaN;
-      return id !== null && !known.has(id) && Number.isFinite(at) && now - at <= RSS_BACKFILL_MS;
-    })
-    .slice(0, MAX_BACKFILL);
-  const out: RawJob[] = [];
+  const recent = items.filter((i) => {
+    const id = idOf(i.link);
+    const at = i.pubDate ? Date.parse(i.pubDate) : NaN;
+    return id !== null && !known.has(id) && Number.isFinite(at) && now - at <= RSS_BACKFILL_MS;
+  });
+  // Postings already stored are reported from the feed as they are (so they count as seen); only new ones are read
+  // from their own page, which is the slow part of a run.
+  const stored = ctx.knownIds ? await ctx.knownIds(recent.map((i) => idOf(i.link)!)).catch(() => new Set<string>()) : new Set<string>();
+  const out: RawJob[] = recent.filter((i) => stored.has(idOf(i.link)!)).map((item) => feedJob(item));
+  const missing = recent.filter((i) => !stored.has(idOf(i.link)!)).slice(0, MAX_BACKFILL);
   for (let i = 0; i < missing.length; i += DETAIL_CONCURRENCY) {
     const batch = await Promise.all(
       missing.slice(i, i + DETAIL_CONCURRENCY).map(async (item): Promise<RawJob | null> => {
@@ -73,17 +89,7 @@ async function rssBackfill(
         } catch {
           // fall back to the feed entry
         }
-        const id = idOf(item.link)!;
-        return {
-          externalId: id,
-          url: item.link,
-          title: item.title,
-          company: 'Djinni',
-          companyIsPlaceholder: true,
-          description: item.description,
-          location: null,
-          postedAt: item.pubDate ? new Date(item.pubDate).toISOString() : null,
-        };
+        return feedJob(item);
       }),
     );
     out.push(...batch.filter((j): j is RawJob => j !== null));
