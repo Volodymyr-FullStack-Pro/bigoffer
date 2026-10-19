@@ -116,6 +116,22 @@
     font-family: var(--font-display);
     font-weight: 800;
     letter-spacing: -0.03em;
+    /* No single orphan word on a heading's last line. */
+    text-wrap: balance;
+  }
+  /* Taps act at once (no double-tap zoom wait) and without the grey flash on mobile. */
+  a,
+  button,
+  label,
+  summary,
+  [role='button'] {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+  /* Scrolling inside a dialog or panel never drags the page behind it. */
+  dialog,
+  [role='menu'] {
+    overscroll-behavior: contain;
   }
   /* Numbers line up (scores, counters, salaries) — the job the mono face used to do. */
   .font-mono {

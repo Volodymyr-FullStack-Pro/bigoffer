@@ -59,9 +59,9 @@ function Pill({ name, value, label, checked, defaultChecked, onChange, testId }:
   );
 }
 
-function Section({ title, children }: { title: string; children: ReactNode }) {
+function Section({ id, title, children }: { id: string; title: string; children: ReactNode }) {
   return (
-    <section className="flex flex-col gap-4 border-t border-border pt-5 first-of-type:border-t-0 first-of-type:pt-0">
+    <section id={id} className="scroll-mt-24 flex flex-col gap-4 border-t border-border pt-5 first-of-type:border-t-0 first-of-type:pt-0">
       <h2 className="text-lg">{title}</h2>
       {children}
     </section>
@@ -133,6 +133,15 @@ export function SearchProfileForm({ values, cvSkills = [], cvHeadline = null, de
       >
         {values.id && <input type="hidden" name="id" value={values.id} />}
 
+        {/* A long form: jump straight to the part to change. */}
+        <nav aria-label={t('sectionsNav')} className="-mx-1 flex gap-1.5 overflow-x-auto px-1 [scrollbar-width:none]">
+          {([['search-what', 'sectionWhat'], ['search-skills', 'sectionSkills'], ['search-terms', 'sectionTerms'], ['search-where', 'sources']] as const).map(([id, key]) => (
+            <a key={id} href={`#${id}`} data-testid="search-nav" className="brutal-press shrink-0 rounded-full border border-border px-3 py-1 text-xs font-semibold text-muted-foreground hover:bg-muted hover:text-foreground">
+              {t(key)}
+            </a>
+          ))}
+        </nav>
+
         {tips.length > 0 && (
           <aside id="profile-tips" data-testid="profile-tips" className="scroll-mt-24 flex flex-col gap-2 rounded-xl border border-brand/40 bg-brand/[0.07] p-4">
             <p className="flex items-center gap-2 text-sm font-semibold">
@@ -148,7 +157,7 @@ export function SearchProfileForm({ values, cvSkills = [], cvHeadline = null, de
             </ul>
           </aside>
         )}
-        <Section title={t('sectionWhat')}>
+        <Section id="search-what" title={t('sectionWhat')}>
           <label className="flex flex-col gap-1.5">
             <span className="text-xs text-muted-foreground">{t('name')}</span>
             <input name="name" value={name} onChange={(e) => setName(e.target.value)} aria-invalid={invalid.has('name')} className={cn(field, invalid.has('name') && 'border-danger')} />
@@ -197,7 +206,7 @@ export function SearchProfileForm({ values, cvSkills = [], cvHeadline = null, de
           </fieldset>
         </Section>
 
-        <Section title={t('sectionSkills')}>
+        <Section id="search-skills" title={t('sectionSkills')}>
           <TagInput
             name="skills"
             label={t('skills')}
@@ -228,7 +237,7 @@ export function SearchProfileForm({ values, cvSkills = [], cvHeadline = null, de
           />
         </Section>
 
-        <Section title={t('sectionTerms')}>
+        <Section id="search-terms" title={t('sectionTerms')}>
           <div className="grid gap-4 md:grid-cols-2">
             <label className="flex flex-col gap-1.5">
               <span className="text-xs text-muted-foreground">{t('remoteType')}</span>
@@ -268,7 +277,7 @@ export function SearchProfileForm({ values, cvSkills = [], cvHeadline = null, de
           )}
         </Section>
 
-        <Section title={t('sources')}>
+        <Section id="search-where" title={t('sources')}>
           <div className="flex flex-wrap items-center justify-between gap-2">
             <p className="text-sm text-muted-foreground">{t('sourcesHint')}</p>
             <button
@@ -305,11 +314,13 @@ export function SearchProfileForm({ values, cvSkills = [], cvHeadline = null, de
           <Button type="submit" variant="brand" disabled={pending} data-testid="search-save" className="ml-auto">
             {t('save')}
           </Button>
-          <p role="status" className="w-full text-sm">
-            {state.status === 'saved' && <span className="text-success">{t('saved')}</span>}
-            {state.status === 'invalid' && <span className="text-danger">{t('invalid', { fields: [...invalid].join(', ') })}</span>}
-            {state.status === 'error' && <span className="text-danger">{t('error')}</span>}
-          </p>
+          {state.status !== 'idle' && (
+            <p role="status" className="w-full text-sm">
+              {state.status === 'saved' && <span className="text-success">{t('saved')}</span>}
+              {state.status === 'invalid' && <span className="text-danger">{t('invalid', { fields: [...invalid].join(', ') })}</span>}
+              {state.status === 'error' && <span className="text-danger">{t('error')}</span>}
+            </p>
+          )}
         </div>
       </form>
       {values.id && (

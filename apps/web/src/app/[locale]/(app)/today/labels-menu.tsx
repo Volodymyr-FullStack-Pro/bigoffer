@@ -22,7 +22,7 @@ export function LabelsMenu({ value, onChange }: { value: CardLabels; onChange: (
   }, [open]);
   return (
     <div ref={box} className="relative flex flex-col gap-1 text-xs text-muted-foreground">
-      <span className="hidden sm:inline">{t('labelsMenu')}</span>
+      <span>{t('labelsMenu')}</span>
       <button
         type="button"
         data-testid="labels-menu"
