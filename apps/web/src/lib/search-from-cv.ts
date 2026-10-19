@@ -14,7 +14,7 @@ type Supabase = Awaited<ReturnType<typeof createClient>>;
 export async function replaceSearchFromCv(supabase: Supabase, userId: string, cv: ParsedCv): Promise<string | null> {
   const { data: old } = await supabase
     .from('search_profiles')
-    .select('id, exclude_keywords, sources, salary_min_usd, remote_type')
+    .select('id, exclude_keywords, hide_other_stacks, sources, salary_min_usd, remote_type')
     .order('updated_at', { ascending: false });
   const keep = old?.[0];
   const p = searchProfileFromCv(cv);
@@ -33,6 +33,7 @@ export async function replaceSearchFromCv(supabase: Supabase, userId: string, cv
       locations: p.locations,
       remote_type: keep && keep.remote_type !== 'any' ? keep.remote_type : p.remoteType,
       exclude_keywords: keep?.exclude_keywords ?? [],
+      hide_other_stacks: keep?.hide_other_stacks ?? false,
       sources: keep?.sources?.length ? keep.sources : [...MAIN_SOURCE_IDS],
       salary_min_usd: keep?.salary_min_usd ?? null,
     })

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_FILTERS, filterMatches, mergeMatches, sortMatches } from './feed-filter';
+import { DEFAULT_FILTERS, experiencePenalty, filterMatches, mergeMatches, sortMatches } from './feed-filter';
 import type { FeedMatch } from './feed-types';
 
 const m = (id: string, over: Partial<FeedMatch> = {}): FeedMatch => ({
@@ -140,5 +140,21 @@ describe('best sort and age', () => {
     const fresh = m('fresh90', { score: 90, postedAt: '2026-10-12T08:00:00.000Z' });
     const week = m('week95', { score: 95, postedAt: '2026-10-07T12:00:00.000Z' });
     expect(sortMatches([old, week, fresh], 'best', now).map((x) => x.id)).toEqual(['week95', 'fresh90', 'old95']);
+  });
+});
+
+describe('best sort and experience', () => {
+  const now = new Date('2026-10-12T12:00:00.000Z');
+  const at = { postedAt: '2026-10-12T08:00:00.000Z' };
+  it('ranks a job asking for far more years than the CV below a slightly weaker one that fits', () => {
+    const stretch = m('senior', { ...at, score: 92, requiredYears: 5, candidateYears: 2 });
+    const fits = m('fits', { ...at, score: 85, requiredYears: 2, candidateYears: 2 });
+    expect(sortMatches([stretch, fits], 'best', now).map((x) => x.id)).toEqual(['fits', 'senior']);
+  });
+  it('lets one extra year and unknown years pass without a penalty', () => {
+    expect(experiencePenalty({ requiredYears: 3, candidateYears: 2 })).toBe(0);
+    expect(experiencePenalty({ requiredYears: null, candidateYears: 2 })).toBe(0);
+    expect(experiencePenalty({ requiredYears: 10, candidateYears: null })).toBe(0);
+    expect(experiencePenalty({ requiredYears: 10, candidateYears: 1 })).toBe(30);
   });
 });

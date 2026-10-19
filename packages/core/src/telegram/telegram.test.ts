@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
   alertMessage,
+  weekLines,
   botReplies,
   createBotApi,
   decodeCallback,
@@ -266,5 +267,17 @@ describe('command menu', () => {
     await ensureBotCommands(bot);
     expect(calls).toEqual([undefined, 'uk', 'ru']);
     expect(BOT_COMMANDS.uk.map((c) => c.command)).toEqual(['top', 'goal', 'pause', 'resume', 'help', 'stop']);
+  });
+});
+
+describe('weekLines', () => {
+  it('sums up the week with the answer rate', () => {
+    const lines = weekLines({ applied: 20, answered: 3, interviews: 1, closed: 2 }, 'uk');
+    expect(lines[0]).toBe('<b>📊 Ваш тиждень</b>');
+    expect(lines[1]).toContain('Відгуків: 20');
+    expect(lines[2]).toBe('15% відгуків цього тижня вже отримали відповідь.');
+  });
+  it('says so when the week was empty', () => {
+    expect(weekLines({ applied: 0, answered: 0, interviews: 0, closed: 0 }, 'en')).toEqual(['<b>📊 Your week</b>', 'No applications last week — a fresh start today.']);
   });
 });

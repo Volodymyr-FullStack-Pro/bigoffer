@@ -72,6 +72,17 @@ const CORE_STACKS: [string, RegExp][] = [
   ['Elixir', /\belixir\b/i],
 ];
 
+/**
+ * Front-end frameworks: an Angular or Vue job is not a React developer's, though it lists the same JS, TS and HTML.
+ * Only the title counts, and a title that also names a framework the candidate has ("Vue → React") stays theirs.
+ */
+const FRAMEWORKS: [string, RegExp][] = [
+  ['Angular', /\bangular(?:js)?\b/i],
+  ['Vue', /\bvue(?:\.?js)?\b|\bnuxt\b/i],
+  ['React', /\breact(?!\s*native)\b|\bnext\.?js\b/i],
+  ['Svelte', /\bsvelte(?:kit)?\b/i],
+];
+
 /** Core stacks the job is built on (its title or first two skills) that none of the profile's skills belongs to. */
 /** The core stack (language or platform) a skill belongs to, e.g. "Laravel" -> "PHP"; null for everything else. */
 export function coreStackOf(skill: string): string | null {
@@ -117,13 +128,22 @@ export function namedPlatforms(text: string, skills: readonly string[]): string[
   return PLATFORMS.filter(([name, re]) => re.test(text) && !have.some((h) => h === name.toLowerCase() || re.test(h))).map(([name]) => name);
 }
 
+/** Front-end frameworks a job title names ("Angular", "Vue", …). */
+export function titleFrameworks(title: string): string[] {
+  return FRAMEWORKS.filter(([, re]) => re.test(title)).map(([name]) => name);
+}
+
 export function missingCoreStacks(jobTitle: string, jobSkills: readonly string[], profileSkills: readonly string[]): string[] {
   const where = [jobTitle, ...jobSkills.slice(0, 2)];
   const needed = CORE_STACKS.filter(([, re]) => where.some((w) => re.test(w)));
-  if (needed.length === 0) return [];
   // One known core stack is enough ("Python/React" for a Python + React dev).
-  if (needed.some(([, re]) => profileSkills.some((s) => re.test(s)))) return [];
-  return needed.map(([name]) => name);
+  const core = needed.length > 0 && !needed.some(([, re]) => profileSkills.some((s) => re.test(s))) ? needed.map(([name]) => name) : [];
+  const titled = FRAMEWORKS.filter(([, re]) => re.test(jobTitle));
+  const known = (re: RegExp) => profileSkills.some((s) => re.test(s));
+  // Only for someone who works in some front-end framework: a backend profile is not judged by these.
+  const frameworks =
+    titled.length > 0 && FRAMEWORKS.some(([, re]) => known(re)) && !titled.some(([, re]) => known(re)) ? titled.map(([name]) => name) : [];
+  return [...core, ...frameworks];
 }
 
 /** Skill points left when the job's main stack is not the candidate's. */
@@ -280,6 +300,7 @@ export function scoreJob(
   const titleLevel = detectSeniority(job.title);
   const levelOff = profile.seniority.length > 0 && titleLevel !== null && !profile.seniority.includes(titleLevel);
   const keywordExclusion = profile.excludeKeywords.find((e) => containsTerm(text, e))?.toLowerCase() ?? null;
+  const stackOff = profile.hideOtherStacks === true && missingStack.length > 0;
   const breakdown: MatchBreakdown = {
     skills,
     role,
@@ -290,7 +311,7 @@ export function scoreJob(
     // 'role' / 'region' hide the row like an exclude keyword, so upsert_job_matches keeps rescoring it.
     // A level in the title outside the profile's chosen levels is hidden, not just scored lower: unchecking "Senior"
     // must take "Senior …" jobs out of the feed. Jobs whose title states no level stay.
-    excludedBy: keywordExclusion ?? (offTarget ? 'role' : levelOff ? 'seniority' : formatOff ? 'format' : blockedRegions ? 'region' : null),
+    excludedBy: keywordExclusion ?? (offTarget ? 'role' : stackOff ? 'stack' : levelOff ? 'seniority' : formatOff ? 'format' : blockedRegions ? 'region' : null),
     blockedRegions,
     ...(missingStack.length > 0 ? { missingStack } : {}),
   };

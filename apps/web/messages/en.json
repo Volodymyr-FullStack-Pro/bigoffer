@@ -253,7 +253,14 @@
     "payLevel_1": "Pay below average",
     "payLevel_2": "Average pay",
     "payLevel_3": "Pay above average",
-    "payLevel_4": "Top pay"
+    "payLevel_4": "Top pay",
+    "reason_stack": "Other stack",
+    "hideTips": "You keep hiding: {list}.",
+    "hideTipsStacks": "Hide other stacks",
+    "hideTipsStacksDone": "Jobs on another stack are hidden from now on. The feed updates in a minute.",
+    "hideTipsWord": "Hide “{word}”",
+    "hideTipsWordDone": "“{word}” added to excluded words. The feed updates in a minute.",
+    "hideTipsDismiss": "Don't suggest"
   },
   "comingSoon": {
     "badge": "Soon",
@@ -362,7 +369,9 @@
     "alreadyThere": "Already there: {value}",
     "fromCvHint": "Upload your CV and the search sets itself up from it. Or fill in the form yourself.",
     "fromCvLink": "Upload CV →",
-    "sectionsNav": "Search sections"
+    "sectionsNav": "Search sections",
+    "hideOtherStacks": "Hide jobs on another stack",
+    "hideOtherStacksHint": "Java, .NET, PHP, Python, Angular, Vue… when you list none of it. Unchecked, such jobs only score lower."
   },
   "board": {
     "title": "Application board",
@@ -582,7 +591,10 @@
     "pingAllConfirm": "Mark {count} cards as followed up? The count restarts from today.",
     "addToCalendar": "Add to calendar",
     "calendarTitle": "Interview",
-    "columnEmpty": "Drag a card here"
+    "columnEmpty": "Drag a card here",
+    "ghostGroup": "{count, plural, one {No answer: # company} other {No answer: # companies}}",
+    "ghostAll": "Close all as no answer",
+    "ghostAllConfirm": "Move {count} cards to lost as “no answer”?"
   },
   "cv": {
     "title": "Your CV",

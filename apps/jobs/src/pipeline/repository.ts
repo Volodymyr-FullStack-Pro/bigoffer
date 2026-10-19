@@ -18,6 +18,7 @@ type ProfileRow = {
   keywords: string[];
   skills: string[];
   exclude_keywords: string[];
+  hide_other_stacks?: boolean;
   seniority: string[];
   locations: string[];
   remote_type: string;
@@ -29,7 +30,7 @@ type ProfileRow = {
 };
 
 const PROFILE_COLUMNS =
-  'id, user_id, keywords, target_roles, skills, exclude_keywords, seniority, locations, remote_type, salary_min_usd, sources, is_active, profiles(country)';
+  'id, user_id, keywords, target_roles, skills, exclude_keywords, hide_other_stacks, seniority, locations, remote_type, salary_min_usd, sources, is_active, profiles(country)';
 
 export function toSearchProfile(row: ProfileRow): SearchProfile {
   return {
@@ -39,6 +40,7 @@ export function toSearchProfile(row: ProfileRow): SearchProfile {
     targetRoles: (row.target_roles ?? []).filter((r): r is RoleFamily => (ROLE_FAMILIES as readonly string[]).includes(r)),
     skills: row.skills,
     excludeKeywords: row.exclude_keywords,
+    hideOtherStacks: row.hide_other_stacks ?? false,
     seniority: row.seniority.filter((s): s is Seniority => (SENIORITIES as readonly string[]).includes(s)),
     locations: row.locations,
     remoteType: (['any', 'remote', 'hybrid', 'office'] as const).find((r) => r === row.remote_type) ?? 'any',

@@ -51,15 +51,26 @@ export function filterMatches(items: FeedMatch[], f: FeedFilters, now: Date = ne
   );
 }
 
-/** 'best' keeps the server order (score, then recency); 'newest' puts the freshest job first. */
 /**
  * 'Best' ranks by match, but a posting loses a point for every day past its third: replies go to the first
  * applicants, so a four-week-old 95% (most likely filled) must not sit above a fresh 90%.
  */
 const AGE_FREE_DAYS = 3;
+/**
+ * A posting asking for more years than the CV has ranks lower: "experience level" is the most common rejection.
+ * One year of stretch is free (worth applying); each year beyond costs 8 points, at most 30.
+ */
+const EXPERIENCE_STRETCH_YEARS = 1;
+const POINTS_PER_MISSING_YEAR = 8;
+const MAX_EXPERIENCE_PENALTY = 30;
+export function experiencePenalty(m: Pick<FeedMatch, 'requiredYears' | 'candidateYears'>): number {
+  if (m.requiredYears === null || m.candidateYears === null) return 0;
+  const missing = m.requiredYears - m.candidateYears - EXPERIENCE_STRETCH_YEARS;
+  return missing > 0 ? Math.min(MAX_EXPERIENCE_PENALTY, missing * POINTS_PER_MISSING_YEAR) : 0;
+}
 export function rankScore(m: FeedMatch, now: Date = new Date()): number {
   const days = (now.getTime() - freshness(m, now)) / DAY_MS;
-  return m.score - Math.max(0, days - AGE_FREE_DAYS);
+  return m.score - Math.max(0, days - AGE_FREE_DAYS) - experiencePenalty(m);
 }
 
 export function sortMatches(items: FeedMatch[], sort: FeedFilters['sort'], now: Date = new Date()): FeedMatch[] {
