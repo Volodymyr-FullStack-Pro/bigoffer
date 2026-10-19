@@ -33,6 +33,8 @@ export const searchProfileInputSchema = z.object({
   targetRoles: z.array(z.enum(ROLE_FAMILIES)).max(ROLE_FAMILIES.length).default([]),
   skills: z.array(term).max(100),
   excludeKeywords: z.array(term).max(30),
+  /** Hide jobs built on a main stack the profile's skills do not cover (see missingCoreStacks). */
+  hideOtherStacks: z.boolean().optional(),
   seniority: z.array(z.enum(SENIORITIES)),
   locations: z.array(term).max(10),
   remoteType: z.enum(SEARCH_REMOTE_TYPES),

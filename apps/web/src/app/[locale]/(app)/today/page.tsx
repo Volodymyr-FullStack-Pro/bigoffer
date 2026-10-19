@@ -1,4 +1,4 @@
-import { candidateEnglish, detectDomains, detectPerks, isLocale, localized, type LocalizedText, normalizeCompany, normalizeTitle, payLevelOf, requiredEnglish, requiredYears, SENIORITIES, type Seniority, sourceInfo } from '@jp/core';
+import { candidateEnglish, detectDomains, hideSuggestions, detectPerks, isLocale, localized, type LocalizedText, normalizeCompany, normalizeTitle, payLevelOf, requiredEnglish, requiredYears, SENIORITIES, type Seniority, sourceInfo } from '@jp/core';
 import { getLocale, getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
 import { requireUserId } from '@/lib/auth';
@@ -6,6 +6,7 @@ import { loadPrimaryCv } from '@/lib/cv';
 import { createClient } from '@/lib/supabase/server';
 import { parseUiPrefs } from '@/lib/ui-prefs';
 import { cardSkills, matchedSkillsOf } from './card-skills';
+import { HideTips } from './hide-tips';
 import { Feed } from './feed';
 import { mergeMatches } from './feed-filter';
 import { SearchNow } from './search-now';
@@ -14,6 +15,11 @@ import type { FeedMatch } from './feed-types';
 
 const REMOTE = ['remote', 'hybrid', 'office'] as const;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** ISO time `days` days ago. */
+function daysAgo(days: number): string {
+  return new Date(Date.now() - days * 86_400_000).toISOString();
+}
 
 function since24h(): string {
   return new Date(Date.now() - 24 * 3600 * 1000).toISOString();
@@ -60,7 +66,7 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
       .or(`posted_at.gte.${cutoff},and(posted_at.is.null,first_seen_at.gte.${cutoff})`, { referencedTable: 'jobs' })
       .order('jobs(first_seen_at)', { ascending: false })
       .limit(200),
-    supabase.from('search_profiles').select('id, name, skills, is_active').order('created_at'),
+    supabase.from('search_profiles').select('id, name, skills, exclude_keywords, hide_other_stacks, is_active').order('created_at'),
     supabase.from('profiles').select('onboarded_at, ui_prefs').eq('id', userId).maybeSingle(),
     getSearchNowStatus(),
     loadPrimaryCv(supabase),
@@ -71,6 +77,24 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
     .not('breakdown->>excludedBy', 'is', null)
     .order('score', { ascending: false })
     .limit(150);
+
+  // Jobs the user hid by hand over the last 30 days: what they keep hiding becomes a one-click rule.
+  const search = (profiles ?? []).at(-1);
+  const { data: handHidden } = search
+    ? await supabase
+        .from('job_matches')
+        .select('jobs(title)')
+        .eq('state', 'hidden')
+        .is('breakdown->>excludedBy', null)
+        .gte('updated_at', daysAgo(30))
+        .limit(500)
+    : { data: [] };
+  const tips = search
+    ? hideSuggestions(
+        (handHidden ?? []).map((r) => r.jobs?.title ?? '').filter(Boolean),
+        { skills: search.skills, excludeKeywords: search.exclude_keywords, hideOtherStacks: search.hide_other_stacks },
+      )
+    : [];
 
   if (freshError) console.error('today: fresh matches query failed', { code: freshError.code, message: freshError.message });
 
@@ -170,6 +194,7 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
           <span aria-hidden className="text-ai">→</span>
         </Link>
       )}
+      {tips.length > 0 && <HideTips tips={tips} dismissed={parseUiPrefs(me?.ui_prefs).hideTipsDismissed ?? []} />}
       <Feed
         matches={matches}
         focusId={focusId && matches.some((m) => m.id === focusId) ? focusId : null}
