@@ -1,4 +1,4 @@
-import { alertLabels, errorText, alertMessage, ensureBotCommands, detectDomains, detectPerks, digestGenieLines, digestMessage, streaks, inQuietHours, overflowMessage, sourceInfo, toTgLocale, type AlertJob, type BotApi, type BotResult, type TgLocale } from '@jp/core';
+import { alertLabels, errorText, alertMessage, ensureBotCommands, detectDomains, detectPerks, digestGenieLines, digestMessage, streaks, weekLines, inQuietHours, overflowMessage, sourceInfo, toTgLocale, type AlertJob, type BotApi, type BotResult, type TgLocale } from '@jp/core';
 import type { Db } from '../db';
 
 /** `onlyUserIds` restricts the run to those users (tests; never set in production). */
@@ -268,8 +268,11 @@ async function digestUser(db: Db, deps: TelegramDeps, p: Profile, date: string, 
   const top = ((data ?? []) as unknown as MatchRow[]).map((m) => toAlertJob(m, locale));
   const followUps = apps ?? [];
   const genie = await genieDigest(db, p, date, locale);
+  // Mondays open with the week in numbers.
+  const week = new Date(`${date}T12:00:00Z`).getUTCDay() === 1 ? await weekDigest(db, p.id, deps.now, locale) : [];
+  if (week.length > 0) genie.lines.unshift(...week, '');
   // An idle-days nudge is worth a message even when nothing new came in.
-  if (top.length === 0 && followUps.length === 0 && !genie.nudge) {
+  if (top.length === 0 && followUps.length === 0 && !genie.nudge && week.length === 0) {
     await markDone();
     return;
   }
@@ -282,6 +285,28 @@ async function digestUser(db: Db, deps: TelegramDeps, p: Profile, date: string, 
     result.blocked++;
     await dropChat(db, p.id);
   } else result.failed++;
+}
+
+/** Applications sent, answers, interview invites and closed cards over the seven days before `now`. */
+async function weekDigest(db: Db, userId: string, now: Date, locale: TgLocale): Promise<string[]> {
+  const since = new Date(now.getTime() - 7 * DAY_MS).toISOString();
+  const { data, error } = await db
+    .from('applications')
+    .select('applied_at, first_response_at, reply_kind, outcome, updated_at')
+    .eq('user_id', userId)
+    .or(`applied_at.gte.${since},first_response_at.gte.${since},updated_at.gte.${since}`);
+  if (error) throw error;
+  const rows = data ?? [];
+  const inWeek = (at: string | null) => at !== null && at >= since;
+  return weekLines(
+    {
+      applied: rows.filter((a) => inWeek(a.applied_at)).length,
+      answered: rows.filter((a) => inWeek(a.first_response_at)).length,
+      interviews: rows.filter((a) => a.reply_kind === 'interview_invite' && inWeek(a.updated_at)).length,
+      closed: rows.filter((a) => a.outcome !== 'open' && inWeek(a.updated_at)).length,
+    },
+    locale,
+  );
 }
 
 /** Yesterday's applications against the Offer Genie goal (unless the genie is off), in the user's time zone. */

@@ -173,6 +173,39 @@ const MESSAGE_LIMIT = 4096;
 /** The Offer Genie's line in the morning digest: yesterday vs. the goal, the streak, or a nudge after idle days. */
 export type DigestGoal = { yesterday: number; goal: number; streak: number; idleDays: number };
 
+/** The last seven days of the search, for the Monday digest. */
+export type WeekStats = { applied: number; answered: number; interviews: number; closed: number };
+
+const WEEK: Record<TgLocale, { title: string; line: (w: WeekStats) => string; rate: (pct: number) => string; quiet: string }> = {
+  en: {
+    title: '📊 Your week',
+    line: (w) => `Applied: ${w.applied} · Answers: ${w.answered} · Interviews: ${w.interviews} · Closed: ${w.closed}`,
+    rate: (pct) => `${pct}% of this week’s applications already got an answer.`,
+    quiet: 'No applications last week — a fresh start today.',
+  },
+  uk: {
+    title: '📊 Ваш тиждень',
+    line: (w) => `Відгуків: ${w.applied} · Відповідей: ${w.answered} · Інтерв’ю: ${w.interviews} · Закрито: ${w.closed}`,
+    rate: (pct) => `${pct}% відгуків цього тижня вже отримали відповідь.`,
+    quiet: 'Минулого тижня відгуків не було — сьогодні гарний день почати.',
+  },
+  ru: {
+    title: '📊 Ваша неделя',
+    line: (w) => `Откликов: ${w.applied} · Ответов: ${w.answered} · Интервью: ${w.interviews} · Закрыто: ${w.closed}`,
+    rate: (pct) => `${pct}% откликов этой недели уже получили ответ.`,
+    quiet: 'На прошлой неделе откликов не было — сегодня хороший день начать.',
+  },
+};
+
+/** Monday digest lines: what the last seven days brought. */
+export function weekLines(w: WeekStats, locale: TgLocale): string[] {
+  const t = WEEK[locale];
+  if (w.applied === 0 && w.answered === 0 && w.interviews === 0) return [`<b>${escapeHtml(t.title)}</b>`, escapeHtml(t.quiet)];
+  const lines = [`<b>${escapeHtml(t.title)}</b>`, escapeHtml(t.line(w))];
+  if (w.applied > 0) lines.push(escapeHtml(t.rate(Math.round((100 * Math.min(w.answered, w.applied)) / w.applied))));
+  return lines;
+}
+
 const GENIE: Record<TgLocale, { met: (d: number, g: number) => string; short: (d: number, g: number) => string; streak: (n: number) => string; idle: (n: number) => string; mottos: string[] }> = {
   en: {
     met: (d, g) => `🧞 Yesterday: ${d}/${g} — goal reached! 🎉`,
