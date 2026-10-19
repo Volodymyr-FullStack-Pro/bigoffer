@@ -79,6 +79,8 @@ export function PeopleSearch({ jobId }: { jobId: string }) {
   // Keyed by job so switching vacancies never shows the previous company's people.
   const [found, setFound] = useState<{ jobId: string; people: RankedContact[] } | null>(null);
   const [writing, setWriting] = useState<string | null>(null);
+  // The best contact first; the others fold away so the job description is not pushed far down.
+  const [expandedFor, setExpandedFor] = useState<string | null>(null);
   useEffect(() => {
     let alive = true;
     void findRecruiters(jobId)
@@ -88,11 +90,12 @@ export function PeopleSearch({ jobId }: { jobId: string }) {
   }, [jobId]);
   const people = found?.jobId === jobId ? found.people : [];
   if (people.length === 0) return null;
+  const shown = expandedFor === jobId ? people : people.slice(0, 1);
   return (
     <div data-testid="people-search" className="flex flex-col gap-2">
       <h4 className="eyebrow">{t('title')}</h4>
       <ul className="flex flex-col gap-2">
-        {people.map((p) => {
+        {shown.map((p) => {
           const Icon = ICON[p.kind];
           return (
             <li key={p.href} data-testid="contact-recruiter-row" data-best={p.best || undefined} className={`flex flex-col gap-2 rounded-xl border px-3 py-2.5 ${p.best ? 'border-brand/60 bg-brand/[0.06]' : 'border-border'} ${p.current ? '' : 'opacity-70'}`}>
@@ -118,6 +121,11 @@ export function PeopleSearch({ jobId }: { jobId: string }) {
           );
         })}
       </ul>
+      {people.length > shown.length && (
+        <button type="button" data-testid="people-more" onClick={() => setExpandedFor(jobId)} className="self-start text-sm text-muted-foreground underline hover:text-foreground">
+          {t('more', { count: people.length - shown.length })} ▾
+        </button>
+      )}
     </div>
   );
 }

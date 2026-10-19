@@ -236,7 +236,7 @@ export function Board({ columns, cards: initial, labels: initialLabels, rules, n
       <DndContext id="board-dnd" sensors={sensors} collisionDetection={closestCorners} onDragStart={({ active: a }) => setActiveId(String(a.id))} onDragCancel={() => setActiveId(null)} onDragEnd={onDragEnd}>
         {/* Phones scroll one column at a time; desktops show as many as fit. */}
         {/* On wide screens the columns run to the window's right edge instead of stopping at the page container. */}
-        <div className="-mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-4 sm:mx-0 sm:snap-none sm:px-0 sm:mr-[calc(-1*(max(0px,(100vw-80rem)/2)+1rem))] sm:pr-[calc(max(0px,(100vw-80rem)/2)+1rem)]">
+        <div className="-mx-4 flex scroll-px-4 snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-4 sm:mx-0 sm:snap-none sm:px-0 sm:mr-[calc(-1*(max(0px,(100vw-80rem)/2)+1rem))] sm:pr-[calc(max(0px,(100vw-80rem)/2)+1rem)] sm:[mask-image:linear-gradient(to_right,black_calc(100%-56px),transparent)]">
           {columns.map((col) => (
             <BoardColumnView
               key={col.id}

@@ -1,4 +1,5 @@
 import { getTranslations } from 'next-intl/server';
+import { MoreMenu } from './more-menu';
 import { NAV_ITEMS } from './nav-items';
 import { NavLink } from './nav-link';
 
@@ -12,6 +13,7 @@ export async function BottomNav() {
       {NAV_ITEMS.filter((item) => item.mobile).map((item) => (
         <NavLink key={item.key} navKey={item.key} label={t(item.key)} compact />
       ))}
+      <MoreMenu label={t('more')} labels={Object.fromEntries(NAV_ITEMS.filter((i) => !i.mobile).map((i) => [i.key, t(i.key)]))} />
     </nav>
   );
 }
