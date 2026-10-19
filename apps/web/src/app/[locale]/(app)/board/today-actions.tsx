@@ -1,18 +1,25 @@
 'use client';
 
 import { todayActions } from '@jp/core';
+import { ChevronDown } from 'lucide-react';
 import { useFormatter, useNow, useTimeZone, useTranslations } from 'next-intl';
+import { useState } from 'react';
 import { JoinMeeting } from './join-meeting';
 import type { BoardCardView } from './board-types';
 
-export function TodayActions({ cards, onPinged, onOpen, onGhosted }: {
+/** More plain follow-ups than this fold into one line: a batch of applications comes due on the same day. */
+const FOLD_PINGS = 3;
+
+export function TodayActions({ cards, onPinged, onPingedMany, onOpen, onGhosted }: {
   cards: BoardCardView[];
   onPinged: (id: string) => void;
+  onPingedMany: (ids: string[]) => void;
   onOpen: (id: string) => void;
   onGhosted: (id: string) => void;
 }) {
   const t = useTranslations('board');
   const format = useFormatter();
+  const [pingsOpen, setPingsOpen] = useState(false);
   const now = useNow();
   const timeZone = useTimeZone() ?? 'UTC';
   const day = (d: Date) => new Intl.DateTimeFormat('en-CA', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(d);
@@ -30,6 +37,10 @@ export function TodayActions({ cards, onPinged, onOpen, onGhosted }: {
   // An interview tomorrow is not a task for today: it goes under "Coming up" and does not count in today's number.
   const dueToday = actions.filter((a) => a.kind !== 'interview' || !a.at || day(a.at) <= day(now));
   const comingUp = actions.filter((a) => !dueToday.includes(a));
+  const pings = dueToday.filter((a) => a.kind === 'ping');
+  const foldPings = pings.length > FOLD_PINGS;
+  const others = foldPings ? dueToday.filter((a) => a.kind !== 'ping') : dueToday;
+  const todayCount = others.length + (foldPings ? 1 : 0);
   const item = (a: (typeof actions)[number]) => {
     const card = byId.get(a.id)!;
     return (
@@ -54,9 +65,39 @@ export function TodayActions({ cards, onPinged, onOpen, onGhosted }: {
   return (
     <aside id="today-actions" data-testid="today-actions" className="scroll-mt-24 brutal flex flex-col gap-2 p-4">
       <h2 data-testid="today-title" className="font-display text-lg font-semibold">
-        {dueToday.length > 0 ? t('todayTitle', { count: dueToday.length }) : t('todayNothing')}
+        {todayCount > 0 ? t('todayTitle', { count: todayCount }) : t('todayNothing')}
       </h2>
-      {dueToday.length > 0 && <ul className="flex flex-col gap-2">{dueToday.map(item)}</ul>}
+      {todayCount > 0 && (
+        <ul className="flex flex-col gap-2">
+          {others.map(item)}
+          {foldPings && (
+            <li data-testid="today-pings" className="flex flex-col gap-2 border-b border-border pb-2 last:border-b-0">
+              <span className="flex flex-wrap items-center justify-between gap-2">
+                <button
+                  type="button"
+                  data-testid="today-pings-toggle"
+                  aria-expanded={pingsOpen}
+                  onClick={() => setPingsOpen((v) => !v)}
+                  className="inline-flex items-center gap-1.5 text-left font-semibold"
+                >
+                  {t('pingGroup', { count: pings.length })}
+                  <span className="text-sm font-normal text-muted-foreground">· {pingsOpen ? t('pingGroupHide') : t('pingGroupShow')}</span>
+                  <ChevronDown aria-hidden className={`size-4 transition-transform ${pingsOpen ? 'rotate-180' : ''}`} />
+                </button>
+                <button
+                  type="button"
+                  data-testid="today-pings-all"
+                  onClick={() => { if (window.confirm(t('pingAllConfirm', { count: pings.length }))) onPingedMany(pings.map((a) => a.id)); }}
+                  className="brutal brutal-press px-3 py-1 text-sm font-semibold"
+                >
+                  {t('pingAll')}
+                </button>
+              </span>
+              {pingsOpen && <ul className="flex flex-col gap-2 pl-3">{pings.map(item)}</ul>}
+            </li>
+          )}
+        </ul>
+      )}
       {comingUp.length > 0 && (
         <>
           <h3 className="mt-1 tabular-nums text-xs text-muted-foreground">{t('comingUp')}</h3>

@@ -8,7 +8,7 @@ import { useTranslations } from 'next-intl';
 import { useMemo, useState } from 'react';
 import { Toast, useToast } from '@/components/ui/toast';
 import { useSaveUiPrefs } from '@/lib/use-save-ui-prefs';
-import { deleteApplication, markPinged, moveApplication, rejectApplication } from './actions';
+import { deleteApplication, markPinged, markPingedMany, moveApplication, rejectApplication } from './actions';
 import { AddCardDialog } from './add-card-dialog';
 import { type BoardFilter, EMPTY_FILTER, isFiltering, matchesFilter } from './board-filter';
 import { BoardFilterBar } from './board-filter-bar';
@@ -219,6 +219,12 @@ export function Board({ columns, cards: initial, labels: initialLabels, rules, n
           }
           if (ok) patchLocal(id, { lastActivityAt: new Date().toISOString(), followUpCount: (cards.find((c) => c.id === id)?.followUpCount ?? 0) + 1, feedbackDueAt: null });
           else show({ message: t('moveError'), tone: 'error' });
+        }}
+        onPingedMany={async (ids) => {
+          const done = await markPingedMany(ids).catch(() => [] as string[]);
+          const at = new Date().toISOString();
+          for (const id of done) patchLocal(id, { lastActivityAt: at, followUpCount: (cards.find((c) => c.id === id)?.followUpCount ?? 0) + 1, feedbackDueAt: null });
+          if (done.length < ids.length) show({ message: t('moveError'), tone: 'error' });
         }}
         onGhosted={(id) => lost && requestMove(id, lost.id, endRank(lost.id, id), ['no_feedback'], 'ghosted')}
       />

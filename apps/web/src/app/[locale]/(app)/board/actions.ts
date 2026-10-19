@@ -147,6 +147,18 @@ export async function markPinged(id: string): Promise<boolean> {
   return done(error, 'markPinged');
 }
 
+/** "I followed up" for several cards at once (a batch of applications came due together). */
+export async function markPingedMany(ids: string[]): Promise<string[]> {
+  const supabase = await client();
+  if (!supabase) return [];
+  const done: string[] = [];
+  for (const id of ids.filter((x) => UUID.test(x)).slice(0, 200)) {
+    const { error } = await supabase.rpc('ping_application', { p_id: id });
+    if (!error) done.push(id);
+  }
+  return done;
+}
+
 export async function deleteApplication(id: string): Promise<boolean> {
   const supabase = await client();
   if (!supabase || !UUID.test(id)) return false;
