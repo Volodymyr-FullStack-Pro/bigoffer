@@ -47,7 +47,7 @@ export function ReminderSettings({ initial }: { initial: { first: number; second
           <p className="text-sm text-muted-foreground">{t('remindersHint')}</p>
         </div>
       </div>
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(11rem,1fr))]">
         {pick('first', FIRST, t('reminderFirst'), 'businessDays')}
         {pick('second', SECOND, t('reminderSecond'), 'businessDays')}
         {pick('ghost', GHOST, t('reminderGhost'), 'calendarDays')}
