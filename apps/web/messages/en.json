@@ -274,7 +274,16 @@
     "countryNone": "Not set",
     "countryHint": "Remote jobs that only hire in other countries are hidden.",
     "cv": "CV link",
-    "cvHint": "Google Drive, Dropbox or your site — for applications and recruiter messages"
+    "cvHint": "Google Drive, Dropbox or your site — for applications and recruiter messages",
+    "remindersTitle": "Board reminders",
+    "remindersHint": "When a card with no answer asks you to follow up. An auto-reply is not an answer; “I followed up” restarts the count.",
+    "reminderFirst": "First reminder after",
+    "reminderSecond": "“Overdue” after",
+    "reminderGhost": "“Ghosting?” after",
+    "reminderOrder": "The second reminder must come after the first.",
+    "saveError": "Could not save. Try again.",
+    "businessDays": "{count, plural, one {# business day} other {# business days}}",
+    "calendarDays": "{count, plural, one {# day} other {# days}}"
   },
   "search": {
     "title": "Job search settings",
@@ -557,7 +566,12 @@
     "actionReply": "Reply",
     "columnMore": "{count, plural, one {# more card, nothing new} other {# more cards, nothing new}}",
     "columnLess": "Fold quiet cards",
-    "lastFromThem": "their message is the latest"
+    "lastFromThem": "their message is the latest",
+    "pingGroup": "{count, plural, one {Follow up: # company} other {Follow up: # companies}}",
+    "pingGroupShow": "Show",
+    "pingGroupHide": "Hide",
+    "pingAll": "Mark all as followed up",
+    "pingAllConfirm": "Mark {count} cards as followed up? The count restarts from today."
   },
   "cv": {
     "title": "Your CV",

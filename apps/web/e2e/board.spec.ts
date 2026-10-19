@@ -426,3 +426,32 @@ test('a long column folds its quiet cards; the card panel has section navigation
   await expect.poll(() => page.getByTestId('card-panel').evaluate((el) => el.scrollTop), { timeout: 10_000 }).toBeGreaterThan(200);
   await expect(visible(page, 'panel-history')).toBeInViewport({ ratio: 0.5 });
 });
+
+test('a batch of follow-ups folds into one line and can be marked at once', async ({ context, page }) => {
+  const email = uniqueEmail('board-pings');
+  await loginAs(context, email);
+  for (let i = 0; i < 4; i++) await seedApplication(email, { column: 'applied', appliedDaysAgo: 9 });
+  await page.goto('/en/board');
+  const group = visible(page, 'today-pings');
+  await expect(group).toContainText('Follow up: 4 companies');
+  await expect(group.getByTestId('today-action')).toHaveCount(0);
+  await group.getByTestId('today-pings-toggle').click();
+  await expect(group.getByTestId('today-action')).toHaveCount(4);
+  page.once('dialog', (d) => void d.accept());
+  await group.getByTestId('today-pings-all').click();
+  await expect(visible(page, 'today-pings')).toHaveCount(0);
+  await page.reload();
+  await expect(visible(page, 'today-pings')).toHaveCount(0);
+});
+
+test('reminder timing is set in the profile', async ({ context, page }) => {
+  await loginAs(context, uniqueEmail('reminder-rules'));
+  await page.goto('/en/profile');
+  await visible(page, 'reminder-first').selectOption('7');
+  await visible(page, 'reminder-second').selectOption('14');
+  await visible(page, 'reminder-save').click();
+  await expect(visible(page, 'reminder-saved')).toBeVisible();
+  await page.reload();
+  await expect(visible(page, 'reminder-first')).toHaveValue('7');
+  await expect(visible(page, 'reminder-second')).toHaveValue('14');
+});

@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/server';
 import { AnswerBank } from './answer-bank';
 import { CvSection } from './cv-section';
 import { GenieSettings } from './genie-settings';
+import { ReminderSettings } from './reminder-settings';
 import { parseUiPrefs } from '@/lib/ui-prefs';
 import { loadProfileExtras } from './extras-data';
 import { ProfileForm } from './profile-form';
@@ -21,7 +22,7 @@ export default async function ProfilePage() {
   const supabase = await createClient();
   const { data: profile, error } = await supabase
     .from('profiles')
-    .select('full_name, timezone, contacts, country, telegram_chat_id, telegram_alerts, telegram_min_score, digest_hour, ui_prefs, telegram_quiet_start, telegram_quiet_end, telegram_paused_until')
+    .select('full_name, timezone, contacts, country, telegram_chat_id, telegram_alerts, telegram_min_score, digest_hour, ui_prefs, telegram_quiet_start, telegram_quiet_end, telegram_paused_until, follow_up_days, ghost_after_days')
     .eq('id', userId)
     .single();
 
@@ -58,6 +59,9 @@ export default async function ProfilePage() {
         timeZones={Intl.supportedValuesOf('timeZone')}
       />
       <GenieSettings initial={parseUiPrefs(profile.ui_prefs).genie ?? {}} />
+      <ReminderSettings
+        initial={{ first: profile.follow_up_days?.[0] ?? 5, second: profile.follow_up_days?.[1] ?? 10, ghost: profile.ghost_after_days ?? 21 }}
+      />
       <TelegramSection
         botConfigured={Boolean(process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME)}
         settings={{
