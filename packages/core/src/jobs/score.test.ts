@@ -293,3 +293,21 @@ describe('namedPlatforms', () => {
     expect(missingCoreStacks('Web developer', ['WordPress', 'JavaScript'], ['JavaScript', 'React'])).toEqual(['PHP']);
   });
 });
+
+describe('generic skills', () => {
+  const dev: SearchProfile = {
+    ...profile,
+    keywords: ['full stack', 'react developer'],
+    skills: ['React', 'Node.js', 'TypeScript', 'JavaScript', 'Git', 'CI/CD', 'REST APIs', 'HTML', 'CSS', 'Cursor', 'Claude Code'],
+  };
+  it('do not make an unrelated job relevant on their own', () => {
+    expect(scoreJob(dev, { ...job, title: 'Dephi Developer', descriptionText: 'Delphi 7, Firebird. Git and CI/CD.' })).toBeNull();
+    expect(scoreJob(dev, { ...job, title: 'DWH Engineer', descriptionText: 'Python, SQL, Airflow, REST APIs, Git.' })).toBeNull();
+    expect(scoreJob(dev, { ...job, title: 'SEO Content Specialist (AI - Automation)', descriptionText: 'SEO texts with Cursor and Claude Code, a bit of JavaScript.' })).toBeNull();
+  });
+  it('still count with core skills: a Node.js job with a plain title stays', () => {
+    const r = scoreJob(dev, { ...job, title: 'Senior Software Engineer', descriptionText: 'Node.js and TypeScript services, Git, CI/CD.' });
+    expect(r).not.toBeNull();
+    expect(r!.breakdown.matchedSkills).toEqual(expect.arrayContaining(['Node.js', 'TypeScript', 'Git']));
+  });
+});
