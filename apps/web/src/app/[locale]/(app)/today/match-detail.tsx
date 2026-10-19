@@ -30,16 +30,22 @@ export function salaryText(
   return null;
 }
 
+/**
+ * Hide / Save / Applied. Pinned to the bottom of the detail (desktop) or above the tab bar (phone), so they stay in
+ * reach after the apply kit or a cover letter pushes the rest of the panel down.
+ */
 export function MatchActions({
   onAction,
   compact = false,
+  className = '',
 }: {
   onAction: (a: MatchAction) => void;
   compact?: boolean;
+  className?: string;
 }) {
   const t = useTranslations('feed');
   return (
-    <div className={`flex flex-wrap gap-2 ${compact ? 'justify-between' : ''}`} data-testid="match-actions">
+    <div className={`flex flex-wrap gap-2 ${compact ? 'justify-between' : ''} ${className}`} data-testid="match-actions">
       <button
         type="button"
         data-testid="match-hide"
@@ -150,8 +156,8 @@ function JobDescription({ jobId, initial }: { jobId: string; initial: string }) 
           <div className="h-3 w-9/12 rounded bg-muted" />
         </div>
       ) : (
-        // Desktop: its own scroll beside the list. Phone: part of the page, so a swipe on it scrolls the page.
-        <div data-testid="job-description" className="whitespace-pre-line text-sm md:max-h-[50vh] md:overflow-y-auto">
+        // Part of the panel's own scroll (desktop) or the page (phone): no scroll inside a scroll.
+        <div data-testid="job-description" className="whitespace-pre-line text-sm">
           {text}
         </div>
       )}
@@ -362,9 +368,14 @@ export function MatchDetail({
           ))}
       </div>
       <ApplyKitToggle key={match.id} jobId={match.jobId} onApplied={onApplied} defaultOpen={kitOpen} />
-      {onAction && <MatchActions onAction={onAction} />}
       <PeopleSearch jobId={match.jobId} />
       {showDescription && <JobDescription key={match.jobId} jobId={match.jobId} initial={match.description} />}
+      {onAction && (
+        <MatchActions
+          onAction={onAction}
+          className="glass sticky bottom-0 z-10 -mx-6 -mb-6 mt-auto justify-end rounded-none border-x-0 border-b-0 px-6 py-3"
+        />
+      )}
     </article>
   );
 }

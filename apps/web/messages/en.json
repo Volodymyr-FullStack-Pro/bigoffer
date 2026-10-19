@@ -289,7 +289,8 @@
     "reminderOrder": "The second reminder must come after the first.",
     "saveError": "Could not save. Try again.",
     "businessDays": "{count, plural, one {# business day} other {# business days}}",
-    "calendarDays": "{count, plural, one {# day} other {# days}}"
+    "calendarDays": "{count, plural, one {# day} other {# days}}",
+    "saving": "Saving…"
   },
   "search": {
     "title": "Job search settings",

@@ -13,7 +13,14 @@ const GHOST = [14, 21, 30, 45, 60];
 export function ReminderSettings({ initial }: { initial: { first: number; second: number; ghost: number } }) {
   const t = useTranslations('profile');
   const [rules, setRules] = useState(initial);
-  const [state, setState] = useState<'idle' | 'saved' | 'error'>('idle');
+  const [state, setState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  // Saved as soon as a value changes; a pair where the second reminder comes first waits to be fixed.
+  const change = async (next: typeof rules) => {
+    setRules(next);
+    if (next.second <= next.first) return setState('idle');
+    setState('saving');
+    setState((await saveReminderRules(next).catch(() => false)) ? 'saved' : 'error');
+  };
   const field = 'brutal bg-card px-2 py-1.5 text-sm';
   const pick = (key: keyof typeof rules, options: number[], label: string, unit: 'businessDays' | 'calendarDays') => (
     <label className="flex flex-col gap-1 text-xs text-muted-foreground">
@@ -21,7 +28,7 @@ export function ReminderSettings({ initial }: { initial: { first: number; second
       <select
         data-testid={`reminder-${key}`}
         value={rules[key]}
-        onChange={(e) => { setRules((r) => ({ ...r, [key]: Number(e.target.value) })); setState('idle'); }}
+        onChange={(e) => void change({ ...rules, [key]: Number(e.target.value) })}
         className={field}
       >
         {[...new Set([...options, rules[key]])].sort((a, b) => a - b).map((n) => (
@@ -32,7 +39,7 @@ export function ReminderSettings({ initial }: { initial: { first: number; second
   );
   const invalid = rules.second <= rules.first;
   return (
-    <section data-testid="reminder-settings" className="brutal flex max-w-2xl flex-col gap-4 p-6">
+    <section data-testid="reminder-settings" className="brutal flex flex-col gap-4 p-6">
       <div className="flex items-start gap-3">
         <BellRing aria-hidden className="mt-1 size-5 text-status-wait" />
         <div>
@@ -46,19 +53,11 @@ export function ReminderSettings({ initial }: { initial: { first: number; second
         {pick('ghost', GHOST, t('reminderGhost'), 'calendarDays')}
       </div>
       {invalid && <p role="alert" className="text-sm text-danger">{t('reminderOrder')}</p>}
-      <div className="flex items-center gap-3">
-        <button
-          type="button"
-          data-testid="reminder-save"
-          disabled={invalid}
-          onClick={async () => setState((await saveReminderRules(rules).catch(() => false)) ? 'saved' : 'error')}
-          className="brutal brutal-press bg-brand px-4 py-2 font-semibold text-brand-foreground disabled:opacity-50"
-        >
-          {t('save')}
-        </button>
-        {state === 'saved' && <span data-testid="reminder-saved" className="text-sm">✓ {t('saved')}</span>}
-        {state === 'error' && <span role="alert" className="text-sm text-danger">{t('saveError')}</span>}
-      </div>
+      <p aria-live="polite" className="min-h-5 text-sm">
+        {state === 'saving' && <span className="text-muted-foreground">{t('saving')}</span>}
+        {state === 'saved' && <span data-testid="reminder-saved">✓ {t('saved')}</span>}
+        {state === 'error' && <span role="alert" className="text-danger">{t('saveError')}</span>}
+      </p>
     </section>
   );
 }

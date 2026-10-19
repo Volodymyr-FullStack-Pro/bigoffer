@@ -289,7 +289,8 @@
     "reminderOrder": "Друге нагадування має бути пізніше за перше.",
     "saveError": "Не вдалося зберегти. Спробуйте ще раз.",
     "businessDays": "{count, plural, one {# робочий день} few {# робочі дні} many {# робочих днів} other {# робочого дня}}",
-    "calendarDays": "{count, plural, one {# день} few {# дні} many {# днів} other {# дня}}"
+    "calendarDays": "{count, plural, one {# день} few {# дні} many {# днів} other {# дня}}",
+    "saving": "Зберігаю…"
   },
   "search": {
     "title": "Налаштування пошуку",
