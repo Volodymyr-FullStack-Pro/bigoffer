@@ -247,7 +247,12 @@
     "emptyFiltered": "{count, plural, one {Filters hide # job} other {Filters hide # jobs}}",
     "emptyShowAll": "Show all ({count})",
     "emptyRuleHidden": "See the ones your rules hid ({count})",
-    "emptyCadence": "Auto-search checks Djinni and DOU every 30 minutes — new jobs show up here on their own."
+    "emptyCadence": "Auto-search checks Djinni and DOU every 30 minutes — new jobs show up here on their own.",
+    "payLevelHint": "Djinni's pay level relative to other jobs (no amount published)",
+    "payLevel_1": "Pay below average",
+    "payLevel_2": "Average pay",
+    "payLevel_3": "Pay above average",
+    "payLevel_4": "Top pay"
   },
   "comingSoon": {
     "badge": "Soon",
@@ -571,7 +576,9 @@
     "pingGroupShow": "Show",
     "pingGroupHide": "Hide",
     "pingAll": "Mark all as followed up",
-    "pingAllConfirm": "Mark {count} cards as followed up? The count restarts from today."
+    "pingAllConfirm": "Mark {count} cards as followed up? The count restarts from today.",
+    "addToCalendar": "Add to calendar",
+    "calendarTitle": "Interview"
   },
   "cv": {
     "title": "Your CV",
@@ -908,7 +915,23 @@
     "manual": "Added by hand",
     "noData": "No data yet.",
     "reasons": "Rejection reasons",
-    "noReasons": "No rejections with reasons yet — good!"
+    "noReasons": "No rejections with reasons yet — good!",
+    "worksTitle": "What works",
+    "worksHint": "The share of applications that got a real answer. A group shows once it has at least {min} applications.",
+    "worksEmpty": "Not enough applications to tell yet.",
+    "worksLine": "{responded} of {applied}",
+    "works_letter": "Cover letter",
+    "works_letter_full": "Full letter",
+    "works_letter_short": "Short note",
+    "works_letter_none": "No letter",
+    "works_speed": "How soon you applied",
+    "works_speed_day": "Within a day",
+    "works_speed_days": "In 1–3 days",
+    "works_speed_later": "Later",
+    "works_score": "Match score",
+    "works_score_high": "80% and up",
+    "works_score_mid": "60–79%",
+    "works_score_low": "Below 60%"
   },
   "library": {
     "title": "Library",

@@ -455,3 +455,20 @@ test('reminder timing is set in the profile', async ({ context, page }) => {
   await expect(visible(page, 'reminder-first')).toHaveValue('7');
   await expect(visible(page, 'reminder-second')).toHaveValue('14');
 });
+
+test('an upcoming interview can be added to the calendar; today actions fold away', async ({ context, page }) => {
+  const email = uniqueEmail('board-calendar');
+  await loginAs(context, email);
+  const { title } = await seedApplication(email, { column: 'interview', appliedDaysAgo: 3, nextActionInHours: 30 });
+  await page.goto('/en/board');
+  await card(page, title).click();
+  await expect(visible(page, 'add-to-calendar')).toHaveAttribute('href', /calendar\.google\.com\/calendar\/render\?action=TEMPLATE/);
+  await expect(visible(page, 'add-to-calendar-ics')).toHaveAttribute('href', /^data:text\/calendar/);
+  await page.keyboard.press('Escape');
+  await visible(page, 'today-toggle').click();
+  await expect(visible(page, 'coming-up')).toHaveCount(0);
+  await page.reload();
+  await expect(visible(page, 'coming-up')).toHaveCount(0);
+  await visible(page, 'today-toggle').click();
+  await expect(visible(page, 'coming-up')).toContainText(title);
+});

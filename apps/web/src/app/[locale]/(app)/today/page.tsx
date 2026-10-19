@@ -1,4 +1,4 @@
-import { candidateEnglish, detectDomains, detectPerks, isLocale, requiredEnglish, type LocalizedText, localized, normalizeCompany, normalizeTitle, requiredYears, SENIORITIES, type Seniority, sourceInfo } from '@jp/core';
+import { candidateEnglish, detectDomains, detectPerks, isLocale, localized, type LocalizedText, normalizeCompany, normalizeTitle, payLevelOf, requiredEnglish, requiredYears, SENIORITIES, type Seniority, sourceInfo } from '@jp/core';
 import { getLocale, getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
 import { requireUserId } from '@/lib/auth';
@@ -130,6 +130,7 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
       requiredYears: requiredYears(m.jobs.description_text, m.jobs.tags ?? []),
       candidateYears: cv?.parsed?.yearsExperience ?? null,
       requiredEnglish: requiredEnglish(m.jobs.description_text, m.jobs.tags ?? []),
+      payLevel: payLevelOf(m.jobs.tags),
       candidateEnglish: myEnglish,
       onBoard: boardByJob.get(m.job_id) ?? boardByName.get(nameKey(m.jobs.companies?.name ?? '', m.jobs.title)) ?? null,
       onBoardLeft: platformsLeft(m),

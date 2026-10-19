@@ -7,7 +7,20 @@ export type AppRow = {
   outcome: string;
   sourceId: string | null;
   rejectionReasons: string[];
+  /** The letter sent with the application: full cover letter, a short note, none (null: not recorded). */
+  letterKind?: 'full' | 'short' | 'none' | null;
+  /** When the job was posted on its board (for "how fast did I apply"). */
+  postedAt?: string | null;
+  /** The match score the job had for this user. */
+  score?: number | null;
 };
+
+/** One group of "what works": how many applications it has and how many got a real answer. */
+export type WorksGroup = { key: string; applied: number; responded: number };
+export type WhatWorks = { letter: WorksGroup[]; speed: WorksGroup[]; score: WorksGroup[] };
+
+/** Groups with fewer applications say nothing yet. */
+export const WORKS_MIN = 3;
 
 export type Stats = {
   applied7: number;
@@ -64,5 +77,32 @@ export function computeStats(rows: readonly AppRow[], now: Date, tz: string, day
     days: series,
     sources: [...bySource].map(([id, s]) => ({ id, ...s })).sort((a, b) => b.applied - a.applied).slice(0, 6),
     reasons: [...reasons].map(([key, count]) => ({ key, count })).sort((a, b) => b.count - a.count).slice(0, 6),
+  };
+}
+
+/** Response rate by letter, by how soon after posting the application went out, and by match score. */
+export function whatWorks(rows: readonly AppRow[]): WhatWorks {
+  const applied = rows.filter((r) => r.appliedAt);
+  const answered = (r: AppRow) => Boolean(r.firstResponseAt) || r.column === 'talking' || INTERVIEW.has(r.column) || r.outcome === 'offer';
+  const group = (keyOf: (r: AppRow) => string | null, order: string[]): WorksGroup[] => {
+    const m = new Map<string, WorksGroup>();
+    for (const r of applied) {
+      const key = keyOf(r);
+      if (!key) continue;
+      const g = m.get(key) ?? { key, applied: 0, responded: 0 };
+      g.applied++;
+      if (answered(r)) g.responded++;
+      m.set(key, g);
+    }
+    return order.map((k) => m.get(k)).filter((g): g is WorksGroup => g !== undefined && g.applied >= WORKS_MIN);
+  };
+  return {
+    letter: group((r) => (r.letterKind === 'full' ? 'full' : r.letterKind === 'short' ? 'short' : r.letterKind === 'none' ? 'none' : null), ['full', 'short', 'none']),
+    speed: group((r) => {
+      if (!r.postedAt || !r.appliedAt) return null;
+      const hours = (Date.parse(r.appliedAt) - Date.parse(r.postedAt)) / 3_600_000;
+      return hours < 24 ? 'day' : hours < 72 ? 'days' : 'later';
+    }, ['day', 'days', 'later']),
+    score: group((r) => (r.score == null ? null : r.score >= 80 ? 'high' : r.score >= 60 ? 'mid' : 'low'), ['high', 'mid', 'low']),
   };
 }

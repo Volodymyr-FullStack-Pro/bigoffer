@@ -4,7 +4,7 @@ import { Link } from '@/i18n/navigation';
 import { requireUserId } from '@/lib/auth';
 import { createClient } from '@/lib/supabase/server';
 import { parseUiPrefs } from '@/lib/ui-prefs';
-import { type AppRow, computeStats } from './stats';
+import { type AppRow, computeStats, whatWorks, type WorksGroup, WORKS_MIN } from './stats';
 
 function Metric({ label, value, hint, testId }: { label: string; value: string; hint?: string; testId: string }) {
   return (
@@ -23,9 +23,12 @@ export default async function AnalyticsPage() {
   const format = await getFormatter();
   const supabase = await createClient();
   const [{ data: apps }, { data: me }] = await Promise.all([
-    supabase.from('applications').select('applied_at, first_response_at, outcome, source_id, rejection_reasons, board_columns(key)'),
+    supabase.from('applications').select('job_id, applied_at, first_response_at, outcome, source_id, rejection_reasons, letter_kind, board_columns(key), jobs(posted_at)'),
     supabase.from('profiles').select('timezone, ui_prefs').eq('id', userId).maybeSingle(),
   ]);
+  const jobIds = (apps ?? []).map((a) => a.job_id).filter((id): id is string => Boolean(id));
+  const { data: matches } = jobIds.length ? await supabase.from('job_matches').select('job_id, score').in('job_id', jobIds.slice(0, 500)) : { data: [] };
+  const scoreByJob = new Map((matches ?? []).map((m) => [m.job_id, m.score]));
   const rows: AppRow[] = (apps ?? []).map((a) => ({
     column: a.board_columns?.key ?? 'saved',
     appliedAt: a.applied_at,
@@ -33,7 +36,12 @@ export default async function AnalyticsPage() {
     outcome: a.outcome,
     sourceId: a.source_id,
     rejectionReasons: a.rejection_reasons ?? [],
+    letterKind: a.letter_kind === 'full' || a.letter_kind === 'short' || a.letter_kind === 'none' ? a.letter_kind : null,
+    postedAt: a.jobs?.posted_at ?? null,
+    score: a.job_id ? (scoreByJob.get(a.job_id) ?? null) : null,
   }));
+  const works = whatWorks(rows);
+  const worksGroups: [string, WorksGroup[]][] = [['letter', works.letter], ['speed', works.speed], ['score', works.score]];
   const goal = parseUiPrefs(me?.ui_prefs).genie?.goal ?? 5;
   const s = computeStats(rows, new Date(), me?.timezone ?? 'Europe/Kyiv');
   const peak = Math.max(goal, ...s.days.map((d) => d.count), 1);
@@ -137,6 +145,46 @@ export default async function AnalyticsPage() {
             )}
           </div>
         </div>
+      </div>
+
+      <div data-testid="what-works" className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-5">
+        <div>
+          <h2 className="text-base font-semibold">{t('worksTitle')}</h2>
+          <p className="text-sm text-muted-foreground">{t('worksHint', { min: WORKS_MIN })}</p>
+        </div>
+        {worksGroups.every(([, g]) => g.length === 0) ? (
+          <p className="text-sm text-muted-foreground">{t('worksEmpty')}</p>
+        ) : (
+          <div className="grid gap-5 md:grid-cols-3">
+            {worksGroups.filter(([, g]) => g.length > 0).map(([dim, groups]) => {
+              const best = Math.max(...groups.map((g) => g.responded / g.applied));
+              return (
+                <div key={dim} className="flex flex-col gap-2">
+                  <h3 className="text-sm font-semibold">{t(`works_${dim}` as never)}</h3>
+                  <ul className="flex flex-col gap-2">
+                    {groups.map((g) => {
+                      const rate = Math.round((100 * g.responded) / g.applied);
+                      const top = groups.length > 1 && g.responded / g.applied === best && g.responded > 0;
+                      return (
+                        <li key={g.key} data-testid="works-row" data-dim={dim} data-key={g.key} className="flex flex-col gap-1">
+                          <span className="flex justify-between gap-2 text-sm">
+                            <span className={top ? 'font-semibold text-link' : ''}>{t(`works_${dim}_${g.key}` as never)}</span>
+                            <span className="tabular-nums text-muted-foreground">
+                              {t('worksLine', { responded: g.responded, applied: g.applied })} · <b className={top ? 'text-link' : 'text-foreground'}>{rate}%</b>
+                            </span>
+                          </span>
+                          <span className="h-1.5 overflow-hidden rounded-full bg-muted">
+                            <span className={`block h-full rounded-full ${top ? 'bg-brand' : 'bg-foreground/40'}`} style={{ width: `${Math.max(rate, 3)}%` }} />
+                          </span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </section>
   );
