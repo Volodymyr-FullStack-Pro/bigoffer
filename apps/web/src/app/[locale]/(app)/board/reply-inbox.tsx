@@ -1,12 +1,13 @@
 'use client';
 
+import { Check } from 'lucide-react';
 import type { RejectionReason, RejectionStage } from '@jp/core';
 import { useTranslations } from 'next-intl';
 import { tellGenie } from '@/lib/genie/events';
 import { useState } from 'react';
 import type { BoardCardView, BoardColumn } from './board-types';
 import { logReply, logSentMessage, type ReplyChannel, setReplyKind, suggestReplyKind } from './message-actions';
-import { TONE_PILL } from '@/components/ui/status-badge';
+import { toneChip } from '@/components/ui/status-badge';
 import { columnForReply, REPLY_KINDS, REPLY_STYLE, type ReplyKind } from './reply-kinds';
 import { ReplyIcon } from './reply-icon';
 import { fromZonedInput, toZonedInput } from './zoned-input';
@@ -195,9 +196,10 @@ export function ReplyInbox({ card, defaultAuthor, columns, timeZone, lang, onLog
             data-testid="reply-kind"
             data-kind={k}
             onClick={() => setKind(k)}
-            className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset ${TONE_PILL[REPLY_STYLE[k].tone]} ${kind === k ? 'ring-2' : 'opacity-60 hover:opacity-100'}`}
+            className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ${toneChip(REPLY_STYLE[k].tone, kind === k)}`}
           >
             <ReplyIcon kind={k} /> {t(`reply_${k}` as never)}
+{kind === k && <Check aria-hidden className="size-3.5" strokeWidth={3} />}
           </button>
         ))}
       </div>

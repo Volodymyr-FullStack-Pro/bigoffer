@@ -1,11 +1,11 @@
 'use client';
 
-import { Search, X } from 'lucide-react';
+import { Check, Search, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useEffect, useRef } from 'react';
 import { type BoardFilter, EMPTY_FILTER, isFiltering } from './board-filter';
 import type { BoardCard, BoardLabel } from './board-types';
-import { TONE_PILL } from '@/components/ui/status-badge';
+import { toneChip } from '@/components/ui/status-badge';
 import { REPLY_KINDS, REPLY_STYLE } from './reply-kinds';
 import { ReplyIcon } from './reply-icon';
 
@@ -85,9 +85,10 @@ export function BoardFilterBar({ filter, onChange, cards, labels, labelName, fou
                 data-kind={k}
                 aria-pressed={active}
                 onClick={() => onChange({ ...filter, reply: active ? null : k })}
-                className={`${chip} ring-1 ring-inset ${TONE_PILL[REPLY_STYLE[k].tone]} ${active ? 'ring-2' : 'border-transparent opacity-70 hover:opacity-100'}`}
+                className={`${chip} border-transparent ${toneChip(REPLY_STYLE[k].tone, active)}`}
               >
                 <ReplyIcon kind={k} /> {t(`reply_${k}` as never)}
+{active && <Check aria-hidden className="size-3.5" strokeWidth={3} />}
               </button>
             );
           })}
