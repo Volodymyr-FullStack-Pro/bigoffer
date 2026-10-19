@@ -102,4 +102,21 @@ describe('djinniAdapter', () => {
     expect(jobs.filter((j) => j.externalId === '787644')).toHaveLength(1);
     await expectNormalizable(jobs);
   });
+
+  it('does not re-read the page of a feed posting already stored, but still reports it as seen', async () => {
+    const recent = new Date(Date.now() - 3600_000).toUTCString();
+    const item = (id: string) =>
+      `<item><title>Dev ${id}</title><link>https://djinni.co/jobs/${id}-x/</link><description>React</description><pubDate>${recent}</pubDate><guid>https://djinni.co/jobs/${id}-x/</guid></item>`;
+    const { ctx, calls } = fakeContext({
+      'jobs/rss/': `<rss><channel>${item('910001')}${item('910002')}</channel></rss>`,
+      'jobs/910002-x/': '<html>no ld</html>',
+      'page=2': '<html></html>',
+      'djinni.co/jobs/': fixture('djinni.html'),
+    });
+    ctx.knownIds = async (ids) => new Set(ids.filter((id) => id === '910001'));
+    const jobs = await djinniAdapter.search({ primary_keyword: 'Fullstack' }, ctx);
+    expect(calls.map((c) => c.url).some((u) => u.includes('910001-x'))).toBe(false);
+    expect(calls.map((c) => c.url).some((u) => u.includes('910002-x'))).toBe(true);
+    expect(jobs.map((j) => j.externalId)).toEqual(expect.arrayContaining(['910001', '910002']));
+  });
 });

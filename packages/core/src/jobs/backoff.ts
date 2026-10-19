@@ -15,8 +15,8 @@ export function queryBackoff(recentInserted: number[], maxFactor: number): numbe
   return Math.max(1, Math.min(factor, maxFactor));
 }
 
-/** Per board: Djinni is the main source and stays on its interval; DOU waits up to 1 h, robota.ua (little IT) up to 4 h. */
-export const MAX_BACKOFF: Record<string, number> = { djinni: 1, dou: 2, robotaua: 4 };
+/** Per board: Djinni is the main source and stays on its interval; quiet DOU searches wait up to 2 h; robota.ua is already on 4 h. */
+export const MAX_BACKOFF: Record<string, number> = { djinni: 1, dou: 2, robotaua: 1 };
 export const DEFAULT_MAX_BACKOFF = 4;
 
 /** A readable message for any thrown value (Supabase errors are plain objects, not Error). */
