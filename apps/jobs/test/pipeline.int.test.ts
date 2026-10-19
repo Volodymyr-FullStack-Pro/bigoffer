@@ -88,8 +88,8 @@ describe('syncProfile', () => {
       .eq('source_id', 'dou');
     // DOU also gets category queries (Plan 6c); the keyword query is the one without a category.
     const keyword = data!.filter((q) => !('category' in (q.params as Record<string, unknown>)));
-    // One keyword query per search term (keywords + job-title variants), Plan 6d.
-    expect(keyword).toHaveLength(searchTerms({ keywords: ['full stack'], skills: ['React', 'Node.js'] }).length);
+    // The first few search terms (the profile's keywords first): DOU gets 4 searches per profile.
+    expect(keyword).toHaveLength(Math.min(4, searchTerms({ keywords: ['full stack'], skills: ['React', 'Node.js'] }).length));
     douQueryId = keyword[0]!.id;
   });
 });
@@ -174,7 +174,8 @@ describe('saveJobs', () => {
       externalId: `${tag}-${n}`,
       url: `https://jobs.dou.ua/vacancies/${tag}-${n}/`,
       title: `Bulk Developer ${n} ${tag}`,
-      company: `Bulk Co ${tag}`,
+      // Different employers: the same title at one company would rightly be one job.
+      company: `Bulk Co ${n} ${tag}`,
       description: 'React and Node.js.',
       ...extra,
     });
