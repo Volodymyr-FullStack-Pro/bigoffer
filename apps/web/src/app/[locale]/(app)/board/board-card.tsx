@@ -64,7 +64,7 @@ export function BoardCardItem({ card, labels, labelName, now, timeZone, onOpen }
       data-reply-kind={card.replyKind ?? undefined}
       style={{ transform: CSS.Transform.toString(transform), transition, ...(reply ? { borderLeftColor: toneColor(reply.tone), borderLeftWidth: 4 } : {}) }}
       data-needs-action={card.urgency in URGENCY_TONE || undefined}
-      className={`brutal flex min-w-0 cursor-grab flex-col gap-1.5 p-3 ${isDragging ? 'opacity-40' : ''} ${URGENCY_RING[card.urgency] ?? ''}`}
+      className={`brutal flex min-w-0 cursor-grab flex-col gap-1.5 p-3 transition-[border-color,box-shadow] duration-150 hover:border-foreground/25 hover:shadow-[0_8px_24px_-12px_rgb(0_0_0/0.45)] active:cursor-grabbing ${isDragging ? 'opacity-40' : ''} ${URGENCY_RING[card.urgency] ?? ''}`}
       {...attributes}
       {...listeners}
       onClick={onOpen}

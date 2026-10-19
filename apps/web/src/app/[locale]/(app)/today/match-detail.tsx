@@ -2,6 +2,7 @@
 
 import { getJobDescription } from './actions';
 import { SourceBadge } from '@/components/ui/source-badge';
+import { PayLevelBadge } from './pay-level-badge';
 import { pill } from '@/components/ui/pill';
 import { isLocale, type Locale, sourceInfo } from '@jp/core';
 import { useFormatter, useLocale, useNow, useTranslations } from 'next-intl';
@@ -316,6 +317,7 @@ export function MatchDetail({
             <LevelBadge level={match.seniority} label={t(`seniority_${match.seniority}`)} />
           )}
           {salary && <span className="font-bold text-link">{salary}</span>}
+          {!salary && match.payLevel && <PayLevelBadge level={match.payLevel} />}
           {match.requiredYears !== null && (
             <ExperienceBadge required={match.requiredYears} candidate={match.candidateYears} />
           )}

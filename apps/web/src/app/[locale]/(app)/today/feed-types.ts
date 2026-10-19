@@ -14,6 +14,8 @@ export type FeedMatch = {
   seniority: 'intern' | 'junior' | 'middle' | 'senior' | 'lead' | null;
   salaryMinUsd: number | null;
   salaryMaxUsd: number | null;
+  /** Djinni's relative pay level (1 below average … 4 top) when no amount is published. */
+  payLevel: 1 | 2 | 3 | 4 | null;
   summary: string | null;
   why: string | null;
   description: string;

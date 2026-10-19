@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { type AppRow, computeStats } from './stats';
+import { type AppRow, computeStats, whatWorks } from './stats';
 
 const NOW = new Date('2026-10-12T12:00:00Z');
 const row = (o: Partial<AppRow>): AppRow => ({ column: 'applied', appliedAt: null, firstResponseAt: null, outcome: 'open', sourceId: 'djinni', rejectionReasons: [], ...o });
@@ -39,5 +39,23 @@ describe('cards moved without an applied date', () => {
     const s = computeStats([{ column: 'interview', appliedAt: null, firstResponseAt: null, outcome: 'open', sourceId: null, rejectionReasons: [] }], new Date('2026-10-12T12:00:00Z'), 'Europe/Kyiv');
     expect(s.funnel).toMatchObject({ applied: 1, responded: 1, interview: 1 });
     expect(s.applied7).toBe(0);
+  });
+});
+
+describe('whatWorks', () => {
+  const base: AppRow = { column: 'applied', appliedAt: '2026-10-10T10:00:00Z', firstResponseAt: null, outcome: 'open', sourceId: 'djinni', rejectionReasons: [] };
+  const answered = { ...base, firstResponseAt: '2026-10-11T10:00:00Z' };
+  it('groups by letter, speed and score, hiding groups under the minimum', () => {
+    const rows: AppRow[] = [
+      { ...answered, letterKind: 'full', postedAt: '2026-10-10T02:00:00Z', score: 85 },
+      { ...answered, letterKind: 'full', postedAt: '2026-10-10T02:00:00Z', score: 90 },
+      { ...base, letterKind: 'full', postedAt: '2026-10-10T02:00:00Z', score: 82 },
+      { ...base, letterKind: 'none', postedAt: '2026-10-05T02:00:00Z', score: 65 },
+      { ...base, letterKind: 'none', postedAt: '2026-10-05T02:00:00Z', score: 70 },
+    ];
+    const w = whatWorks(rows);
+    expect(w.letter).toEqual([{ key: 'full', applied: 3, responded: 2 }]);
+    expect(w.speed).toEqual([{ key: 'day', applied: 3, responded: 2 }]);
+    expect(w.score).toEqual([{ key: 'high', applied: 3, responded: 2 }]);
   });
 });

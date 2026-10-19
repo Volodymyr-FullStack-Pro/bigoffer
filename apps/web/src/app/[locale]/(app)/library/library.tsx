@@ -170,7 +170,7 @@ export function Library({ initial }: { initial: SavedLink[] }) {
                 }}
               />
             ) : (
-              <li key={l.id} data-testid="link-item" className="brutal flex min-w-0 flex-col gap-1.5 p-4">
+              <li key={l.id} data-testid="link-item" className="brutal flex min-w-0 flex-col gap-1.5 p-4 transition-colors hover:border-foreground/25">
                 <a href={l.url} target="_blank" rel="noopener noreferrer" className="font-display font-semibold leading-snug underline-offset-2 [overflow-wrap:anywhere] hover:underline">
                   {l.title} ↗
                 </a>
