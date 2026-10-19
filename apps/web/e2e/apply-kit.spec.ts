@@ -113,6 +113,9 @@ test('offers the contact the posting names', async ({ context, page, isMobile })
   await page.goto('/en/today');
   if (isMobile) await page.getByRole('button', { name: 'Details' }).click();
   const contacts = visible(page, 'contact-recruiter');
+  // The best contact shows first; the rest fold behind "1 more contact".
+  await expect(contacts).toHaveCount(1);
+  await visible(page, 'people-more').click();
   await expect(contacts).toHaveCount(2);
   await expect(contacts.first()).toHaveAttribute('href', 'mailto:anna.hr@acme.io');
   await expect(contacts.last()).toHaveAttribute('href', 'https://t.me/anna_recruits');

@@ -45,3 +45,17 @@ test('navigates to board and signs out', async ({ page }) => {
   await page.getByTestId('sign-out').click();
   await expect(page).toHaveURL(/\/en\/login$/);
 });
+
+test('on a phone, prep, library, search and profile are one tap away', async ({ context, page, isMobile }) => {
+  test.skip(!isMobile, 'the tab bar is the phone layout');
+  await loginAs(context, uniqueEmail('shell-more'));
+  await page.goto('/en/today');
+  const tabs = page.getByRole('navigation', { name: 'Main mobile' });
+  await expect(tabs.getByRole('link', { name: 'Prep' })).toBeVisible();
+  await tabs.getByTestId('nav-more').click();
+  await tabs.getByRole('menuitem', { name: 'Library' }).click();
+  await expect(page).toHaveURL(/\/en\/library$/);
+  await tabs.getByTestId('nav-more').click();
+  await expect(tabs.getByRole('menuitem', { name: 'Search' })).toBeVisible();
+  await expect(tabs.getByRole('menuitem', { name: 'Profile' })).toBeVisible();
+});

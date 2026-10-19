@@ -48,12 +48,12 @@ export function BoardColumnView({ column, cards, sort, onToggleSort, labels, lab
           type="button"
           data-testid="column-sort"
           onClick={onToggleSort}
-          title={t('sortToggle')}
-          aria-label={t('sortToggle')}
-          className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium ${sort === 'smart' ? 'border-brand/50 bg-brand/10 text-link' : 'border-border text-muted-foreground hover:bg-muted'}`}
+          title={`${t(sort === 'smart' ? 'sortSmart' : 'sortManual')} — ${t('sortToggle')}`}
+          aria-label={`${t(sort === 'smart' ? 'sortSmart' : 'sortManual')} — ${t('sortToggle')}`}
+          aria-pressed={sort === 'smart'}
+          className={`grid size-7 place-items-center rounded-full border transition-colors ${sort === 'smart' ? 'border-brand/50 bg-brand/15 text-link' : 'border-border text-muted-foreground hover:bg-muted hover:text-foreground'}`}
         >
-          <ArrowDownUp className="size-3" aria-hidden />
-          {t(sort === 'smart' ? 'sortSmart' : 'sortManual')}
+          <ArrowDownUp className="size-3.5" aria-hidden />
         </button>
       </header>
       <SortableContext items={visible.map((c) => c.id)} strategy={verticalListSortingStrategy}>
