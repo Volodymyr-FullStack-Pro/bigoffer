@@ -84,7 +84,7 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
   const sourcesByName = new Map<string, Set<string | null>>();
   const addSource = (map: Map<string, Set<string | null>>, key: string, source: string | null) => map.set(key, (map.get(key) ?? new Set()).add(source));
   // Other vacancies of the same company already on the board: applying twice to one company is worth knowing.
-  const boardByCompany = new Map<string, { title: string; column: string }>();
+  const boardByCompany = new Map<string, { title: string; column: string; sourceId: string | null }>();
   for (const a of apps ?? []) {
     const column = a.board_columns ? localized(a.board_columns.title as LocalizedText, locale) || a.board_columns.key : '';
     if (a.job_id) {
@@ -96,7 +96,7 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
       addSource(sourcesByName, nameKey(a.company, a.title), a.source_id);
     }
     const company = a.company ? normalizeCompany(a.company) : '';
-    if (company && a.title && !boardByCompany.has(company)) boardByCompany.set(company, { title: a.title, column });
+    if (company && a.title && !boardByCompany.has(company)) boardByCompany.set(company, { title: a.title, column, sourceId: a.source_id });
   }
   const myEnglish = cv?.parsed ? candidateEnglish(cv.parsed.languages) : null;
   /** The job's platforms that have no card yet; a card without a platform covers a job posted on one platform only. */

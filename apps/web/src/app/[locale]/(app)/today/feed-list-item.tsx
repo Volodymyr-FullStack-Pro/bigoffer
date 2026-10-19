@@ -64,6 +64,7 @@ export function FeedListItem({
         >
           <Flag aria-hidden className="mr-1 inline size-3 -translate-y-px" />
           {t('companyOnBoardShort')}
+          {match.companyOnBoard.sourceId && <> · {sourceInfo(match.companyOnBoard.sourceId)?.name ?? match.companyOnBoard.sourceId}</>}
         </span>
       )}
       {(match.seniority || match.skills.length > 0) && (

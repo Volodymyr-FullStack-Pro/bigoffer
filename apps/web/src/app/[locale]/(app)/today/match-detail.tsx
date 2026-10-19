@@ -310,6 +310,9 @@ export function MatchDetail({
           <p data-testid="company-on-board" className="self-start rounded-full bg-warning/25 ring-1 ring-inset ring-warning/45 px-2.5 py-0.5 text-xs font-semibold text-warning">
             <Flag aria-hidden className="mr-1 inline size-3.5 -translate-y-px" />
             {tf('companyOnBoard', { title: match.companyOnBoard.title, column: match.companyOnBoard.column || '—' })}
+            {match.companyOnBoard.sourceId && (
+              <span data-testid="company-on-board-source"> · {sourceInfo(match.companyOnBoard.sourceId)?.name ?? match.companyOnBoard.sourceId}</span>
+            )}
           </p>
         )}
         {!match.companyIsPlaceholder && <p className="text-muted-foreground">{match.company}</p>}
@@ -318,7 +321,7 @@ export function MatchDetail({
             <SourceBadge key={id} sourceId={id} />
           ))}
           <span>{t(`remote_${match.remoteType}`)}</span>
-          {match.location && <span>{match.location}</span>}
+          {match.location && match.location.trim().toLowerCase() !== t(`remote_${match.remoteType}`).toLowerCase() && <span>{match.location}</span>}
           {match.seniority && (
             <LevelBadge level={match.seniority} label={t(`seniority_${match.seniority}`)} />
           )}
