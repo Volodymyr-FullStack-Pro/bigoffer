@@ -253,7 +253,8 @@
     "payLevel_1": "Pay below average",
     "payLevel_2": "Average pay",
     "payLevel_3": "Pay above average",
-    "payLevel_4": "Top pay"
+    "payLevel_4": "Top pay",
+    "reason_stack": "Other stack"
   },
   "comingSoon": {
     "badge": "Soon",
@@ -362,7 +363,9 @@
     "alreadyThere": "Already there: {value}",
     "fromCvHint": "Upload your CV and the search sets itself up from it. Or fill in the form yourself.",
     "fromCvLink": "Upload CV →",
-    "sectionsNav": "Search sections"
+    "sectionsNav": "Search sections",
+    "hideOtherStacks": "Hide jobs on another stack",
+    "hideOtherStacksHint": "Java, .NET, PHP, Python, Angular, Vue… when your skills have none of it. Unchecked, such jobs only score lower."
   },
   "board": {
     "title": "Application board",

@@ -24,6 +24,7 @@ export type SearchProfileValues = {
   targetRoles: string[];
   skills: string[];
   excludeKeywords: string[];
+  hideOtherStacks: boolean;
   seniority: string[];
   locations: string[];
   remoteType: string;
@@ -235,6 +236,13 @@ export function SearchProfileForm({ values, cvSkills = [], cvHeadline = null, de
             addLabel={t.raw('addTyped')}
             duplicateLabel={t.raw('alreadyThere')}
           />
+          <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-border p-3 hover:bg-muted/50">
+            <input type="checkbox" name="hideOtherStacks" data-testid="hide-other-stacks" defaultChecked={values.hideOtherStacks} className="mt-0.5 size-4 accent-[var(--brand)]" />
+            <span className="flex flex-col gap-0.5">
+              <span className="text-sm font-semibold">{t('hideOtherStacks')}</span>
+              <span className="text-xs text-muted-foreground">{t('hideOtherStacksHint')}</span>
+            </span>
+          </label>
         </Section>
 
         <Section id="search-terms" title={t('sectionTerms')}>

@@ -270,8 +270,26 @@ describe('main stack the candidate lacks', () => {
     expect(dotnet.breakdown.skills).toBe(8);
     expect(dotnet.breakdown.missingStack).toEqual(['.NET']);
     const java = scoreJob(js, { ...job, title: 'Senior Full Stack Engineer (Java / Vue)', skills: ['Java', 'Spring', 'TypeScript', 'Docker', 'Git', 'AWS'] })!;
-    expect(java.breakdown.missingStack).toEqual(['Java']);
+    // Vue counts too: the title names it and a React developer has no Vue.
+    expect(java.breakdown.missingStack).toEqual(['Java', 'Vue']);
     expect(java.score).toBeLessThan(scoreJob(js, { ...job, skills: ['React', 'Node.js', 'TypeScript', 'Docker', 'Git', 'AWS'] })!.score);
+  });
+  it('treats an Angular or Vue title as another stack for a React developer, unless it also names React', () => {
+    const ng = scoreJob(js, { ...job, title: 'Middle Frontend Developer (Angular)', skills: ['TypeScript', 'JavaScript', 'HTML'] })!;
+    expect(ng.breakdown.missingStack).toEqual(['Angular']);
+    const migration = scoreJob(js, { ...job, title: 'Frontend Developer (Vue → React migration)', skills: ['Vue', 'React'] })!;
+    expect(migration.breakdown.missingStack).toBeUndefined();
+    // A backend profile with no front-end framework is not judged by frameworks.
+    const backend = scoreJob({ ...js, skills: ['Node.js', 'PostgreSQL'] }, { ...job, title: 'Node.js Developer (Vue admin panel)', skills: ['Node.js'] })!;
+    expect(backend.breakdown.missingStack).toBeUndefined();
+  });
+  it('hides jobs on another stack only when the profile asks to', () => {
+    const dotnet = { ...job, title: 'Senior FullStack .NET Engineer', skills: ['.NET', 'C#', 'React'] };
+    expect(scoreJob(js, dotnet)!.hidden).toBe(false);
+    const hidden = scoreJob({ ...js, hideOtherStacks: true }, dotnet)!;
+    expect(hidden.hidden).toBe(true);
+    expect(hidden.breakdown.excludedBy).toBe('stack');
+    expect(scoreJob({ ...js, hideOtherStacks: true }, { ...job, skills: ['React', 'Node.js'] })!.hidden).toBe(false);
   });
   it('keeps full points when the candidate has one of the stacks, and for JavaScript', () => {
     const py = scoreJob({ ...js, skills: [...js.skills, 'Python'] }, { ...job, title: 'Full Stack Engineer (React + Python)', skills: ['Python', 'React'] })!;

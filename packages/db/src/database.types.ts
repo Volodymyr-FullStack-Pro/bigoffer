@@ -498,13 +498,13 @@ isOneToOne: false
                   ]
                 },"search_profiles": {
                   Row: {
-                    "created_at": string,"exclude_keywords": (string)[],"id": string,"is_active": boolean,"keywords": (string)[],"locations": (string)[],"name": string,"remote_type": string,"role_id": string | null,"salary_min_usd": number | null,"seniority": (string)[],"skills": (string)[],"sources": (string)[] | null,"target_roles": (string)[],"updated_at": string,"user_id": string
+                    "created_at": string,"exclude_keywords": (string)[],"hide_other_stacks": boolean,"id": string,"is_active": boolean,"keywords": (string)[],"locations": (string)[],"name": string,"remote_type": string,"role_id": string | null,"salary_min_usd": number | null,"seniority": (string)[],"skills": (string)[],"sources": (string)[] | null,"target_roles": (string)[],"updated_at": string,"user_id": string
                   }
                   Insert: {
-                    "created_at"?: string,"exclude_keywords"?: (string)[],"id"?: string,"is_active"?: boolean,"keywords"?: (string)[],"locations"?: (string)[],"name": string,"remote_type"?: string,"role_id"?: string | null,"salary_min_usd"?: number | null,"seniority"?: (string)[],"skills"?: (string)[],"sources"?: (string)[] | null,"target_roles"?: (string)[],"updated_at"?: string,"user_id": string
+                    "created_at"?: string,"exclude_keywords"?: (string)[],"hide_other_stacks"?: boolean,"id"?: string,"is_active"?: boolean,"keywords"?: (string)[],"locations"?: (string)[],"name": string,"remote_type"?: string,"role_id"?: string | null,"salary_min_usd"?: number | null,"seniority"?: (string)[],"skills"?: (string)[],"sources"?: (string)[] | null,"target_roles"?: (string)[],"updated_at"?: string,"user_id": string
                   }
                   Update: {
-                    "created_at"?: string,"exclude_keywords"?: (string)[],"id"?: string,"is_active"?: boolean,"keywords"?: (string)[],"locations"?: (string)[],"name"?: string,"remote_type"?: string,"role_id"?: string | null,"salary_min_usd"?: number | null,"seniority"?: (string)[],"skills"?: (string)[],"sources"?: (string)[] | null,"target_roles"?: (string)[],"updated_at"?: string,"user_id"?: string
+                    "created_at"?: string,"exclude_keywords"?: (string)[],"hide_other_stacks"?: boolean,"id"?: string,"is_active"?: boolean,"keywords"?: (string)[],"locations"?: (string)[],"name"?: string,"remote_type"?: string,"role_id"?: string | null,"salary_min_usd"?: number | null,"seniority"?: (string)[],"skills"?: (string)[],"sources"?: (string)[] | null,"target_roles"?: (string)[],"updated_at"?: string,"user_id"?: string
                   }
                   Relationships: [
                     {

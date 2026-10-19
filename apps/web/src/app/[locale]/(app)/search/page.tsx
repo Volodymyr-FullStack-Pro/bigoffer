@@ -15,6 +15,7 @@ const EMPTY: SearchProfileValues = {
   targetRoles: [],
   skills: [],
   excludeKeywords: [],
+  hideOtherStacks: false,
   seniority: [],
   locations: [],
   remoteType: 'any',
@@ -44,7 +45,7 @@ export default async function SearchPage() {
   const [{ data }, cv, { data: matched }] = await Promise.all([
     supabase
       .from('search_profiles')
-      .select('id, name, keywords, target_roles, skills, exclude_keywords, seniority, locations, remote_type, sources, salary_min_usd, is_active')
+      .select('id, name, keywords, target_roles, skills, exclude_keywords, hide_other_stacks, seniority, locations, remote_type, sources, salary_min_usd, is_active')
       .order('updated_at', { ascending: false })
       .limit(1),
     loadPrimaryCv(supabase),
@@ -68,6 +69,7 @@ export default async function SearchPage() {
     }),
     skills: p.skills,
     excludeKeywords: p.exclude_keywords,
+    hideOtherStacks: p.hide_other_stacks,
     seniority: p.seniority,
     locations: p.locations,
     remoteType: p.remote_type,
