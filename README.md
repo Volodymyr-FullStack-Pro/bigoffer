@@ -12,6 +12,8 @@ Monorepo (pnpm + Turborepo):
 - `apps/jobs` — ingestion/matching pipeline (Trigger.dev tasks + a local `run-once` CLI)
 - `apps/web` — Next.js web app
 
+What each service and tool is for: [docs/stack.md](docs/stack.md).
+
 ## Local setup
 
 Requirements: Node 24+, pnpm 12, Docker (for the local Supabase stack), Supabase CLI.

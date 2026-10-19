@@ -12,7 +12,8 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "audit:lighthouse": "npx -y lighthouse@12 ${LH_URL:-https://bigoffer-nu.vercel.app/en/login} --only-categories=performance,accessibility,best-practices,seo --chrome-flags=--headless=new --view"
   },
   "dependencies": {
     "@dnd-kit/core": "6.3.1",
@@ -24,6 +25,7 @@
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.117.2",
     "@trigger.dev/sdk": "4.6.4",
+    "@vercel/speed-insights": "^2.0.0",
     "clsx": "2.1.1",
     "docx": "9.9.0",
     "lucide-react": "^1.49.0",
@@ -39,6 +41,7 @@
     "zod": "^4.6.5"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
     "@playwright/test": "^1.63.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
