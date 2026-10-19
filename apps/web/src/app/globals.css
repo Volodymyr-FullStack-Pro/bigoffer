@@ -53,8 +53,8 @@
   --danger: #ff7b7b;
   --warning: #ffb86b;
   --glass: rgb(30 29 37 / 0.85);
-  --glass-border: rgb(254 253 255 / 0.06);
-  --shadow: none;
+  --glass-border: rgb(254 253 255 / 0.08);
+  --shadow: inset 0 1px 0 rgb(255 255 255 / 0.04), 0 10px 30px -18px rgb(0 0 0 / 0.7);
   --status-interview: #f472b6;
   --status-move: #38bdf8;
   --status-wait: #fbbf24;
@@ -137,6 +137,28 @@
   input[type='radio'] {
     accent-color: var(--brand);
   }
+  /* Everything clickable shows the hand (Tailwind v4 resets buttons to the arrow); disabled says so. */
+  button:not(:disabled),
+  [role='button']:not([aria-disabled='true']),
+  [role='tab'],
+  [role='radio'],
+  select:not(:disabled),
+  summary,
+  label:has(> input[type='checkbox']),
+  label:has(> input[type='radio']),
+  input[type='checkbox'],
+  input[type='radio'],
+  input[type='color'],
+  input[type='file'],
+  input[type='date']::-webkit-calendar-picker-indicator,
+  input[type='datetime-local']::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+  }
+  button:disabled,
+  select:disabled,
+  [aria-disabled='true'] {
+    cursor: not-allowed;
+  }
   select {
     appearance: none;
     padding-right: 2rem !important;
@@ -166,10 +188,20 @@
       transform 120ms ease-out,
       background-color 160ms ease-out,
       border-color 160ms ease-out,
+      box-shadow 160ms ease-out,
       filter 160ms ease-out;
   }
-  .brutal-press:hover {
-    filter: brightness(1.08);
+  /* A hover you can see on the dark canvas too: coloured buttons light up, plain ones get a tint and a brighter edge. */
+  .brutal-press:hover:not(:disabled) {
+    filter: brightness(1.1);
+    border-color: color-mix(in srgb, var(--foreground) 28%, var(--border));
+  }
+  .brutal-press:hover:not(:disabled):not([class*='bg-']) {
+    background-color: color-mix(in srgb, var(--foreground) 7%, var(--card));
+  }
+  .brutal-press:disabled {
+    filter: none;
+    transform: none;
   }
   /* "● LABEL" eyebrow above a section (small caps, mint pill). */
   .eyebrow {

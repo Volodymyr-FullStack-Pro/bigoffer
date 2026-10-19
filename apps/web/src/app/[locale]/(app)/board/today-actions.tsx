@@ -3,9 +3,18 @@
 import { todayActions } from '@jp/core';
 import { ChevronDown } from 'lucide-react';
 import { useFormatter, useNow, useTimeZone, useTranslations } from 'next-intl';
-import { useState } from 'react';
+import { useState, useSyncExternalStore } from 'react';
 import { JoinMeeting } from './join-meeting';
 import type { BoardCardView } from './board-types';
+
+const noopSubscribe = () => () => undefined;
+function readTodayOpen(): boolean {
+  try {
+    return localStorage.getItem('bo.todayOpen') !== '0';
+  } catch {
+    return true;
+  }
+}
 
 /** More plain follow-ups than this fold into one line: a batch of applications comes due on the same day. */
 const FOLD_PINGS = 3;
@@ -20,6 +29,19 @@ export function TodayActions({ cards, onPinged, onPingedMany, onOpen, onGhosted 
   const t = useTranslations('board');
   const format = useFormatter();
   const [pingsOpen, setPingsOpen] = useState(false);
+  // Folded or open is remembered per browser: a long list should not push the board down every visit.
+  const stored = useSyncExternalStore(noopSubscribe, readTodayOpen, () => true);
+  const [override, setOverride] = useState<boolean | null>(null);
+  const open = override ?? stored;
+  const toggle = () => {
+    const next = !open;
+    setOverride(next);
+    try {
+      localStorage.setItem('bo.todayOpen', next ? '1' : '0');
+    } catch {
+      // storage blocked: only this visit remembers it
+    }
+  };
   const now = useNow();
   const timeZone = useTimeZone() ?? 'UTC';
   const day = (d: Date) => new Intl.DateTimeFormat('en-CA', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(d);
@@ -64,10 +86,13 @@ export function TodayActions({ cards, onPinged, onPingedMany, onOpen, onGhosted 
   };
   return (
     <aside id="today-actions" data-testid="today-actions" className="scroll-mt-24 brutal flex flex-col gap-2 p-4">
-      <h2 data-testid="today-title" className="font-display text-lg font-semibold">
-        {todayCount > 0 ? t('todayTitle', { count: todayCount }) : t('todayNothing')}
-      </h2>
-      {todayCount > 0 && (
+      <button type="button" data-testid="today-toggle" aria-expanded={open} onClick={toggle} className="flex items-center justify-between gap-2 text-left">
+        <h2 data-testid="today-title" className="font-display text-lg font-semibold">
+          {todayCount > 0 ? t('todayTitle', { count: todayCount }) : t('todayNothing')}
+        </h2>
+        <ChevronDown aria-hidden className={`size-5 text-muted-foreground transition-transform ${open ? 'rotate-180' : ''}`} />
+      </button>
+      {open && todayCount > 0 && (
         <ul className="flex flex-col gap-2">
           {others.map(item)}
           {foldPings && (
@@ -98,7 +123,7 @@ export function TodayActions({ cards, onPinged, onPingedMany, onOpen, onGhosted 
           )}
         </ul>
       )}
-      {comingUp.length > 0 && (
+      {open && comingUp.length > 0 && (
         <>
           <h3 className="mt-1 tabular-nums text-xs text-muted-foreground">{t('comingUp')}</h3>
           <ul data-testid="coming-up" className="flex flex-col gap-2">{comingUp.map(item)}</ul>

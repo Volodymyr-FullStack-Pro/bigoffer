@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { normalizeJob } from '@jp/core';
 import { describe, expect, it } from 'vitest';
-import { djinniAdapter, formatByJob } from '../src/adapters/djinni';
+import { djinniAdapter, formatByJob, payLevelByJob } from '../src/adapters/djinni';
 import { douAdapter, splitDouTitle } from '../src/adapters/dou';
 import { fakeContext } from './fake-context';
 
@@ -58,6 +58,10 @@ describe('djinniAdapter', () => {
     expect(jobs).toHaveLength(3);
     expect(jobs[0]!.company).not.toBe('');
     await expectNormalizable(jobs);
+  });
+
+  it('reads the relative pay level a card shows instead of an amount', () => {
+    expect(Object.fromEntries(payLevelByJob(fixture('djinni-list-formats.html')))).toEqual({ '853476': 3, '720738': 1, '849647': 4, '853424': 2 });
   });
 
   it('reads the work format from each listing card; a card without a label offers remote too', () => {

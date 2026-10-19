@@ -10,6 +10,7 @@ import { Link } from '@/i18n/navigation';
 import { PREP_COLUMNS } from '../prep/prep-types';
 import { listMessages } from './message-actions';
 import { RecruiterMessage, type RecruiterMessageHandle } from './recruiter-message';
+import { AddToCalendar } from './add-to-calendar';
 import { JoinMeeting } from './join-meeting';
 import { Conversation } from './conversation';
 import { columnForReply } from './reply-kinds';
@@ -260,6 +261,12 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, companyC
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
         {/* The interview is over once the card waits for feedback: no call to join. */}
         {card.meetingUrl && !card.feedbackDueAt && <JoinMeeting url={card.meetingUrl} label={t('joinMeeting')} testId="panel-join" />}
+        {card.nextActionAt && Date.parse(card.nextActionAt) > now.getTime() && !card.feedbackDueAt && (
+          <AddToCalendar
+            uid={card.id}
+            event={{ title: `${t('calendarTitle')}: ${card.company} — ${card.title}`, start: new Date(card.nextActionAt), meetingUrl: card.meetingUrl, details: card.url }}
+          />
+        )}
         {card.url && <a href={card.url} target="_blank" rel="noopener" className="tabular-nums text-sm underline">{t('openOriginal')} ↗</a>}
         {PREP_KEYS.has(columns.find((c) => c.id === card.columnId)?.key ?? '') && (
           <Link href={`/prep?start=${card.id}`} data-testid="panel-prep" className="tabular-nums text-sm font-semibold underline"><GraduationCap aria-hidden className="mr-1 inline size-4 -translate-y-px" />

@@ -1,4 +1,4 @@
-import { ENGLISH_TAG, englishLevelOf, kyivLocalDate, type RawJob, type RemoteType, YEARS_TAG } from '@jp/core';
+import { ENGLISH_TAG, englishLevelOf, kyivLocalDate, PAY_LEVEL_TAG, type RawJob, type RemoteType, YEARS_TAG } from '@jp/core';
 import { extractJobPostings, type JobPostingLd, ldLocation, ldSalary } from '../jsonld';
 import { parseRss } from '../rss';
 import { isGoneError, type SourceAdapter } from '../types';
@@ -140,6 +140,20 @@ export function formatByJob(html: string): Map<string, RemoteType> {
   return out;
 }
 
+/**
+ * Djinni's relative pay level ("$" below average … "$$$$" top) a card shows instead of an amount, read from the
+ * tooltip-marked span. Keyed by job id; jobs with a published salary have no such span.
+ */
+export function payLevelByJob(html: string): Map<string, number> {
+  const out = new Map<string, number>();
+  for (const part of html.split('id="job-item-').slice(1)) {
+    const id = /^(\d+)/.exec(part)?.[1];
+    const m = /title="[^"]*\$ — [^"]*"\s*>\s*(\${1,4})\s*</.exec(part.slice(0, 8_000));
+    if (id && m) out.set(id, m[1]!.length);
+  }
+  return out;
+}
+
 export const djinniAdapter: SourceAdapter = {
   id: 'djinni',
   async search(params, ctx) {
@@ -153,14 +167,17 @@ export const djinniAdapter: SourceAdapter = {
       if (postings.length === 0) break;
       const english = englishByJob(html);
       const formats = formatByJob(html);
+      const pay = payLevelByJob(html);
       for (const p of postings) {
         const job = toRawJob(p);
         if (!job) continue;
         const level = english.get(job.externalId);
         const format = formats.get(job.externalId);
+        const payLevel = pay.get(job.externalId);
+        const tags = [...(job.tags ?? []), ...(level ? [`${ENGLISH_TAG}${level}`] : []), ...(payLevel ? [`${PAY_LEVEL_TAG}${payLevel}`] : [])];
         out.push({
           ...job,
-          ...(level ? { tags: [...(job.tags ?? []), `${ENGLISH_TAG}${level}`] } : {}),
+          ...(tags.length ? { tags } : {}),
           // The card's own label beats the JSON-LD (which marks only fully remote jobs) and any guess from the text.
           ...(format ? { remoteHint: format } : {}),
         });
