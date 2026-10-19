@@ -2,7 +2,7 @@
 
 import { BANK_KEYS, type Locale } from '@jp/core';
 import { useTranslations } from 'next-intl';
-import { useEffect, useState, useTransition } from 'react';
+import { useEffect, useRef, useState, useTransition } from 'react';
 import { BANK_PLACEHOLDER_KEYS, OTHER, presetChoice, presetsFor } from './bank-presets';
 import { deleteBankAnswer, saveBankAnswer } from './profile-extras-actions';
 
@@ -21,6 +21,8 @@ function BankRow({ answer, locale, removable, onDeleted }: { answer: BankAnswer;
   const [result, setResult] = useState<RowResult>(null);
   const [pending, startTransition] = useTransition();
   const id = `bank-${answer.key}`;
+  // Saved on its own: a picked preset right away, typed text when the field loses focus.
+  const lastSaved = useRef(answer.answer);
 
   useEffect(() => {
     if (!result) return;
@@ -42,13 +44,16 @@ function BankRow({ answer, locale, removable, onDeleted }: { answer: BankAnswer;
     }
     setOther(false);
     setValue(choice);
+    save(choice);
   };
 
-  const save = () => {
+  const save = (next: string = value) => {
+    if (next === lastSaved.current) return;
     setResult(null);
     startTransition(async () => {
       try {
-        const res = await saveBankAnswer({ key: answer.key, question: answer.question, answer: value, locale });
+        const res = await saveBankAnswer({ key: answer.key, question: answer.question, answer: next, locale });
+        if (res.ok) lastSaved.current = next;
         setResult(res.ok ? 'saved' : 'error');
       } catch {
         setResult('error');
@@ -74,19 +79,17 @@ function BankRow({ answer, locale, removable, onDeleted }: { answer: BankAnswer;
                 <option value={OTHER}>{t('other')}</option>
               </select>
               {other && (
-                <textarea value={value} maxLength={2000} onChange={(e) => edit(e.target.value)} aria-label={`${answer.question}: ${t('other')}`} placeholder={t('otherPlaceholder')} className={`${FIELD} min-h-14`} />
+                <textarea value={value} maxLength={2000} onChange={(e) => edit(e.target.value)} onBlur={() => save()} aria-label={`${answer.question}: ${t('other')}`} placeholder={t('otherPlaceholder')} className={`${FIELD} min-h-14`} />
               )}
             </>
           ) : (
-            <textarea id={id} value={value} maxLength={2000} onChange={(e) => edit(e.target.value)} placeholder={placeholder} className={`${FIELD} min-h-14`} />
+            <textarea id={id} value={value} maxLength={2000} onChange={(e) => edit(e.target.value)} onBlur={() => save()} placeholder={placeholder} className={`${FIELD} min-h-14`} />
           )}
         </div>
         <div className="flex flex-col items-start gap-1">
-          <button type="button" data-testid="bank-save" disabled={pending} onClick={save} className="brutal brutal-press px-3 py-1 text-sm font-semibold disabled:opacity-50">
-            {pending ? t('saving') : t('save')}
-          </button>
-          <span data-testid="bank-row-status" aria-live="polite" className={`text-xs ${result === 'error' ? 'text-danger' : 'text-success'}`}>
-            {result === 'saved' && `✓ ${t('saved')}`}
+          <span data-testid="bank-row-status" aria-live="polite" className={`min-w-20 text-xs ${result === 'error' ? 'text-danger' : pending ? 'text-muted-foreground' : 'text-success'}`}>
+            {pending && t('saving')}
+            {!pending && result === 'saved' && `✓ ${t('saved')}`}
             {result === 'error' && t('error')}
           </span>
           {removable && (

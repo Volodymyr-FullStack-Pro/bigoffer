@@ -103,7 +103,7 @@ export function CvSection({
     }
   }
   return (
-    <section data-testid="cv-section" className="brutal flex max-w-2xl flex-col gap-4 p-5">
+    <section data-testid="cv-section" className="brutal flex flex-col gap-4 p-5">
       <h2 className="text-lg">{t('title')}</h2>
       {!aiAvailable && <p className="text-sm text-warning">{t('aiUnavailable')}</p>}
       <form onSubmit={onSubmit} className="flex flex-col gap-3">

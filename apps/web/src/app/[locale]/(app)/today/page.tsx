@@ -156,11 +156,10 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
   return (
     // Phone: a compact header, so the first jobs show on the first screen.
     <section className="flex flex-col gap-4 md:gap-6">
-      <div className="flex flex-col gap-3">
-        <div className="hidden md:block">
-          <span className="eyebrow">{t('eyebrow')}</span>
-        </div>
-        <h1 className="text-3xl md:text-5xl">{t('title')}</h1>
+      {/* Title and the search toolbar share one row: the jobs start right under it. */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-3xl md:text-4xl">{t('title')}</h1>
+        {(profiles ?? []).length > 0 && <SearchNow initialStatus={searchStatus} autopilot={(profiles ?? []).some((p) => p.is_active)} />}
       </div>
       {me && !me.onboarded_at && (
         <Link href="/onboarding" data-testid="onboarding-banner" className="brutal brutal-press flex items-center justify-between gap-3 p-4 font-medium">
@@ -171,7 +170,6 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
           <span aria-hidden className="text-ai">→</span>
         </Link>
       )}
-      {(profiles ?? []).length > 0 && <SearchNow initialStatus={searchStatus} autopilot={(profiles ?? []).some((p) => p.is_active)} />}
       <Feed
         matches={matches}
         focusId={focusId && matches.some((m) => m.id === focusId) ? focusId : null}

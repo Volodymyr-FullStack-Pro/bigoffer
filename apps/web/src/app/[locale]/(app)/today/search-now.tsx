@@ -1,11 +1,10 @@
 'use client';
 
-import { Loader2 } from 'lucide-react';
+import { Loader2, Search, SlidersHorizontal } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { HoverBorderGradient } from '@/components/aceternity/hover-border-gradient';
-import { GlowCard } from '@/components/ui/glow-card';
 import { Link } from '@/i18n/navigation';
 import {
   getSearchNowStatus,
@@ -82,80 +81,60 @@ export function SearchNow({
   const done = Math.min(status?.done ?? 0, total);
   const pct = total ? Math.round((done / total) * 100) : 0;
 
+  // Idle: one slim toolbar beside the page title. A run or its result adds a short status line under it.
+  const statusText = running
+    ? t('progress', { done, total, found: status?.newMatches ?? 0 })
+    : message === 'cooldown'
+      ? t('cooldown')
+      : message === 'failed'
+        ? t('failed')
+        : status?.requestedAt && total > 0
+          ? t('lastDone', { found: status.newMatches })
+          : null;
+
   return (
-    <GlowCard>
-      <section
-        data-testid="search-now"
-        aria-label={t('title')}
-        className="brutal flex flex-col gap-3 p-4 md:flex-row md:items-center md:justify-between md:gap-4 md:p-5"
-      >
-        <div className="flex flex-col gap-1">
-          <h2 className="font-display text-lg font-semibold">{t('title')}</h2>
-          {running ? (
-            <p
-              role="status"
-              data-testid="search-now-progress"
-              className="tabular-nums text-sm text-muted-foreground"
-            >
-              {t('progress', { done, total, found: status?.newMatches ?? 0 })}
-            </p>
-          ) : (
-            // The idle hint is hidden on a phone; a status after a run (cooldown, failure, result) always shows.
-            <p className={`text-sm text-muted-foreground ${message || (status?.requestedAt && total > 0) ? '' : 'hidden md:block'}`}>
-              {message === 'cooldown'
-                ? t('cooldown')
-                : message === 'failed'
-                  ? t('failed')
-                  : status?.requestedAt && total > 0
-                    ? t('lastDone', { found: status.newMatches })
-                    : t('hint')}
-            </p>
-          )}
-          {running && (
-            <span aria-hidden className="mt-1.5 h-1.5 w-full max-w-sm overflow-hidden rounded-full bg-muted">
-              <span
-                className="progress-sweep block h-full rounded-full bg-brand transition-[width] duration-700"
-                style={{ width: `${Math.max(pct, 6)}%` }}
-              />
-            </span>
-          )}
-        </div>
-        <div className="flex flex-wrap items-center gap-3">
-          {running ? (
-            // A calm "working" pill instead of a dimmed button: spinner, label and percent, no glow.
-            <span
-              data-testid="search-now-running"
-              className="inline-flex items-center gap-2 rounded-full border border-brand/40 bg-brand/10 px-5 py-2.5 text-sm font-semibold text-link"
-            >
-              <Loader2 className="size-4 animate-spin" aria-hidden />
-              {t('searching')}
-              <span className="tabular-nums text-xs opacity-80">{pct}%</span>
-            </span>
-          ) : (
-            <HoverBorderGradient data-testid="search-now-start" disabled={pending} onClick={() => void start()}>
-              {pending && <Loader2 className="mr-1.5 inline size-4 animate-spin" aria-hidden />}
-              {t('start')}
-            </HoverBorderGradient>
-          )}
-          <label className="mono-label flex cursor-pointer items-center gap-2">
-            <input
-              type="checkbox"
-              role="switch"
-              data-testid="autopilot"
-              checked={autopilot}
-              onChange={() => void toggleAutopilot()}
-              className="size-4 accent-[var(--brand)]"
-            />
-            {t('autopilot')}
-          </label>
-          <Link
-            href="/search"
-            className="mono-label text-muted-foreground underline hover:text-foreground"
+    <section data-testid="search-now" aria-label={t('title')} className="flex flex-col items-start gap-1.5 md:items-end">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+        {running ? (
+          <span
+            data-testid="search-now-running"
+            className="inline-flex items-center gap-2 rounded-full border border-brand/40 bg-brand/10 px-4 py-1.5 text-sm font-semibold text-link"
           >
-            {t('settings')}
-          </Link>
-        </div>
-      </section>
-    </GlowCard>
+            <Loader2 className="size-4 animate-spin" aria-hidden />
+            {t('searching')}
+            <span className="tabular-nums text-xs opacity-80">{pct}%</span>
+          </span>
+        ) : (
+          <HoverBorderGradient data-testid="search-now-start" disabled={pending} onClick={() => void start()} className="px-4 py-1.5 text-sm font-semibold">
+            {pending ? <Loader2 className="mr-1.5 inline size-4 animate-spin" aria-hidden /> : <Search className="mr-1.5 inline size-4 -translate-y-px" aria-hidden />}
+            {t('start')}
+          </HoverBorderGradient>
+        )}
+        <label className="flex cursor-pointer items-center gap-2 text-sm font-medium">
+          <input
+            type="checkbox"
+            role="switch"
+            data-testid="autopilot"
+            checked={autopilot}
+            onChange={() => void toggleAutopilot()}
+            className="size-4 accent-[var(--brand)]"
+          />
+          {t('autopilot')}
+        </label>
+        <Link href="/search" title={t('settings')} aria-label={t('settings')} className="brutal-press inline-flex size-8 items-center justify-center rounded-full border border-border text-muted-foreground hover:bg-muted hover:text-foreground">
+          <SlidersHorizontal className="size-4" aria-hidden />
+        </Link>
+      </div>
+      {statusText && (
+        <p role="status" data-testid={running ? 'search-now-progress' : undefined} className="tabular-nums text-xs text-muted-foreground">
+          {statusText}
+        </p>
+      )}
+      {running && (
+        <span aria-hidden className="h-1 w-full max-w-xs overflow-hidden rounded-full bg-muted">
+          <span className="progress-sweep block h-full rounded-full bg-brand transition-[width] duration-700" style={{ width: `${Math.max(pct, 6)}%` }} />
+        </span>
+      )}
+    </section>
   );
 }

@@ -50,13 +50,12 @@ test('answer bank: per-row save feedback and presets', async ({ page }) => {
   await page.goto('/en/profile');
   const english = page.locator('[data-testid="bank-answer"][data-key="english"]');
   await english.getByLabel('English level', { exact: true }).selectOption('C1 (Advanced)');
-  await english.getByTestId('bank-save').click();
   await expect(english.getByTestId('bank-row-status')).toHaveText('✓ Saved.');
 
   const format = page.locator('[data-testid="bank-answer"][data-key="work_format"]');
   await format.getByLabel('Preferred work format', { exact: true }).selectOption({ label: 'Other…' });
   await format.getByRole('textbox').fill('Remote, EU time zones');
-  await format.getByTestId('bank-save').click();
+  await format.getByRole('textbox').blur();
   await expect(format.getByTestId('bank-row-status')).toHaveText('✓ Saved.');
   // Editing again clears the saved indicator.
   await format.getByRole('textbox').fill('Remote, EU time zones only');
