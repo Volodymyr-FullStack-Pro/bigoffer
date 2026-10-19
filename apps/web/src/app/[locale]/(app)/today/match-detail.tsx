@@ -30,10 +30,7 @@ export function salaryText(
   return null;
 }
 
-/**
- * Hide / Save / Applied. Pinned to the bottom of the detail (desktop) or above the tab bar (phone), so they stay in
- * reach after the apply kit or a cover letter pushes the rest of the panel down.
- */
+/** Hide / Save / Applied: at the top of the detail, beside the match score, where the eye starts. */
 export function MatchActions({
   onAction,
   compact = false,
@@ -291,7 +288,10 @@ export function MatchDetail({
   return (
     <article data-testid="match-detail" className="flex flex-col gap-4">
       <div className="flex flex-col gap-2">
-        <ScoreMeter score={match.score} label={t('match')} />
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+          <ScoreMeter score={match.score} label={t('match')} />
+          {onAction && <MatchActions onAction={onAction} />}
+        </div>
         <h2 className="font-display text-3xl leading-tight font-extrabold tracking-tight">
           {match.title}
         </h2>
@@ -373,12 +373,6 @@ export function MatchDetail({
       <ApplyKitToggle key={match.id} jobId={match.jobId} onApplied={onApplied} defaultOpen={kitOpen} />
       <PeopleSearch jobId={match.jobId} />
       {showDescription && <JobDescription key={match.jobId} jobId={match.jobId} initial={match.description} />}
-      {onAction && (
-        <MatchActions
-          onAction={onAction}
-          className="glass sticky bottom-0 z-10 -mx-6 -mb-6 mt-auto justify-end rounded-none border-x-0 border-b-0 px-6 py-3"
-        />
-      )}
     </article>
   );
 }
