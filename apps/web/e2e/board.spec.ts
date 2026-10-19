@@ -449,7 +449,6 @@ test('reminder timing is set in the profile', async ({ context, page }) => {
   await page.goto('/en/profile');
   await visible(page, 'reminder-first').selectOption('7');
   await visible(page, 'reminder-second').selectOption('14');
-  await visible(page, 'reminder-save').click();
   await expect(visible(page, 'reminder-saved')).toBeVisible();
   await page.reload();
   await expect(visible(page, 'reminder-first')).toHaveValue('7');

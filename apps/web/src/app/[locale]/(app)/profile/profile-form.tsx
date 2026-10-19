@@ -66,7 +66,7 @@ export function ProfileForm({ fullName, timezone, contacts, country, countries, 
   const formKey = state.rev ?? 0;
 
   return (
-    <form key={formKey} action={action} noValidate className="flex max-w-2xl flex-col gap-6">
+    <form key={formKey} action={action} noValidate className="flex flex-col gap-6">
       <div className="brutal grid gap-4 p-5 md:grid-cols-2">
         <Field name="full_name" label={t('fullName')} defaultValue={v?.full_name ?? fullName} invalid={invalid.has('full_name')} />
         <Field name="timezone" label={t('timezone')} defaultValue={v?.timezone ?? timezone} invalid={invalid.has('timezone')} list="timezones" />

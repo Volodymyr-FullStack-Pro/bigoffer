@@ -123,7 +123,7 @@ export function AnswerBank({ answers, locale }: { answers: BankAnswer[]; locale:
   };
 
   return (
-    <section data-testid="answer-bank" className="brutal flex max-w-2xl flex-col gap-4 p-5">
+    <section data-testid="answer-bank" className="brutal flex flex-col gap-4 p-5">
       <h2 className="font-display text-lg font-bold">{t('title')}</h2>
       <p className="text-sm text-muted-foreground">{t('hint')}</p>
       {[...base, ...custom].map((a) => (
