@@ -128,6 +128,11 @@ export function namedPlatforms(text: string, skills: readonly string[]): string[
   return PLATFORMS.filter(([name, re]) => re.test(text) && !have.some((h) => h === name.toLowerCase() || re.test(h))).map(([name]) => name);
 }
 
+/** Front-end frameworks a job title names ("Angular", "Vue", …). */
+export function titleFrameworks(title: string): string[] {
+  return FRAMEWORKS.filter(([, re]) => re.test(title)).map(([name]) => name);
+}
+
 export function missingCoreStacks(jobTitle: string, jobSkills: readonly string[], profileSkills: readonly string[]): string[] {
   const where = [jobTitle, ...jobSkills.slice(0, 2)];
   const needed = CORE_STACKS.filter(([, re]) => where.some((w) => re.test(w)));

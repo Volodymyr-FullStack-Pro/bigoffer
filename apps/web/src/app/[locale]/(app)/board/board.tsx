@@ -227,6 +227,22 @@ export function Board({ columns, cards: initial, labels: initialLabels, rules, n
           if (done.length < ids.length) show({ message: t('moveError'), tone: 'error' });
         }}
         onGhosted={(id) => lost && requestMove(id, lost.id, endRank(lost.id, id), ['no_feedback'], 'ghosted')}
+        onGhostedMany={async (ids) => {
+          if (!lost) return;
+          // Each goes to the end of the lost column as "no feedback" from the stage it was at; no dialog per card.
+          let rank = inColumn(lost.id).at(-1)?.rank ?? null;
+          let failed = 0;
+          for (const id of ids) {
+            const card = cards.find((c) => c.id === id);
+            if (!card) continue;
+            rank = rankAtEnd(rank);
+            const stage = STAGE_BY_COLUMN[columnById.get(card.columnId)?.key ?? ''] ?? 'application';
+            const ok = await rejectApplication(id, lost.id, rank, { stage, by: 'company', reasons: ['no_feedback'], note: '' }, 'ghosted').catch(() => false);
+            if (ok) patchLocal(id, { columnId: lost.id, rank, outcome: 'ghosted', rejectionReasons: ['no_feedback'], rejectionStage: stage });
+            else failed++;
+          }
+          if (failed > 0) show({ message: t('moveError'), tone: 'error' });
+        }}
       />
       {cards.length === 0 && <p data-testid="board-empty" className="text-muted-foreground">{t('empty')}</p>}
       {cards.length > 0 && (

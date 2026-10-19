@@ -21,6 +21,7 @@ export * from './jobs/salary';
 export * from './jobs/regions';
 export * from './jobs/backoff';
 export * from './jobs/pay-level';
+export * from './jobs/hide-suggestions';
 export * from './board/rank';
 export * from './board/business-days';
 export * from './board/urgency';

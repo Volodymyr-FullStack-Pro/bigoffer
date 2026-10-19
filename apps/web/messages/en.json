@@ -254,7 +254,13 @@
     "payLevel_2": "Average pay",
     "payLevel_3": "Pay above average",
     "payLevel_4": "Top pay",
-    "reason_stack": "Other stack"
+    "reason_stack": "Other stack",
+    "hideTips": "You keep hiding: {list}.",
+    "hideTipsStacks": "Hide other stacks",
+    "hideTipsStacksDone": "Jobs on another stack are hidden from now on. The feed updates in a minute.",
+    "hideTipsWord": "Hide “{word}”",
+    "hideTipsWordDone": "“{word}” added to excluded words. The feed updates in a minute.",
+    "hideTipsDismiss": "Don't suggest"
   },
   "comingSoon": {
     "badge": "Soon",
@@ -585,7 +591,10 @@
     "pingAllConfirm": "Mark {count} cards as followed up? The count restarts from today.",
     "addToCalendar": "Add to calendar",
     "calendarTitle": "Interview",
-    "columnEmpty": "Drag a card here"
+    "columnEmpty": "Drag a card here",
+    "ghostGroup": "{count, plural, one {No answer: # company} other {No answer: # companies}}",
+    "ghostAll": "Close all as no answer",
+    "ghostAllConfirm": "Move {count} cards to lost as “no answer”?"
   },
   "cv": {
     "title": "Your CV",

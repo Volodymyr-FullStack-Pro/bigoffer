@@ -26,6 +26,8 @@ export const uiPrefsSchema = z
     cardLabels: z.object({ domains: z.boolean(), military: z.boolean(), reservation: z.boolean(), testTask: z.boolean(), partTime: z.boolean(), urgent: z.boolean() }).partial(),
     /** Offer Genie: on (tips + motivation), quiet (only important: goal, health, celebrations), off; daily goal. */
     genie: z.object({ mode: z.enum(['on', 'quiet', 'off']), goal: z.number().int().min(1).max(50) }).partial(),
+    /** "You keep hiding X" tips the user waved away (by term). */
+    hideTipsDismissed: z.array(z.string().max(60)).max(50),
   })
   .partial();
 
