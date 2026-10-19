@@ -9,6 +9,13 @@ import { detectRoleFamilies, type RoleFamily, roleOffTarget, targetRoleFamilies 
 
 const TECH = /\b(engineer|engineering|developer|dev|programmer|swe|sre|devops|front[- ]?end|back[- ]?end|full[- ]?stack|software|web|react|angular|vue|node(\.js)?|typescript|javascript|mobile|ios|android|qa|tester|architect|data|ml|ai)\b|розробник|разработчик|програміст|программист|інженер|инженер/i;
 
+/** Skills too common across developer jobs to say anything about fit on their own (lowercase). */
+const GENERIC_SKILLS: ReadonlySet<string> = new Set([
+  'git', 'github', 'gitlab', 'bitbucket', 'ci/cd', 'rest', 'rest api', 'rest apis', 'restful api', 'json', 'html', 'html5', 'css', 'css3',
+  'sql', 'docker', 'linux', 'jira', 'confluence', 'agile', 'scrum', 'kanban', 'postman', 'swagger', 'figma', 'npm', 'yarn',
+  'cursor', 'claude code', 'chatgpt', 'copilot', 'github copilot', 'ai tools', 'english', 'unit testing', 'oop', 'solid',
+]);
+
 /** A title that names an engineering role (any stack). */
 export function isTechTitle(title: string): boolean {
   return TECH.test(title);
@@ -230,8 +237,11 @@ export function scoreJob(
     (s) => jobSkills.includes(s.toLowerCase()) || containsSkill(raw, text, s),
   );
 
+  // Skills almost every developer job lists (Git, CI/CD, REST, HTML/CSS, AI tools) still add points, but on their own
+  // they do not make a job relevant: Delphi, DWH or SEO postings matched a JS profile on "Git, CI/CD" alone.
+  const coreMatched = matchedSkills.filter((s) => !GENERIC_SKILLS.has(s.toLowerCase()));
   const relevant =
-    inText || matchedSkills.length >= 2 || (matchedSkills.length === 1 && profile.skills.length === 1);
+    inText || coreMatched.length >= 2 || (matchedSkills.length === 1 && profile.skills.length === 1);
   if (!relevant) return null;
 
   // Role points come from the job's family, not from a tech keyword in the title ("Backend Developer (Node.js)").
