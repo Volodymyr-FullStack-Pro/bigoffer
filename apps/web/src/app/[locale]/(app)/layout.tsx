@@ -24,7 +24,8 @@ export default async function AppLayout({
       <Header />
       <div className="mx-auto flex max-w-7xl gap-8 px-4 pt-6 pb-24 md:pb-10">
         <Sidebar />
-        <main className="min-w-0 flex-1">{children}</main>
+        {/* Heatmaps keep the layout and clicks but never record the user's own text. */}
+        <main data-clarity-mask="true" className="min-w-0 flex-1">{children}</main>
       </div>
       <footer className="mx-auto hidden max-w-7xl px-4 pb-6 md:block">
         <LegalLinks className="text-xs text-muted-foreground" />

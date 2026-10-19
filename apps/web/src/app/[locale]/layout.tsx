@@ -6,6 +6,7 @@ import type { ReactNode } from 'react';
 import { routing } from '@/i18n/routing';
 import { fontVariables } from '../fonts';
 import '../globals.css';
+import { SiteAnalytics } from '@/components/analytics/site-analytics';
 import { Providers } from './providers';
 
 export async function generateMetadata({
@@ -37,6 +38,7 @@ export default async function LocaleLayout({
             <div className="relative z-10">{children}</div>
           </Providers>
         </NextIntlClientProvider>
+        <SiteAnalytics />
       </body>
     </html>
   );
