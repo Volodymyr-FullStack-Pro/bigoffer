@@ -14,14 +14,15 @@ type Props = {
   timeZones: string[];
 };
 
+// autoComplete lets the browser fill what it already knows; addresses are never spell-checked.
 const CONTACT_FIELDS = [
-  { key: 'email', type: 'email' },
-  { key: 'phone', type: 'tel' },
-  { key: 'linkedin', type: 'url' },
-  { key: 'github', type: 'url' },
-  { key: 'cv', type: 'url' },
-  { key: 'portfolio', type: 'url' },
-  { key: 'telegram', type: 'text' },
+  { key: 'email', type: 'email', autoComplete: 'email' },
+  { key: 'phone', type: 'tel', autoComplete: 'tel' },
+  { key: 'linkedin', type: 'url', autoComplete: 'url' },
+  { key: 'github', type: 'url', autoComplete: 'url' },
+  { key: 'cv', type: 'url', autoComplete: 'url' },
+  { key: 'portfolio', type: 'url', autoComplete: 'url' },
+  { key: 'telegram', type: 'text', autoComplete: 'off' },
 ] as const;
 
 function Field({
@@ -31,6 +32,7 @@ function Field({
   type = 'text',
   invalid,
   list,
+  autoComplete,
 }: {
   name: string;
   label: string;
@@ -38,6 +40,7 @@ function Field({
   type?: string;
   invalid: boolean;
   list?: string;
+  autoComplete?: string;
 }) {
   return (
     <label className="flex flex-col gap-1">
@@ -46,6 +49,8 @@ function Field({
         name={name}
         type={type}
         list={list}
+        autoComplete={autoComplete}
+        spellCheck={type === 'text' && autoComplete !== 'off' ? undefined : false}
         defaultValue={defaultValue}
         aria-invalid={invalid}
         className={`brutal bg-card px-3 py-2 outline-none focus:ring-2 focus:ring-brand ${invalid ? 'border-danger' : ''}`}
@@ -93,8 +98,8 @@ export function ProfileForm({ fullName, timezone, contacts, country, countries, 
       className="flex flex-col gap-6"
     >
       <div className="brutal grid gap-4 p-5 md:grid-cols-2">
-        <Field name="full_name" label={t('fullName')} defaultValue={fullName} invalid={invalid.has('full_name')} />
-        <Field name="timezone" label={t('timezone')} defaultValue={timezone} invalid={invalid.has('timezone')} list="timezones" />
+        <Field name="full_name" autoComplete="name" label={t('fullName')} defaultValue={fullName} invalid={invalid.has('full_name')} />
+        <Field name="timezone" autoComplete="off" label={t('timezone')} defaultValue={timezone} invalid={invalid.has('timezone')} list="timezones" />
         <datalist id="timezones">
           {timeZones.map((tz) => (
             <option key={tz} value={tz} />
@@ -128,11 +133,12 @@ export function ProfileForm({ fullName, timezone, contacts, country, countries, 
       {/* A heading inside the card (a <legend> would sit on the card's border). */}
       <div role="group" aria-labelledby="contacts-title" className="brutal grid gap-4 p-5 md:grid-cols-2">
         <h2 id="contacts-title" className="text-lg md:col-span-2">{t('contacts')}</h2>
-        {CONTACT_FIELDS.map(({ key, type }) => (
+        {CONTACT_FIELDS.map(({ key, type, autoComplete }) => (
           <Field
             key={key}
             name={`contacts.${key}`}
             type={type}
+            autoComplete={autoComplete}
             label={t(key)}
             defaultValue={contacts[key]}
             invalid={invalid.has(`contacts.${key}`)}

@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { hasLocale, NextIntlClientProvider } from 'next-intl';
 import { getTranslations } from 'next-intl/server';
 import { notFound } from 'next/navigation';
@@ -8,6 +8,14 @@ import { fontVariables } from '../fonts';
 import '../globals.css';
 import { SiteAnalytics } from '@/components/analytics/site-analytics';
 import { Providers } from './providers';
+
+// The phone's browser bar matches the page background in each theme.
+export const viewport: Viewport = {
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#f4f4f6' },
+    { media: '(prefers-color-scheme: dark)', color: '#16151b' },
+  ],
+};
 
 export async function generateMetadata({
   params,
