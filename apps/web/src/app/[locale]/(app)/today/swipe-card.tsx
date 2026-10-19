@@ -55,12 +55,9 @@ export function SwipeCard({ match, onAction, onApplied, kitOpen = false }: { mat
           {open ? tf('lessDetails') : tf('moreDetails')}
         </button>
       </motion.article>
+      {/* Right under the card, before the details: no scrolling past a letter to reach them. */}
+      <MatchActions onAction={onAction} compact />
       {open && <MatchDetail match={match} onApplied={onApplied} kitOpen={kitOpen} />}
-      <MatchActions
-        onAction={onAction}
-        compact
-        className="glass sticky bottom-[calc(3.6rem+env(safe-area-inset-bottom))] z-10 -mx-4 rounded-none border-x-0 px-4 py-2.5"
-      />
     </div>
   );
 }
