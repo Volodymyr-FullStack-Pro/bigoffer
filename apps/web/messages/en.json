@@ -365,7 +365,7 @@
     "fromCvLink": "Upload CV →",
     "sectionsNav": "Search sections",
     "hideOtherStacks": "Hide jobs on another stack",
-    "hideOtherStacksHint": "Java, .NET, PHP, Python, Angular, Vue… when your skills have none of it. Unchecked, such jobs only score lower."
+    "hideOtherStacksHint": "Java, .NET, PHP, Python, Angular, Vue… when you list none of it. Unchecked, such jobs only score lower."
   },
   "board": {
     "title": "Application board",
