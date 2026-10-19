@@ -289,7 +289,8 @@
     "reminderOrder": "Второе напоминание должно быть позже первого.",
     "saveError": "Не удалось сохранить. Попробуйте ещё раз.",
     "businessDays": "{count, plural, one {# рабочий день} few {# рабочих дня} many {# рабочих дней} other {# рабочего дня}}",
-    "calendarDays": "{count, plural, one {# день} few {# дня} many {# дней} other {# дня}}"
+    "calendarDays": "{count, plural, one {# день} few {# дня} many {# дней} other {# дня}}",
+    "saving": "Сохраняю…"
   },
   "search": {
     "title": "Настройки поиска",

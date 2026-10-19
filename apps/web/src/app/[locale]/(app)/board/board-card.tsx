@@ -56,6 +56,8 @@ export function BoardCardItem({ card, labels, labelName, now, timeZone, onOpen }
   const reply = waiting ? FEEDBACK_STYLE : card.replyKind ? REPLY_STYLE[card.replyKind] : null;
   const daysLeft = card.feedbackDueAt ? Math.max(1, Math.round((new Date(card.feedbackDueAt).getTime() - now.getTime()) / 86_400_000)) : 0;
   const upcoming = card.nextActionAt && new Date(card.nextActionAt) > now ? new Date(card.nextActionAt) : null;
+  // In the lost column the reasons below already say it was a rejection.
+  const showReply = !waiting && Boolean(reply && card.replyKind) && !(card.replyKind === 'rejection' && card.outcome !== 'open');
   return (
     <article
       ref={setNodeRef}
@@ -83,10 +85,9 @@ export function BoardCardItem({ card, labels, labelName, now, timeZone, onOpen }
           {card.urgency === 'awaiting_feedback' ? t('feedbackBadge', { count: daysLeft }) : t('urgency_feedback_due')}
         </StatusBadge>
       )}
-      {/* In the lost column the reasons below already say it was a rejection. */}
-      {!waiting && reply && card.replyKind && !(card.replyKind === 'rejection' && card.outcome !== 'open') && (
+      {showReply && reply && (
         <StatusBadge tone={reply.tone} icon={reply.icon} data-testid="card-reply">
-          {t(`reply_${card.replyKind}` as never)}
+          {t(`reply_${card.replyKind!}` as never)}
         </StatusBadge>
       )}
       {card.rejectionReasons.length > 0 && (card.outcome === 'rejected' || card.outcome === 'withdrawn' || card.outcome === 'ghosted') && (
@@ -131,7 +132,8 @@ export function BoardCardItem({ card, labels, labelName, now, timeZone, onOpen }
           </span>
         )}
         {card.appliedAt && <span suppressHydrationWarning>{t('appliedAgo', { ago: format.relativeTime(new Date(card.appliedAt), now) })}</span>}
-        {card.urgency in URGENCY_TONE && !waiting && (
+        {/* "Your move" next to a reply badge only repeats it: the badge and the glow already say so. */}
+        {card.urgency in URGENCY_TONE && !waiting && !(card.urgency === 'your_move' && showReply) && (
           <StatusBadge tone={URGENCY_TONE[card.urgency]!} data-testid="card-urgency" data-urgency={card.urgency} className="font-sans">
             {t(`urgency_${card.urgency}` as never)}
           </StatusBadge>

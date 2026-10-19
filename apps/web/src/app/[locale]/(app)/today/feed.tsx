@@ -343,7 +343,8 @@ export function Feed({
             {selected && (
               // Sticky: the details stay in view while the list scrolls.
               <GlowCard className="sticky top-20 self-start">
-                <div className="brutal p-6">
+                {/* Scrolls on its own, so the action bar at its bottom never leaves the screen. */}
+                <div key={selected.id} data-testid="match-detail-scroll" className="brutal max-h-[calc(100dvh-6rem)] overflow-y-auto p-6 [scrollbar-width:thin]">
                   <MatchDetail match={selected} onAction={(a) => void act(selected, a)} onApplied={() => appliedFromKit(selected)} kitOpen={openKit && selected.id === focusId} />
                 </div>
               </GlowCard>

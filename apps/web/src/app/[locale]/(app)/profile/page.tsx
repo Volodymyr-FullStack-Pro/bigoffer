@@ -50,6 +50,9 @@ export default async function ProfilePage() {
       <h1 className="text-3xl font-semibold md:text-4xl">{t('title')}</h1>
       {/* The CV drives matching, letters and form answers: it comes first. */}
       <CvSection cv={cv ? { fileName: cv.fileName, parsed: cv.parsed, parseError: cv.parseError } : null} aiAvailable={privateAiAvailable()} cvLink={cvLink} />
+      {/* Wide screens: who I am on the left, how the app nudges me on the right. */}
+      <div className="grid items-start gap-6 xl:grid-cols-2">
+      <div className="flex min-w-0 flex-col gap-6">
       <ProfileForm
         fullName={profile.full_name ?? ''}
         timezone={profile.timezone ?? 'Europe/Kyiv'}
@@ -58,6 +61,9 @@ export default async function ProfilePage() {
         contacts={contacts.success ? contacts.data : {}}
         timeZones={Intl.supportedValuesOf('timeZone')}
       />
+      <AnswerBank answers={answers} locale={locale} />
+      </div>
+      <div className="flex min-w-0 flex-col gap-6">
       <GenieSettings initial={parseUiPrefs(profile.ui_prefs).genie ?? {}} />
       <ReminderSettings
         initial={{ first: profile.follow_up_days?.[0] ?? 5, second: profile.follow_up_days?.[1] ?? 10, ghost: profile.ghost_after_days ?? 21 }}
@@ -75,7 +81,8 @@ export default async function ProfilePage() {
           timezone: profile.timezone ?? 'Europe/Kyiv',
         }}
       />
-      <AnswerBank answers={answers} locale={locale} />
+      </div>
+      </div>
     </section>
   );
 }
