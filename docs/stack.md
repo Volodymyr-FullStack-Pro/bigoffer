@@ -36,6 +36,8 @@
 | lucide-react | іконки |
 | motion | анімації (свайп карток на телефоні) |
 | React Bits, Aceternity | окремі ефекти (світіння карток, поява тексту) |
+| shadcn CLI + MCP (`apps/web/components.json`, `.mcp.json`) | готові компоненти з реєстрів React Bits, Magic UI, Aceternity: `npx shadcn@latest add @magicui/<name>`; Claude Code бачить їх через MCP-сервер `shadcn` |
+| tweakcn (tweakcn.com) | візуальний редактор теми: підібрати кольори й радіуси, потім перенести токени в `globals.css` |
 | next-intl | мови uk / ru / en (`apps/web/messages`) |
 
 ## Якість і аналітика
