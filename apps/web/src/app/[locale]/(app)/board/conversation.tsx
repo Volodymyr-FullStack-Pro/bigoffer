@@ -1,10 +1,11 @@
 'use client';
 
+import { Check } from 'lucide-react';
 import { useFormatter, useNow, useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { deleteMessage, listMessages, type ReplyChannel, setMessageKind, updateMessage } from './message-actions';
 import { CHANNELS } from './reply-inbox';
-import { TONE_PILL, toneColor } from '@/components/ui/status-badge';
+import { TONE_PILL, toneChip, toneColor } from '@/components/ui/status-badge';
 import { REPLY_KINDS, REPLY_STYLE, type ReplyKind } from './reply-kinds';
 import { ReplyIcon } from './reply-icon';
 
@@ -92,7 +93,7 @@ export function Conversation({ applicationId, version, onDeleted, onKindChanged 
                     title={t('conversationChangeKind')}
                     aria-expanded={editing === m.id}
                     onClick={() => setEditing((e) => (e === m.id ? null : m.id))}
-                    className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold ring-1 ring-inset hover:ring-2 ${style ? TONE_PILL[style.tone] : 'ring-foreground/30'}`}
+                    className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold ring-1 ring-inset hover:ring-2 ${style ? TONE_PILL[style.tone] : 'ring-foreground/30'}`}
                   >
                     {m.kind ? t(`reply_${m.kind}` as never) : t('conversationSetKind')}
                     <span className="opacity-80">· {t('conversationChange')} ▾</span>
@@ -117,9 +118,10 @@ export function Conversation({ applicationId, version, onDeleted, onKindChanged 
                         setMessages((list) => list && list.map((x) => (x.id === m.id ? { ...x, kind: k } : x)));
                         onKindChanged({ kind: k, ...res });
                       }}
-                      className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ring-1 ring-inset ${TONE_PILL[REPLY_STYLE[k].tone]} ${m.kind === k ? 'ring-2' : 'opacity-70 hover:opacity-100'}`}
+                      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold ${toneChip(REPLY_STYLE[k].tone, m.kind === k)}`}
                     >
                       <ReplyIcon kind={k} /> {t(`reply_${k}` as never)}
+{m.kind === k && <Check aria-hidden className="size-3.5" strokeWidth={3} />}
                     </button>
                   ))}
                 </span>
