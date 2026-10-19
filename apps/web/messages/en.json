@@ -81,7 +81,8 @@
     "profile": "Profile",
     "soon": "soon",
     "signOut": "Sign out",
-    "library": "Library"
+    "library": "Library",
+    "more": "More"
   },
   "auth": {
     "title": "Sign in",
@@ -666,7 +667,8 @@
     "err_ai_limit": "Today’s AI limit is reached.",
     "err_no_cv": "Upload a CV in your profile.",
     "err_not_found": "Not found.",
-    "err_failed": "Failed, try again."
+    "err_failed": "Failed, try again.",
+    "more": "{count, plural, one {# more contact} other {# more contacts}}"
   },
   "kit": {
     "title": "Apply kit",
