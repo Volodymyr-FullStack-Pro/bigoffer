@@ -15,7 +15,7 @@ export function AddToCalendar({ event, uid }: { event: CalendarEvent; uid: strin
         target="_blank"
         rel="noopener noreferrer"
         data-testid="add-to-calendar"
-        className="brutal brutal-press inline-flex items-center gap-1.5 px-3 py-1 text-sm font-semibold"
+        className="btn brutal-press inline-flex items-center gap-1.5 px-3 py-1 text-sm font-semibold"
       >
         <CalendarPlus aria-hidden className="size-4" /> {t('addToCalendar')}
       </a>

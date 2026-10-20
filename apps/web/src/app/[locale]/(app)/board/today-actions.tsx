@@ -79,13 +79,13 @@ export function TodayActions({ cards, onPinged, onPingedMany, onOpen, onGhosted,
         </span>
         {a.kind === 'interview' && card.meetingUrl && !card.feedbackDueAt && <JoinMeeting url={card.meetingUrl} label={t('joinMeeting')} testId="today-join" />}
         {(a.kind === 'ping' || a.kind === 'feedback') && (
-          <button type="button" onClick={() => onPinged(a.id)} className="brutal brutal-press px-3 py-1 text-sm font-semibold">{t('actionPinged')}</button>
+          <button type="button" onClick={() => onPinged(a.id)} className="btn brutal-press px-3 py-1 text-sm font-semibold">{t('actionPinged')}</button>
         )}
         {(a.kind === 'interview' || a.kind === 'answer' || a.kind === 'status') && (
-          <button type="button" onClick={() => onOpen(a.id)} className="brutal brutal-press px-3 py-1 text-sm font-semibold">{t('actionOpen')}</button>
+          <button type="button" onClick={() => onOpen(a.id)} className="btn brutal-press px-3 py-1 text-sm font-semibold">{t('actionOpen')}</button>
         )}
         {a.kind === 'ghosting' && (
-          <button type="button" onClick={() => onGhosted(a.id)} className="brutal brutal-press px-3 py-1 text-sm font-semibold">{t('actionGhosted')}</button>
+          <button type="button" onClick={() => onGhosted(a.id)} className="btn brutal-press px-3 py-1 text-sm font-semibold">{t('actionGhosted')}</button>
         )}
       </li>
     );
@@ -108,7 +108,7 @@ export function TodayActions({ cards, onPinged, onPingedMany, onOpen, onGhosted,
           type="button"
           data-testid={`today-${g.id}-all`}
           onClick={() => { if (window.confirm(g.confirm)) g.onAll(); }}
-          className="brutal brutal-press px-3 py-1 text-sm font-semibold"
+          className="btn brutal-press px-3 py-1 text-sm font-semibold"
         >
           {g.all}
         </button>

@@ -186,7 +186,7 @@ export function CvSection({
               data-testid="cv-delete"
               disabled={deleting}
               onClick={onDelete}
-              className="brutal brutal-press px-3 py-1.5 text-sm font-semibold text-danger disabled:opacity-50"
+              className="btn brutal-press px-3 py-1.5 text-sm font-semibold text-danger disabled:opacity-50"
             >
               {t('delete')}
             </button>
@@ -216,7 +216,7 @@ export function CvSection({
                   <button
                     type="submit"
                     data-testid="cv-create-search"
-                    className="brutal brutal-press px-3 py-1.5 text-sm font-semibold"
+                    className="btn brutal-press px-3 py-1.5 text-sm font-semibold"
                   >
                     {t('createSearch')}
                   </button>
@@ -231,7 +231,7 @@ export function CvSection({
                       setFilled(false);
                     }
                   }}
-                  className="brutal brutal-press px-3 py-1.5 text-sm font-semibold"
+                  className="btn brutal-press px-3 py-1.5 text-sm font-semibold"
                 >
                   {t('fillContacts')}
                 </button>

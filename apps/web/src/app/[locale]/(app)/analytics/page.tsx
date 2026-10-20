@@ -56,7 +56,7 @@ export default async function AnalyticsPage() {
   if (rows.length === 0) {
     return (
       <section className="flex flex-col gap-6">
-        <h1 className="text-3xl font-semibold md:text-4xl">{t('title')}</h1>
+        <h1 className="text-3xl md:text-4xl">{t('title')}</h1>
         <div data-testid="analytics-empty" className="flex max-w-xl flex-col gap-3 rounded-2xl border border-border bg-card p-6">
           <p className="text-lg">{t('empty')}</p>
           <Link href="/today" className="self-start rounded-full bg-brand px-4 py-2 text-sm font-semibold text-brand-foreground">{t('toFeed')}</Link>
@@ -69,7 +69,7 @@ export default async function AnalyticsPage() {
     <section data-testid="analytics" className="flex flex-col gap-6">
       <div className="flex flex-col gap-2">
         <span className="eyebrow">{t('eyebrow')}</span>
-        <h1 className="text-3xl font-semibold md:text-4xl">{t('title')}</h1>
+        <h1 className="text-3xl md:text-4xl">{t('title')}</h1>
       </div>
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">

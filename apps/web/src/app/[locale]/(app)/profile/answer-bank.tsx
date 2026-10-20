@@ -140,7 +140,7 @@ export function AnswerBank({ answers, locale }: { answers: BankAnswer[]; locale:
           data-testid="bank-add"
           disabled={adding || !newQ.trim() || !newA.trim()}
           onClick={add}
-          className="brutal brutal-press self-start px-3 py-1 text-sm font-semibold disabled:opacity-50"
+          className="btn brutal-press self-start px-3 py-1 text-sm font-semibold disabled:opacity-50"
         >
           {adding ? t('saving') : t('add')}
         </button>
