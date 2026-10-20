@@ -72,6 +72,8 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, companyC
   const [events, setEvents] = useState<{ type: string; payload: unknown; createdAt: string }[]>([]);
   const [messagesVersion, setMessagesVersion] = useState(0);
   const writer = useRef<RecruiterMessageHandle>(null);
+  // Salary, meeting link and recruiter contact are filled once and rarely read: folded under "More fields".
+  const [moreOpen, setMoreOpen] = useState(false);
   // Section navigation: the pinned header jumps to a section and highlights the one being read.
   const anchors = useRef<Partial<Record<Section, HTMLElement | null>>>({});
   const header = useRef<HTMLDivElement>(null);
@@ -297,7 +299,8 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, companyC
         )}
         {threadLink && <a data-testid="panel-thread" href={threadLink} target="_blank" rel="noopener noreferrer" className="tabular-nums text-sm font-semibold underline">{t('openThread')} ↗</a>}
       </div>
-      {card.jobId && (
+      {/* The apply kit is for applying: shown on saved cards, or once it is open. */}
+      {card.jobId && (columns.find((c) => c.id === card.columnId)?.key === 'saved' || kitOpen) && (
         <div className="flex flex-col gap-3">
           <button type="button" data-testid="apply-kit-open" aria-expanded={kitOpen} onClick={() => setKitOpen((v) => !v)} className="btn brutal-press self-start px-4 py-2 font-semibold">
             {tk('open')}
@@ -383,8 +386,13 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, companyC
           <button type="button" onClick={async () => { let l: BoardLabel | null = null; try { l = await createLabel(newLabel, newColor.toUpperCase()); } catch { l = null; } setError(!l); if (l) { onLabelCreated(l); setNewLabel(''); } }} className="btn brutal-press px-3 text-sm font-semibold">+</button>
         </div>
       </fieldset>
-      <label className="flex flex-col gap-1 tabular-nums text-xs">{t('salary')}<input data-testid="panel-salary" value={salary} maxLength={120} onChange={(e) => setSalary(e.target.value)} className={field} /></label>
       <label className="flex flex-col gap-1 tabular-nums text-xs">{t('nextAction')}<input data-testid="panel-next-action" type="datetime-local" value={next} onChange={(e) => setNext(e.target.value)} className={field} /></label>
+      <label className="flex flex-col gap-1 tabular-nums text-xs">{t('notes')}<textarea data-testid="panel-notes" value={notes} maxLength={5000} onChange={(e) => setNotes(e.target.value)} className={`${field} min-h-24`} /></label>
+      <button type="button" data-testid="panel-more" aria-expanded={moreOpen} onClick={() => setMoreOpen((v) => !v)} className="self-start text-sm font-medium text-muted-foreground underline hover:text-foreground">
+        {moreOpen ? t('fewerFields') : t('moreFields')}
+      </button>
+      {moreOpen && (<>
+      <label className="flex flex-col gap-1 tabular-nums text-xs">{t('salary')}<input data-testid="panel-salary" value={salary} maxLength={120} onChange={(e) => setSalary(e.target.value)} className={field} /></label>
       <label className="flex flex-col gap-1 tabular-nums text-xs">
         {t('meetingUrl')}
         <input data-testid="panel-meeting" type="url" value={meeting} maxLength={500} onChange={(e) => setMeeting(e.target.value)} placeholder="https://meet.google.com/…" className={field} />
@@ -399,7 +407,7 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, companyC
       )}
       <label className="flex flex-col gap-1 tabular-nums text-xs">{t('contactName')}<input value={contactName} maxLength={120} onChange={(e) => setContactName(e.target.value)} className={field} /></label>
       <label className="flex flex-col gap-1 tabular-nums text-xs">{t('contactUrl')}<input type="url" value={contactUrl} onChange={(e) => setContactUrl(e.target.value)} className={field} /></label>
-      <label className="flex flex-col gap-1 tabular-nums text-xs">{t('notes')}<textarea data-testid="panel-notes" value={notes} maxLength={5000} onChange={(e) => setNotes(e.target.value)} className={`${field} min-h-24`} /></label>
+      </>)}
       <div className="flex items-center gap-3">
         <button type="button" data-testid="panel-save" onClick={save} className="btn brutal-press bg-brand px-4 py-2 font-semibold text-brand-foreground">{t('save')}</button>
         {error && <span role="alert" className="text-sm text-danger">{t('saveError')}</span>}
