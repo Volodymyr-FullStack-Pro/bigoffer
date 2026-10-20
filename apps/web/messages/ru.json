@@ -150,7 +150,8 @@
     "eyebrow": "Подобрано для вас",
     "companyOnBoardShort": "Уже отклик в эту компанию",
     "companyOnBoard": "Вы уже подавались в эту компанию: «{title}» · {column}",
-    "onBoardLeft": "ещё можно на {platforms}"
+    "onBoardLeft": "ещё можно на {platforms}",
+    "titleCount": "{count, plural, one {# совпадение} few {# совпадения} many {# совпадений} other {# совпадения}}"
   },
   "feed": {
     "progress": "{done} / {total}",

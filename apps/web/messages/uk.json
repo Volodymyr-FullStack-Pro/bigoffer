@@ -150,7 +150,8 @@
     "eyebrow": "Підібрано для вас",
     "companyOnBoardShort": "Вже відгук у цю компанію",
     "companyOnBoard": "Ви вже подавалися в цю компанію: «{title}» · {column}",
-    "onBoardLeft": "ще можна на {platforms}"
+    "onBoardLeft": "ще можна на {platforms}",
+    "titleCount": "{count, plural, one {# збіг} few {# збіги} many {# збігів} other {# збігу}}"
   },
   "feed": {
     "progress": "{done} / {total}",

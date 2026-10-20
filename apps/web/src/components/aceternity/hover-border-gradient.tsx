@@ -39,7 +39,7 @@ export function HoverBorderGradient({
       type="button"
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      className={cn('group relative flex w-fit items-center justify-center overflow-visible rounded-full bg-brand-gradient p-[1.5px] transition disabled:opacity-60', containerClassName)}
+      className={cn('group relative flex w-fit items-center justify-center overflow-visible rounded-[11px] bg-brand-gradient p-[1.5px] transition disabled:opacity-60', containerClassName)}
       {...props}
     >
       <span className={cn('relative z-10 rounded-[inherit] bg-brand px-5 py-2 text-[15px] font-medium text-brand-foreground', className)}>{children}</span>
