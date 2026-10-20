@@ -6,12 +6,12 @@ export type StatusTone = (typeof STATUS_TONES)[number];
 
 /** Tinted pill per tone: a clear fill, text in the tone and a ring; reads the same in light and dark themes. */
 export const TONE_PILL: Record<StatusTone, string> = {
-  interview: 'bg-status-interview/30 text-status-interview ring-status-interview/75',
-  move: 'bg-status-move/30 text-status-move ring-status-move/75',
-  wait: 'bg-status-wait/30 text-status-wait ring-status-wait/80',
-  test: 'bg-status-test/30 text-status-test ring-status-test/75',
-  offer: 'bg-status-offer/30 text-status-offer ring-status-offer/80',
-  danger: 'bg-status-danger/30 text-status-danger ring-status-danger/75',
+  interview: 'bg-status-interview/30 text-status-interview-text ring-status-interview/75',
+  move: 'bg-status-move/30 text-status-move-text ring-status-move/75',
+  wait: 'bg-status-wait/30 text-status-wait-text ring-status-wait/80',
+  test: 'bg-status-test/30 text-status-test-text ring-status-test/75',
+  offer: 'bg-status-offer/30 text-status-offer-text ring-status-offer/80',
+  danger: 'bg-status-danger/30 text-status-danger-text ring-status-danger/75',
   neutral: 'bg-status-neutral/30 text-foreground ring-status-neutral/70',
 };
 
@@ -28,7 +28,7 @@ export const TONE_SOLID: Record<StatusTone, string> = {
 
 /** Classes for an option in a tone picker: solid when picked, a quieter tinted pill otherwise. */
 export const toneChip = (tone: StatusTone, picked: boolean) =>
-  `ring-1 ring-inset transition ${picked ? `${TONE_SOLID[tone]} ring-2` : `${TONE_PILL[tone]} opacity-75 hover:opacity-100`}`;
+  `ring-1 ring-inset transition ${picked ? `${TONE_SOLID[tone]} ring-2` : `${TONE_PILL[tone]} opacity-90 hover:opacity-100`}`;
 
 /** The tone as a CSS colour, for a card's left edge or a banner's border. */
 export const toneColor = (tone: StatusTone) => `var(--status-${tone})`;
