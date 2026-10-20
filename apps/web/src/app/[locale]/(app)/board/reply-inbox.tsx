@@ -180,7 +180,7 @@ export function ReplyInbox({ card, defaultAuthor, columns, timeZone, lang, onLog
       />
       {!mine && (<>
       <div className="flex flex-wrap gap-2">
-        <button type="button" data-testid="reply-classify" disabled={!body.trim() || busy !== null} onClick={classify} className="brutal brutal-press bg-ai px-3 py-1 text-sm font-semibold text-ai-foreground disabled:opacity-50">
+        <button type="button" data-testid="reply-classify" disabled={!body.trim() || busy !== null} onClick={classify} className="btn brutal-press bg-ai px-3 py-1 text-sm font-semibold text-ai-foreground disabled:opacity-50">
           {busy === 'ai' ? t('replyReading') : t('replyClassify')}
         </button>
       </div>
@@ -222,7 +222,7 @@ export function ReplyInbox({ card, defaultAuthor, columns, timeZone, lang, onLog
         </label>
       )}
       <div className="flex flex-wrap items-center gap-3">
-        <button type="button" data-testid="reply-save" disabled={!body.trim() || (!mine && !kind) || busy !== null} onClick={save} className="brutal brutal-press bg-brand px-3 py-1 text-sm font-semibold text-brand-foreground disabled:opacity-50">
+        <button type="button" data-testid="reply-save" disabled={!body.trim() || (!mine && !kind) || busy !== null} onClick={save} className="btn brutal-press bg-brand px-3 py-1 text-sm font-semibold text-brand-foreground disabled:opacity-50">
           {mine ? t('replySaveMine') : moveTo ? t('replySaveMove', { column: moveTo.title }) : t('replySave')}
         </button>
         {saved && <span data-testid="reply-saved" className="text-sm">✓ {t('replySaved')}</span>}

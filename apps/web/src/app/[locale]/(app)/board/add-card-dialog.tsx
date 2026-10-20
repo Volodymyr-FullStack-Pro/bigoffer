@@ -90,7 +90,7 @@ export function AddCardDialog({ columns, onCreated, onClose }: { columns: BoardC
             placeholder={t('addUrl')}
             className={`${field} flex-1`}
           />
-          <button type="button" data-testid="add-fetch" disabled={!url || loading} onClick={() => void fetchPreview()} className="brutal brutal-press px-3 text-sm font-semibold disabled:opacity-50">
+          <button type="button" data-testid="add-fetch" disabled={!url || loading} onClick={() => void fetchPreview()} className="btn brutal-press px-3 text-sm font-semibold disabled:opacity-50">
             {loading ? '…' : t('addFetch')}
           </button>
         </div>
@@ -110,7 +110,7 @@ export function AddCardDialog({ columns, onCreated, onClose }: { columns: BoardC
         {error && <p role="alert" className="text-sm text-danger">{t('saveError')}</p>}
         <div className="flex justify-end gap-2">
           <button type="button" onClick={onClose} className="px-4 py-2 font-semibold">{t('cancel')}</button>
-          <button type="submit" data-testid="add-submit" disabled={!title.trim()} className="brutal brutal-press bg-brand px-4 py-2 font-semibold text-brand-foreground disabled:opacity-50">{t('addSubmit')}</button>
+          <button type="submit" data-testid="add-submit" disabled={!title.trim()} className="btn brutal-press bg-brand px-4 py-2 font-semibold text-brand-foreground disabled:opacity-50">{t('addSubmit')}</button>
         </div>
       </form>
     </dialog>

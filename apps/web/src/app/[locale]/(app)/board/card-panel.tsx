@@ -190,7 +190,7 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, companyC
               type="button"
               data-testid="panel-primary"
               onClick={(e) => { jump('conversation', e.timeStamp); writer.current?.writeReply(); }}
-              className="brutal brutal-press shrink-0 bg-ai px-3 py-1 text-xs font-semibold text-ai-foreground"
+              className="btn brutal-press shrink-0 bg-ai px-3 py-1 text-xs font-semibold text-ai-foreground"
             >
               <PenLine aria-hidden className="mr-1 inline size-3.5 -translate-y-px" />
               {t('actionReply')}
@@ -202,7 +202,7 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, companyC
               type="button"
               data-testid="panel-primary"
               onClick={async () => { if (await attempt(() => markPinged(card.id))) onChanged({ followUpCount: card.followUpCount + 1, lastActivityAt: new Date().toISOString(), feedbackDueAt: null }); }}
-              className="brutal brutal-press shrink-0 px-3 py-1 text-xs font-semibold"
+              className="btn brutal-press shrink-0 px-3 py-1 text-xs font-semibold"
             >
               {t('actionPinged')}
             </button>
@@ -224,7 +224,7 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, companyC
             type="button"
             data-testid="panel-move-rejected-go"
             onClick={() => { const lost = columns.find((c) => c.kind === 'lost'); if (lost) onMove(lost.id); }}
-            className="brutal brutal-press bg-danger px-3 py-1 text-xs font-semibold text-white"
+            className="btn brutal-press bg-danger px-3 py-1 text-xs font-semibold text-white"
           >
             {t('rejectedMove')}
           </button>
@@ -238,7 +238,7 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, companyC
               type="button"
               data-testid="panel-write-reply"
               onClick={() => writer.current?.writeReply()}
-              className="brutal brutal-press mt-2 block bg-ai px-3 py-1 text-sm font-semibold text-ai-foreground"
+              className="btn brutal-press mt-2 self-start bg-ai px-3 py-1 text-sm font-semibold text-ai-foreground"
             >
               <PenLine aria-hidden className="mr-1 inline size-4 -translate-y-px" />
               {t('writeReply')}
@@ -276,7 +276,7 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, companyC
       </div>
       {card.jobId && (
         <div className="flex flex-col gap-3">
-          <button type="button" data-testid="apply-kit-open" aria-expanded={kitOpen} onClick={() => setKitOpen((v) => !v)} className="brutal brutal-press self-start px-4 py-2 font-semibold">
+          <button type="button" data-testid="apply-kit-open" aria-expanded={kitOpen} onClick={() => setKitOpen((v) => !v)} className="btn brutal-press self-start px-4 py-2 font-semibold">
             {tk('open')}
           </button>
           {kitOpen && <ApplyKitPanel jobId={card.jobId} locale={locale} onApplied={onApplied} />}
@@ -329,7 +329,7 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, companyC
         </select>
       </label>
       <div className="flex flex-wrap gap-2">
-        <button type="button" data-testid="panel-pinged" onClick={async () => { if (await attempt(() => markPinged(card.id))) onChanged({ followUpCount: card.followUpCount + 1, lastActivityAt: new Date().toISOString(), feedbackDueAt: null }); }} className="brutal brutal-press px-3 py-1 text-sm font-semibold">{t('actionPinged')}</button>
+        <button type="button" data-testid="panel-pinged" onClick={async () => { if (await attempt(() => markPinged(card.id))) onChanged({ followUpCount: card.followUpCount + 1, lastActivityAt: new Date().toISOString(), feedbackDueAt: null }); }} className="btn brutal-press px-3 py-1 text-sm font-semibold">{t('actionPinged')}</button>
       </div>
       <fieldset className="flex flex-col gap-2">
         <legend className="tabular-nums text-xs">{t('labels')}</legend>
@@ -357,7 +357,7 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, companyC
         <div className="flex gap-2">
           <input value={newLabel} onChange={(e) => setNewLabel(e.target.value)} maxLength={40} placeholder={t('newLabel')} className={`${field} flex-1`} />
           <input type="color" value={newColor} onChange={(e) => setNewColor(e.target.value)} aria-label={t('labelColor')} className="h-9 w-10 border-[1.5px] border-border" />
-          <button type="button" onClick={async () => { let l: BoardLabel | null = null; try { l = await createLabel(newLabel, newColor.toUpperCase()); } catch { l = null; } setError(!l); if (l) { onLabelCreated(l); setNewLabel(''); } }} className="brutal brutal-press px-3 text-sm font-semibold">+</button>
+          <button type="button" onClick={async () => { let l: BoardLabel | null = null; try { l = await createLabel(newLabel, newColor.toUpperCase()); } catch { l = null; } setError(!l); if (l) { onLabelCreated(l); setNewLabel(''); } }} className="btn brutal-press px-3 text-sm font-semibold">+</button>
         </div>
       </fieldset>
       <label className="flex flex-col gap-1 tabular-nums text-xs">{t('salary')}<input data-testid="panel-salary" value={salary} maxLength={120} onChange={(e) => setSalary(e.target.value)} className={field} /></label>
@@ -378,7 +378,7 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, companyC
       <label className="flex flex-col gap-1 tabular-nums text-xs">{t('contactUrl')}<input type="url" value={contactUrl} onChange={(e) => setContactUrl(e.target.value)} className={field} /></label>
       <label className="flex flex-col gap-1 tabular-nums text-xs">{t('notes')}<textarea data-testid="panel-notes" value={notes} maxLength={5000} onChange={(e) => setNotes(e.target.value)} className={`${field} min-h-24`} /></label>
       <div className="flex items-center gap-3">
-        <button type="button" data-testid="panel-save" onClick={save} className="brutal brutal-press bg-brand px-4 py-2 font-semibold text-brand-foreground">{t('save')}</button>
+        <button type="button" data-testid="panel-save" onClick={save} className="btn brutal-press bg-brand px-4 py-2 font-semibold text-brand-foreground">{t('save')}</button>
         {error && <span role="alert" className="text-sm text-danger">{t('saveError')}</span>}
         <button type="button" data-testid="panel-delete" onClick={() => { if (window.confirm(t('deleteConfirm'))) onDelete(); }} className="ml-auto text-sm text-danger underline">{t('delete')}</button>
       </div>

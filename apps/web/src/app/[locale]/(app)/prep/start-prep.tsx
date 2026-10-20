@@ -38,7 +38,7 @@ export function StartPrep({ applicationId, auto = false }: { applicationId: stri
   return (
     <span className="flex flex-wrap items-center gap-2">
       {error && <span role="alert" data-testid="prep-error" className="text-sm text-danger">{t(`err_${error}` as never)}</span>}
-      <button type="button" data-testid="prep-start" disabled={busy} onClick={() => void run()} className="brutal brutal-press bg-ai px-3 py-1.5 text-sm font-semibold text-ai-foreground disabled:opacity-60">
+      <button type="button" data-testid="prep-start" disabled={busy} onClick={() => void run()} className="btn brutal-press bg-ai px-3 py-1.5 text-sm font-semibold text-ai-foreground disabled:opacity-60">
         {busy ? t('planning') : <><GraduationCap aria-hidden className="mr-1 inline size-4 -translate-y-px" />{t('start')}</>}
       </button>
     </span>

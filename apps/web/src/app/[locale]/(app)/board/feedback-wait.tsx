@@ -56,12 +56,12 @@ export function FeedbackWait({ applicationId, dueAt, timeZone, onChanged, onThan
         </p>
         <div className="flex flex-wrap gap-2">
           {justSet && (
-            <button type="button" data-testid="feedback-thanks" onClick={onThanks} className="brutal brutal-press bg-ai px-3 py-1 text-xs font-semibold text-ai-foreground">
+            <button type="button" data-testid="feedback-thanks" onClick={onThanks} className="btn brutal-press bg-ai px-3 py-1 text-xs font-semibold text-ai-foreground">
               <PenLine aria-hidden className="mr-1 inline size-3.5 -translate-y-px" />
               {t('feedbackThanks')}
             </button>
           )}
-          <button type="button" onClick={() => setPicking(true)} className="brutal brutal-press px-3 py-1 text-xs">{t('feedbackChange')}</button>
+          <button type="button" onClick={() => setPicking(true)} className="btn brutal-press px-3 py-1 text-xs">{t('feedbackChange')}</button>
           <button type="button" data-testid="feedback-stop" onClick={() => void save(null)} className="text-xs underline">{t('feedbackStop')}</button>
         </div>
         {error && <p role="alert" className="text-danger">{t('saveError')}</p>}
@@ -71,7 +71,7 @@ export function FeedbackWait({ applicationId, dueAt, timeZone, onChanged, onThan
 
   if (!picking) {
     return (
-      <button type="button" data-testid="feedback-start" onClick={() => setPicking(true)} className="brutal brutal-press self-start px-3 py-1.5 text-sm font-semibold">
+      <button type="button" data-testid="feedback-start" onClick={() => setPicking(true)} className="btn brutal-press self-start px-3 py-1.5 text-sm font-semibold">
         ✓ {t('feedbackStart')}
       </button>
     );
@@ -88,13 +88,13 @@ export function FeedbackWait({ applicationId, dueAt, timeZone, onChanged, onThan
             data-testid="feedback-preset"
             data-days={days}
             onClick={() => void save(new Date(now.getTime() + days * DAY))}
-            className="brutal brutal-press px-3 py-1 text-xs font-semibold"
+            className="btn brutal-press px-3 py-1 text-xs font-semibold"
           >
             {t('feedbackPreset', { count: days })}
           </button>
         ))}
         <input data-testid="feedback-date" type="date" value={date} onChange={(e) => setDate(e.target.value)} aria-label={t('feedbackDate')} className="brutal bg-card px-2 py-1 text-xs" />
-        <button type="button" data-testid="feedback-date-save" disabled={!date} onClick={() => { const due = endOfDay(date); if (due) void save(due); }} className="brutal brutal-press bg-brand px-3 py-1 text-xs font-semibold text-brand-foreground disabled:opacity-50">
+        <button type="button" data-testid="feedback-date-save" disabled={!date} onClick={() => { const due = endOfDay(date); if (due) void save(due); }} className="btn brutal-press bg-brand px-3 py-1 text-xs font-semibold text-brand-foreground disabled:opacity-50">
           {t('save')}
         </button>
         <button type="button" onClick={() => setPicking(false)} className="text-xs underline">{t('feedbackCancel')}</button>

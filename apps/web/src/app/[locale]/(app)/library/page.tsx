@@ -13,7 +13,7 @@ export default async function LibraryPage() {
   return (
     <section className="flex flex-col gap-6">
       <div className="flex flex-col gap-1">
-        <h1 className="text-3xl font-semibold md:text-4xl">{t('title')}</h1>
+        <h1 className="text-3xl md:text-4xl">{t('title')}</h1>
         <p className="text-muted-foreground">{t('subtitle')}</p>
       </div>
       <Library initial={links} />

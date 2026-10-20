@@ -66,7 +66,7 @@ export function RejectDialog({ initialReasons = [], initialStage = 'application'
         </label>
         <div className="flex justify-end gap-2">
           <button type="button" onClick={onCancel} className="px-4 py-2 font-semibold">{t('cancel')}</button>
-          <button type="submit" data-testid="reject-confirm" disabled={reasons.length === 0} className="brutal brutal-press bg-danger px-4 py-2 font-semibold text-white disabled:opacity-50">
+          <button type="submit" data-testid="reject-confirm" disabled={reasons.length === 0} className="btn brutal-press bg-danger px-4 py-2 font-semibold text-white disabled:opacity-50">
             {t('rejectConfirm')}
           </button>
         </div>

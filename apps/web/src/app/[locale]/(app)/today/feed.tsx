@@ -212,7 +212,7 @@ export function Feed({
     return (
       <div data-testid="today-empty" className="brutal flex max-w-xl flex-col gap-4 p-6">
         <p className="text-lg">{tt('empty')}</p>
-        <Link href="/search" className="brutal brutal-press self-start bg-brand px-4 py-2 font-semibold text-brand-foreground">
+        <Link href="/search" className="btn brutal-press self-start bg-brand px-4 py-2 font-semibold text-brand-foreground">
           {tt('setup')}
         </Link>
       </div>
@@ -324,16 +324,16 @@ export function Feed({
           {filteredOut === 0 && !showHidden && <p className="text-sm text-muted-foreground">{t('emptyCadence')}</p>}
           <div className="flex flex-wrap gap-2">
             {filteredOut > 0 && (
-              <button type="button" data-testid="feed-empty-show-all" onClick={() => setFilters((f) => ({ ...DEFAULT_FILTERS, sort: f.sort }))} className="brutal brutal-press bg-brand px-4 py-2 font-semibold text-brand-foreground">
+              <button type="button" data-testid="feed-empty-show-all" onClick={() => setFilters((f) => ({ ...DEFAULT_FILTERS, sort: f.sort }))} className="btn brutal-press bg-brand px-4 py-2 font-semibold text-brand-foreground">
                 {t('emptyShowAll', { count: filteredOut })}
               </button>
             )}
             {!showHidden && hiddenItems.length > 0 && (
-              <button type="button" data-testid="feed-empty-rule-hidden" onClick={() => { setShowHidden(true); setSelectedId(null); }} className="brutal brutal-press px-4 py-2 font-semibold">
+              <button type="button" data-testid="feed-empty-rule-hidden" onClick={() => { setShowHidden(true); setSelectedId(null); }} className="btn brutal-press px-4 py-2 font-semibold">
                 {t('emptyRuleHidden', { count: hiddenItems.length })}
               </button>
             )}
-            {filteredOut === 0 && <Link href="/board" className="brutal brutal-press px-4 py-2 font-semibold">{t('toBoard')}</Link>}
+            {filteredOut === 0 && <Link href="/board" className="btn brutal-press px-4 py-2 font-semibold">{t('toBoard')}</Link>}
           </div>
         </div>
       ) : (

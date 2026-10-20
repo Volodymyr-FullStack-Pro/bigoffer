@@ -25,7 +25,7 @@ export default async function PrepPage({ searchParams }: { searchParams: Promise
   return (
     <section className="flex flex-col gap-6">
       <div className="flex flex-col gap-1">
-        <h1 className="text-3xl font-semibold md:text-4xl">{t('title')}</h1>
+        <h1 className="text-3xl md:text-4xl">{t('title')}</h1>
         <p className="max-w-2xl text-muted-foreground">{t('subtitle')}</p>
       </div>
 
