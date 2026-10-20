@@ -7,7 +7,8 @@ import { checkHealth } from '../pipeline/health';
 /** Hourly: each board still runs, finds jobs and fills their fields; AI enrichment keeps up. A problem fails the run. */
 export const sourceHealthTask = schedules.task({
   id: 'source-health',
-  machine: 'micro',
+  // micro (0.25 GB) was OOM-killed once while reading a day of runs and jobs; a run takes seconds, so the cost is nil.
+  machine: 'small-1x',
   cron: '50 * * * *',
   maxDuration: 120,
   retry: { maxAttempts: 1 },
