@@ -3,11 +3,22 @@
 import { columnCounters, NEEDS_ACTION } from '@jp/core';
 import { useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { ArrowDownUp } from 'lucide-react';
+import { ArrowDownUp, Bookmark, CalendarClock, type LucideIcon, MessageCircle, Puzzle, Send, Trophy, XCircle } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { BoardCardItem } from './board-card';
 import type { BoardCardView as Card, BoardColumn, BoardLabel } from './board-types';
+
+/** Each stage keeps one colour and icon: the column header shows them, every card carries the colour as a stripe. */
+export const STAGE: Record<string, { color: string; icon: LucideIcon }> = {
+  saved: { color: 'var(--status-neutral)', icon: Bookmark },
+  applied: { color: 'var(--status-move)', icon: Send },
+  talking: { color: 'var(--status-wait)', icon: MessageCircle },
+  test_task: { color: 'var(--status-test)', icon: Puzzle },
+  interview: { color: 'var(--status-interview)', icon: CalendarClock },
+  offer: { color: 'var(--status-offer)', icon: Trophy },
+};
+const LOST = { color: 'var(--status-danger)', icon: XCircle };
 
 /** A column longer than this folds its quiet cards: every card that needs you stays, plus the first quiet ones. */
 const FOLD_AFTER = 12;
@@ -29,6 +40,8 @@ export function BoardColumnView({ column, cards, sort, onToggleSort, labels, lab
   const t = useTranslations('board');
   const { setNodeRef, isOver } = useDroppable({ id: `column:${column.id}` });
   const { total, needsAction } = columnCounters(cards);
+  const stage = STAGE[column.key] ?? (column.kind === 'lost' ? LOST : STAGE.saved!);
+  const StageIcon = stage.icon;
   const [expanded, setExpanded] = useState(false);
   const folds = !expandAll && cards.length > FOLD_AFTER;
   let quiet = 0;
@@ -39,6 +52,7 @@ export function BoardColumnView({ column, cards, sort, onToggleSort, labels, lab
     <section data-testid="board-column" data-column-key={column.key} aria-label={column.title} className="flex w-[85vw] max-w-80 shrink-0 snap-start flex-col gap-3 sm:w-72">
       <header className="flex items-center justify-between gap-2 px-1">
         <span className="flex min-w-0 items-center gap-2">
+          <StageIcon aria-hidden className="size-4 shrink-0" style={{ color: stage.color }} />
           <h2 className="truncate font-display text-sm font-semibold">{column.title}</h2>
           <span data-testid="column-count" className="rounded-full bg-muted px-2 py-0.5 tabular-nums text-xs font-bold">
             {total}{needsAction > 0 && <span className="text-danger"> · ● {needsAction}</span>}
@@ -63,7 +77,7 @@ export function BoardColumnView({ column, cards, sort, onToggleSort, labels, lab
             <p data-testid="column-empty" className="m-auto px-2 text-center text-xs text-muted-foreground">{t('columnEmpty')}</p>
           )}
           {visible.map((c) => (
-            <BoardCardItem key={c.id} card={c} labels={labels} labelName={labelName} now={now} timeZone={timeZone} onOpen={() => onOpen(c.id)} />
+            <BoardCardItem key={c.id} card={c} stripe={stage.color} labels={labels} labelName={labelName} now={now} timeZone={timeZone} onOpen={() => onOpen(c.id)} />
           ))}
           {hidden > 0 && (
             <button type="button" data-testid="column-more" onClick={() => setExpanded(true)} className="rounded-xl border border-dashed border-border px-3 py-2 text-sm text-muted-foreground hover:bg-muted">

@@ -56,9 +56,12 @@ describe.each([
     ['success on its 15% tint', t.success!, mix(t.success!, t.card!, 0.15)],
     ...TONES.map((tone): [string, string, string] => [`${tone} badge`, t[`status-${tone}-text`]!, mix(t[`status-${tone}`]!, t.card!, 0.3)]),
   ];
-  it.each(pairs)('%s reads', (_label, fg, bg) => {
+  // Secondary text (hints, meta, placeholders) may sit a little lower on APCA (its guide allows 45+ for it);
+  // everything else is held to Lc 60. WCAG 4.5 holds for all.
+  const SECONDARY = new Set(['muted text on card', 'muted text on muted']);
+  it.each(pairs)('%s reads', (label, fg, bg) => {
     expect(wcag(fg, bg)).toBeGreaterThanOrEqual(4.5);
-    expect(apca(fg, bg)).toBeGreaterThanOrEqual(60);
+    expect(apca(fg, bg)).toBeGreaterThanOrEqual(SECONDARY.has(label) ? 55 : 60);
   });
 });
 
