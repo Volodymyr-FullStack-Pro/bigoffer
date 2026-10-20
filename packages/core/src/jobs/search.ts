@@ -165,6 +165,30 @@ export function searchTerms(profile: Pick<SearchProfile, 'keywords' | 'skills'>)
   return out.slice(0, MAX_TERMS);
 }
 
+/**
+ * The first `max` search terms, one per role first: "full stack developer", "full stack engineer" and "full-stack
+ * software engineer" return the same postings, so a board with three searches gets full stack, JavaScript and React
+ * instead of three spellings of full stack. Order inside each role is kept.
+ */
+export function diverseTerms(terms: readonly string[], max: number): string[] {
+  // "Full-Stack", "fullstack" and "фулстек" are one role spelled three ways.
+  const ALIAS: Record<string, string> = { фулстек: 'fullstack', фуллстек: 'fullstack', фронтенд: 'frontend', бекенд: 'backend', бэкенд: 'backend' };
+  const role = (t: string) => {
+    const key = t
+      .toLowerCase()
+      .replace(/(developer|engineer|software|programmer|розробник|разработчик)/g, '')
+      .replace(/[^\p{L}\p{N}.#+]/gu, '');
+    return ALIAS[key] ?? (key || t);
+  };
+  const groups = new Map<string, string[]>();
+  for (const t of terms) groups.set(role(t), [...(groups.get(role(t)) ?? []), t]);
+  const out: string[] = [];
+  for (let round = 0; out.length < max && out.length < terms.length; round++) {
+    for (const list of groups.values()) if (list[round] !== undefined && out.length < max) out.push(list[round]!);
+  }
+  return out;
+}
+
 export function queryKey(sourceId: SourceId, params: Record<string, string>): string {
   const sorted = Object.fromEntries(
     Object.keys(params)
@@ -185,27 +209,30 @@ export function buildSourceQueries(
   };
 
   for (const [sourceId, param, max] of SEARCH_SOURCES) {
-    for (const keyword of keywords.slice(0, max)) add(sourceId, { [param]: keyword });
+    for (const keyword of diverseTerms(keywords, max)) add(sourceId, { [param]: keyword });
   }
 
   const terms = [...profile.keywords, ...profile.skills].map((t) => t.toLowerCase());
   const has = (re: RegExp) => terms.some((t) => re.test(t));
+  // A role is what the user searches for, not a tool they know: Figma among a developer's skills is not a design job.
+  const roleTerms = profile.keywords.map((t) => t.toLowerCase());
+  const wants = (re: RegExp) => roleTerms.some((t) => re.test(t));
   const categories = [
     has(/front|react|vue|angular|\bnext\b|full ?stack|javascript|typescript/) ? 'Front End' : null,
     has(/node|nest|express|full ?stack|back ?end/) ? 'Node.js' : null,
     has(/javascript|typescript|full ?stack/) ? 'JavaScript' : null,
-    has(/\bqa\b|\baqa\b|tester|testing|test automation|sdet|тестувальник|тестировщик/) ? 'QA' : null,
+    wants(/\bqa\b|\baqa\b|tester|testing|test automation|sdet|тестувальник|тестировщик/) ? 'QA' : null,
     has(/python|django|fastapi/) ? 'Python' : null,
     has(/\bjava\b|spring|kotlin/) ? 'Java' : null,
     has(/\.net|c#|asp\.net/) ? '.NET' : null,
-    has(/devops|\bsre\b|kubernetes|terraform/) ? 'DevOps' : null,
+    wants(/devops|\bsre\b|kubernetes|terraform/) ? 'DevOps' : null,
     // DOU has no React Native / Flutter category: cross-platform jobs are filed under iOS and Android.
-    has(/\bios\b|swift|react[\s-]?native|flutter/) ? 'iOS/macOS' : null,
-    has(/android|kotlin|react[\s-]?native|flutter/) ? 'Android' : null,
-    has(/designer|ui\/ux|\bux\b|figma/) ? 'Design' : null,
-    has(/project manager/) ? 'Project Manager' : null,
-    has(/product manager/) ? 'Product Manager' : null,
-    has(/data (scientist|engineer|analyst)|machine learning/) ? 'Data Science' : null,
+    wants(/\bios\b|swift|react[\s-]?native|flutter/) ? 'iOS/macOS' : null,
+    wants(/android|kotlin|react[\s-]?native|flutter/) ? 'Android' : null,
+    wants(/designer|ui\/ux|\bux\b|figma/) ? 'Design' : null,
+    wants(/project manager/) ? 'Project Manager' : null,
+    wants(/product manager/) ? 'Product Manager' : null,
+    wants(/data (scientist|engineer|analyst)|machine learning/) ? 'Data Science' : null,
   ].filter((c): c is string => c !== null);
   for (const category of categories) add('dou', { category });
 
