@@ -45,7 +45,9 @@ export function FeedbackWait({ applicationId, dueAt, timeZone, onChanged, onThan
 
   if (dueAt && !picking) {
     const due = new Date(dueAt);
-    const daysLeft = Math.ceil((due.getTime() - now.getTime()) / DAY);
+    // Rounded like the card's badge: a wait set a few seconds ago still reads "7 days", not "8".
+    const left = due.getTime() - now.getTime();
+    const daysLeft = left > 0 ? Math.max(1, Math.round(left / DAY)) : 0;
     return (
       <div data-testid="feedback-wait" className="brutal flex flex-col gap-2 border-l-[6px] p-3 text-sm" style={{ borderLeftColor: 'var(--status-wait)' }}>
         <p>
