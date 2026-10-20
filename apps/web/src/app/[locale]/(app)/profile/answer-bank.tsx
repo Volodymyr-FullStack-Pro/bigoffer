@@ -67,7 +67,8 @@ function BankRow({ answer, locale, removable, onDeleted }: { answer: BankAnswer;
   return (
     <div data-testid="bank-answer" data-key={answer.key} className="flex flex-col gap-1">
       <label htmlFor={id} className="tabular-nums text-xs">{answer.question}</label>
-      <div className="flex gap-2">
+      {/* Phone: the field takes the full width, its status sits under it. */}
+      <div className="flex flex-col gap-1 sm:flex-row sm:gap-2">
         <div className="flex flex-1 flex-col gap-1">
           {presets ? (
             <>
@@ -86,7 +87,7 @@ function BankRow({ answer, locale, removable, onDeleted }: { answer: BankAnswer;
             <textarea id={id} value={value} maxLength={2000} onChange={(e) => edit(e.target.value)} onBlur={() => save()} placeholder={placeholder} className={`${FIELD} min-h-14`} />
           )}
         </div>
-        <div className="flex flex-col items-start gap-1">
+        <div className="flex flex-row items-center gap-3 sm:flex-col sm:items-start sm:gap-1">
           <span data-testid="bank-row-status" aria-live="polite" className={`min-w-20 text-xs ${result === 'error' ? 'text-danger' : pending ? 'text-muted-foreground' : 'text-success'}`}>
             {pending && t('saving')}
             {!pending && result === 'saved' && `✓ ${t('saved')}`}
