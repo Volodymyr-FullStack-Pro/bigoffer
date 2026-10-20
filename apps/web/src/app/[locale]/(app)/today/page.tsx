@@ -182,7 +182,11 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
     <section className="flex flex-col gap-4 md:gap-6">
       {/* Title and the search toolbar share one row: the jobs start right under it. */}
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-3xl md:text-4xl">{t('title')}</h1>
+        {/* Two-tone title: the page, then what is waiting on it. */}
+        <h1 className="text-3xl md:text-4xl">
+          {t('title')}
+          {matches.length > 0 && <span className="text-muted-foreground">. {t('titleCount', { count: matches.length })}</span>}
+        </h1>
         {(profiles ?? []).length > 0 && <SearchNow initialStatus={searchStatus} autopilot={(profiles ?? []).some((p) => p.is_active)} />}
       </div>
       {me && !me.onboarded_at && (

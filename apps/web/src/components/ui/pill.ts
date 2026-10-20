@@ -2,7 +2,7 @@
  * One button scale for the job panels: 32px pills with 13px text, and a 36px one for the main action. Kept as class
  * strings so they work on <button> and <a> alike.
  */
-const base = 'brutal-press inline-flex items-center justify-center gap-1.5 rounded-full font-semibold transition-colors disabled:opacity-50';
+const base = 'brutal-press inline-flex items-center justify-center gap-1.5 rounded-[10px] font-medium transition-colors disabled:opacity-50';
 const sm = `${base} h-8 px-3.5 text-[13px]`;
 
 export const pill = {

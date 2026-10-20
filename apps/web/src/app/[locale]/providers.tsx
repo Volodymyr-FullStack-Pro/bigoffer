@@ -15,7 +15,7 @@ function AppToaster() {
       closeButton
       richColors
       toastOptions={{
-        style: { borderRadius: '14px', border: '1px solid var(--border)', fontFamily: 'var(--font-manrope), system-ui, sans-serif' },
+        style: { borderRadius: '14px', border: '1px solid var(--border)', fontFamily: 'var(--font-geist), system-ui, sans-serif' },
       }}
     />
   );

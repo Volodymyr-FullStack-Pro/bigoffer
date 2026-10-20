@@ -150,7 +150,8 @@
     "eyebrow": "Matched for you",
     "companyOnBoardShort": "Already applied to this company",
     "companyOnBoard": "You already applied to this company: “{title}” · {column}",
-    "onBoardLeft": "still open on {platforms}"
+    "onBoardLeft": "still open on {platforms}",
+    "titleCount": "{count, plural, one {# match} other {# matches}}"
   },
   "feed": {
     "progress": "{done} / {total}",
