@@ -49,7 +49,7 @@ export function MatchActions({
         onClick={() => onAction('hide')}
         className={pill.quiet}
       >
-        {t('hide')} {!compact && <kbd className="font-mono text-xs opacity-60">H</kbd>}
+        {t('hide')}
       </button>
       <button
         type="button"
@@ -57,7 +57,7 @@ export function MatchActions({
         onClick={() => onAction('saved')}
         className={pill.quiet}
       >
-        {t('save')} {!compact && <kbd className="font-mono text-xs opacity-60">S</kbd>}
+        {t('save')}
       </button>
       <button
         type="button"
@@ -65,7 +65,7 @@ export function MatchActions({
         onClick={() => onAction('applied')}
         className={pill.accent}
       >
-        {t('applied')} {!compact && <kbd className="font-mono text-xs opacity-60">A</kbd>}
+        {t('applied')}
       </button>
     </div>
   );
