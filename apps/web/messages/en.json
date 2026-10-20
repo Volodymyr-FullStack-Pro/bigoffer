@@ -599,7 +599,9 @@
     "stepDoneInterview": "Interview done",
     "stepDoneTest": "Test task sent",
     "stepDoneHintInterview": "Had the interview? Press “Interview done” above: the card waits 7 days for feedback (change it below), and a follow-up nudge comes only after that.",
-    "stepDoneHintTest": "Sent the test task? Press “Test task sent” above: the card waits 7 days for feedback (change it below), and a follow-up nudge comes only after that."
+    "stepDoneHintTest": "Sent the test task? Press “Test task sent” above: the card waits 7 days for feedback (change it below), and a follow-up nudge comes only after that.",
+    "moreFields": "More fields: salary, meeting, contact",
+    "fewerFields": "Fewer fields"
   },
   "cv": {
     "title": "Your CV",

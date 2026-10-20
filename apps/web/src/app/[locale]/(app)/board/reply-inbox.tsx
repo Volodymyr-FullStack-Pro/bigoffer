@@ -31,6 +31,8 @@ export function ReplyInbox({ card, defaultAuthor, columns, timeZone, lang, onLog
   onLogged: (patch: Partial<BoardCardView>, moveTo: BoardColumn | null, rejection?: RejectionSuggestion | null) => void;
 }) {
   const t = useTranslations('board');
+  // A card with a conversation shows it first; the form to log another message opens on demand.
+  const [formOpen, setFormOpen] = useState(card.messageCount === 0);
   const [body, setBody] = useState('');
   // Most replies come through the board the application went out on.
   const [channel, setChannel] = useState<ReplyChannel>(CHANNELS.find((c) => c === card.sourceId) ?? 'email');
@@ -118,6 +120,14 @@ export function ReplyInbox({ card, defaultAuthor, columns, timeZone, lang, onLog
       setBusy(null);
     }
   };
+
+  if (!formOpen) {
+    return (
+      <button type="button" data-testid="reply-open" onClick={() => setFormOpen(true)} className="btn brutal-press self-start px-3 py-1.5 text-sm">
+        + {t('replyAddTitle')}
+      </button>
+    );
+  }
 
   return (
     <section data-testid="reply-inbox" className="flex flex-col gap-3 border-t border-border pt-3">
