@@ -32,6 +32,8 @@
   --status-offer: #4d7c0f;
   --status-danger: #dc2626;
   --status-neutral: #71717a;
+  /* Technology and level chips: on white their bright brand colours keep 40% and take the rest from the ink. */
+  --chip-ink: 40%;
   /* Text on a tone's tinted pill: the same hue, deepened until it reads (WCAG ≥ 4.5, APCA Lc ≥ 60). */
   --status-interview-text: #88184a;
   --status-move-text: #015a87;
@@ -69,6 +71,7 @@
   --status-offer: #bef264;
   --status-danger: #f87171;
   --status-neutral: #a1a1aa;
+  --chip-ink: 100%;
   /* Text on a tone's tinted pill: the same hue, lightened until it reads (WCAG ≥ 4.5, APCA Lc ≥ 60). */
   --status-interview-text: #f9add5;
   --status-move-text: #78d2fa;
