@@ -34,7 +34,7 @@ export function FeedListItem({
       onClick={onSelect}
       className={`relative flex w-full flex-col gap-1.5 border-b border-border px-4 py-3 text-left transition-colors ${
         selected
-          ? 'bg-muted before:absolute before:inset-y-0 before:left-0 before:w-0.75 before:bg-[image:var(--brand-gradient)] before:shadow-[0_0_14px_var(--brand)]'
+          ? 'bg-muted before:absolute before:inset-y-0 before:left-0 before:w-0.75 before:bg-brand'
           : 'hover:bg-muted/60'
       }`}
     >

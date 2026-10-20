@@ -39,13 +39,15 @@ const URGENCY_RING: Record<string, string> = {
 
 const FEEDBACK_STYLE = { tone: 'wait' as StatusTone, icon: Hourglass };
 
-export function BoardCardItem({ card, labels, labelName, now, timeZone, onOpen }: {
+export function BoardCardItem({ card, stripe, labels, labelName, now, timeZone, onOpen }: {
   card: BoardCardView;
   labels: BoardLabel[];
   labelName: (l: BoardLabel) => string;
   now: Date;
   timeZone: string;
   onOpen: () => void;
+  /** The stage colour (from the column) for the card's left stripe. */
+  stripe?: string;
 }) {
   const t = useTranslations('board');
   const format = useFormatter();
@@ -64,7 +66,8 @@ export function BoardCardItem({ card, labels, labelName, now, timeZone, onOpen }
       data-testid="board-card"
       data-card-id={card.id}
       data-reply-kind={card.replyKind ?? undefined}
-      style={{ transform: CSS.Transform.toString(transform), transition, ...(reply ? { borderLeftColor: toneColor(reply.tone), borderLeftWidth: 4 } : {}) }}
+      // A stripe on the left: the reply's colour when there is one, else the stage's.
+      style={{ transform: CSS.Transform.toString(transform), transition, borderLeftColor: reply ? toneColor(reply.tone) : stripe, borderLeftWidth: 3 }}
       data-needs-action={card.urgency in URGENCY_TONE || undefined}
       className={`brutal flex min-w-0 cursor-grab flex-col gap-1.5 p-3 transition-[border-color,box-shadow] duration-150 hover:border-foreground/25 hover:shadow-[0_8px_24px_-12px_rgb(0_0_0/0.45)] active:cursor-grabbing ${isDragging ? 'opacity-40' : ''} ${URGENCY_RING[card.urgency] ?? ''}`}
       {...attributes}
