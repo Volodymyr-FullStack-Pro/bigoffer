@@ -17,15 +17,13 @@ export function LogoMark({ className = 'size-7' }: { className?: string }) {
   );
 }
 
-/** Mark + "BigOffer." wordmark (mono, mint full stop), as used in the header and on the sign-in page. */
+/** The wordmark: a heavy "big", a lighter "offer" and a red full stop (header and sign-in page). */
 export function Logo({ name }: { name: string }) {
   return (
-    <span className="flex items-center gap-2.5 font-display text-xl font-bold tracking-tight">
-      <LogoMark />
-      <span>
-        {name}
-        <span className="text-brand">.</span>
-      </span>
+    <span aria-label={name} className="flex items-baseline font-display text-[22px] leading-none tracking-[-0.04em]">
+      <span aria-hidden className="font-extrabold text-foreground">big</span>
+      <span aria-hidden className="font-medium text-muted-foreground">offer</span>
+      <span aria-hidden className="font-extrabold text-brand">.</span>
     </span>
   );
 }

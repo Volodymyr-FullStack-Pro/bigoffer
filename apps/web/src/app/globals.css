@@ -5,24 +5,24 @@
 /* Apple-inspired canvas (SF Pro, #f5f5f7 / #000, glass chrome) with monochrome actions; colour comes only from the
    brand gradient (logo) and semantic states. */
 :root {
-  --background: #fafafa;
-  --foreground: #09090b;
+  --background: #f7f8fa;
+  --foreground: #0f1116;
   --card: #ffffff;
-  --muted: #f4f4f5;
-  --muted-foreground: #52525b;
-  --border: #e4e4e7;
-  --border-strong: #09090b;
-  --brand: #73f7b2;
-  --brand-foreground: #1e1d25;
-  --link: #0f7a4c;
-  --brand-gradient: linear-gradient(90deg, #73f7b2, #98d0b9);
+  --muted: #eef0f4;
+  --muted-foreground: #566074;
+  --border: #e2e5eb;
+  --border-strong: #0f1116;
+  --brand: #d6364d;
+  --brand-foreground: #ffffff;
+  --link: #b8283d;
+  --brand-gradient: linear-gradient(90deg, #d6364d, #d6364d);
   --ai: #6d28d9;
   --ai-foreground: #ffffff;
   --success: #0b6b42;
   --danger: #b4232b;
   --warning: #833a0c;
-  --glass: rgb(250 250 250 / 0.8);
-  --glass-border: rgb(9 9 11 / 0.08);
+  --glass: rgb(247 248 250 / 0.85);
+  --glass-border: rgb(15 17 22 / 0.08);
   --shadow: 0 1px 2px rgb(30 29 37 / 0.05);
   /* Card and reply states: one hue each, readable on white (600-ish) and on ink (400-ish) below. */
   --status-interview: #db2777;
@@ -45,24 +45,24 @@
 
 /* Mint-on-ink: #1e1d25 canvas, #27262e / #2d2c31 blocks, #73f7b2 accent; mono only for code. */
 .dark {
-  --background: #09090b;
-  --foreground: #fafafa;
-  --card: #0f0f12;
-  --muted: #18181b;
-  --muted-foreground: #b4b4bd;
-  --border: #27272a;
-  --border-strong: #73f7b2;
-  --brand: #73f7b2;
-  --brand-foreground: #1e1d25;
-  --link: #73f7b2;
-  --brand-gradient: linear-gradient(90deg, #73f7b2, #98d0b9);
+  --background: #0f1116;
+  --foreground: #f5f5f7;
+  --card: #181a20;
+  --muted: #22252c;
+  --muted-foreground: #a4b1c3;
+  --border: #2f3038;
+  --border-strong: #a4b1c3;
+  --brand: #d6364d;
+  --brand-foreground: #ffffff;
+  --link: #ff9aa6;
+  --brand-gradient: linear-gradient(90deg, #d6364d, #d6364d);
   --ai: #c4a7ff;
   --ai-foreground: #1e1d25;
   --success: #73f7b2;
   --danger: #ffadad;
   --warning: #ffb86b;
-  --glass: rgb(30 29 37 / 0.85);
-  --glass-border: rgb(255 255 255 / 0.08);
+  --glass: rgb(15 17 22 / 0.85);
+  --glass-border: rgb(255 255 255 / 0.06);
   --shadow: inset 0 1px 0 rgb(255 255 255 / 0.04), 0 10px 30px -18px rgb(0 0 0 / 0.7);
   --status-interview: #f472b6;
   --status-move: #38bdf8;
@@ -125,10 +125,6 @@
   }
   body {
     background-color: var(--background);
-    /* The one light in the room: a mint and a blue glow above the page, as on Linear/Raycast. */
-    background-image:
-      radial-gradient(56rem 26rem at 38% -10%, rgb(115 247 178 / 0.11), transparent 62%),
-      radial-gradient(40rem 22rem at 88% -12%, rgb(59 130 246 / 0.09), transparent 60%);
     background-attachment: fixed;
     color: var(--foreground);
     font-family: var(--font-sans);

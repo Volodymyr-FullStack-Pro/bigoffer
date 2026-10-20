@@ -348,9 +348,9 @@ export function Feed({
             </GlowCard>
             {selected && (
               // Sticky: the details stay in view while the list scrolls.
-              <GlowCard className="sticky top-20 self-start rounded-2xl bg-[linear-gradient(140deg,var(--brand),#3b82f6_40%,var(--border)_72%)] p-px">
+              <GlowCard className="sticky top-20 self-start rounded-2xl border border-border">
                 {/* Scrolls on its own, so the action bar at its bottom never leaves the screen. */}
-                <div key={selected.id} data-testid="match-detail-scroll" className="max-h-[calc(100dvh-6rem)] overflow-y-auto rounded-[15px] bg-card p-6 [scrollbar-width:thin]">
+                <div key={selected.id} data-testid="match-detail-scroll" className="max-h-[calc(100dvh-6rem)] overflow-y-auto rounded-2xl bg-card p-6 [scrollbar-width:thin]">
                   <MatchDetail match={selected} onAction={(a) => void act(selected, a)} onApplied={() => appliedFromKit(selected)} kitOpen={openKit && selected.id === focusId} />
                 </div>
               </GlowCard>
