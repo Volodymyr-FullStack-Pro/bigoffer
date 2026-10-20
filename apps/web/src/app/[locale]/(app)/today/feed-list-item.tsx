@@ -45,7 +45,7 @@ export function FeedListItem({
       {match.onBoard !== null && (
         <span
           data-testid="on-board-badge"
-          className="self-start rounded-full bg-brand/25 ring-1 ring-inset ring-brand/45 px-2 py-0.5 text-xs font-semibold text-link"
+          className="self-start rounded-full bg-success/15 ring-1 ring-inset ring-success/40 px-2 py-0.5 text-xs font-semibold text-success"
         >
           ✓ {t('onBoardShort')}
           {match.onBoardLeft.length > 0 && <> · {t('onBoardLeft', { platforms: match.onBoardLeft.map((s) => sourceInfo(s)?.name ?? s).join(', ') })}</>}

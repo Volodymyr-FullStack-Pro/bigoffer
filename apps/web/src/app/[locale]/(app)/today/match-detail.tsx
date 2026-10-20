@@ -239,7 +239,7 @@ function JobTechs({ techs }: { techs: FeedMatch['techs'] }) {
           <span className="text-xs text-muted-foreground">{tf('techsHave')}</span>
           <ul className="flex flex-wrap gap-1.5">
             {shownHave.map((x) => (
-              <li key={x.name} data-testid="match-skill" data-matched="true" className="rounded-full border border-brand/50 bg-brand/10 px-2.5 py-0.5 text-xs font-medium text-link">
+              <li key={x.name} data-testid="match-skill" data-matched="true" className="rounded-full border border-success/45 bg-success/10 px-2.5 py-0.5 text-xs font-medium text-success">
                 ✓ {x.name}
               </li>
             ))}
@@ -300,7 +300,7 @@ export function MatchDetail({
         {match.onBoard !== null && (
           <p
             data-testid="on-board"
-            className="self-start rounded-full bg-brand/25 ring-1 ring-inset ring-brand/45 px-2.5 py-0.5 text-xs font-semibold text-link"
+            className="self-start rounded-full bg-success/15 ring-1 ring-inset ring-success/40 px-2.5 py-0.5 text-xs font-semibold text-success"
           >
             ✓ {tf('onBoard', { column: match.onBoard || '—' })}
             {match.onBoardLeft.length > 0 && <> · {tf('onBoardLeft', { platforms: match.onBoardLeft.map((s) => sourceInfo(s)?.name ?? s).join(', ') })}</>}
@@ -325,7 +325,7 @@ export function MatchDetail({
           {match.seniority && (
             <LevelBadge level={match.seniority} label={t(`seniority_${match.seniority}`)} />
           )}
-          {salary && <span className="font-bold text-link">{salary}</span>}
+          {salary && <span className="font-bold text-foreground">{salary}</span>}
           {!salary && match.payLevel && <PayLevelBadge level={match.payLevel} />}
           {match.requiredYears !== null && (
             <ExperienceBadge required={match.requiredYears} candidate={match.candidateYears} />
