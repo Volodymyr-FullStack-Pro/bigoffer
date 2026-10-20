@@ -146,7 +146,7 @@ export function ProfileForm({ fullName, timezone, contacts, country, countries, 
         ))}
       </div>
 
-      <div className="flex min-h-5 items-center gap-4">
+      <div className="flex items-center gap-4 empty:hidden [&:not(:has(span))]:hidden">
         <p role="status" data-testid="profile-status" className="text-sm">
           {pending && <span className="text-muted-foreground">{t('saving')}</span>}
           {!pending && state.status === 'saved' && <span className="text-success">{t('saved')}</span>}
