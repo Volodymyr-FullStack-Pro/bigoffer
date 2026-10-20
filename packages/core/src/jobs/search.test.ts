@@ -1,6 +1,6 @@
 import type { SourceId } from './job';
 import { describe, expect, it } from 'vitest';
-import { buildSourceQueries, DJINNI_PRIMARY_KEYWORDS, parseList, searchProfileInputSchema, searchTerms } from './search';
+import { buildSourceQueries, diverseTerms, DJINNI_PRIMARY_KEYWORDS, parseList, searchProfileInputSchema, searchTerms } from './search';
 
 describe('parseList', () => {
   it('splits, trims and dedupes case-insensitively', () => {
@@ -42,10 +42,11 @@ describe('buildSourceQueries', () => {
 
   it('creates a few searches per board, the profile keywords first', () => {
     const terms = searchTerms({ keywords: ['Full Stack', 'React Developer'], skills: ['React', 'Node.js'] });
-    expect(bySource('dou').map((s) => s.params).filter((p) => p.search)).toEqual(terms.slice(0, 4).map((search) => ({ search })));
+    expect(bySource('dou').map((s) => s.params).filter((p) => p.search)).toEqual(diverseTerms(terms, 4).map((search) => ({ search })));
     expect(bySource('dou').filter((s) => s.params.search)).toHaveLength(4);
     expect(bySource('robotaua')).toHaveLength(3);
-    expect(bySource('robotaua')[0]!.params).toEqual({ keyWords: 'full stack' });
+    // One search per role before a second spelling of the same role.
+    expect(bySource('robotaua').map((s) => s.params.keyWords)).toEqual(['full stack', 'react developer', 'frontend developer']);
   });
   it('maps skills to djinni primary keywords', () => {
     expect(bySource('djinni').map((s) => s.params)).toEqual([
@@ -57,6 +58,24 @@ describe('buildSourceQueries', () => {
   it('builds deterministic unique query keys', () => {
     expect(bySource('dou')[0]!.queryKey).toBe('dou:{"search":"full stack"}');
     expect(new Set(specs.map((s) => s.queryKey)).size).toBe(specs.length);
+  });
+});
+
+describe('diverseTerms', () => {
+  it('takes one term per role first, spellings of the same role later', () => {
+    const terms = ['full-stack software engineer', 'full stack developer', 'full stack engineer', 'full stack', 'javascript developer', 'react developer', 'фулстек'];
+    expect(diverseTerms(terms, 3)).toEqual(['full-stack software engineer', 'javascript developer', 'react developer']);
+    expect(diverseTerms(terms, 5)).toEqual(['full-stack software engineer', 'javascript developer', 'react developer', 'full stack developer', 'full stack engineer']);
+  });
+});
+
+describe('role categories', () => {
+  it('a developer who knows Figma does not search design jobs', () => {
+    const specs = buildSourceQueries({ keywords: ['frontend developer'], skills: ['React', 'Figma', 'Playwright'], remoteType: 'remote', sources: ['dou'] });
+    const categories = specs.map((s) => s.params.category).filter(Boolean);
+    expect(categories).not.toContain('Design');
+    expect(categories).not.toContain('QA');
+    expect(buildSourceQueries({ keywords: ['ui/ux designer'], skills: [], remoteType: 'remote', sources: ['dou'] }).map((s) => s.params.category)).toContain('Design');
   });
 });
 
