@@ -403,6 +403,18 @@ test('after an interview the card waits for feedback calmly, then asks for a rem
   await expect(visible(page, 'feedback-start')).toBeVisible();
 });
 
+test('a past interview offers "Interview done" first, which starts a 7-day feedback wait', async ({ context, page }) => {
+  const email = uniqueEmail('board-step-done');
+  await loginAs(context, email);
+  const { title } = await seedApplication(email, { column: 'interview', appliedDaysAgo: 9 });
+  await page.goto('/en/board');
+  await card(page, title).click();
+  await expect(visible(page, 'panel-next-step')).toHaveAttribute('data-urgency', 'step_done');
+  await visible(page, 'panel-primary').and(page.locator('[data-action="step-done"]')).click();
+  await expect(visible(page, 'feedback-wait')).toContainText('7 days left');
+  await expect(card(page, title).getByTestId('card-urgency')).toHaveAttribute('data-urgency', 'awaiting_feedback');
+});
+
 test('a long column folds its quiet cards; the card panel has section navigation', async ({ context, page }) => {
   const email = uniqueEmail('board-fold');
   await loginAs(context, email);

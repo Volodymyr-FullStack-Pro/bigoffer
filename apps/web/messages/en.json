@@ -594,7 +594,11 @@
     "columnEmpty": "Drag a card here",
     "ghostGroup": "{count, plural, one {No answer: # company} other {No answer: # companies}}",
     "ghostAll": "Close all as no answer",
-    "ghostAllConfirm": "Move {count} cards to lost as “no answer”?"
+    "ghostAllConfirm": "Move {count} cards to lost as “no answer”?",
+    "stepDoneInterview": "Interview done",
+    "stepDoneTest": "Test task sent",
+    "stepDoneHintInterview": "Had the interview? Press “Interview done” above: the card waits 7 days for feedback (change it below), and a follow-up nudge comes only after that.",
+    "stepDoneHintTest": "Sent the test task? Press “Test task sent” above: the card waits 7 days for feedback (change it below), and a follow-up nudge comes only after that."
   },
   "cv": {
     "title": "Your CV",

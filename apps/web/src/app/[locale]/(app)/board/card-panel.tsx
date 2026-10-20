@@ -17,7 +17,7 @@ import { columnForReply } from './reply-kinds';
 import { ReplyInbox, type RejectionSuggestion } from './reply-inbox';
 import { useModalDialog } from './use-modal-dialog';
 import { fromZonedInput, toZonedInput } from './zoned-input';
-import { createLabel, getApplicationEvents, markPinged, setApplicationLabel, updateApplication } from './actions';
+import { createLabel, getApplicationEvents, markPinged, setApplicationLabel, setFeedbackWait, updateApplication } from './actions';
 import { FeedbackWait } from './feedback-wait';
 import type { BoardCardView, BoardColumn, BoardLabel } from './board-types';
 
@@ -122,6 +122,15 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, companyC
     getApplicationEvents(card.id).then(setEvents).catch(() => setEvents([]));
   }, [card.id, card.columnId, card.labelIds.length, card.followUpCount, card.lastActivityAt, card.replyKind, messagesVersion]);
 
+  // An interview (or test task) card with no upcoming call and no feedback wait: the step most likely happened.
+  // Its first action is "it's done, waiting for feedback", not a follow-up nudge.
+  const columnKey = columns.find((c) => c.id === card.columnId)?.key ?? '';
+  const stepDone = WAIT_KEYS.has(columnKey) && card.outcome === 'open' && !card.feedbackDueAt && card.urgency !== 'interview_soon';
+  const stepKind = columnKey === 'test_task' ? 'Test' : 'Interview';
+  const markStepDone = async () => {
+    const res = await setFeedbackWait(card.id, new Date(Date.now() + 7 * 86_400_000).toISOString()).catch(() => null);
+    if (res) onChanged(res);
+  };
   const attempt = async (fn: () => Promise<boolean>): Promise<boolean> => {
     let ok = false;
     try {
@@ -197,6 +206,16 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, companyC
             </button>
           ) : card.urgency === 'interview_soon' && card.meetingUrl && !card.feedbackDueAt ? (
             <JoinMeeting url={card.meetingUrl} label={t('joinMeeting')} testId="panel-primary" compact />
+          ) : stepDone ? (
+            <button
+              type="button"
+              data-testid="panel-primary"
+              data-action="step-done"
+              onClick={() => void markStepDone()}
+              className="btn brutal-press shrink-0 bg-status-wait px-3 py-1 text-xs font-semibold text-[#1f1300]"
+            >
+              ✓ {t(`stepDone${stepKind}`)}
+            </button>
           ) : card.urgency === 'feedback_due' || card.urgency === 'ping' || card.urgency === 'overdue' ? (
             <button
               type="button"
@@ -230,7 +249,11 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, companyC
           </button>
         </p>
       )}
-      {card.urgency in NEXT_STEP && (
+      {stepDone && (card.urgency === 'ping' || card.urgency === 'overdue' || card.urgency === 'ghosting' || card.urgency === 'none') ? (
+        <p data-testid="panel-next-step" data-urgency="step_done" className="brutal border-l-[6px] bg-card p-3 text-sm" style={{ borderLeftColor: 'var(--status-wait)' }}>
+          {t(`stepDoneHint${stepKind}`)}
+        </p>
+      ) : card.urgency in NEXT_STEP && (
         <p data-testid="panel-next-step" data-urgency={card.urgency} className="brutal border-l-[6px] bg-card p-3 text-sm" style={{ borderLeftColor: NEXT_STEP[card.urgency] }}>
           <span className="font-semibold">{t(`urgency_${card.urgency}` as never)}.</span> {t(`nextStep_${card.urgency}` as never)}
           {card.lastMessage?.direction === 'in' && (
