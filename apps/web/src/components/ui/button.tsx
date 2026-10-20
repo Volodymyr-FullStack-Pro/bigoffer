@@ -4,9 +4,9 @@ import { cn } from '@/lib/utils';
 type Variant = 'brand' | 'outline' | 'ghost';
 
 const variants: Record<Variant, string> = {
-  brand: 'brutal-press rounded-full bg-brand text-brand-foreground',
-  outline: 'brutal-press rounded-full border border-brand text-link hover:bg-brand/10',
-  ghost: 'brutal-press rounded-full text-link hover:bg-muted',
+  brand: 'btn brutal-press bg-brand text-brand-foreground',
+  outline: 'btn brutal-press border-brand text-link hover:bg-brand/10',
+  ghost: 'btn brutal-press border-transparent bg-transparent text-link hover:bg-muted',
 };
 
 export function Button({
@@ -16,7 +16,7 @@ export function Button({
 }: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: Variant }) {
   return (
     <button
-      className={cn('inline-flex items-center justify-center gap-2 px-5 py-2 text-[15px] font-medium disabled:opacity-50', variants[variant], className)}
+      className={cn('px-5 py-2 text-[15px] disabled:opacity-50', variants[variant], className)}
       {...props}
     />
   );

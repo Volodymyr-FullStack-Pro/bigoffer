@@ -171,7 +171,7 @@ export function PrepView({ prepId, card, plan, lessons: initialLessons, pitch: i
                         type="button"
                         data-testid="prep-topic-done"
                         onClick={() => void toggleDone(topic.key)}
-                        className={`brutal brutal-press self-start px-3 py-1.5 text-sm font-semibold ${learnedTopic ? '' : 'bg-brand text-brand-foreground'}`}
+                        className={`btn brutal-press self-start px-3 py-1.5 text-sm font-semibold ${learnedTopic ? '' : 'bg-brand text-brand-foreground'}`}
                       >
                         {learnedTopic ? t('notLearned') : `✓ ${t('learned')}`}
                       </button>
@@ -201,12 +201,12 @@ export function PrepView({ prepId, card, plan, lessons: initialLessons, pitch: i
                 </li>
               ))}
             </ul>
-            <button type="button" disabled={pitchBusy} onClick={() => void writePitch(true)} className="brutal brutal-press self-start px-3 py-1.5 text-sm disabled:opacity-50">
+            <button type="button" disabled={pitchBusy} onClick={() => void writePitch(true)} className="btn brutal-press self-start px-3 py-1.5 text-sm disabled:opacity-50">
               {pitchBusy ? t('writing') : t('pitchAgain')}
             </button>
           </>
         ) : (
-          <button type="button" data-testid="prep-pitch-write" disabled={pitchBusy} onClick={() => void writePitch(false)} className="brutal brutal-press self-start bg-ai px-4 py-2 font-semibold text-ai-foreground disabled:opacity-50">
+          <button type="button" data-testid="prep-pitch-write" disabled={pitchBusy} onClick={() => void writePitch(false)} className="btn brutal-press self-start bg-ai px-4 py-2 font-semibold text-ai-foreground disabled:opacity-50">
             {pitchBusy ? t('writing') : t('pitchWrite')}
           </button>
         )}

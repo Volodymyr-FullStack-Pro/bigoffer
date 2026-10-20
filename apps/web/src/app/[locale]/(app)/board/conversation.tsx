@@ -159,7 +159,7 @@ export function Conversation({ applicationId, version, onDeleted, onKindChanged 
                         setMessages((list) => list && list.map((x) => (x.id === m.id ? { ...x, channel: draft.channel, author: mine ? x.author : draft.author.trim() || null, body: draft.body.trim(), link: draft.link.trim() || null } : x)));
                         setDraft(null);
                       }}
-                      className="brutal brutal-press bg-brand px-3 py-1 text-xs font-semibold text-brand-foreground disabled:opacity-50"
+                      className="btn brutal-press bg-brand px-3 py-1 text-xs font-semibold text-brand-foreground disabled:opacity-50"
                     >
                       {t('save')}
                     </button>

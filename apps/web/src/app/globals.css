@@ -36,12 +36,12 @@
 
 /* Mint-on-ink: #1e1d25 canvas, #27262e / #2d2c31 blocks, #73f7b2 accent; mono only for code. */
 .dark {
-  --background: #16151b;
-  --foreground: #fefdff;
-  --card: #1e1d25;
-  --muted: #27262e;
-  --muted-foreground: #b3b2b9;
-  --border: #33323b;
+  --background: #111016;
+  --foreground: #ffffff;
+  --card: #1c1b23;
+  --muted: #292830;
+  --muted-foreground: #bdbcc4;
+  --border: #393842;
   --border-strong: #73f7b2;
   --brand: #73f7b2;
   --brand-foreground: #1e1d25;
@@ -53,7 +53,7 @@
   --danger: #ff7b7b;
   --warning: #ffb86b;
   --glass: rgb(30 29 37 / 0.85);
-  --glass-border: rgb(254 253 255 / 0.08);
+  --glass-border: rgb(254 253 255 / 0.1);
   --shadow: inset 0 1px 0 rgb(255 255 255 / 0.04), 0 10px 30px -18px rgb(0 0 0 / 0.7);
   --status-interview: #f472b6;
   --status-move: #38bdf8;
@@ -185,10 +185,10 @@
 }
 
 @layer components {
-  /* Surface (class name kept from earlier styles): a soft card — 18px corners, hairline, gentle elevation. */
+  /* Surface (class name kept from earlier styles): a card — 16px corners, hairline, gentle elevation. */
   .brutal {
     border: 1px solid var(--glass-border);
-    border-radius: 12px;
+    border-radius: 16px;
     background-color: var(--card);
     box-shadow: var(--shadow);
   }
@@ -198,6 +198,24 @@
     border-radius: 12px;
     box-shadow: none;
     border-color: var(--border);
+  }
+  /* One button shape across the app: a pill. Colour comes from a bg-* utility (brand, ai, danger) or stays plain. */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.375rem;
+    border: 1px solid var(--border);
+    border-radius: 9999px;
+    background-color: var(--card);
+    color: var(--foreground);
+    font-weight: 600;
+    line-height: 1.25rem;
+    padding: 0.5rem 1rem;
+    white-space: nowrap;
+  }
+  .btn[class*='bg-'] {
+    border-color: transparent;
   }
   .brutal-press {
     transition:
@@ -234,7 +252,7 @@
     font-size: 11px;
     font-weight: 700;
     letter-spacing: 0.08em;
-    text-transform: uppercase;
+    text-transform: none;
   }
   .eyebrow::before {
     content: '';

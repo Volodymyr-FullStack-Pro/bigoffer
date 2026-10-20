@@ -23,7 +23,7 @@ export default async function OnboardingPage() {
   const step = 'flex flex-col gap-3';
   return (
     <section data-testid="onboarding" className="flex flex-col gap-6">
-      <h1 className="text-3xl font-semibold md:text-4xl">{t('title')}</h1>
+      <h1 className="text-3xl md:text-4xl">{t('title')}</h1>
       <ol className="flex list-decimal flex-col gap-8 pl-6 marker:font-bold">
         <li className={step}>
           <h2 className="font-display text-lg font-bold">{t('stepCv')}</h2>
@@ -31,7 +31,7 @@ export default async function OnboardingPage() {
         </li>
         <li className={step}>
           <h2 className="font-display text-lg font-bold">{t('stepSearch')}</h2>
-          <Link href="/search" className="brutal brutal-press self-start px-4 py-2 font-semibold">{t('manualSearch')}</Link>
+          <Link href="/search" className="btn brutal-press self-start px-4 py-2 font-semibold">{t('manualSearch')}</Link>
         </li>
         <li className={step}>
           <h2 className="font-display text-lg font-bold">{t('stepAnswers')}</h2>
@@ -46,7 +46,7 @@ export default async function OnboardingPage() {
         </span>
       </p>
       <form action={finishOnboarding}>
-        <button type="submit" data-testid="onboarding-finish" className="brutal brutal-press bg-brand px-6 py-3 font-semibold text-brand-foreground">{t('finish')}</button>
+        <button type="submit" data-testid="onboarding-finish" className="btn brutal-press bg-brand px-6 py-3 font-semibold text-brand-foreground">{t('finish')}</button>
       </form>
     </section>
   );

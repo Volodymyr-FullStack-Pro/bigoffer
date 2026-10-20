@@ -125,7 +125,7 @@ export function Library({ initial }: { initial: SavedLink[] }) {
         </div>
         <textarea data-testid="link-note" value={note} maxLength={1000} onChange={(e) => setNote(e.target.value)} placeholder={t('noteHint')} aria-label={t('note')} className={`${field} min-h-16`} />
         <div className="flex items-center gap-3">
-          <button type="submit" data-testid="link-save" disabled={!url.trim() || busy !== null} className="brutal brutal-press bg-brand px-4 py-2 font-semibold text-brand-foreground disabled:opacity-50">
+          <button type="submit" data-testid="link-save" disabled={!url.trim() || busy !== null} className="btn brutal-press bg-brand px-4 py-2 font-semibold text-brand-foreground disabled:opacity-50">
             {busy === 'save' ? t('saving') : t('save')}
           </button>
           {error && <span data-testid="link-error" role="alert" className="text-sm text-danger">{t(`err_${error}` as never)}</span>}
@@ -220,11 +220,11 @@ function EditLink({ link, onDone }: { link: SavedLink; onDone: (next: SavedLink 
             const ok = await updateLink(link.id, { title, topic, note }).catch(() => false);
             onDone(ok ? { ...link, title: title.trim(), topic: topic.replace(/\s+/g, ' ').trim() || 'Other', note: note.trim() || null } : null);
           }}
-          className="brutal brutal-press bg-brand px-3 py-1 text-sm font-semibold text-brand-foreground"
+          className="btn brutal-press bg-brand px-3 py-1 text-sm font-semibold text-brand-foreground"
         >
           {t('save')}
         </button>
-        <button type="button" onClick={() => onDone(null)} className="brutal brutal-press px-3 py-1 text-sm">{t('cancel')}</button>
+        <button type="button" onClick={() => onDone(null)} className="btn brutal-press px-3 py-1 text-sm">{t('cancel')}</button>
       </span>
     </li>
   );

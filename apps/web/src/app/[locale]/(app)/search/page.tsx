@@ -81,7 +81,7 @@ export default async function SearchPage() {
   return (
     <section className="flex max-w-4xl flex-col gap-6">
       <div>
-        <h1 className="text-3xl font-semibold md:text-4xl">{t('title')}</h1>
+        <h1 className="text-3xl md:text-4xl">{t('title')}</h1>
         <p className="mt-2 text-muted-foreground">{t('intro')}</p>
       </div>
       {!profile && !cv?.parsed && (
