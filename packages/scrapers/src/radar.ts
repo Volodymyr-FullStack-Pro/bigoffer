@@ -18,11 +18,16 @@ export function radarFeedUrl(sourceId: string, params: Record<string, string>): 
   return null;
 }
 
-/** Posting ids in a feed, as the adapters store them (Djinni /jobs/<id>-…, DOU /vacancies/<id>). */
-export function radarFeedIds(sourceId: string, xml: string): string[] {
+/**
+ * Posting ids in a feed, as the adapters store them (Djinni /jobs/<id>-…, DOU /vacancies/<id>). With `since`, an item
+ * published before it is left out: a feed keeps old postings the regular scrape never stores, and they are not news.
+ */
+export function radarFeedIds(sourceId: string, xml: string, since?: Date): string[] {
   const re = sourceId === 'djinni' ? /djinni\.co\/jobs\/(\d+)/ : sourceId === 'dou' ? /vacancies\/(\d+)/ : null;
   if (!re) return [];
   const ids = parseRss(xml).flatMap((item) => {
+    const published = item.pubDate ? Date.parse(item.pubDate) : NaN;
+    if (since && published < since.getTime()) return [];
     const id = item.link.match(re)?.[1];
     return id ? [id] : [];
   });
