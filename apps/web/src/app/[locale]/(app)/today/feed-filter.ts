@@ -68,15 +68,19 @@ export function experiencePenalty(m: Pick<FeedMatch, 'requiredYears' | 'candidat
   const missing = m.requiredYears - m.candidateYears - EXPERIENCE_STRETCH_YEARS;
   return missing > 0 ? Math.min(MAX_EXPERIENCE_PENALTY, missing * POINTS_PER_MISSING_YEAR) : 0;
 }
+/** Freshness for ranking: a vacancy the company re-published (bumped) counts from that date; it is still hiring. */
+const activity = (m: FeedMatch, now: Date) =>
+  Math.max(freshness(m, now), m.refreshedAt ? Math.min(Date.parse(m.refreshedAt), now.getTime()) : 0);
+
 export function rankScore(m: FeedMatch, now: Date = new Date()): number {
-  const days = (now.getTime() - freshness(m, now)) / DAY_MS;
+  const days = (now.getTime() - activity(m, now)) / DAY_MS;
   return m.score - Math.max(0, days - AGE_FREE_DAYS) - experiencePenalty(m);
 }
 
 export function sortMatches(items: FeedMatch[], sort: FeedFilters['sort'], now: Date = new Date()): FeedMatch[] {
   // Array.prototype.sort is stable: equal ranks keep the server order (score, then recency).
   if (sort === 'best') return [...items].sort((a, b) => rankScore(b, now) - rankScore(a, now));
-  return [...items].sort((a, b) => freshness(b, now) - freshness(a, now));
+  return [...items].sort((a, b) => activity(b, now) - activity(a, now));
 }
 
 /** Union of both sets, ordered like the 'best' feed: score desc, then created_at desc. */

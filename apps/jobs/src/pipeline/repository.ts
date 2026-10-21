@@ -174,7 +174,7 @@ async function findJobId(db: Db, job: NormalizedJob, companyId: string): Promise
  * Fields a richer posting of an already-stored job can fill in (e.g. a LinkedIn card without a description,
  * later seen on a board with the full text and a salary). Title and company stay as first seen.
  */
-const BACKFILL_COLUMNS = 'id, description_text, salary_raw, salary_min_usd, salary_max_usd, location, remote_type, remote_regions, tags';
+const BACKFILL_COLUMNS = 'id, description_text, salary_raw, salary_min_usd, salary_max_usd, location, remote_type, remote_regions, tags, posted_at, refreshed_at';
 type BackfillRow = {
   description_text: string | null;
   salary_min_usd: number | null;
@@ -183,7 +183,12 @@ type BackfillRow = {
   remote_type: string;
   remote_regions: string[] | null;
   tags: string[] | null;
+  posted_at: string | null;
+  refreshed_at: string | null;
 };
+
+/** A board date this many days after the first one is a re-publication (a bump), not the same posting. */
+const REFRESH_AFTER_DAYS = 2;
 
 async function backfillPatch(db: Db, jobId: string, job: NormalizedJob) {
   const { data, error } = await db.from('jobs').select(BACKFILL_COLUMNS).eq('id', jobId).single();
@@ -202,7 +207,14 @@ function patchFrom(data: BackfillRow, job: NormalizedJob) {
     remote_type?: string;
     remote_regions?: string[];
     tags?: string[];
+    refreshed_at?: string;
   } = {};
+  // The board shows the job again with a later date (Djinni's "updated"): remember the newest such date.
+  if (job.postedAt && data.posted_at) {
+    const board = job.postedAt.getTime();
+    const later = board - Date.parse(data.posted_at) > REFRESH_AFTER_DAYS * 86_400_000;
+    if (later && board <= Date.now() + 3_600_000 && (!data.refreshed_at || board > Date.parse(data.refreshed_at))) patch.refreshed_at = job.postedAt.toISOString();
+  }
   // The board stated the format (e.g. Djinni's card label): it replaces a format guessed from the text.
   // Only towards remote (or over unknown), so two boards that disagree cannot flip it back and forth.
   if (job.remoteFromBoard && job.remoteType !== data.remote_type && (job.remoteType === 'remote' || data.remote_type === 'unknown')) {

@@ -28,6 +28,8 @@ export type FeedMatch = {
   /** When the board says the job was posted (null if unknown). */
   postedAt: string | null;
   firstSeenAt: string;
+  /** The latest date a board re-published (bumped) the job, when that came after its first posting. */
+  refreshedAt?: string | null;
   postings: { sourceId: string; url: string }[];
   /** Years of experience the posting asks for (null when it states none). */
   requiredYears: number | null;

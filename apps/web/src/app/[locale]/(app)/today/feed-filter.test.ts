@@ -158,3 +158,13 @@ describe('best sort and experience', () => {
     expect(experiencePenalty({ requiredYears: 10, candidateYears: 1 })).toBe(30);
   });
 });
+
+describe('re-published jobs', () => {
+  it('ranks a vacancy bumped today like a fresh one, not by its first posting weeks ago', () => {
+    const now = new Date('2026-10-21T12:00:00.000Z');
+    const bumped = m('bumped', { score: 83, postedAt: '2026-09-10T12:00:00.000Z', refreshedAt: '2026-10-21T09:00:00.000Z' });
+    const stale = m('stale', { score: 90, postedAt: '2026-09-10T12:00:00.000Z' });
+    const fresh = m('fresh', { score: 80, postedAt: '2026-10-21T08:00:00.000Z' });
+    expect(sortMatches([stale, fresh, bumped], 'best', now).map((x) => x.id)).toEqual(['bumped', 'fresh', 'stale']);
+  });
+});
