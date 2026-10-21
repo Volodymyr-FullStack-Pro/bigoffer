@@ -362,7 +362,6 @@ test('a Meet link in the invite becomes a Join button on the card, and can be ed
   await visible(page, 'reply-save').click();
   await expect(card(page, title).getByTestId('card-join')).toHaveAttribute('href', 'https://meet.google.com/xcg-ekku-yjg');
   await expect(visible(page, 'panel-join')).toHaveAttribute('href', 'https://meet.google.com/xcg-ekku-yjg');
-  await visible(page, 'panel-more').click();
   await expect(visible(page, 'panel-meeting')).toHaveValue('https://meet.google.com/xcg-ekku-yjg');
   await visible(page, 'panel-meeting').fill('https://us02web.zoom.us/j/123');
   await visible(page, 'panel-save').click();
