@@ -122,7 +122,7 @@ export function RecruiterMessage({
           data-testid="msg-generate"
           disabled={busy}
           onClick={() => void generate(kind, lang)}
-          className="btn brutal-press bg-ai px-3 py-1 text-sm font-semibold text-ai-foreground disabled:opacity-50"
+          className="btn btn-ai brutal-press px-3 py-1 text-sm font-semibold  disabled:opacity-50"
         >
           {busy ? t('writing') : body ? t('regenerate') : t('generate')}
         </button>

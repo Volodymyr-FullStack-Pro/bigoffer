@@ -30,7 +30,7 @@ export function DomainBadges({ domains, perks = [], detailed = false }: { domain
     <span className="flex flex-col gap-1">
       <span className="flex flex-wrap gap-1" data-testid="job-domains">
         {army && (
-          <span data-testid="domain-military" className="rounded-full border border-danger/60 bg-danger/15 px-2 py-0.5 text-[11px] font-bold text-danger">
+          <span data-testid="domain-military" className="rounded-full border border-danger/60 bg-danger/15 px-2 py-0.5 text-xs font-semibold text-danger">
             {t('domain_military')}
           </span>
         )}
@@ -40,7 +40,7 @@ export function DomainBadges({ domains, perks = [], detailed = false }: { domain
           </span>
         ))}
         {fields.map((d) => (
-          <span key={d} data-testid={`domain-${d}`} className="rounded-full border border-border bg-muted/60 px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+          <span key={d} data-testid={`domain-${d}`} className="rounded-full border border-border bg-muted/60 px-2 py-0.5 text-xs font-semibold text-muted-foreground">
             {t(`domain_${d}`)}
           </span>
         ))}

@@ -59,17 +59,31 @@ export function BoardColumnView({ column, cards, sort, onToggleSort, labels, lab
           </span>
         </span>
         {/* Sorting means nothing until a column has two cards. */}
-        {cards.length > 1 && <button
-          type="button"
-          data-testid="column-sort"
-          onClick={onToggleSort}
-          title={`${t(sort === 'smart' ? 'sortSmart' : 'sortManual')} — ${t('sortToggle')}`}
-          aria-label={`${t(sort === 'smart' ? 'sortSmart' : 'sortManual')} — ${t('sortToggle')}`}
-          aria-pressed={sort === 'smart'}
-          className={`grid size-7 place-items-center rounded-full border transition-colors ${sort === 'smart' ? 'border-brand/50 bg-brand/15 text-link' : 'border-border text-muted-foreground hover:bg-muted hover:text-foreground'}`}
-        >
-          <ArrowDownUp className="size-3.5" aria-hidden />
-        </button>}
+        {/* The arrows sort the column; a hover or focus card says what the current mode does and what a click changes. */}
+        {cards.length > 1 && (
+          <span className="group relative">
+            <button
+              type="button"
+              data-testid="column-sort"
+              onClick={onToggleSort}
+              aria-label={`${t(sort === 'smart' ? 'sortSmart' : 'sortManual')} — ${t('sortToggle')}`}
+              aria-describedby={`sort-tip-${column.id}`}
+              aria-pressed={sort === 'smart'}
+              className={`grid size-7 place-items-center rounded-full border transition-colors ${sort === 'smart' ? 'border-brand/50 bg-brand/15 text-link' : 'border-border text-muted-foreground hover:bg-muted hover:text-foreground'}`}
+            >
+              <ArrowDownUp className="size-3.5" aria-hidden />
+            </button>
+            <span
+              id={`sort-tip-${column.id}`}
+              role="tooltip"
+              data-testid="column-sort-tip"
+              className="pointer-events-none invisible absolute top-full right-0 z-30 mt-2 flex w-64 flex-col gap-1 rounded-xl border border-border bg-card p-3 text-left text-xs leading-relaxed text-muted-foreground opacity-0 shadow-lg transition-opacity group-focus-within:visible group-focus-within:opacity-100 group-hover:visible group-hover:opacity-100"
+            >
+              <span className="font-semibold text-foreground">{t(sort === 'smart' ? 'sortTipSmartTitle' : 'sortTipManualTitle')}</span>
+              {t(sort === 'smart' ? 'sortTipSmart' : 'sortTipManual')}
+            </span>
+          </span>
+        )}
       </header>
       <SortableContext items={visible.map((c) => c.id)} strategy={verticalListSortingStrategy}>
         <div ref={setNodeRef} className={`flex min-h-24 flex-col gap-2 rounded-brutal border-[1.5px] border-dashed p-2 ${isOver ? 'border-brand bg-brand/10' : cards.length === 0 ? 'border-border/70' : 'border-transparent'}`}>
