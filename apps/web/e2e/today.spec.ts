@@ -14,7 +14,7 @@ async function openDetail(page: Page, title: string, isMobile: boolean) {
 test('shows the empty state with a link to search settings', async ({ context, page }) => {
   await loginAs(context, uniqueEmail('today-empty'));
   await page.goto('/en/today');
-  await expect(page.getByTestId('today-empty')).toBeVisible();
+  await expect(page.getByTestId('today-empty')).toHaveAttribute('data-reason', 'no-search');
   await page.getByRole('link', { name: 'Set up job search' }).click();
   await expect(page).toHaveURL(/\/en\/search$/);
 });

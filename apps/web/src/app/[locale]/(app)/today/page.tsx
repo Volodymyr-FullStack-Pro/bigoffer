@@ -26,10 +26,6 @@ function since24h(): string {
 }
 
 /** Postings older than this are not shown in Today, however recent the match. */
-function staleSince(): string {
-  return new Date(Date.now() - 30 * 24 * 3600 * 1000).toISOString();
-}
-
 function windowStart(): string {
   return new Date(Date.now() - 3 * 24 * 3600 * 1000).toISOString();
 }
@@ -44,7 +40,6 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
   const locale = isLocale(rawLocale) ? rawLocale : 'en';
   const supabase = await createClient();
   const since = windowStart();
-  const staleCutoff = staleSince();
   const baseQuery = (states: ('new' | 'seen' | 'hidden')[] = ['new', 'seen']) =>
     supabase
       .from('job_matches')
@@ -54,9 +49,9 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
       .in('state', states)
       .eq('jobs.status', 'active')
       .not('jobs.is_job', 'is', false)
-      // Board feeds re-surface months-old postings; a "Today" feed only shows jobs posted in the last 30 days.
-      .or(`posted_at.is.null,posted_at.gte.${staleCutoff}`, { referencedTable: 'jobs' })
-      .gte('created_at', since);
+      // Every match not acted on yet, while its job is still listed on a board (seen in the last few days):
+      // a bumped vacancy first published weeks ago, or a match from last week that was never opened, still shows.
+      .gte('jobs.last_seen_at', since);
   const cutoff = since24h();
   const [{ data: bestRows }, { data: freshRows, error: freshError }, { data: profiles }, { data: me }, searchStatus, cv, { data: apps }] = await Promise.all([
     baseQuery().order('score', { ascending: false }).order('created_at', { ascending: false }).limit(200),
