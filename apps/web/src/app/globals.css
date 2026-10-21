@@ -356,12 +356,12 @@
   }
 }
 
-/* Status tags (unlayered so they win over a call site's rounded/padding utilities). A tag pointing back for states; an arrow pointing on for the ones that wait on you. */
+/* Status tags (unlayered so they win over a call site's rounded/padding utilities). A label with a cut corner for states; an arrow pointing on for the ones that wait on you. */
 .tag {
-  clip-path: polygon(8px 0, 100% 0, 100% 100%, 8px 100%, 0 50%);
-  border-radius: 0 6px 6px 0;
-  padding-left: 13px;
-  padding-right: 9px;
+  clip-path: polygon(0 0, calc(100% - 7px) 0, 100% 7px, 100% 100%, 0 100%);
+  border-radius: 6px 0 6px 6px;
+  padding-left: 9px;
+  padding-right: 10px;
 }
 .tag-go {
   clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 50%, calc(100% - 8px) 100%, 0 100%);

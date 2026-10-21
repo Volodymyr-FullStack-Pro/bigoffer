@@ -26,7 +26,7 @@ export const TONE_SOLID: Record<StatusTone, string> = {
   neutral: 'bg-status-neutral text-white dark:text-[#0f1116]',
 };
 
-/** States that wait on you point on (an arrow); the rest are tags pointing back. */
+/** States that wait on you point on (an arrow); the rest are labels with a cut corner. */
 const GO: ReadonlySet<StatusTone> = new Set(['interview', 'move', 'wait']);
 export type TagShape = 'tag' | 'tag-go';
 export const toneShape = (tone: StatusTone): TagShape => (GO.has(tone) ? 'tag-go' : 'tag');
