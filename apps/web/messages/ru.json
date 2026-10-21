@@ -151,7 +151,8 @@
     "companyOnBoardShort": "Уже отклик в эту компанию",
     "companyOnBoard": "Вы уже подавались в эту компанию: «{title}» · {column}",
     "onBoardLeft": "ещё можно на {platforms}",
-    "titleCount": "{count, plural, one {# совпадение} few {# совпадения} many {# совпадений} other {# совпадения}}"
+    "titleCount": "{count, plural, one {# совпадение} few {# совпадения} many {# совпадений} other {# совпадения}}",
+    "caughtUp": "Ты всё просмотрел. Новые вакансии появятся после следующего сканирования, а пока можно заглянуть на доску."
   },
   "feed": {
     "progress": "{done} / {total}",

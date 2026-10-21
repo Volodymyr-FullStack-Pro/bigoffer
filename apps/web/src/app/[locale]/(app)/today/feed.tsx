@@ -210,11 +210,15 @@ export function Feed({
 
   if (startedEmpty) {
     return (
-      <div data-testid="today-empty" className="brutal flex max-w-xl flex-col gap-4 p-6">
-        <p className="text-lg">{tt('empty')}</p>
-        <Link href="/search" className="btn brutal-press self-start bg-brand px-4 py-2 font-semibold text-brand-foreground">
-          {tt('setup')}
-        </Link>
+      <div data-testid="today-empty" data-reason={profiles.length > 0 ? 'caught-up' : 'no-search'} className="brutal flex max-w-xl flex-col gap-4 p-6">
+        <p className="text-lg">{tt(profiles.length > 0 ? 'caughtUp' : 'empty')}</p>
+        {profiles.length > 0 ? (
+          <Link href="/board" className="btn brutal-press self-start bg-brand px-4 py-2 font-semibold text-brand-foreground">{t('toBoard')}</Link>
+        ) : (
+          <Link href="/search" className="btn brutal-press self-start bg-brand px-4 py-2 font-semibold text-brand-foreground">
+            {tt('setup')}
+          </Link>
+        )}
       </div>
     );
   }
