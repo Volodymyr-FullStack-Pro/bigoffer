@@ -1,27 +1,43 @@
 /**
- * BigOffer mark: an ink "terminal" squircle with a mint lowercase "b" whose stem is an up arrow (career growth) and a
- * cursor block. Same drawing as app/icon.svg (favicon) and app/apple-icon.png.
+ * BigOffer "b": a solid mint letter whose bowl carries a pair of eyes looking ahead, at the name. The same drawing is
+ * the wordmark's first letter and, on an ink tile, app/icon.svg (favicon) and app/apple-icon.png.
  */
+function Glyph() {
+  return (
+    <>
+      <path d="M168 384 V108" fill="none" stroke="#73f7b2" strokeWidth="56" strokeLinecap="round" />
+      <circle cx="252" cy="296" r="110" fill="#73f7b2" />
+      {[206, 300].map((x) => (
+        <g key={x}>
+          <ellipse cx={x} cy="296" rx="48" ry="66" fill="#fff" />
+          <circle cx={x + 16} cy="288" r="27" fill="#0f1116" />
+          <circle cx={x + 6.5} cy="276.5" r="9" fill="#fff" />
+        </g>
+      ))}
+    </>
+  );
+}
+
+/** The app mark on its ink tile (same as the favicon). */
 export function LogoMark({ className = 'size-7' }: { className?: string }) {
   return (
     <svg viewBox="0 0 512 512" aria-hidden className={className}>
       <rect width="512" height="512" rx="116" fill="#1e1d25" />
-      <rect x="10" y="10" width="492" height="492" rx="106" fill="none" stroke="#73f7b2" strokeOpacity=".28" strokeWidth="12" />
-      <g fill="none" stroke="#73f7b2" strokeWidth="54" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M168 372 V140" />
-        <path d="M110 198 L168 132 L226 198" />
-        <path d="M168 292 a80 80 0 1 1 0 0.01" />
+      <g transform="translate(256 256) scale(1.14) translate(-251 -246)">
+        <Glyph />
       </g>
-      <rect x="330" y="356" width="92" height="34" rx="8" fill="#73f7b2" className="motion-safe:animate-pulse" />
     </svg>
   );
 }
 
-/** The wordmark: a heavy "big", a lighter "offer" and a red full stop (header and sign-in page). */
+/** The wordmark: the mint "b" with eyes, a heavy "ig", a lighter "offer" and a mint full stop (header and sign-in page). */
 export function Logo({ name }: { name: string }) {
   return (
     <span aria-label={name} className="flex items-baseline font-display text-[22px] leading-none tracking-[-0.04em]">
-      <span aria-hidden className="font-extrabold text-foreground">big</span>
+      <svg viewBox="112 80 254 332" aria-hidden className="h-[1.15em] w-auto shrink-0">
+        <Glyph />
+      </svg>
+      <span aria-hidden className="ml-[0.03em] font-extrabold text-foreground">ig</span>
       <span aria-hidden className="font-medium text-muted-foreground">offer</span>
       <span aria-hidden className="font-extrabold text-brand">.</span>
     </span>
