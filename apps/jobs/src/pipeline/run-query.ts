@@ -50,13 +50,14 @@ export function scorableFromNormalized(job: NormalizedJob): ScorableJob {
   };
 }
 
-export async function runQuery(deps: RunQueryDeps, queryId: string): Promise<RunQueryResult> {
+/** `force`: run even though the query is not due (the radar saw a new posting in its feed). */
+export async function runQuery(deps: RunQueryDeps, queryId: string, opts: { force?: boolean } = {}): Promise<RunQueryResult> {
   const { db } = deps;
   const now = deps.now?.() ?? new Date();
   const query = await getQuery(db, queryId);
   if (!query) return SKIPPED;
   // A duplicate enqueue of a query that already ran: its next_run_at has moved on. No bookkeeping.
-  if (new Date(query.next_run_at).getTime() > now.getTime() + DUE_WINDOW_MS) return SKIPPED;
+  if (!opts.force && new Date(query.next_run_at).getTime() > now.getTime() + DUE_WINDOW_MS) return SKIPPED;
   const source = await getSource(db, query.source_id);
   const adapter = deps.adapters[query.source_id];
 
