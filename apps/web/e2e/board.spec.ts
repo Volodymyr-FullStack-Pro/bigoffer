@@ -96,7 +96,7 @@ test('edits notes and labels in the panel', async ({ context, page }) => {
   await expect(visible(page, 'panel-label').filter({ hasText: 'Priority' })).toHaveAttribute('aria-pressed', 'true');
   await page.reload();
   await expect(card(page, title)).toContainText('Priority');
-  await card(page, title).click();
+  await expect(visible(page, 'card-panel')).toBeVisible();
   await expect(visible(page, 'panel-notes')).toHaveValue('Ask about the team size');
 });
 

@@ -59,7 +59,9 @@ export function setUrlParam(param: string, value: string | null): void {
     const url = new URL(window.location.href);
     if (value === null) url.searchParams.delete(param);
     else url.searchParams.set(param, value);
-    if (url.href !== window.location.href) window.history.replaceState(window.history.state, '', url);
+    // A null state (not Next's own) makes the router adopt the new URL; passing its state back would make it skip the
+    // sync and restore the old URL on the next server action.
+    if (url.href !== window.location.href) window.history.replaceState(null, '', url);
   } catch {
     // not in a browser
   }
