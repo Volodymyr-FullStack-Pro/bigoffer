@@ -5,6 +5,7 @@ import { Check, Copy, Sparkles } from 'lucide-react';
 import { textLang } from '@jp/core';
 import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
+import { useStoredState } from '@/lib/use-stored-state';
 import { saveBankAnswer } from '@/app/[locale]/(app)/profile/profile-extras-actions';
 import { tellGenie } from '@/lib/genie/events';
 import { downloadLetter } from '@/lib/letter-file';
@@ -28,7 +29,8 @@ export function ApplyKitPanel({ jobId, onApplied, hidePeopleSearch }: { jobId: s
   const saveUiPrefs = useSaveUiPrefs();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<KitError | null>(null);
-  const [formText, setFormText] = useState('');
+  // The pasted form questions survive a reload until they are answered.
+  const [formText, setFormText] = useStoredState(`bo.kitForm.${jobId}`, '');
   const [answers, setAnswers] = useState<FormAnswer[]>([]);
   const [letter, setLetter] = useState('');
   const [copied, setCopied] = useState<string | null>(null);

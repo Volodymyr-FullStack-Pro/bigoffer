@@ -52,7 +52,8 @@ test('moves a card through the panel and records history', async ({ context, pag
   await expect(column(page, 'interview').getByText(title)).toBeVisible();
   await page.reload();
   await expect(column(page, 'interview').getByText(title)).toBeVisible();
-  await card(page, title).click();
+  // The reload keeps the card open.
+  await expect(visible(page, 'card-panel')).toBeVisible();
   await expect(visible(page, 'panel-history')).toContainText('Moved');
 });
 
@@ -95,7 +96,7 @@ test('edits notes and labels in the panel', async ({ context, page }) => {
   await expect(visible(page, 'panel-label').filter({ hasText: 'Priority' })).toHaveAttribute('aria-pressed', 'true');
   await page.reload();
   await expect(card(page, title)).toContainText('Priority');
-  await card(page, title).click();
+  await expect(visible(page, 'card-panel')).toBeVisible();
   await expect(visible(page, 'panel-notes')).toHaveValue('Ask about the team size');
 });
 
@@ -309,7 +310,7 @@ test('a saved reply can be re-tagged; an auto-reply after all sends the card bac
   await expect(visible(page, 'msg-item')).toContainText('Email');
   await expect(visible(page, 'msg-item')).toContainText('We will get back to you');
   await page.reload();
-  await card(page, title).click();
+  await expect(visible(page, 'card-panel')).toBeVisible();
   await expect(visible(page, 'msg-item')).toContainText('We will get back to you');
 });
 
@@ -332,7 +333,7 @@ test('a pasted rejection opens the reject dialog with the stage and reason the A
   await expect(card(page, title).getByTestId('card-reject-reasons')).toContainText('No reason given');
   await page.reload();
   await expect(card(page, title).getByTestId('card-reject-reasons')).toContainText('No reason given');
-  await card(page, title).click();
+  await expect(visible(page, 'card-panel')).toBeVisible();
   await expect(visible(page, 'panel-reject-reasons')).toContainText('No reason given');
 });
 
@@ -362,7 +363,6 @@ test('a Meet link in the invite becomes a Join button on the card, and can be ed
   await visible(page, 'reply-save').click();
   await expect(card(page, title).getByTestId('card-join')).toHaveAttribute('href', 'https://meet.google.com/xcg-ekku-yjg');
   await expect(visible(page, 'panel-join')).toHaveAttribute('href', 'https://meet.google.com/xcg-ekku-yjg');
-  await visible(page, 'panel-more').click();
   await expect(visible(page, 'panel-meeting')).toHaveValue('https://meet.google.com/xcg-ekku-yjg');
   await visible(page, 'panel-meeting').fill('https://us02web.zoom.us/j/123');
   await visible(page, 'panel-save').click();
@@ -397,7 +397,7 @@ test('after an interview the card waits for feedback calmly, then asks for a rem
   await page.reload();
   await expect(card(page, title).getByTestId('card-urgency')).toHaveAttribute('data-urgency', 'awaiting_feedback');
   // Their answer ends the wait.
-  await card(page, title).click();
+  await expect(visible(page, 'card-panel')).toBeVisible();
   await visible(page, 'reply-body').fill('Thank you! We would like to invite you to the technical interview.');
   await visible(page, 'reply-kind').and(page.locator('[data-kind="interview_invite"]')).click();
   await visible(page, 'reply-save').click();
@@ -483,4 +483,17 @@ test('an upcoming interview can be added to the calendar; today actions fold awa
   await expect(visible(page, 'coming-up')).toHaveCount(0);
   await visible(page, 'today-toggle').click();
   await expect(visible(page, 'coming-up')).toContainText(title);
+});
+
+test('a reload keeps the open card and an unsaved message', async ({ context, page }) => {
+  const email = uniqueEmail('board-reload');
+  await loginAs(context, email);
+  const { title } = await seedApplication(email, { column: 'applied', appliedDaysAgo: 2 });
+  await page.goto('/en/board');
+  await card(page, title).click();
+  await visible(page, 'reply-body').fill('Thanks, I am free on Thursday.');
+  await expect(page).toHaveURL(/card=/);
+  await page.reload();
+  await expect(visible(page, 'card-panel')).toBeVisible();
+  await expect(visible(page, 'reply-body')).toHaveValue('Thanks, I am free on Thursday.');
 });
