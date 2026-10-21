@@ -356,13 +356,11 @@
   }
 }
 
-/* Status tags (unlayered so they win over a call site's rounded/padding utilities). A price tag with a punched hole for
-   states; an arrow pointing on for the ones that wait on you. */
+/* Status tags (unlayered so they win over a call site's rounded/padding utilities). A tag pointing back for states; an arrow pointing on for the ones that wait on you. */
 .tag {
   clip-path: polygon(8px 0, 100% 0, 100% 100%, 8px 100%, 0 50%);
-  mask: radial-gradient(circle 2.25px at 8.5px 50%, #0000 96%, #000);
   border-radius: 0 6px 6px 0;
-  padding-left: 16px;
+  padding-left: 13px;
   padding-right: 9px;
 }
 .tag-go {
@@ -375,7 +373,6 @@
 .tag:focus-visible,
 .tag-go:focus-visible {
   clip-path: none;
-  mask: none;
   border-radius: 6px;
   outline: 2px solid var(--brand);
   outline-offset: 2px;
