@@ -7,7 +7,8 @@ import { Board } from './board';
 import type { BoardCard, BoardColumn, BoardLabel } from './board-types';
 import { isReplyKind } from './reply-kinds';
 
-export default async function BoardPage() {
+export default async function BoardPage({ searchParams }: { searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) {
+  const { card: openCard } = await searchParams;
   const userId = await requireUserId();
   const t = await getTranslations('board');
   const rawLocale = await getLocale();
@@ -81,6 +82,7 @@ export default async function BoardPage() {
         now={new Date().toISOString()}
         timeZone={await getTimeZone()}
         savedSort={parseUiPrefs(profile?.ui_prefs).boardSort}
+        initialOpenId={typeof openCard === 'string' ? openCard : null}
       />
     </section>
   );

@@ -484,3 +484,16 @@ test('an upcoming interview can be added to the calendar; today actions fold awa
   await visible(page, 'today-toggle').click();
   await expect(visible(page, 'coming-up')).toContainText(title);
 });
+
+test('a reload keeps the open card and an unsaved message', async ({ context, page }) => {
+  const email = uniqueEmail('board-reload');
+  await loginAs(context, email);
+  const { title } = await seedApplication(email, { column: 'applied', appliedDaysAgo: 2 });
+  await page.goto('/en/board');
+  await card(page, title).click();
+  await visible(page, 'reply-body').fill('Thanks, I am free on Thursday.');
+  await expect(page).toHaveURL(/card=/);
+  await page.reload();
+  await expect(visible(page, 'card-panel')).toBeVisible();
+  await expect(visible(page, 'reply-body')).toHaveValue('Thanks, I am free on Thursday.');
+});

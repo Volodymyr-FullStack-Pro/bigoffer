@@ -5,6 +5,7 @@ import type { RejectionReason, RejectionStage } from '@jp/core';
 import { useTranslations } from 'next-intl';
 import { tellGenie } from '@/lib/genie/events';
 import { useState } from 'react';
+import { useStoredState } from '@/lib/use-stored-state';
 import type { BoardCardView, BoardColumn } from './board-types';
 import { logReply, logSentMessage, type ReplyChannel, setReplyKind, suggestReplyKind } from './message-actions';
 import { toneChip } from '@/components/ui/status-badge';
@@ -33,7 +34,8 @@ export function ReplyInbox({ card, defaultAuthor, columns, timeZone, lang, onLog
   const t = useTranslations('board');
   // A card with a conversation shows it first; the form to log another message opens on demand.
   const [formOpen, setFormOpen] = useState(card.messageCount === 0);
-  const [body, setBody] = useState('');
+  // An unsaved message survives a reload.
+  const [body, setBody] = useStoredState(`bo.reply.${card.id}`, '');
   // Most replies come through the board the application went out on.
   const [channel, setChannel] = useState<ReplyChannel>(CHANNELS.find((c) => c === card.sourceId) ?? 'email');
   const [kind, setKind] = useState<ReplyKind | null>(null);

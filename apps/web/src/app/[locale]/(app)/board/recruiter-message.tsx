@@ -3,6 +3,7 @@
 import { MESSAGE_FORMATS, MESSAGE_LIMITS, type MessageFormat, REPLY_LIMIT } from '@jp/ai';
 import { useTranslations } from 'next-intl';
 import { type Ref, useEffect, useImperativeHandle, useRef, useState } from 'react';
+import { useStoredState } from '@/lib/use-stored-state';
 import { tellGenie } from '@/lib/genie/events';
 import { generateRecruiterMessage, listMessages, logSentMessage, type ReplyChannel } from './message-actions';
 
@@ -34,7 +35,8 @@ export function RecruiterMessage({
   const [replyChannel, setReplyChannel] = useState<ReplyChannel | null>(null);
   const section = useRef<HTMLElement>(null);
   const [subject, setSubject] = useState<string | null>(null);
-  const [body, setBody] = useState('');
+  // A generated or edited message not sent yet survives a reload.
+  const [body, setBody] = useStoredState(`bo.recruiterMsg.${applicationId}`, '');
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -157,6 +159,8 @@ export function RecruiterMessage({
               const ok = await logSentMessage(applicationId, logChannel, subject ? `${subject}\n\n${body}` : body);
               if (!ok) return setError('failed');
               setSent(true);
+              // Sent: the draft is done, a reload starts clean.
+              setBody('');
               setKind('follow_up');
               if (lang === 'auto') setLang(defaultLang);
               onSent();

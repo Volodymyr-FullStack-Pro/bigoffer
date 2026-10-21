@@ -119,3 +119,19 @@ test('an empty feed says the filters hide matches and shows them in one click', 
   await visible(page, 'feed-empty-show-all').click();
   await expect(visible(page, 'job-match').filter({ hasText: title })).toBeVisible();
 });
+
+test('a reload keeps the open job, its apply kit and pasted form questions', async ({ context, page, isMobile }) => {
+  test.skip(isMobile, 'the phone deck shows one card; the list + detail is the desktop layout');
+  const email = uniqueEmail('feed-reload');
+  await loginAs(context, email);
+  await seedMatch(email, { score: 95, title: 'First Frontend Role' });
+  const second = await seedMatch(email, { score: 80, title: 'Second Frontend Role' });
+  await page.goto('/en/today');
+  await visible(page, 'job-match').filter({ hasText: second.title }).click();
+  await expect(page).toHaveURL(/match=/);
+  await visible(page, 'apply-kit-open').click();
+  await expect(page).toHaveURL(/kit=1/);
+  await page.reload();
+  await expect(visible(page, 'match-detail')).toContainText(second.title);
+  await expect(visible(page, 'apply-kit-open')).toHaveAttribute('aria-expanded', 'true');
+});

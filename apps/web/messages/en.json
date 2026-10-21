@@ -264,7 +264,8 @@
     "hideTipsWord": "Hide “{word}”",
     "hideTipsWordDone": "“{word}” added to excluded words. The feed updates in a minute.",
     "hideTipsDismiss": "Don't suggest",
-    "refreshed": "Refreshed {ago}: still hiring"
+    "refreshed": "Refreshed {ago}: still hiring",
+    "arrived": "{count, plural, one {# new job — show} other {# new jobs — show}}"
   },
   "comingSoon": {
     "badge": "Soon",

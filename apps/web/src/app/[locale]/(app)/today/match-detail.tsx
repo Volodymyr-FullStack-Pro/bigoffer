@@ -8,6 +8,7 @@ import { isLocale, type Locale, sourceInfo } from '@jp/core';
 import { useFormatter, useLocale, useNow, useTranslations } from 'next-intl';
 import { Flag, RefreshCw, Sparkles } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { setUrlParam } from '@/lib/use-stored-state';
 import { TextGenerateEffect } from '@/components/aceternity/text-generate-effect';
 import { ApplyKitPanel } from '@/components/apply-kit/apply-kit-panel';
 import { PeopleSearch } from '@/components/apply-kit/people-search';
@@ -82,7 +83,11 @@ function ApplyKitToggle({ jobId, onApplied, defaultOpen = false }: { jobId: stri
         type="button"
         data-testid="apply-kit-open"
         aria-expanded={open}
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => {
+          // Remembered in the URL, so a reload keeps the kit open.
+          setUrlParam('kit', open ? null : '1');
+          setOpen((v) => !v);
+        }}
         className={`${pill.main} self-start`}
       >
         <Sparkles className="size-5" aria-hidden />
