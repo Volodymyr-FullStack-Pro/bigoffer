@@ -208,6 +208,7 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
         onlyFresh={fresh === '1'}
         // Telegram "Apply kit" button: the focused job opens with its apply kit expanded.
         openKit={kit === '1'}
+        userId={userId}
       />
     </section>
   );

@@ -8,6 +8,7 @@ import { useTranslations } from 'next-intl';
 import { useMemo, useState } from 'react';
 import { Toast, useToast } from '@/components/ui/toast';
 import { useSaveUiPrefs } from '@/lib/use-save-ui-prefs';
+import { setUrlParam } from '@/lib/use-stored-state';
 import { deleteApplication, markPinged, markPingedMany, moveApplication, rejectApplication } from './actions';
 import { AddCardDialog } from './add-card-dialog';
 import { type BoardFilter, EMPTY_FILTER, isFiltering, matchesFilter } from './board-filter';
@@ -24,7 +25,7 @@ type PendingReject = { id: string; columnId: string; rank: string; reasons: Reje
 /** The stage a rejection most likely happened at, from where the card was. */
 const STAGE_BY_COLUMN: Record<string, RejectionStage> = { saved: 'application', applied: 'application', talking: 'screening', test_task: 'test_task', interview: 'technical' };
 
-export function Board({ columns, cards: initial, labels: initialLabels, rules, now: nowIso, timeZone, savedSort }: {
+export function Board({ columns, cards: initial, labels: initialLabels, rules, now: nowIso, timeZone, savedSort, initialOpenId = null }: {
   columns: BoardColumn[];
   cards: BoardCard[];
   labels: BoardLabel[];
@@ -33,6 +34,8 @@ export function Board({ columns, cards: initial, labels: initialLabels, rules, n
   timeZone: string;
   /** Remembered per-column sort modes (column id -> mode). */
   savedSort?: Record<string, 'smart' | 'manual'>;
+  /** ?card=<id>: the card to open (a reload keeps the panel open). */
+  initialOpenId?: string | null;
 }) {
   const t = useTranslations('board');
   const saveUiPrefs = useSaveUiPrefs();
@@ -42,7 +45,11 @@ export function Board({ columns, cards: initial, labels: initialLabels, rules, n
   const [sort, setSort] = useState<Record<string, 'smart' | 'manual'>>(
     Object.fromEntries(columns.map((c) => [c.id, savedSort?.[c.id] ?? (c.kind === 'active' ? 'smart' : 'manual')])),
   );
-  const [openId, setOpenId] = useState<string | null>(null);
+  const [openId, setOpenIdState] = useState<string | null>(initial.some((c) => c.id === initialOpenId) ? initialOpenId : null);
+  const setOpenId = (id: string | null) => {
+    setOpenIdState(id);
+    setUrlParam('card', id);
+  };
   const [activeId, setActiveId] = useState<string | null>(null);
   const [pendingReject, setPendingReject] = useState<PendingReject | null>(null);
   const [confetti, setConfetti] = useState(false);

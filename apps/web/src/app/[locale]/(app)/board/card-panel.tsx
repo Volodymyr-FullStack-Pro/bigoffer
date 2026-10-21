@@ -387,16 +387,17 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, companyC
         </div>
       </fieldset>
       <label className="flex flex-col gap-1 tabular-nums text-xs">{t('nextAction')}<input data-testid="panel-next-action" type="datetime-local" value={next} onChange={(e) => setNext(e.target.value)} className={field} /></label>
+      {/* The meeting link stays in view: it is what an interview card is for. */}
+      <label className="flex flex-col gap-1 tabular-nums text-xs">
+        {t('meetingUrl')}
+        <input data-testid="panel-meeting" type="url" value={meeting} maxLength={500} onChange={(e) => setMeeting(e.target.value)} placeholder="https://meet.google.com/…" className={field} />
+      </label>
       <label className="flex flex-col gap-1 tabular-nums text-xs">{t('notes')}<textarea data-testid="panel-notes" value={notes} maxLength={5000} onChange={(e) => setNotes(e.target.value)} className={`${field} min-h-24`} /></label>
       <button type="button" data-testid="panel-more" aria-expanded={moreOpen} onClick={() => setMoreOpen((v) => !v)} className="self-start text-sm font-medium text-muted-foreground underline hover:text-foreground">
         {moreOpen ? t('fewerFields') : t('moreFields')}
       </button>
       {moreOpen && (<>
       <label className="flex flex-col gap-1 tabular-nums text-xs">{t('salary')}<input data-testid="panel-salary" value={salary} maxLength={120} onChange={(e) => setSalary(e.target.value)} className={field} /></label>
-      <label className="flex flex-col gap-1 tabular-nums text-xs">
-        {t('meetingUrl')}
-        <input data-testid="panel-meeting" type="url" value={meeting} maxLength={500} onChange={(e) => setMeeting(e.target.value)} placeholder="https://meet.google.com/…" className={field} />
-      </label>
       {!contactName && companyContact && (
         <p data-testid="company-contact" className="text-sm">
           {t('companyContact', { company: card.company, name: companyContact.name })}{' '}

@@ -9,6 +9,8 @@ import { Toast, useToast } from '@/components/ui/toast';
 import { Link } from '@/i18n/navigation';
 import { tellGenie } from '@/lib/genie/events';
 import { useSaveUiPrefs } from '@/lib/use-save-ui-prefs';
+import { setUrlParam } from '@/lib/use-stored-state';
+import { createBrowserSupabase } from '@/lib/supabase/browser';
 import { hideMatch, restoreMatch, saveMatch } from './actions';
 import { DEFAULT_FILTERS, filterMatches, sortMatches, type FeedFilters } from './feed-filter';
 import { ALL_LABELS, type CardLabels, CardLabelsContext } from './domain-badges';
@@ -41,7 +43,10 @@ export function Feed({
   openHidden = false,
   onlyFresh = false,
   openKit = false,
+  userId = null,
 }: {
+  /** For the live "new jobs" banner (new matches of this user arrive while the page is open). */
+  userId?: string | null;
   matches: FeedMatch[];
   /** Matches the profile rules hid, browsable with the "Hidden by rules" toggle. */
   ruleHidden?: FeedMatch[];
@@ -101,6 +106,27 @@ export function Feed({
     return focused ? [focused, ...sorted.filter((m) => m !== focused)] : sorted;
   }, [items, filters, focusId]);
   const selected = visible.find((m) => m.id === selectedId) ?? visible[0] ?? null;
+  // Matches created while the page is open (the radar, a scan): counted into a banner, shown on request, so the list
+  // never jumps under the reader.
+  const [arrived, setArrived] = useState(0);
+  useEffect(() => {
+    if (!userId) return;
+    const supabase = createBrowserSupabase();
+    const channel = supabase
+      .channel(`matches-${userId}`)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'job_matches', filter: `user_id=eq.${userId}` }, (payload) => {
+        if ((payload.new as { state?: string }).state === 'new') setArrived((n) => n + 1);
+      })
+      .subscribe();
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [userId]);
+
+  // The open job is part of the URL: a reload (or a shared link) opens it again.
+  useEffect(() => {
+    if (selected) setUrlParam('match', selected.id);
+  }, [selected]);
 
   const act = useCallback(
     async (match: FeedMatch, action: MatchAction) => {
@@ -312,6 +338,16 @@ export function Feed({
         </div>
       )}
 
+      {arrived > 0 && (
+        <button
+          type="button"
+          data-testid="feed-arrived"
+          onClick={() => window.location.reload()}
+          className="btn brutal-press self-center bg-brand px-4 py-2 text-sm font-semibold text-brand-foreground"
+        >
+          {t('arrived', { count: arrived })}
+        </button>
+      )}
       {showHidden && (
         <p data-testid="rule-hidden-note" className="rounded-xl border border-warning/40 bg-warning/10 px-4 py-3 text-sm">
           {t('ruleHiddenNote')}{' '}
