@@ -6,6 +6,8 @@ import { knownExternalIds } from './repository';
 const RADAR_SOURCES = ['djinni', 'dou'];
 /** Pause between two feeds of one sweep, to stay a polite reader. */
 const GAP_MS = 300;
+/** Feed items older than this are not news; the regular scrape has had its chances with them. */
+const FRESH_MS = 2 * 24 * 3600_000;
 
 export type RadarHit = { queryId: string; sourceId: string; fresh: string[] };
 export type RadarResult = { checked: number; errors: number; hits: RadarHit[] };
@@ -29,7 +31,7 @@ export async function radarSweep(db: Db, fetchText: (url: string) => Promise<str
     if (!url) continue;
     result.checked++;
     try {
-      const ids = radarFeedIds(q.source_id, await fetchText(url));
+      const ids = radarFeedIds(q.source_id, await fetchText(url), new Date(Date.now() - FRESH_MS));
       const known = await knownExternalIds(db, q.source_id, ids);
       const fresh = ids.filter((id) => !known.has(id));
       if (fresh.length > 0) result.hits.push({ queryId: q.id, sourceId: q.source_id, fresh });
