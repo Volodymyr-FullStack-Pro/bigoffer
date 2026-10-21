@@ -601,7 +601,11 @@
     "stepDoneHintInterview": "Had the interview? Press “Interview done” above: the card waits 7 days for feedback (change it below), and a follow-up nudge comes only after that.",
     "stepDoneHintTest": "Sent the test task? Press “Test task sent” above: the card waits 7 days for feedback (change it below), and a follow-up nudge comes only after that.",
     "moreFields": "More fields: salary, meeting, contact",
-    "fewerFields": "Fewer fields"
+    "fewerFields": "Fewer fields",
+    "sortTipSmartTitle": "Smart sort: on",
+    "sortTipSmart": "Cards that need you come first: reply, follow up, go to an interview. Click to order the cards yourself by dragging.",
+    "sortTipManualTitle": "Manual order",
+    "sortTipManual": "Cards stay where you dragged them. Click to keep the ones that need you on top."
   },
   "cv": {
     "title": "Your CV",

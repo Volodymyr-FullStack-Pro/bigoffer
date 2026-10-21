@@ -39,7 +39,7 @@ export function NavLink({
       <NavIcon icon={Icon} compact={compact} />
       <span>{label}</span>
       {badge && !compact && (
-        <span className="ml-auto rounded-full bg-ai/15 px-2 py-0.5 text-[11px] font-medium text-ai">
+        <span className="ml-auto rounded-full bg-ai/15 px-2 py-0.5 text-xs font-medium text-ai">
           {badge}
         </span>
       )}

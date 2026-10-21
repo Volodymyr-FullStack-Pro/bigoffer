@@ -13,7 +13,7 @@ export function JoinMeeting({ url, label, testId, compact = false }: { url: stri
       onClick={(e) => e.stopPropagation()}
       onPointerDown={(e) => e.stopPropagation()}
       onKeyDown={(e) => e.stopPropagation()}
-      className={`btn brutal-press inline-flex items-center gap-1 bg-status-interview font-semibold text-white dark:text-[#2a0a1b] ${compact ? 'px-2 py-0.5 text-xs' : 'px-3 py-1 text-sm'}`}
+      className={`btn brutal-press inline-flex items-center gap-1 bg-brand font-semibold text-brand-foreground ${compact ? 'px-2 py-0.5 text-xs' : 'px-3 py-1 text-sm'}`}
     >
       <Video aria-hidden className="size-3.5 shrink-0" strokeWidth={2.25} /> {label}
     </a>

@@ -201,7 +201,7 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, companyC
               type="button"
               data-testid="panel-primary"
               onClick={(e) => { jump('conversation', e.timeStamp); writer.current?.writeReply(); }}
-              className="btn brutal-press shrink-0 bg-ai px-3 py-1 text-xs font-semibold text-ai-foreground"
+              className="btn btn-ai brutal-press shrink-0 px-3 py-1 text-xs font-semibold "
             >
               <PenLine aria-hidden className="mr-1 inline size-3.5 -translate-y-px" />
               {t('actionReply')}
@@ -214,7 +214,7 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, companyC
               data-testid="panel-primary"
               data-action="step-done"
               onClick={() => void markStepDone()}
-              className="btn brutal-press shrink-0 bg-status-wait px-3 py-1 text-xs font-semibold text-[#1f1300]"
+              className="btn brutal-press shrink-0 bg-brand px-3 py-1 text-xs font-semibold text-brand-foreground"
             >
               ✓ {t(`stepDone${stepKind}`)}
             </button>
@@ -263,7 +263,7 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, companyC
               type="button"
               data-testid="panel-write-reply"
               onClick={() => writer.current?.writeReply()}
-              className="btn brutal-press mt-2 self-start bg-ai px-3 py-1 text-sm font-semibold text-ai-foreground"
+              className="btn btn-ai brutal-press mt-2 self-start px-3 py-1 text-sm font-semibold "
             >
               <PenLine aria-hidden className="mr-1 inline size-4 -translate-y-px" />
               {t('writeReply')}

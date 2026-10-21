@@ -58,7 +58,7 @@ export function FeedbackWait({ applicationId, dueAt, timeZone, onChanged, onThan
         </p>
         <div className="flex flex-wrap gap-2">
           {justSet && (
-            <button type="button" data-testid="feedback-thanks" onClick={onThanks} className="btn brutal-press bg-ai px-3 py-1 text-xs font-semibold text-ai-foreground">
+            <button type="button" data-testid="feedback-thanks" onClick={onThanks} className="btn btn-ai brutal-press px-3 py-1 text-xs font-semibold ">
               <PenLine aria-hidden className="mr-1 inline size-3.5 -translate-y-px" />
               {t('feedbackThanks')}
             </button>

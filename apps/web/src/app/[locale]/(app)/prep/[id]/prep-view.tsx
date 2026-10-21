@@ -137,7 +137,7 @@ export function PrepView({ prepId, card, plan, lessons: initialLessons, pitch: i
                   <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                     <span className="font-semibold [overflow-wrap:anywhere]">
                       {topic.title}
-                      {!topic.fromJob && <span className="ml-2 rounded-full bg-ai/20 px-2 py-0.5 align-middle text-[11px] font-medium">{t('likelyAsked')}</span>}
+                      {!topic.fromJob && <span className="ml-2 rounded-full bg-ai/20 px-2 py-0.5 align-middle text-xs font-medium">{t('likelyAsked')}</span>}
                     </span>
                     <span className="text-sm text-muted-foreground">{topic.why}</span>
                   </span>
@@ -206,7 +206,7 @@ export function PrepView({ prepId, card, plan, lessons: initialLessons, pitch: i
             </button>
           </>
         ) : (
-          <button type="button" data-testid="prep-pitch-write" disabled={pitchBusy} onClick={() => void writePitch(false)} className="btn brutal-press self-start bg-ai px-4 py-2 font-semibold text-ai-foreground disabled:opacity-50">
+          <button type="button" data-testid="prep-pitch-write" disabled={pitchBusy} onClick={() => void writePitch(false)} className="btn btn-ai brutal-press self-start px-4 py-2 font-semibold  disabled:opacity-50">
             {pitchBusy ? t('writing') : t('pitchWrite')}
           </button>
         )}
