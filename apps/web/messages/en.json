@@ -609,7 +609,8 @@
     "sortTipSmartTitle": "Smart sort: on",
     "sortTipSmart": "Cards that need you come first: reply, follow up, go to an interview. Click to order the cards yourself by dragging.",
     "sortTipManualTitle": "Manual order",
-    "sortTipManual": "Cards stay where you dragged them. Click to keep the ones that need you on top."
+    "sortTipManual": "Cards stay where you dragged them. Click to keep the ones that need you on top.",
+    "match": "match"
   },
   "cv": {
     "title": "Your CV",

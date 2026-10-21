@@ -64,21 +64,21 @@
   --glass: rgb(15 17 22 / 0.85);
   --glass-border: rgb(255 255 255 / 0.06);
   --shadow: inset 0 1px 0 rgb(255 255 255 / 0.04), 0 10px 30px -18px rgb(0 0 0 / 0.7);
-  --status-interview: #ff7eb6;
-  --status-move: #5cc8ff;
-  --status-wait: #ffc35a;
-  --status-test: #b49cff;
+  --status-interview: #ff63ab;
+  --status-move: #36bbff;
+  --status-wait: #ffb52e;
+  --status-test: #a685ff;
   --status-offer: #73f7b2;
-  --status-danger: #ff6b7a;
-  --status-neutral: #8e98ad;
+  --status-danger: #ff4d63;
+  --status-neutral: #a6b0c6;
   --chip-ink: 100%;
   /* Text on a tone's tinted pill: the same hue, lightened until it reads (WCAG ≥ 4.5, APCA Lc ≥ 60). */
-  --status-interview-text: #ffb3d3;
-  --status-move-text: #9adcff;
-  --status-wait-text: #ffd48a;
-  --status-test-text: #d2c4ff;
-  --status-offer-text: #a8fad0;
-  --status-danger-text: #ffadb6;
+  --status-interview-text: #ffc2dd;
+  --status-move-text: #a8e2ff;
+  --status-wait-text: #ffd98f;
+  --status-test-text: #dcd0ff;
+  --status-offer-text: #b4fcd7;
+  --status-danger-text: #ffbcc4;
 }
 
 @theme inline {

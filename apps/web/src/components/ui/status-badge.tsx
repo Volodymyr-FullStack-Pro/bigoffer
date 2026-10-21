@@ -6,13 +6,13 @@ export type StatusTone = (typeof STATUS_TONES)[number];
 
 /** A tone at rest: a quiet tinted fill with text in the tone (an unpicked filter, a reply's kind). */
 export const TONE_PILL: Record<StatusTone, string> = {
-  interview: 'bg-status-interview/18 text-status-interview-text',
-  move: 'bg-status-move/18 text-status-move-text',
-  wait: 'bg-status-wait/20 text-status-wait-text',
-  test: 'bg-status-test/18 text-status-test-text',
-  offer: 'bg-status-offer/18 text-status-offer-text',
-  danger: 'bg-status-danger/18 text-status-danger-text',
-  neutral: 'bg-status-neutral/20 text-foreground',
+  interview: 'bg-status-interview/28 text-status-interview-text',
+  move: 'bg-status-move/28 text-status-move-text',
+  wait: 'bg-status-wait/30 text-status-wait-text',
+  test: 'bg-status-test/28 text-status-test-text',
+  offer: 'bg-status-offer/28 text-status-offer-text',
+  danger: 'bg-status-danger/28 text-status-danger-text',
+  neutral: 'bg-status-neutral/30 text-foreground',
 };
 
 /** A tone that speaks: the solid hue with ink on it (a status on a card, a picked filter). */
