@@ -5,7 +5,7 @@
 function Glyph() {
   return (
     <>
-      <path d="M168 384 V108" fill="none" stroke="#73f7b2" strokeWidth="56" strokeLinecap="round" />
+      <path d="M168 384 V156" fill="none" stroke="#73f7b2" strokeWidth="56" strokeLinecap="round" />
       <circle cx="252" cy="296" r="110" fill="#73f7b2" />
       {[206, 300].map((x) => (
         <g key={x}>
@@ -23,7 +23,7 @@ export function LogoMark({ className = 'size-7' }: { className?: string }) {
   return (
     <svg viewBox="0 0 512 512" aria-hidden className={className}>
       <rect width="512" height="512" rx="116" fill="#1e1d25" />
-      <g transform="translate(256 256) scale(1.14) translate(-251 -246)">
+      <g transform="translate(256 256) scale(1.2) translate(-251 -270)">
         <Glyph />
       </g>
     </svg>
@@ -34,7 +34,7 @@ export function LogoMark({ className = 'size-7' }: { className?: string }) {
 export function Logo({ name }: { name: string }) {
   return (
     <span aria-label={name} className="flex items-baseline font-display text-[22px] leading-none tracking-[-0.04em]">
-      <svg viewBox="112 80 254 332" aria-hidden className="h-[1.15em] w-auto shrink-0">
+      <svg viewBox="112 124 254 288" aria-hidden className="h-[1.3em] w-auto shrink-0">
         <Glyph />
       </svg>
       <span aria-hidden className="ml-[0.03em] font-extrabold text-foreground">ig</span>

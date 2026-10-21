@@ -85,7 +85,7 @@ export function BoardFilterBar({ filter, onChange, cards, labels, labelName, fou
                 data-kind={k}
                 aria-pressed={active}
                 onClick={() => onChange({ ...filter, reply: active ? null : k })}
-                className={`${chip} border-transparent ${toneChip(REPLY_STYLE[k].tone, active)}`}
+                className={`inline-flex items-center gap-1 py-1 text-xs font-semibold ${toneChip(REPLY_STYLE[k].tone, active)}`}
               >
                 <ReplyIcon kind={k} /> {t(`reply_${k}` as never)}
 {active && <Check aria-hidden className="size-3.5" strokeWidth={3} />}

@@ -5,7 +5,7 @@ import { useFormatter, useNow, useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { deleteMessage, listMessages, type ReplyChannel, setMessageKind, updateMessage } from './message-actions';
 import { CHANNELS } from './reply-inbox';
-import { TONE_PILL, toneChip, toneColor } from '@/components/ui/status-badge';
+import { TONE_PILL, toneChip, toneColor, toneShape } from '@/components/ui/status-badge';
 import { REPLY_KINDS, REPLY_STYLE, type ReplyKind } from './reply-kinds';
 import { ReplyIcon } from './reply-icon';
 
@@ -93,7 +93,7 @@ export function Conversation({ applicationId, version, onDeleted, onKindChanged 
                     title={t('conversationChangeKind')}
                     aria-expanded={editing === m.id}
                     onClick={() => setEditing((e) => (e === m.id ? null : m.id))}
-                    className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold ring-1 ring-inset hover:ring-2 ${style ? TONE_PILL[style.tone] : 'ring-foreground/30'}`}
+                    className={`inline-flex items-center gap-1 py-1 text-xs font-semibold leading-none hover:brightness-125 ${style ? `${toneShape(style.tone)} ${TONE_PILL[style.tone]}` : 'rounded-full px-2 ring-1 ring-inset ring-foreground/30'}`}
                   >
                     {m.kind ? t(`reply_${m.kind}` as never) : t('conversationSetKind')}
                     <span className="opacity-80">· {t('conversationChange')} ▾</span>
