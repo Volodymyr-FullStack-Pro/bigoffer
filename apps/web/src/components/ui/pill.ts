@@ -6,12 +6,12 @@ const base = 'brutal-press inline-flex items-center justify-center gap-1.5 round
 const sm = `${base} h-8 px-3.5 text-[13px]`;
 
 export const pill = {
-  /** White: the action that runs AI or confirms. */
-  primary: `${sm} bg-foreground text-background hover:bg-foreground/90`,
+  /** Mint: the action that confirms (same as the primary button). */
+  primary: `${sm} bg-brand text-brand-foreground hover:bg-brand/90`,
   /** Mint: the next step (copy, applied). */
   accent: `${sm} bg-brand text-brand-foreground hover:bg-brand/90`,
   /** Outline: secondary actions. */
   quiet: `${sm} border border-border font-medium hover:bg-muted`,
   /** The panel's main call to action. */
-  main: `${base} h-9 px-4 text-sm font-bold bg-brand text-brand-foreground shadow-[0_0_20px_rgb(115_247_178/0.22)]`,
+  main: `${base} h-9 px-4 text-sm font-semibold bg-brand text-brand-foreground`,
 } as const;

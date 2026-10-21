@@ -239,6 +239,13 @@
   .btn[class*='bg-'] {
     border-color: transparent;
   }
+  /* AI actions (write, classify, prepare): a violet tint on the plain button, so they read as AI
+     without a second solid colour next to the mint primary. */
+  .btn-ai {
+    border-color: color-mix(in srgb, var(--ai) 45%, transparent);
+    background-color: color-mix(in srgb, var(--ai) 14%, var(--card));
+    color: var(--foreground);
+  }
   .brutal-press {
     transition:
       transform 120ms ease-out,

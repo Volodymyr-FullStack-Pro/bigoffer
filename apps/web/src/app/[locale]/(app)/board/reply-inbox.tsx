@@ -190,7 +190,7 @@ export function ReplyInbox({ card, defaultAuthor, columns, timeZone, lang, onLog
       />
       {!mine && (<>
       <div className="flex flex-wrap gap-2">
-        <button type="button" data-testid="reply-classify" disabled={!body.trim() || busy !== null} onClick={classify} className="btn brutal-press bg-ai px-3 py-1 text-sm font-semibold text-ai-foreground disabled:opacity-50">
+        <button type="button" data-testid="reply-classify" disabled={!body.trim() || busy !== null} onClick={classify} className="btn btn-ai brutal-press px-3 py-1 text-sm font-semibold  disabled:opacity-50">
           {busy === 'ai' ? t('replyReading') : t('replyClassify')}
         </button>
       </div>
