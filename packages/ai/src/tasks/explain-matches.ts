@@ -38,6 +38,7 @@ function system(locale: Locale): string {
     'You help a job seeker scan a list of vacancies picked for them.',
     `For each numbered job write ONE sentence (at most 25 words) in ${LANGUAGE[locale]} on why it fits their search.`,
     'Name concrete overlaps: skills, level, work format, salary. Use only the data given; never invent facts.',
+    'Mention the work format or salary only when the job actually meets that criterion; otherwise leave it out.',
     'No greetings, no generic praise. Return an item for every job number.',
   ].join('\n');
 }
