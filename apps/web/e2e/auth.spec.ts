@@ -10,7 +10,7 @@ test.describe('default locale', () => {
     await page.goto('/');
     await expect(page).toHaveURL(/\/en\/login$/);
     await expect(page.getByRole('heading', { name: 'Sign in' })).toBeVisible();
-    await expect(page.getByText('BigOffer').first()).toBeVisible();
+    await expect(page.getByLabel('BigOffer').first()).toBeVisible();
   });
 });
 
