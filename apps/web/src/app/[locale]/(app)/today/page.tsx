@@ -44,7 +44,7 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
     supabase
       .from('job_matches')
       .select(
-        'id, job_id, score, created_at, breakdown, explanation, search_profile_id, jobs!inner(title, location, remote_type, seniority, salary_min_usd, salary_max_usd, posted_at, first_seen_at, summary, skills, description_text, tags, is_job, company_is_placeholder, companies(name), job_postings(source_id, url))',
+        'id, job_id, score, created_at, breakdown, explanation, search_profile_id, jobs!inner(title, location, remote_type, seniority, salary_min_usd, salary_max_usd, posted_at, first_seen_at, refreshed_at, summary, skills, description_text, tags, is_job, company_is_placeholder, companies(name), job_postings(source_id, url))',
       )
       .in('state', states)
       .eq('jobs.status', 'active')
@@ -165,6 +165,7 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
       // Older rows may hold a zone-shifted stamp in the future; never show "in 2 hours".
       postedAt: m.jobs.posted_at && m.jobs.posted_at > new Date().toISOString() ? new Date().toISOString() : m.jobs.posted_at,
       firstSeenAt: m.jobs.first_seen_at,
+      refreshedAt: m.jobs.refreshed_at,
       postings: m.jobs.job_postings.map((p) => ({ sourceId: p.source_id, url: p.url })),
     };
   };
