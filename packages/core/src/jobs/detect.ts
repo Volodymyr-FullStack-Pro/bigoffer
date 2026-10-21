@@ -1,17 +1,34 @@
-export function detectRemote(text: string): 'remote' | 'hybrid' | 'office' | 'unknown' {
-  const t = text
+const REMOTE_WORDS = /\bremote(ly)?\b|work from anywhere|anywhere in the world|work from home|\bwfh\b|віддален|дистанційн|удаленн|удалённ|удаленк/;
+const HYBRID_WORDS = /hybrid|гібрид|гибрид/;
+/** A clause that names a format only to rule it out ("remote work is not considered"). */
+const NEGATION =
+  /(?<!\p{L})(не\s+(розгляда|рассматрива|пропону|предлага|передбач|предусмотр|можлив|возможн|підходить|подходит|практику)|немає|нет|без\s+(можливост|возможност))|\bnot\s+(possible|available|an option|considered|offered|allowed)\b/u;
+/** "Only in the office", "with your presence in the office": office beats any other format the text mentions. */
+const OFFICE_ONLY =
+  /(тільки|лише|только|виключно|исключительно)\s+(в|у|з|із)\s+офіс|(тільки|лише|только|виключно|исключительно)\s+(в|из)\s+офис|присутніст\S*\s+(в|у)\s+офіс|присутстви\S*\s+в\s+офис|\boffice[-\s]only\b|\bon-?site only\b|\bonly (in the )?office\b/;
+
+const clean = (text: string) =>
+  text
     .toLowerCase()
     .replace(/\b(not|no|non)[-\s]+remote(ly)?\b/g, ' ')
     .replace(/\bremote[-\s]+control\b/g, ' ')
     .replace(/\b(hybrid[-\s]+cloud)\b/g, ' ')
     .replace(/\b(ms|microsoft)[-\s]+office\b|\boffice[-\s]?365\b/g, ' ');
-  if (/hybrid|гібрид|гибрид/.test(t)) return 'hybrid';
-  if (
-    /\bremote(ly)?\b|work from anywhere|anywhere in the world|work from home|\bwfh\b|віддален|дистанційн|удаленн|удалённ|удаленк/.test(
-      t,
-    )
-  )
-    return 'remote';
+const clauses = (text: string) => clean(text).split(/[.!?;,\n]+/);
+const ruledOut = (clause: string) => (REMOTE_WORDS.test(clause) || HYBRID_WORDS.test(clause)) && NEGATION.test(clause);
+
+/** True when the text rules remote work out ("remote is not considered", "only in the office"). */
+export function remoteRuledOut(text: string): boolean {
+  return clauses(text).some((c) => ruledOut(c) || OFFICE_ONLY.test(c));
+}
+
+export function detectRemote(text: string): 'remote' | 'hybrid' | 'office' | 'unknown' {
+  const t = clauses(text)
+    .filter((c) => !ruledOut(c))
+    .join('. ');
+  if (OFFICE_ONLY.test(t)) return 'office';
+  if (HYBRID_WORDS.test(t)) return 'hybrid';
+  if (REMOTE_WORDS.test(t)) return 'remote';
   if (/\bon-?site\b|\boffice\b|офіс|офис/.test(t)) return 'office';
   return 'unknown';
 }
