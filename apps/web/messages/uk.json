@@ -151,7 +151,8 @@
     "companyOnBoardShort": "Вже відгук у цю компанію",
     "companyOnBoard": "Ви вже подавалися в цю компанію: «{title}» · {column}",
     "onBoardLeft": "ще можна на {platforms}",
-    "titleCount": "{count, plural, one {# збіг} few {# збіги} many {# збігів} other {# збігу}}"
+    "titleCount": "{count, plural, one {# збіг} few {# збіги} many {# збігів} other {# збігу}}",
+    "caughtUp": "Ти все переглянув. Нові вакансії з’являться після наступного сканування, а поки можна заглянути на дошку."
   },
   "feed": {
     "progress": "{done} / {total}",

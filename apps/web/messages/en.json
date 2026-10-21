@@ -151,7 +151,8 @@
     "companyOnBoardShort": "Already applied to this company",
     "companyOnBoard": "You already applied to this company: “{title}” · {column}",
     "onBoardLeft": "still open on {platforms}",
-    "titleCount": "{count, plural, one {# match} other {# matches}}"
+    "titleCount": "{count, plural, one {# match} other {# matches}}",
+    "caughtUp": "You are all caught up. New jobs show up after the next scan; meanwhile, check your board."
   },
   "feed": {
     "progress": "{done} / {total}",
