@@ -29,9 +29,9 @@
   --status-move: #0284c7;
   --status-wait: #d97706;
   --status-test: #7c3aed;
-  --status-offer: #4d7c0f;
+  --status-offer: #0f7a4c;
   --status-danger: #dc2626;
-  --status-neutral: #71717a;
+  --status-neutral: #64708a;
   /* Technology and level chips: on white their bright brand colours keep 40% and take the rest from the ink. */
   --chip-ink: 40%;
   /* Text on a tone's tinted pill: the same hue, deepened until it reads (WCAG ≥ 4.5, APCA Lc ≥ 60). */
@@ -39,7 +39,7 @@
   --status-move-text: #015a87;
   --status-wait-text: #8f4f04;
   --status-test-text: #592aab;
-  --status-offer-text: #3b5e0b;
+  --status-offer-text: #0b5c39;
   --status-danger-text: #881818;
 }
 
@@ -64,21 +64,21 @@
   --glass: rgb(15 17 22 / 0.85);
   --glass-border: rgb(255 255 255 / 0.06);
   --shadow: inset 0 1px 0 rgb(255 255 255 / 0.04), 0 10px 30px -18px rgb(0 0 0 / 0.7);
-  --status-interview: #f472b6;
-  --status-move: #38bdf8;
-  --status-wait: #fbbf24;
-  --status-test: #a78bfa;
-  --status-offer: #bef264;
-  --status-danger: #f87171;
-  --status-neutral: #a1a1aa;
+  --status-interview: #ff7eb6;
+  --status-move: #5cc8ff;
+  --status-wait: #ffc35a;
+  --status-test: #b49cff;
+  --status-offer: #73f7b2;
+  --status-danger: #ff6b7a;
+  --status-neutral: #8e98ad;
   --chip-ink: 100%;
   /* Text on a tone's tinted pill: the same hue, lightened until it reads (WCAG ≥ 4.5, APCA Lc ≥ 60). */
-  --status-interview-text: #f9add5;
-  --status-move-text: #78d2fa;
-  --status-wait-text: #fbc22d;
-  --status-test-text: #ccbcfc;
-  --status-offer-text: #bef264;
-  --status-danger-text: #fbafaf;
+  --status-interview-text: #ffb3d3;
+  --status-move-text: #9adcff;
+  --status-wait-text: #ffd48a;
+  --status-test-text: #d2c4ff;
+  --status-offer-text: #a8fad0;
+  --status-danger-text: #ffadb6;
 }
 
 @theme inline {
@@ -354,4 +354,29 @@
     animation: none !important;
     transition: none !important;
   }
+}
+
+/* Status tags (unlayered so they win over a call site's rounded/padding utilities). A price tag with a punched hole for
+   states; an arrow pointing on for the ones that wait on you. */
+.tag {
+  clip-path: polygon(8px 0, 100% 0, 100% 100%, 8px 100%, 0 50%);
+  mask: radial-gradient(circle 2.25px at 8.5px 50%, #0000 96%, #000);
+  border-radius: 0 6px 6px 0;
+  padding-left: 16px;
+  padding-right: 9px;
+}
+.tag-go {
+  clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 50%, calc(100% - 8px) 100%, 0 100%);
+  border-radius: 6px 0 0 6px;
+  padding-left: 8px;
+  padding-right: 15px;
+}
+/* A clip-path would cut the focus ring off: a focused tag turns back into a plain rounded box. */
+.tag:focus-visible,
+.tag-go:focus-visible {
+  clip-path: none;
+  mask: none;
+  border-radius: 6px;
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
 }
