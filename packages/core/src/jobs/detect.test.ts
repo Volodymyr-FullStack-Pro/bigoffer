@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { detectRemote, detectSeniority, parseSalary } from './detect';
+import { detectRemote, detectSeniority, parseSalary, remoteRuledOut } from './detect';
 
 describe('detectRemote', () => {
   it.each([
@@ -21,8 +21,24 @@ describe('detectRemote', () => {
     ['anywhere in the world', 'remote'],
     ['Видалення дублікатів, удаление данных', 'unknown'],
     ['Удалённая работа', 'remote'],
+    ['Повна зайнятість в офісі в Харкові. ВАЖЛИВО! ЧАСТКОВУ та ДИСТАНЦІЙНУ ЗАЙНЯТІСТЬ НЕ РОЗГЛЯДАЄМО', 'office'],
+    ['Удаленную работу не рассматриваем, офис в Киеве', 'office'],
+    ['Remote work is not possible. Office in Lviv', 'office'],
+    ['Работа только в офисе, гибрид обсуждается', 'office'],
+    ['Віддалено, офіс у Києві за бажанням', 'remote'],
   ] as const)('%s → %s', (text, expected) => {
     expect(detectRemote(text)).toBe(expected);
+  });
+});
+
+describe('remoteRuledOut', () => {
+  it('sees a text that rules remote out', () => {
+    expect(remoteRuledOut('ЧАСТКОВУ та ДИСТАНЦІЙНУ ЗАЙНЯТІСТЬ НЕ РОЗГЛЯДАЄМО')).toBe(true);
+    expect(remoteRuledOut('Работа только в офисе')).toBe(true);
+  });
+  it('leaves a text that only mentions an office alone', () => {
+    expect(remoteRuledOut('Сучасний офіс у Києві та робочий MacBook')).toBe(false);
+    expect(remoteRuledOut('Fully remote team')).toBe(false);
   });
 });
 
