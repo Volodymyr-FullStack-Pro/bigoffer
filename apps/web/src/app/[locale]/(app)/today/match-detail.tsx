@@ -6,7 +6,7 @@ import { PayLevelBadge } from './pay-level-badge';
 import { pill } from '@/components/ui/pill';
 import { isLocale, type Locale, sourceInfo } from '@jp/core';
 import { useFormatter, useLocale, useNow, useTranslations } from 'next-intl';
-import { Flag, Sparkles } from 'lucide-react';
+import { Flag, RefreshCw, Sparkles } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { TextGenerateEffect } from '@/components/aceternity/text-generate-effect';
 import { ApplyKitPanel } from '@/components/apply-kit/apply-kit-panel';
@@ -306,6 +306,12 @@ export function MatchDetail({
             {match.onBoardLeft.length > 0 && <> · {tf('onBoardLeft', { platforms: match.onBoardLeft.map((s) => sourceInfo(s)?.name ?? s).join(', ') })}</>}
           </p>
         )}
+        {match.refreshedAt && Date.parse(match.refreshedAt) > now.getTime() - 7 * 86_400_000 && (
+        <span data-testid="refreshed-badge" className="self-start rounded-full bg-success/15 ring-1 ring-inset ring-success/40 px-2 py-0.5 text-xs font-semibold text-success" suppressHydrationWarning>
+          <RefreshCw aria-hidden className="mr-1 inline size-3 -translate-y-px" />
+          {tf('refreshed', { ago: format.relativeTime(new Date(match.refreshedAt), now) })}
+        </span>
+      )}
         {match.onBoard === null && match.companyOnBoard && (
           <p data-testid="company-on-board" className="self-start rounded-full bg-warning/25 ring-1 ring-inset ring-warning/45 px-2.5 py-0.5 text-xs font-semibold text-warning">
             <Flag aria-hidden className="mr-1 inline size-3.5 -translate-y-px" />

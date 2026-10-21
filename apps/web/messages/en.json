@@ -152,7 +152,8 @@
     "companyOnBoard": "You already applied to this company: “{title}” · {column}",
     "onBoardLeft": "still open on {platforms}",
     "titleCount": "{count, plural, one {# match} other {# matches}}",
-    "caughtUp": "You are all caught up. New jobs show up after the next scan; meanwhile, check your board."
+    "caughtUp": "You are all caught up. New jobs show up after the next scan; meanwhile, check your board.",
+    "refreshed": "Refreshed {ago}: still hiring"
   },
   "feed": {
     "progress": "{done} / {total}",
@@ -262,7 +263,8 @@
     "hideTipsStacksDone": "Jobs on another stack are hidden from now on. The feed updates in a minute.",
     "hideTipsWord": "Hide “{word}”",
     "hideTipsWordDone": "“{word}” added to excluded words. The feed updates in a minute.",
-    "hideTipsDismiss": "Don't suggest"
+    "hideTipsDismiss": "Don't suggest",
+    "refreshed": "Refreshed {ago}: still hiring"
   },
   "comingSoon": {
     "badge": "Soon",
