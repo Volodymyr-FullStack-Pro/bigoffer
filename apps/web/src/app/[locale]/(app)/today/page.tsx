@@ -8,6 +8,7 @@ import { parseUiPrefs } from '@/lib/ui-prefs';
 import { cardSkills, matchedSkillsOf } from './card-skills';
 import { HideTips } from './hide-tips';
 import { FeedStats } from './feed-stats';
+import { feedStats } from './feed-stats-data';
 import { SkillAnswers, SkillTipBanner } from './skill-answers';
 import { missingSkillTip } from './skill-tips';
 import { Feed } from './feed';
@@ -177,14 +178,7 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
   const sourceIds = [...new Set(matches.flatMap((m) => m.postings.map((p) => p.sourceId)))];
 
   // Four numbers over the feed: what is worth applying to today, and how the applications are doing.
-  const nowMs = Date.now();
-  const DAY = 86_400_000;
-  const stats = {
-    strong: matches.filter((m) => m.score >= 80 && Date.parse(m.firstSeenAt) > nowMs - DAY).length,
-    saved: (apps ?? []).filter((a) => a.outcome === 'open' && !a.applied_at).length,
-    silent: (apps ?? []).filter((a) => a.outcome === 'open' && a.applied_at && !a.first_response_at && Date.parse(a.applied_at) < nowMs - 14 * DAY).length,
-    week: (apps ?? []).filter((a) => a.applied_at && Date.parse(a.applied_at) > nowMs - 7 * DAY).length,
-  };
+  const stats = feedStats(matches, apps ?? []);
   // The technology the feed asks for most that the profile lacks: answering once sharpens every score.
   const skillTip = missingSkillTip(matches, parseUiPrefs(me?.ui_prefs).skillsDeclined ?? []);
 
