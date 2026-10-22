@@ -34,7 +34,9 @@ export async function seedMatch(
     explanation?: Record<string, string>;
     matchedSkills?: string[];
     isJob?: boolean | null;
-    state?: 'new' | 'seen';
+    state?: 'new' | 'seen' | 'hidden';
+    /** The profile rule that hid it (breakdown.excludedBy), e.g. 'role'. */
+    excludedBy?: string;
     sourceId?: string;
     url?: string;
     postedAt?: string;
@@ -61,7 +63,7 @@ export async function seedMatch(
   if (pErr) throw pErr;
   const { data: match, error: mErr } = await db
     .from('job_matches')
-    .insert({ user_id: userId, job_id: job.id, score: opts.score ?? 88, state: opts.state ?? 'new', explanation: opts.explanation ?? null, breakdown: { matchedSkills: opts.matchedSkills ?? [] } })
+    .insert({ user_id: userId, job_id: job.id, score: opts.score ?? 88, state: opts.state ?? 'new', explanation: opts.explanation ?? null, breakdown: { matchedSkills: opts.matchedSkills ?? [], ...(opts.excludedBy ? { excludedBy: opts.excludedBy } : {}) } })
     .select('id')
     .single();
   if (mErr) throw mErr;

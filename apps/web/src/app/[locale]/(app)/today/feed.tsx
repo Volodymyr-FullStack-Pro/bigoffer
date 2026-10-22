@@ -62,7 +62,8 @@ export function Feed({
   const t = useTranslations('feed');
   const tt = useTranslations('today');
   // Decided once: a save/hide server action re-renders the page with fewer matches, which must not turn the feed into the "no matches yet" state.
-  const [startedEmpty] = useState(matches.length === 0);
+  // Only a truly empty feed gets the bare "all caught up" card: with rule-hidden jobs the feed stays, so they can be opened.
+  const [startedEmpty] = useState(matches.length === 0 && ruleHidden.length === 0);
   const [mainItems, setMainItems] = useState(matches);
   const [hiddenItems, setHiddenItems] = useState(ruleHidden);
   const [showHidden, setShowHidden] = useState(openHidden && ruleHidden.length > 0);
