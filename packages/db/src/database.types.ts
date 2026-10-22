@@ -610,6 +610,31 @@ isOneToOne: false
                   Relationships: [
                     
                   ]
+                },"tailored_cvs": {
+                  Row: {
+                    "cv": NonNullable<Json>,"generated_at": string,"id": string,"job_id": string,"lang": string,"updated_at": string,"user_id": string
+                  }
+                  Insert: {
+                    "cv": NonNullable<Json>,"generated_at"?: string,"id"?: string,"job_id": string,"lang": string,"updated_at"?: string,"user_id": string
+                  }
+                  Update: {
+                    "cv"?: NonNullable<Json>,"generated_at"?: string,"id"?: string,"job_id"?: string,"lang"?: string,"updated_at"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "tailored_cvs_job_id_fkey"
+      columns: ["job_id"]
+isOneToOne: false
+      referencedRelation: "jobs"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "tailored_cvs_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"telegram_link_tokens": {
                   Row: {
                     "created_at": string,"expires_at": string,"token_hash": string,"user_id": string

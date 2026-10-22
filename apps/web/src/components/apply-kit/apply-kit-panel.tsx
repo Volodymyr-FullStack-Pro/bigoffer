@@ -11,6 +11,7 @@ import { tellGenie } from '@/lib/genie/events';
 import { downloadLetter } from '@/lib/letter-file';
 import { useSaveUiPrefs } from '@/lib/use-save-ui-prefs';
 import { answerFormQuestions, type FormAnswer, generateKit, getApplyKitData, type KitData, type KitError, markAppliedFromKit, saveKitLetter, type StoredKit } from './actions';
+import { TailoredCvSection } from './tailored-cv';
 import { ContactChips } from './contact-chips';
 import { PeopleSearch } from './people-search';
 
@@ -191,6 +192,14 @@ export function ApplyKitPanel({ jobId, onApplied, hidePeopleSearch }: { jobId: s
           </div>
           {kit.salaryHint && <p data-testid="kit-salary" className="border-l-4 border-warning pl-3 text-sm">💰 {kit.salaryHint}</p>}
         </>
+      )}
+
+      {data.aiAvailable && data.hasCv && (
+        <TailoredCvSection
+          jobId={jobId}
+          lang={lang}
+          contacts={(['email', 'phone', 'linkedin', 'github', 'portfolio', 'telegram'] as const).map((k) => data.contacts[k]).filter((v): v is string => Boolean(v))}
+        />
       )}
 
       <div className="flex flex-col gap-1">

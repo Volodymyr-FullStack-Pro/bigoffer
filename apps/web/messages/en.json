@@ -1131,5 +1131,29 @@
     "a5": "It’s stored privately and only you can see it. Delete it from your profile at any time.",
     "finalTitle": "Your next offer is being posted",
     "finalText": "Upload your CV and in a few minutes see which of today’s jobs are really yours."
+  },
+  "tailoredCv": {
+    "title": "CV for this job",
+    "intro": "We rewrite your CV for this job: the skills it asks for first, your experience in its words. Numbers, dates and employers stay as they are, and every change is visible.",
+    "generate": "Write the CV",
+    "again": "Write it again",
+    "writing": "Writing the CV…",
+    "download": "Download PDF",
+    "legendBoosted": "strengthened",
+    "legendUnverified": "not in your CV — check",
+    "check": "Check {count, plural, one {# mark} other {# marks}} before sending",
+    "remove": "Remove",
+    "experience": "Experience",
+    "skills": "Skills",
+    "languages": "Languages",
+    "summary": "Summary",
+    "present": "present",
+    "savePdf": "Save PDF",
+    "savePdfHint": "In the print dialog choose “Save as PDF”. The text stays text, so applicant tracking systems can read it.",
+    "error_ai_unavailable": "AI is unavailable right now.",
+    "error_ai_limit": "Today’s generation limit is used up.",
+    "error_no_cv": "Upload your CV in the profile first.",
+    "error_not_found": "Job not found.",
+    "error_failed": "Couldn’t write the CV. Try again."
   }
 }

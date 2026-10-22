@@ -395,3 +395,11 @@
     animation: none;
   }
 }
+
+/* The CV page prints as A4 with even margins and no browser-added backgrounds. */
+@media print {
+  @page {
+    size: A4;
+    margin: 14mm 12mm;
+  }
+}
