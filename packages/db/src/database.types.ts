@@ -664,6 +664,9 @@ isOneToOne: false
 "ping_application":
 { Args: { "p_id": string }; Returns: undefined
                            },
+"public_landing_stats":
+{ Args: Record<PropertyKey, never>; Returns: Json
+                           },
 "purge_expired_jobs":
 { Args: { "p_cutoff": string,"p_limit"?: number }; Returns: number
                            },
