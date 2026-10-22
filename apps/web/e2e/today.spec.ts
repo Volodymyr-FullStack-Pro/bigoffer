@@ -1,6 +1,6 @@
 import { expect, type Page, test } from '@playwright/test';
 import { loginAs, uniqueEmail } from './helpers/auth';
-import { seedApplication, seedCardFromJob, seedCv, seedMatch } from './helpers/seed';
+import { seedApplication, seedCardFromJob, seedCv, seedMatch, seedSearchProfile } from './helpers/seed';
 
 const visible = (page: Page, id: string) => page.getByTestId(id).filter({ visible: true });
 
@@ -17,6 +17,17 @@ test('shows the empty state with a link to search settings', async ({ context, p
   await expect(page.getByTestId('today-empty')).toHaveAttribute('data-reason', 'no-search');
   await page.getByRole('link', { name: 'Set up job search' }).click();
   await expect(page).toHaveURL(/\/en\/search$/);
+});
+
+test('an empty feed still opens the jobs the profile rules hid', async ({ context, page }) => {
+  const email = uniqueEmail('today-rule-hidden');
+  await loginAs(context, email);
+  await seedSearchProfile(email);
+  const { title } = await seedMatch(email, { title: `Backend Developer ${Date.now()}`, score: 80, state: 'hidden', excludedBy: 'role' });
+  await page.goto('/en/today');
+  await expect(page.getByTestId('today-empty')).toHaveCount(0);
+  await visible(page, 'feed-empty-rule-hidden').click();
+  await expect(visible(page, 'job-match').filter({ hasText: title })).toBeVisible();
 });
 
 test('lists a match with score and source link, and hides it', async ({ context, page, isMobile }) => {
