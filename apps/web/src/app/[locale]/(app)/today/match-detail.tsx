@@ -273,6 +273,61 @@ function JobTechs({ techs }: { techs: FeedMatch['techs'] }) {
   );
 }
 
+/**
+ * "Open on Djinni ↗" links. Leaving for the board and coming back asks "Did you apply?": yes moves the job to the
+ * board as applied, so nobody has to remember to log it.
+ */
+function PostingLinks({ match, onAction }: { match: FeedMatch; onAction?: (a: MatchAction) => void }) {
+  const t = useTranslations('today');
+  const tf = useTranslations('feed');
+  const [away, setAway] = useState<'clicked' | 'hidden' | null>(null);
+  const [ask, setAsk] = useState(false);
+  useEffect(() => {
+    if (!away) return;
+    // Only after the user really left the tab and came back.
+    const onVisible = () => {
+      if (document.visibilityState === 'hidden') setAway('hidden');
+      else if (away === 'hidden') {
+        setAway(null);
+        setAsk(true);
+      }
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => document.removeEventListener('visibilitychange', onVisible);
+  }, [away]);
+  const links = match.postings.filter((p) => /^https?:\/\//i.test(p.url));
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="flex flex-wrap gap-2">
+        {links.map((p) => (
+          <a
+            key={p.url}
+            href={p.url}
+            target="_blank"
+            rel="noopener"
+            data-testid="match-open"
+            onClick={() => onAction && setAway('clicked')}
+            className={pill.quiet}
+          >
+            {t('open', { source: sourceInfo(p.sourceId)?.name ?? p.sourceId })} ↗
+          </a>
+        ))}
+      </div>
+      {ask && onAction && (
+        <div data-testid="applied-ask" role="status" className="flex flex-wrap items-center gap-2 rounded-xl border border-brand/40 bg-brand/10 px-3.5 py-2.5 text-sm">
+          <span className="mr-auto font-semibold">{tf('appliedAsk')}</span>
+          <button type="button" data-testid="applied-ask-yes" onClick={() => { setAsk(false); onAction('applied'); }} className={pill.primary}>
+            {tf('appliedAskYes')}
+          </button>
+          <button type="button" data-testid="applied-ask-no" onClick={() => setAsk(false)} className={pill.quiet}>
+            {tf('appliedAskNo')}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function MatchDetail({
   match,
   onAction,
@@ -364,25 +419,7 @@ export function MatchDetail({
       )}
       <JobTechs techs={match.techs} />
       <SkillQuestion skills={match.techs.filter((x) => !x.matched).map((x) => x.name)} />
-      <div className="flex flex-wrap gap-2">
-        {match.postings
-          .filter((p) => /^https?:\/\//i.test(p.url))
-          .map((p) => (
-            <div key={p.url} className="flex flex-col gap-1">
-              <span className="inline-flex items-center gap-2">
-                <a
-                  href={p.url}
-                  target="_blank"
-                  rel="noopener"
-                  data-testid="match-open"
-                  className={pill.quiet}
-                >
-                  {t('open', { source: sourceInfo(p.sourceId)?.name ?? p.sourceId })} ↗
-                </a>
-              </span>
-            </div>
-          ))}
-      </div>
+      <PostingLinks key={match.id} match={match} onAction={onAction} />
       <ApplyKitToggle key={match.id} jobId={match.jobId} onApplied={onApplied} defaultOpen={kitOpen} />
       <PeopleSearch jobId={match.jobId} />
       {showDescription && <JobDescription key={match.jobId} jobId={match.jobId} initial={match.description} />}

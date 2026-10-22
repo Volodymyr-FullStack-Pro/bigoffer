@@ -275,7 +275,10 @@
     "skillAsk": "Do you have experience with <b>{skill}</b>?",
     "skillAskYes": "Yes, add to profile",
     "skillAskNo": "No",
-    "skillAdded": "{skill} added to your profile — scores update in a minute."
+    "skillAdded": "{skill} added to your profile — scores update in a minute.",
+    "appliedAsk": "Did you apply to this job?",
+    "appliedAskYes": "Yes, application sent",
+    "appliedAskNo": "Not yet"
   },
   "comingSoon": {
     "badge": "Soon",
@@ -1131,5 +1134,20 @@
     "a5": "It’s stored privately and only you can see it. Delete it from your profile at any time.",
     "finalTitle": "Your next offer is being posted",
     "finalText": "Upload your CV and in a few minutes see which of today’s jobs are really yours."
+  },
+  "feedStats": {
+    "label": "Summary",
+    "strong": "Worth applying today",
+    "strongHint": "Strong matches in 24 h",
+    "strongNone": "No new strong ones yet",
+    "saved": "Saved, not applied",
+    "savedHint": "Waiting for your application",
+    "savedNone": "All applied",
+    "silent": "No reply in 14+ days",
+    "silentHint": "Ping or close them",
+    "silentNone": "Everyone replied",
+    "week": "Applications this week",
+    "weekHint": "Keep it up",
+    "weekNone": "None yet"
   }
 }
