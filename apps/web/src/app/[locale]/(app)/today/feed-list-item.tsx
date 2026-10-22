@@ -24,7 +24,7 @@ export function FeedListItem({
   const tt = t;
   const format = useFormatter();
   const now = useNow();
-  const sourceId = match.postings[0]?.sourceId;
+  const sources = [...new Set(match.postings.map((p) => p.sourceId))];
   const have = match.techs.filter((x) => x.matched);
   const lack = match.techs.filter((x) => !x.matched);
   return (
@@ -103,7 +103,8 @@ export function FeedListItem({
       )}
       <span className="flex flex-wrap items-center gap-x-2 gap-y-1 tabular-nums text-xs text-muted-foreground">
         {!match.companyIsPlaceholder && <span className="truncate">{match.company}</span>}
-        {sourceId && <SourceBadge sourceId={sourceId} />}
+        {/* The same job on several boards is one row: every board it is on. */}
+        {sources.map((id) => <SourceBadge key={id} sourceId={id} />)}
         <span suppressHydrationWarning>
           {format.relativeTime(new Date(match.postedAt ?? match.firstSeenAt), now)}
         </span>
