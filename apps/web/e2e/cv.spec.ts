@@ -11,7 +11,16 @@ test('uploads a CV, reads it with AI and creates a search from it', async ({ con
   await expect(page.getByTestId('cv-status')).toContainText('CV read');
   await page.reload();
   await expect(page.getByTestId('cv-headline')).toContainText('Full Stack Developer');
-  await expect(page.getByTestId('cv-skill').filter({ visible: true, hasText: 'React' }).first()).toBeVisible();
+  const facts = page.getByTestId('cv-facts');
+  await expect(facts.getByTestId('tag-chip').filter({ hasText: 'React' }).first()).toBeVisible();
+  // The facts every job is checked against can be corrected in place and stay corrected.
+  await facts.getByTestId('cv-facts-years').fill('4.5');
+  await facts.getByTestId('cv-facts-english').filter({ hasText: 'C1' }).click();
+  await facts.getByTestId('cv-facts-save').click();
+  await expect(facts.getByTestId('cv-facts-status')).toContainText('Saved');
+  await page.reload();
+  await expect(page.getByTestId('cv-facts-years')).toHaveValue('4.5');
+  await expect(page.getByTestId('cv-facts-english').filter({ hasText: 'C1' })).toHaveAttribute('aria-pressed', 'true');
   await expect(page.getByTestId('cv-link')).toHaveAttribute('href', /token=/);
   await page.getByTestId('cv-fill-contacts').click();
   await expect(page.getByText('Contacts updated.')).toBeVisible();
