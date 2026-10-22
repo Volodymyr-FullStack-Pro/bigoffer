@@ -218,9 +218,11 @@ export function buildSourceQueries(
   const roleTerms = profile.keywords.map((t) => t.toLowerCase());
   const wants = (re: RegExp) => roleTerms.some((t) => re.test(t));
   const categories = [
-    has(/front|react|vue|angular|\bnext\b|full ?stack|javascript|typescript/) ? 'Front End' : null,
-    has(/node|nest|express|full ?stack|back ?end/) ? 'Node.js' : null,
-    has(/javascript|typescript|full ?stack/) ? 'JavaScript' : null,
+    has(/front|react|vue|angular|\bnext\b|full[\s-]?stack|javascript|typescript/) ? 'Front End' : null,
+    has(/node|nest|express|full[\s-]?stack|back ?end/) ? 'Node.js' : null,
+    has(/javascript|typescript|full[\s-]?stack/) ? 'JavaScript' : null,
+    // DOU files many full-stack jobs only under Fullstack (React + Python, React + Node), not Front End or Node.js.
+    wants(/full[\s-]?stack|фулстек/) ? 'Fullstack' : null,
     wants(/\bqa\b|\baqa\b|tester|testing|test automation|sdet|тестувальник|тестировщик/) ? 'QA' : null,
     has(/python|django|fastapi/) ? 'Python' : null,
     has(/\bjava\b|spring|kotlin/) ? 'Java' : null,

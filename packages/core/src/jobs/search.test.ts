@@ -97,12 +97,14 @@ describe('buildSourceQueries with source selection', () => {
 describe('DOU categories', () => {
   it('adds category feeds from keywords and skills', () => {
     const specs = buildSourceQueries({ keywords: ['full stack'], skills: ['React', 'Node.js'], remoteType: 'remote', sources: ['dou' as SourceId] });
-    expect(specs.filter((s) => s.params.category).map((s) => s.params.category)).toEqual(['Front End', 'Node.js', 'JavaScript']);
+    expect(specs.filter((s) => s.params.category).map((s) => s.params.category)).toEqual(['Front End', 'Node.js', 'JavaScript', 'Fullstack']);
   });
   it('matches next as a word only, not inside context', () => {
     const cat = (kw: string) => buildSourceQueries({ keywords: [kw], skills: [], remoteType: 'remote', sources: ['dou'] }).map((s) => s.params.category).filter(Boolean);
     expect(cat('context engineer')).toEqual([]);
     expect(cat('next.js')).toEqual(['Front End']);
+    expect(cat('full-stack developer')).toContain('Fullstack');
+    expect(cat('фулстек')).toContain('Fullstack');
   });
   it('adds none for unrelated profiles', () => {
     const specs = buildSourceQueries({ keywords: ['accountant'], skills: ['Excel'], remoteType: 'office', sources: ['dou' as SourceId] });

@@ -309,6 +309,10 @@ describe('namedPlatforms', () => {
 
   it('counts WordPress work as the PHP stack', () => {
     expect(missingCoreStacks('Web developer', ['WordPress', 'JavaScript'], ['JavaScript', 'React'])).toEqual(['PHP']);
+    // A title naming TypeScript / Node settles it, whatever skill the extraction listed first.
+    expect(missingCoreStacks('Senior Full Stack Typescript Engineer (AI)', ['Python', 'TypeScript'], ['TypeScript', 'React'])).toEqual([]);
+    expect(missingCoreStacks('Node.js Developer', ['Python', 'Django'], ['Node.js'])).toEqual([]);
+    expect(missingCoreStacks('Full-Stack Engineer', ['Python', 'Django'], ['TypeScript', 'React'])).toEqual(['Python']);
   });
 });
 
