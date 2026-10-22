@@ -72,6 +72,9 @@ const CORE_STACKS: [string, RegExp][] = [
   ['Elixir', /\belixir\b/i],
 ];
 
+/** The JavaScript family: not a core stack of its own (every web job lists it), but a title naming it settles the stack. */
+const JS_STACK = /\b(java\s*script|type\s*script|node(?:\.?js)?|nest\.?js)\b/i;
+
 /**
  * Front-end frameworks: an Angular or Vue job is not a React developer's, though it lists the same JS, TS and HTML.
  * Only the title counts, and a title that also names a framework the candidate has ("Vue → React") stays theirs.
@@ -136,8 +139,11 @@ export function titleFrameworks(title: string): string[] {
 export function missingCoreStacks(jobTitle: string, jobSkills: readonly string[], profileSkills: readonly string[]): string[] {
   const where = [jobTitle, ...jobSkills.slice(0, 2)];
   const needed = CORE_STACKS.filter(([, re]) => where.some((w) => re.test(w)));
-  // One known core stack is enough ("Python/React" for a Python + React dev).
-  const core = needed.length > 0 && !needed.some(([, re]) => profileSkills.some((s) => re.test(s))) ? needed.map(([name]) => name) : [];
+  // One known core stack is enough ("Python/React" for a Python + React dev). A title naming JavaScript / TypeScript /
+  // Node counts too: "Full Stack TypeScript Engineer" whose skills start with Python is a TS developer's job. Only the
+  // title: every web job lists JavaScript among its skills, a WordPress one included.
+  const jsJob = JS_STACK.test(jobTitle) && profileSkills.some((s) => JS_STACK.test(s));
+  const core = needed.length > 0 && !jsJob && !needed.some(([, re]) => profileSkills.some((s) => re.test(s))) ? needed.map(([name]) => name) : [];
   const titled = FRAMEWORKS.filter(([, re]) => re.test(jobTitle));
   const known = (re: RegExp) => profileSkills.some((s) => re.test(s));
   // Only for someone who works in some front-end framework: a backend profile is not judged by these.
