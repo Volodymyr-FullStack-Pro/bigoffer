@@ -377,21 +377,3 @@
   outline: 2px solid var(--brand);
   outline-offset: 2px;
 }
-
-/* Landing ticker: the freshest postings drift by; it stands still for reduced motion and on hover. */
-@keyframes landing-ticker {
-  to {
-    transform: translateX(-50%);
-  }
-}
-.landing-ticker-track {
-  animation: landing-ticker 90s linear infinite;
-}
-.landing-ticker:hover .landing-ticker-track {
-  animation-play-state: paused;
-}
-@media (prefers-reduced-motion: reduce) {
-  .landing-ticker-track {
-    animation: none;
-  }
-}

@@ -9,7 +9,7 @@ test.describe('default locale', () => {
   test('root shows the landing in the default locale when signed out, and its button leads to sign-in', async ({ page }) => {
     await page.goto('/');
     await expect(page).toHaveURL(/\/en$/);
-    await expect(page.getByRole('heading', { level: 1, name: 'See the job first. Apply first.' })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: 'We watch the boards. You watch the offer.' })).toBeVisible();
     await expect(page.getByLabel('BigOffer').first()).toBeVisible();
     await page.getByTestId('landing-start').click();
     await expect(page).toHaveURL(/\/en\/login$/);
@@ -23,7 +23,7 @@ test.describe('browser language detection', () => {
   test('Ukrainian browser lands on the Ukrainian landing', async ({ page }) => {
     await page.goto('/');
     await expect(page).toHaveURL(/\/uk$/);
-    await expect(page.getByRole('heading', { level: 1, name: 'Перший бачиш вакансію. Перший відгукуєшся.' })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: 'Ми дивимось на дошки. Ти — на офер.' })).toBeVisible();
   });
 });
 
