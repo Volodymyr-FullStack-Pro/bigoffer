@@ -4,6 +4,7 @@ import { todayActions } from '@jp/core';
 import { ChevronDown } from 'lucide-react';
 import { useFormatter, useNow, useTimeZone, useTranslations } from 'next-intl';
 import { useState, useSyncExternalStore } from 'react';
+import { ScoreMeter } from '@/components/ui/score-meter';
 import { JoinMeeting } from './join-meeting';
 import type { BoardCardView } from './board-types';
 
@@ -62,10 +63,12 @@ export function TodayActions({ cards, onPinged, onPingedMany, onOpen, onGhosted,
   // An interview tomorrow is not a task for today: it goes under "Coming up" and does not count in today's number.
   const dueToday = actions.filter((a) => a.kind !== 'interview' || !a.at || day(a.at) <= day(now));
   const comingUp = actions.filter((a) => !dueToday.includes(a));
-  const pings = dueToday.filter((a) => a.kind === 'ping');
+  // The best matches first: when there is no time to ping everyone, the top of the list is worth it most.
+  const byScore = (a: (typeof actions)[number], b: (typeof actions)[number]) => (byId.get(b.id)?.score ?? -1) - (byId.get(a.id)?.score ?? -1);
+  const pings = dueToday.filter((a) => a.kind === 'ping').sort(byScore);
   const foldPings = pings.length > FOLD_PINGS;
   // Long silences pile up the same way: one group with "close all as no answer".
-  const ghosts = dueToday.filter((a) => a.kind === 'ghosting');
+  const ghosts = dueToday.filter((a) => a.kind === 'ghosting').sort(byScore);
   const foldGhosts = ghosts.length > FOLD_PINGS;
   const others = dueToday.filter((a) => !(foldPings && a.kind === 'ping') && !(foldGhosts && a.kind === 'ghosting'));
   const todayCount = others.length + (foldPings ? 1 : 0) + (foldGhosts ? 1 : 0);
@@ -73,9 +76,10 @@ export function TodayActions({ cards, onPinged, onPingedMany, onOpen, onGhosted,
     const card = byId.get(a.id)!;
     return (
       <li key={a.id} data-testid="today-action" data-kind={a.kind} className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-2 last:border-b-0">
-        <span>
-          <span className="font-semibold">{t(`today_${a.kind}`)}</span>: {card.company} — {card.title}
-          {a.at && <span data-testid="today-when" suppressHydrationWarning className="tabular-nums text-xs font-semibold"> · {when(a.at)}</span>}
+        <span className="inline-flex flex-wrap items-center gap-x-2">
+          {(a.kind === 'ping' || a.kind === 'ghosting') && card.score != null && <ScoreMeter score={card.score} label={t('match')} compact testId="today-score" />}
+          <span><span className="font-semibold">{t(`today_${a.kind}`)}</span>: {card.company} — {card.title}
+          {a.at && <span data-testid="today-when" suppressHydrationWarning className="tabular-nums text-xs font-semibold"> · {when(a.at)}</span>}</span>
         </span>
         {a.kind === 'interview' && card.meetingUrl && !card.feedbackDueAt && <JoinMeeting url={card.meetingUrl} label={t('joinMeeting')} testId="today-join" />}
         {(a.kind === 'ping' || a.kind === 'feedback') && (

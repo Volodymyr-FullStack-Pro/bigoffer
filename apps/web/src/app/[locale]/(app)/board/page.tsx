@@ -26,6 +26,11 @@ export default async function BoardPage({ searchParams }: { searchParams: Promis
     supabase.from('profiles').select('follow_up_days, ghost_after_days, ui_prefs').eq('id', userId).single(),
     supabase.from('application_messages').select('application_id, direction, sent_at').order('sent_at', { ascending: false }).limit(2000),
   ]);
+  // The match score of each card's job: which silent companies are worth a reminder first.
+  const jobIds = [...new Set((apps ?? []).flatMap((a) => (a.job_id ? [a.job_id] : [])))];
+  const { data: scores } = jobIds.length ? await supabase.from('job_matches').select('job_id, score').eq('user_id', userId).in('job_id', jobIds) : { data: [] };
+  const scoreByJob = new Map<string, number>();
+  for (const m of scores ?? []) scoreByJob.set(m.job_id, Math.max(scoreByJob.get(m.job_id) ?? 0, Math.round(Number(m.score))));
   const lastMessage = new Map<string, { direction: 'in' | 'out'; at: string }>();
   const messageCount = new Map<string, number>();
   for (const m of messages ?? []) {
@@ -68,6 +73,7 @@ export default async function BoardPage({ searchParams }: { searchParams: Promis
       messageCount: messageCount.get(a.id) ?? 0,
       rejectionReasons: a.rejection_reasons ?? [],
       rejectionStage: a.rejection_stage,
+      score: a.job_id ? (scoreByJob.get(a.job_id) ?? null) : null,
     };
   });
 

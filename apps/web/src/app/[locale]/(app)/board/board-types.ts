@@ -37,6 +37,8 @@ export type BoardCard = {
   /** Why it ended (rejected/withdrawn cards): reasons and stage from the reject dialog. */
   rejectionReasons: string[];
   rejectionStage: string | null;
+  /** How well the job fits the search (0–100), for picking whom to ping first; null for a card added by hand. */
+  score?: number | null;
 };
 
 export type BoardCardView = BoardCard & { urgency: Urgency };

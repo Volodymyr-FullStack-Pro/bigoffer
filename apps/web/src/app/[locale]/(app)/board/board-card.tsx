@@ -4,6 +4,7 @@ import { AlarmClock, CornerDownLeft, Hourglass, MessageSquare } from 'lucide-rea
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useFormatter, useTranslations } from 'next-intl';
+import { ScoreMeter } from '@/components/ui/score-meter';
 import { SourceBadge } from '@/components/ui/source-badge';
 import { StatusBadge, type StatusTone, toneColor } from '@/components/ui/status-badge';
 import type { BoardCardView, BoardLabel } from './board-types';
@@ -36,6 +37,9 @@ const URGENCY_RING: Record<string, string> = {
   feedback_due: 'outline-2 outline-offset-2 outline-status-wait',
   awaiting_feedback: 'outline-1 outline-offset-2 outline-status-wait/40',
 };
+
+/** Urgencies that ask for a reminder: the card shows its match score beside the badge. */
+const REMIND = new Set(['ping', 'overdue', 'ghosting']);
 
 const FEEDBACK_STYLE = { tone: 'wait' as StatusTone, icon: Hourglass };
 
@@ -141,6 +145,8 @@ export function BoardCardItem({ card, stripe, labels, labelName, now, timeZone, 
             {t(`urgency_${card.urgency}` as never)}
           </StatusBadge>
         )}
+        {/* Next to "time to ping": how well the job fits, so the best matches get the reminder first. */}
+        {REMIND.has(card.urgency) && card.score != null && <ScoreMeter score={card.score} label={t('match')} compact testId="card-score" />}
       </span>
     </article>
   );
