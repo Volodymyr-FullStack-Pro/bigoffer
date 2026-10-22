@@ -1,13 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <rect width="512" height="512" rx="116" fill="#1e1d25"/>
-  <g transform="translate(256 256) scale(1.2) translate(-251 -270)">
+  <g transform="translate(256 256) scale(1.12) translate(-249 -262)">
     <path d="M168 384 V156" fill="none" stroke="#73f7b2" stroke-width="56" stroke-linecap="round"/>
     <circle cx="252" cy="296" r="110" fill="#73f7b2"/>
-    <ellipse cx="206" cy="296" rx="48" ry="66" fill="#fff"/>
-    <circle cx="222" cy="288" r="27" fill="#0f1116"/>
-    <circle cx="212.5" cy="276.5" r="9" fill="#fff"/>
-    <ellipse cx="300" cy="296" rx="48" ry="66" fill="#fff"/>
-    <circle cx="316" cy="288" r="27" fill="#0f1116"/>
-    <circle cx="306.5" cy="276.5" r="9" fill="#fff"/>
+    <ellipse cx="206" cy="262" rx="40" ry="46" fill="#fff"/><circle cx="214" cy="252" r="22" fill="#0f1116"/><circle cx="206" cy="242" r="8" fill="#fff"/>
+    <ellipse cx="298" cy="262" rx="40" ry="46" fill="#fff"/><circle cx="306" cy="252" r="22" fill="#0f1116"/><circle cx="298" cy="242" r="8" fill="#fff"/>
+    <clipPath id="m"><path d="M196 330 Q252 392 308 330 Z"/></clipPath>
+    <path d="M196 330 Q252 392 308 330 Z" fill="#0f1116"/>
+    <rect x="196" y="330" width="112" height="14.5" fill="#fff" clip-path="url(#m)"/>
   </g>
 </svg>

@@ -1,10 +1,10 @@
 import { sourceInfo } from '@jp/core';
 
-/** Per-board accent (the dot); the pill itself stays neutral so text contrast never depends on the hue. */
+/** Per-board dot from the one palette; the pill stays neutral so text contrast never depends on the hue. */
 const SOURCE_COLORS: Record<string, string> = {
-  dou: '#f97316',
-  djinni: '#22c55e',
-  robotaua: '#ef4444',
+  dou: 'var(--status-wait)',
+  djinni: 'var(--status-move)',
+  robotaua: 'var(--status-interview)',
 };
 
 export function SourceBadge({ sourceId }: { sourceId: string }) {
