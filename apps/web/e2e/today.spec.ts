@@ -48,6 +48,20 @@ test('asks once about a skill many jobs want and the profile lacks', async ({ co
   await expect(visible(page, 'skill-ask')).toHaveCount(0);
 });
 
+test('the numbers over the feed count strong fresh jobs and lead to them', async ({ context, page }) => {
+  const email = uniqueEmail('today-stats');
+  await loginAs(context, email);
+  await seedMatch(email, { score: 91 });
+  await seedMatch(email, { score: 60 });
+  await page.goto('/en/today');
+  const strong = page.getByTestId('feed-stat-strong');
+  await expect(strong).toContainText('1');
+  await expect(strong).toContainText('Worth applying today');
+  await expect(page.getByTestId('feed-stat-week')).toContainText('0');
+  await strong.click();
+  await expect(page).toHaveURL(/\/en\/today\?fresh=1$/);
+});
+
 test('lists a match with score and source link, and hides it', async ({ context, page, isMobile }) => {
   const email = uniqueEmail('today');
   await loginAs(context, email);
