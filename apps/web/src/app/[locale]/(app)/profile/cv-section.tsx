@@ -1,5 +1,7 @@
 'use client';
 
+import { candidateEnglish } from '@jp/core';
+import { CvFactsReview } from './cv-facts';
 import type { ParsedCv } from '@jp/ai';
 import { useTranslations } from 'next-intl';
 import { useState, useTransition } from 'react';
@@ -193,24 +195,19 @@ export function CvSection({
           </div>
           {parsed && (
             <>
-              <p data-testid="cv-headline" className="font-display text-xl font-semibold">
+              <p data-testid="cv-headline" className="sr-only">
                 {parsed.headline}
-                {parsed.seniority ? ` · ${parsed.seniority}` : ''}
-                {parsed.yearsExperience != null
-                  ? ` · ${t('years', { count: parsed.yearsExperience })}`
-                  : ''}
               </p>
-              <ul className="flex flex-wrap gap-1.5">
-                {parsed.skills.map((s) => (
-                  <li
-                    key={s}
-                    data-testid="cv-skill"
-                    className="rounded-full bg-muted px-2.5 py-0.5 text-xs"
-                  >
-                    {s}
-                  </li>
-                ))}
-              </ul>
+              <CvFactsReview
+                key={JSON.stringify([parsed.headline, parsed.seniority, parsed.yearsExperience, parsed.skills.length])}
+                initial={{
+                  headline: parsed.headline ?? '',
+                  seniority: parsed.seniority,
+                  yearsExperience: parsed.yearsExperience,
+                  english: candidateEnglish(parsed.languages),
+                  skills: parsed.skills,
+                }}
+              />
               <div className="flex flex-wrap gap-2">
                 <form action={createSearchProfileFromCv}>
                   <button

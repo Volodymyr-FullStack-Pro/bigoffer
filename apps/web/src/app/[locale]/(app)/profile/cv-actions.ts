@@ -1,7 +1,9 @@
 'use server';
 
 import { type ParsedCv, parseCv } from '@jp/ai';
+import { ENGLISH_LEVELS, SENIORITIES } from '@jp/core';
 import { revalidatePath } from 'next/cache';
+import { z } from 'zod';
 import { getLocale } from 'next-intl/server';
 import { redirect } from '@/i18n/navigation';
 import { consumePrivateAi, getLlm, privateAiAvailable } from '@/lib/ai';
@@ -196,5 +198,42 @@ export async function fillContactsFromCv(): Promise<boolean> {
     .update({ contacts: next, ...(!profile?.full_name && cv.parsed.fullName?.trim() ? { full_name: cv.parsed.fullName.trim() } : {}) })
     .eq('id', userId);
   revalidatePath('/[locale]/profile', 'page');
+  return !error;
+}
+
+const factsSchema = z.object({
+  headline: z.string().trim().max(120),
+  seniority: z.enum(SENIORITIES).nullable(),
+  yearsExperience: z.number().min(0).max(50).nullable(),
+  english: z.enum(ENGLISH_LEVELS).nullable(),
+  skills: z.array(z.string().trim().min(1).max(60)).max(100),
+});
+export type CvFacts = z.infer<typeof factsSchema>;
+
+/**
+ * The facts every job is checked against, as the user corrected them: role, level, years, English, skills. They are
+ * written into the parsed CV, so the feed's experience and English checks use them at once.
+ */
+export async function saveCvFacts(input: CvFacts): Promise<boolean> {
+  if (!(await getUserId())) return false;
+  const facts = factsSchema.safeParse(input);
+  if (!facts.success) return false;
+  const supabase = await createClient();
+  const cv = await loadPrimaryCv(supabase);
+  if (!cv?.parsed) return false;
+  const { headline, seniority, yearsExperience, english, skills } = facts.data;
+  const others = cv.parsed.languages.filter((l) => !/english|англ/i.test(l.language));
+  const parsed: ParsedCv = {
+    ...cv.parsed,
+    headline: headline || null,
+    seniority,
+    yearsExperience,
+    skills: [...new Map(skills.map((s) => [s.toLowerCase(), s])).values()],
+    languages: english ? [...others, { language: 'English', level: english }] : others,
+  };
+  const { error } = await supabase.from('resumes').update({ parsed }).eq('id', cv.id);
+  revalidatePath('/[locale]/profile', 'page');
+  revalidatePath('/[locale]/onboarding', 'page');
+  revalidatePath('/[locale]/today', 'page');
   return !error;
 }

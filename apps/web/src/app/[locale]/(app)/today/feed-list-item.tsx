@@ -25,6 +25,8 @@ export function FeedListItem({
   const format = useFormatter();
   const now = useNow();
   const sourceId = match.postings[0]?.sourceId;
+  const have = match.techs.filter((x) => x.matched);
+  const lack = match.techs.filter((x) => !x.matched);
   return (
     <button
       type="button"
@@ -73,17 +75,30 @@ export function FeedListItem({
           {match.companyOnBoard.sourceId && <> · {sourceInfo(match.companyOnBoard.sourceId)?.name ?? match.companyOnBoard.sourceId}</>}
         </span>
       )}
-      {(match.seniority || match.skills.length > 0) && (
-        <span className="flex flex-wrap gap-1">
+      {match.requiredYears !== null && match.candidateYears !== null && match.candidateYears < match.requiredYears && (
+        <span data-testid="years-gap-badge" className="self-start rounded-full bg-warning/25 ring-1 ring-inset ring-warning/45 px-2 py-0.5 text-xs font-semibold text-warning">
+          {t('yearsGap', { years: match.requiredYears })}
+        </span>
+      )}
+      {(match.seniority || match.techs.length > 0) && (
+        // What the job asks for at a glance: the user's technologies (✓), then up to two they have not listed (?).
+        <span data-testid="job-reqs" className="flex flex-wrap items-center gap-1">
           {match.seniority && (
             <LevelBadge level={match.seniority} label={tt(`seniority_${match.seniority}`)} />
           )}
-          {match.skills
-            .filter((x) => x.matched)
-            .slice(0, 4)
-            .map((x) => (
-              <TechChip key={x.name} name={x.name} />
-            ))}
+          {have.slice(0, 3).map((x) => (
+            <TechChip key={x.name} name={x.name} check />
+          ))}
+          {lack.slice(0, 2).map((x) => (
+            <span key={x.name} data-testid="req-unknown" className="inline-flex items-center rounded-full border border-dashed border-border px-2 py-0.5 text-xs font-medium text-muted-foreground">
+              ? {x.name}
+            </span>
+          ))}
+          {match.techs.length > 0 && (
+            <span data-testid="req-count" className="text-xs tabular-nums text-muted-foreground">
+              {t('reqCount', { have: have.length, total: match.techs.length })}
+            </span>
+          )}
         </span>
       )}
       <span className="flex flex-wrap items-center gap-x-2 gap-y-1 tabular-nums text-xs text-muted-foreground">

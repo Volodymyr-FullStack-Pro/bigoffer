@@ -14,6 +14,7 @@ import { ApplyKitPanel } from '@/components/apply-kit/apply-kit-panel';
 import { PeopleSearch } from '@/components/apply-kit/people-search';
 import { ScoreMeter } from '@/components/ui/score-meter';
 import { LevelBadge } from '@/components/ui/tech-chip';
+import { SkillQuestion } from './skill-answers';
 import type { FeedMatch } from './feed-types';
 import { DomainBadges } from './domain-badges';
 import { HiddenReason } from './hidden-reason';
@@ -362,6 +363,7 @@ export function MatchDetail({
         </p>
       )}
       <JobTechs techs={match.techs} />
+      <SkillQuestion skills={match.techs.filter((x) => !x.matched).map((x) => x.name)} />
       <div className="flex flex-wrap gap-2">
         {match.postings
           .filter((p) => /^https?:\/\//i.test(p.url))
