@@ -1,46 +1,41 @@
 import { cn } from '@/lib/utils';
 
-/** Brand-ish colour per technology (text + tinted fill), like tag chips on job boards; unknown ones stay neutral. */
-const TECH: Record<string, string> = {
-  react: '#61dafb', 'react native': '#61dafb', 'next.js': '#e5e5e5', typescript: '#5aa2ff', javascript: '#f7df1e',
-  'node.js': '#7cc74f', nestjs: '#ff5a76', express: '#cfcfcf', graphql: '#ff6ac1', vue: '#42d392', 'vue.js': '#42d392',
-  angular: '#ff4f5e', svelte: '#ff7a45', redux: '#a48bff', 'redux toolkit': '#a48bff', mobx: '#ff9a3c', zustand: '#d8b46a',
-  tailwind: '#38bdf8', 'tailwind css': '#38bdf8', css: '#5aa2ff', html: '#ff7043', html5: '#ff7043', python: '#ffd54f',
-  django: '#4fc08d', java: '#ff8a50', 'c#': '#b388ff', '.net': '#b388ff', go: '#4dd0e1', golang: '#4dd0e1', php: '#9fa8ff',
-  postgresql: '#6fa8ff', mysql: '#4fc3f7', mongodb: '#69d36e', redis: '#ff6b6b', docker: '#4aa8ff', kubernetes: '#6e9bff',
-  aws: '#ffb74d', gcp: '#7aa7ff', azure: '#4fb3ff', supabase: '#5fe3a1', prisma: '#c3c8ff', figma: '#ff7262',
-  jest: '#ff6b81', playwright: '#7bd88f', cypress: '#cfd8dc', git: '#ff7043', flutter: '#5ac8fa', swift: '#ff8a65',
-  kotlin: '#b388ff', 'rest api': '#cfd8dc', 'rest apis': '#cfd8dc', websockets: '#cfd8dc', stripe: '#8f8cff',
-};
-
-/** Chip text: the brand colour as is on the dark canvas, deepened toward the ink on white so it stays readable. */
-const ink = (c: string) => `color-mix(in srgb, ${c} var(--chip-ink), var(--foreground))`;
-
-export function techColor(name: string): string | null {
-  return TECH[name.trim().toLowerCase()] ?? null;
-}
-
-/** `check` marks a technology the user has (a requirement they meet). */
+/**
+ * A technology the job asks for. One quiet style for all of them — a rainbow of brand colours fought the mint — and
+ * mint for the ones the user has (`check`), so what matters is the only colour in the row.
+ */
 export function TechChip({ name, dim = false, check = false, className }: { name: string; dim?: boolean; check?: boolean; className?: string }) {
-  const c = techColor(name);
   return (
     <span
-      className={cn('inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-semibold', dim && 'opacity-60', className)}
-      style={c ? { color: ink(c), borderColor: `${c}55`, backgroundColor: `${c}14` } : undefined}
+      className={cn(
+        'inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-semibold',
+        check ? 'border-brand/50 bg-brand/15 text-foreground' : 'border-border bg-muted/60 text-foreground/85',
+        dim && 'opacity-60',
+        className,
+      )}
     >
-      {check && <span aria-hidden className="mr-1">✓</span>}
+      {check && <span aria-hidden className="mr-1 text-success">✓</span>}
       {name}
     </span>
   );
 }
 
-const LEVEL: Record<string, string> = { intern: '#7cc74f', junior: '#7cc74f', middle: '#ffc24d', senior: '#ff6b6b', lead: '#c084fc' };
+/** Level hues from the one palette: junior mint, middle sky, senior violet, lead amber. */
+const LEVEL: Record<string, string> = {
+  intern: 'var(--brand)',
+  junior: 'var(--brand)',
+  middle: 'var(--status-move)',
+  senior: 'var(--status-test)',
+  lead: 'var(--status-wait)',
+};
 
-/** Junior green, Middle amber, Senior red, Lead violet. */
 export function LevelBadge({ level, label }: { level: string; label: string }) {
-  const c = LEVEL[level] ?? '#b3b2b9';
+  const c = LEVEL[level] ?? 'var(--status-neutral)';
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-xs font-semibold" style={{ color: ink(c), borderColor: `${c}55`, backgroundColor: `${c}14` }}>
+    <span
+      className="inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-xs font-semibold text-foreground"
+      style={{ borderColor: `color-mix(in srgb, ${c} 45%, transparent)`, backgroundColor: `color-mix(in srgb, ${c} 14%, transparent)` }}
+    >
       <span aria-hidden className="size-1.5 rounded-full" style={{ backgroundColor: c }} />
       {label}
     </span>

@@ -2,7 +2,7 @@ import { sourceInfo } from '@jp/core';
 import { AlarmClock, Bot, CalendarClock, CircleHelp } from 'lucide-react';
 import { getFormatter, getTranslations } from 'next-intl/server';
 import type { ReactNode } from 'react';
-import { Logo } from '@/components/brand/logo';
+import { Coin, Logo } from '@/components/brand/logo';
 import { LegalLinks } from '@/components/legal-links';
 import { LocaleSwitcher } from '@/components/locale-switcher';
 import { ThemeToggle } from '@/components/theme-toggle';
@@ -25,7 +25,7 @@ function DemoCard({ title, company, tone, badge, score, note }: { title: string;
           {score !== undefined && <span className="font-semibold text-foreground tabular-nums">{score}%</span>}
         </span>
       </div>
-      {note && <span className="pl-1 text-xs text-brand">↑ {note}</span>}
+      {note && <span className="pl-1 text-xs text-link">↑ {note}</span>}
     </div>
   );
 }
@@ -70,7 +70,11 @@ export async function Landing({ stats }: { stats: LandingStats | null }) {
               <span className="text-sm text-muted-foreground">{t('heroNote')}</span>
             </div>
           </div>
-          <WatchingB className="mx-auto h-56 w-auto md:h-80" />
+          {/* The two characters of the brand: the happy b watching, and the offer it found. */}
+          <div className="mx-auto flex items-end gap-1 md:gap-2">
+            <WatchingB className="h-52 w-auto md:h-80" />
+            <Coin className="landing-coin mb-1 size-24 md:size-36" />
+          </div>
         </section>
 
         {/* What the radar saw a moment ago: real postings, newest first. */}
@@ -162,7 +166,10 @@ export async function Landing({ stats }: { stats: LandingStats | null }) {
 
         <section className="border-t border-border bg-card/40">
           <div className="mx-auto flex max-w-6xl flex-col items-start gap-6 px-4 py-16 sm:flex-row sm:items-center md:py-20">
-            <WatchingB className="h-24 w-auto shrink-0" />
+            <span className="flex shrink-0 items-end gap-1">
+              <WatchingB className="h-24 w-auto" />
+              <Coin className="mb-0.5 size-11" />
+            </span>
             <div className="flex-1">
               <h2 className="text-3xl md:text-4xl">{t('finalTitle')}</h2>
               <p className="mt-2 text-muted-foreground">{t('finalText')}</p>

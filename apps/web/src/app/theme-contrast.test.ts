@@ -66,12 +66,9 @@ describe.each([
 });
 
 describe('technology and level chips', () => {
-  const chips = readFileSync(join(__dirname, '../components/ui/tech-chip.tsx'), 'utf8');
-  const colours = [...new Set([...chips.matchAll(/'(#[0-9a-f]{6})'/g)].map((m) => m[1]!))];
-  const share = Number(light['chip-ink'] ?? css.match(/--chip-ink:\s*(\d+)%/)?.[1]) / 100;
-  it.each(colours)('%s reads on white (deepened toward the ink) and as is on the dark card', (c) => {
-    const onLight = mix(c, light.foreground!, share);
-    expect(wcag(onLight, mix(c, light.card!, 0.08))).toBeGreaterThanOrEqual(4.5);
-    expect(wcag(c, mix(c, dark.card!, 0.08))).toBeGreaterThanOrEqual(4.5);
+  // One palette: chips take their colour from the theme tokens (checked above), never from per-brand hex values.
+  it('use no colours of their own', () => {
+    const chips = readFileSync(join(__dirname, '../components/ui/tech-chip.tsx'), 'utf8');
+    expect(chips.match(/#[0-9a-f]{6}/gi) ?? []).toEqual([]);
   });
 });
