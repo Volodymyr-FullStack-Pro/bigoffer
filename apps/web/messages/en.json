@@ -153,7 +153,9 @@
     "onBoardLeft": "still open on {platforms}",
     "titleCount": "{count, plural, one {# match} other {# matches}}",
     "caughtUp": "You are all caught up. New jobs show up after the next scan; meanwhile, check your board.",
-    "refreshed": "Refreshed {ago}: still hiring"
+    "refreshed": "Refreshed {ago}: still hiring",
+    "yearsGap": "{years}+ years required",
+    "reqCount": "{have} of {total} met"
   },
   "feed": {
     "progress": "{done} / {total}",
@@ -265,7 +267,15 @@
     "hideTipsWordDone": "“{word}” added to excluded words. The feed updates in a minute.",
     "hideTipsDismiss": "Don't suggest",
     "refreshed": "Refreshed {ago}: still hiring",
-    "arrived": "{count, plural, one {# new job — show} other {# new jobs — show}}"
+    "arrived": "{count, plural, one {# new job — show} other {# new jobs — show}}",
+    "skillTip": "{count} jobs ask for {skill}, and your profile doesn’t list it.",
+    "skillTipHint": "If you have it, add it — scores get sharper.",
+    "skillTipYes": "Add {skill}",
+    "skillTipNo": "No experience",
+    "skillAsk": "Do you have experience with <b>{skill}</b>?",
+    "skillAskYes": "Yes, add to profile",
+    "skillAskNo": "No",
+    "skillAdded": "{skill} added to your profile — scores update in a minute."
   },
   "comingSoon": {
     "badge": "Soon",
