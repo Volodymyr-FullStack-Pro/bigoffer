@@ -20,13 +20,15 @@ export function techColor(name: string): string | null {
   return TECH[name.trim().toLowerCase()] ?? null;
 }
 
-export function TechChip({ name, dim = false, className }: { name: string; dim?: boolean; className?: string }) {
+/** `check` marks a technology the user has (a requirement they meet). */
+export function TechChip({ name, dim = false, check = false, className }: { name: string; dim?: boolean; check?: boolean; className?: string }) {
   const c = techColor(name);
   return (
     <span
       className={cn('inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-semibold', dim && 'opacity-60', className)}
       style={c ? { color: ink(c), borderColor: `${c}55`, backgroundColor: `${c}14` } : undefined}
     >
+      {check && <span aria-hidden className="mr-1">✓</span>}
       {name}
     </span>
   );

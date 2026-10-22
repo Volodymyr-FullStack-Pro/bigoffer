@@ -11,7 +11,7 @@ const TERM = /^[\p{L}\p{N}.#+ -]{1,60}$/u;
 async function ownSearch() {
   if (!(await getUserId())) return null;
   const supabase = await createClient();
-  const { data } = await supabase.from('search_profiles').select('id, exclude_keywords').order('updated_at', { ascending: false }).limit(1).maybeSingle();
+  const { data } = await supabase.from('search_profiles').select('id, exclude_keywords, skills').order('updated_at', { ascending: false }).limit(1).maybeSingle();
   return data ? { supabase, search: data } : null;
 }
 
@@ -36,6 +36,22 @@ export async function excludeWord(term: string): Promise<boolean> {
   if (words.some((w) => w.toLowerCase() === word.toLowerCase())) return true;
   if (words.length >= 30) return false;
   const { error } = await own.supabase.from('search_profiles').update({ exclude_keywords: [...words, word] }).eq('id', own.search.id);
+  if (error) return false;
+  await requestProfileSync(own.search.id);
+  revalidatePath('/[locale]/today', 'page');
+  return true;
+}
+
+/** "Є досвід з X?" → yes: the skill joins the search's skills and the feed is rescored with it. */
+export async function addSkill(term: string): Promise<boolean> {
+  const skill = term.trim();
+  if (!TERM.test(skill)) return false;
+  const own = await ownSearch();
+  if (!own) return false;
+  const skills = own.search.skills;
+  if (skills.some((s) => s.toLowerCase() === skill.toLowerCase())) return true;
+  if (skills.length >= 100) return false;
+  const { error } = await own.supabase.from('search_profiles').update({ skills: [...skills, skill] }).eq('id', own.search.id);
   if (error) return false;
   await requestProfileSync(own.search.id);
   revalidatePath('/[locale]/today', 'page');

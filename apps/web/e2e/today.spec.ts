@@ -30,6 +30,24 @@ test('an empty feed still opens the jobs the profile rules hid', async ({ contex
   await expect(visible(page, 'job-match').filter({ hasText: title })).toBeVisible();
 });
 
+test('asks once about a skill many jobs want and the profile lacks', async ({ context, page, isMobile }) => {
+  const email = uniqueEmail('today-skill-tip');
+  await loginAs(context, email);
+  const skill = `Kafka${Date.now() % 100000}`;
+  let title = '';
+  for (let i = 0; i < 3; i++) ({ title } = await seedMatch(email, { score: 80 + i, skills: [skill, 'React'], matchedSkills: ['React'] }));
+  await page.goto('/en/today');
+  const tip = page.getByTestId('skill-tip');
+  await expect(tip).toContainText(skill);
+  await expect(tip).toContainText('3 jobs');
+  const detail = await openDetail(page, title, isMobile);
+  await expect(detail.getByTestId('skill-ask')).toContainText(skill);
+  // "No experience" settles it everywhere on the page: the banner and the job's question both go.
+  await tip.getByTestId('skill-tip-no').click();
+  await expect(page.getByTestId('skill-tip')).toHaveCount(0);
+  await expect(visible(page, 'skill-ask')).toHaveCount(0);
+});
+
 test('lists a match with score and source link, and hides it', async ({ context, page, isMobile }) => {
   const email = uniqueEmail('today');
   await loginAs(context, email);

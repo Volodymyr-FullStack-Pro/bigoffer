@@ -7,6 +7,8 @@ import { createClient } from '@/lib/supabase/server';
 import { parseUiPrefs } from '@/lib/ui-prefs';
 import { cardSkills, matchedSkillsOf } from './card-skills';
 import { HideTips } from './hide-tips';
+import { SkillAnswers, SkillTipBanner } from './skill-answers';
+import { missingSkillTip } from './skill-tips';
 import { Feed } from './feed';
 import { mergeMatches } from './feed-filter';
 import { SearchNow } from './search-now';
@@ -173,6 +175,9 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
   const matches = mergeMatches((bestRows ?? []).map(toMatch), (freshRows ?? []).map(toMatch)).filter((m) => m.onBoard === null || m.onBoardLeft.length > 0);
   const sourceIds = [...new Set(matches.flatMap((m) => m.postings.map((p) => p.sourceId)))];
 
+  // The technology the feed asks for most that the profile lacks: answering once sharpens every score.
+  const skillTip = missingSkillTip(matches, parseUiPrefs(me?.ui_prefs).skillsDeclined ?? []);
+
   return (
     // Phone: a compact header, so the first jobs show on the first screen.
     <section className="flex flex-col gap-4 md:gap-6">
@@ -194,7 +199,9 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
           <span aria-hidden className="text-ai">→</span>
         </Link>
       )}
+      <SkillAnswers declined={parseUiPrefs(me?.ui_prefs).skillsDeclined ?? []}>
       {tips.length > 0 && <HideTips tips={tips} dismissed={parseUiPrefs(me?.ui_prefs).hideTipsDismissed ?? []} />}
+      {skillTip && <SkillTipBanner skill={skillTip.skill} count={skillTip.count} />}
       <Feed
         matches={matches}
         focusId={focusId && matches.some((m) => m.id === focusId) ? focusId : null}
@@ -210,6 +217,7 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
         openKit={kit === '1'}
         userId={userId}
       />
+      </SkillAnswers>
     </section>
   );
 }

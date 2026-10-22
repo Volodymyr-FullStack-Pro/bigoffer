@@ -28,6 +28,8 @@ export const uiPrefsSchema = z
     genie: z.object({ mode: z.enum(['on', 'quiet', 'off']), goal: z.number().int().min(1).max(50) }).partial(),
     /** "You keep hiding X" tips the user waved away (by term). */
     hideTipsDismissed: z.array(z.string().max(60)).max(50),
+    /** Skills the user said they have no experience with ("Є досвід з X?" → Ні): never asked again. */
+    skillsDeclined: z.array(z.string().max(60)).max(200),
   })
   .partial();
 

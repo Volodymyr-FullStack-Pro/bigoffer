@@ -153,7 +153,9 @@
     "onBoardLeft": "still open on {platforms}",
     "titleCount": "{count, plural, one {# match} other {# matches}}",
     "caughtUp": "You are all caught up. New jobs show up after the next scan; meanwhile, check your board.",
-    "refreshed": "Refreshed {ago}: still hiring"
+    "refreshed": "Refreshed {ago}: still hiring",
+    "yearsGap": "{years}+ years required",
+    "reqCount": "{have} of {total} met"
   },
   "feed": {
     "progress": "{done} / {total}",
@@ -265,7 +267,15 @@
     "hideTipsWordDone": "“{word}” added to excluded words. The feed updates in a minute.",
     "hideTipsDismiss": "Don't suggest",
     "refreshed": "Refreshed {ago}: still hiring",
-    "arrived": "{count, plural, one {# new job — show} other {# new jobs — show}}"
+    "arrived": "{count, plural, one {# new job — show} other {# new jobs — show}}",
+    "skillTip": "{count} jobs ask for {skill}, and your profile doesn’t list it.",
+    "skillTipHint": "If you have it, add it — scores get sharper.",
+    "skillTipYes": "Add {skill}",
+    "skillTipNo": "No experience",
+    "skillAsk": "Do you have experience with <b>{skill}</b>?",
+    "skillAskYes": "Yes, add to profile",
+    "skillAskNo": "No",
+    "skillAdded": "{skill} added to your profile — scores update in a minute."
   },
   "comingSoon": {
     "badge": "Soon",
@@ -1034,6 +1044,24 @@
     "levelHint_middle": "Daily work: advanced features, patterns, debugging, tests — and middle questions.",
     "levelHint_senior": "How it works inside, architecture, trade-offs, scale — and senior questions.",
     "writingLevel": "Writing the {level} level (~30 s)…"
+  },
+  "cvFacts": {
+    "title": "What we understood from your CV",
+    "filled": "For scoring: {filled} of {total}",
+    "intro": "Every job is checked against these facts. Fix anything wrong and fill in what your CV doesn’t say.",
+    "role": "Role",
+    "level": "Level",
+    "levelMissing": "Not stated in your CV. Without it, jobs aren’t checked by seniority.",
+    "years": "Experience",
+    "yearsMissing": "Not found in your CV. Without it we can’t tell if you have enough years.",
+    "yearsUnit": "years",
+    "english": "English",
+    "englishMissing": "Not found in your CV. Set your level to compare with jobs.",
+    "skills": "Skills · {count}",
+    "skillsAdd": "Add skills",
+    "save": "Save",
+    "saved": "Saved",
+    "error": "Couldn’t save. Try again."
   },
   "landing": {
     "title": "BigOffer — an IT job search without the chaos",
