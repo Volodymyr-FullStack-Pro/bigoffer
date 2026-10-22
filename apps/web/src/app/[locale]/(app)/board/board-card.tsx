@@ -23,21 +23,6 @@ const URGENCY_TONE: Record<string, StatusTone> = {
   awaiting_feedback: 'wait',
 };
 
-/**
- * Outline per urgency. Only the two "act now" states glow (an interview within 48 h, the company waiting on you);
- * the rest get a quiet ring, so a busy board does not light up like a garland.
- */
-const URGENCY_RING: Record<string, string> = {
-  // outline + drop-shadow: the card style already owns box-shadow
-  interview_soon: 'outline-2 outline-offset-2 outline-status-interview drop-shadow-[0_0_10px_color-mix(in_srgb,var(--status-interview)_45%,transparent)]',
-  your_move: 'outline-2 outline-offset-2 outline-status-move drop-shadow-[0_0_10px_color-mix(in_srgb,var(--status-move)_45%,transparent)]',
-  step_passed: 'outline-1 outline-offset-2 outline-status-wait/70',
-  overdue: 'outline-1 outline-offset-2 outline-status-danger/70',
-  ping: 'outline-1 outline-offset-2 outline-status-wait/50',
-  feedback_due: 'outline-2 outline-offset-2 outline-status-wait',
-  awaiting_feedback: 'outline-1 outline-offset-2 outline-status-wait/40',
-};
-
 /** Urgencies that ask for a reminder: the card shows its match score beside the badge. */
 const REMIND = new Set(['ping', 'overdue', 'ghosting']);
 
@@ -70,10 +55,10 @@ export function BoardCardItem({ card, stripe, labels, labelName, now, timeZone, 
       data-testid="board-card"
       data-card-id={card.id}
       data-reply-kind={card.replyKind ?? undefined}
-      // A stripe on the left: the reply's colour when there is one, else the stage's.
+      // No outline per urgency: the badge and this left stripe say it (the reply's colour, else the stage's).
       style={{ transform: CSS.Transform.toString(transform), transition, borderLeftColor: reply ? toneColor(reply.tone) : stripe, borderLeftWidth: 3 }}
       data-needs-action={card.urgency in URGENCY_TONE || undefined}
-      className={`brutal flex min-w-0 cursor-grab flex-col gap-1.5 p-3 transition-[border-color,box-shadow] duration-150 hover:border-foreground/25 hover:shadow-[0_8px_24px_-12px_rgb(0_0_0/0.45)] active:cursor-grabbing ${isDragging ? 'opacity-40' : ''} ${URGENCY_RING[card.urgency] ?? ''}`}
+      className={`brutal flex min-w-0 cursor-grab flex-col gap-1.5 p-3 transition-[border-color,box-shadow] duration-150 hover:border-foreground/25 hover:shadow-[0_8px_24px_-12px_rgb(0_0_0/0.45)] active:cursor-grabbing ${isDragging ? 'opacity-40' : ''}`}
       {...attributes}
       {...listeners}
       onClick={onOpen}
