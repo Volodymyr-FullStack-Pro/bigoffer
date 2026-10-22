@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase/server';
 import { parseUiPrefs } from '@/lib/ui-prefs';
 import { cardSkills, matchedSkillsOf } from './card-skills';
 import { HideTips } from './hide-tips';
+import { FeedStats } from './feed-stats';
 import { SkillAnswers, SkillTipBanner } from './skill-answers';
 import { missingSkillTip } from './skill-tips';
 import { Feed } from './feed';
@@ -67,7 +68,7 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
     supabase.from('profiles').select('onboarded_at, ui_prefs').eq('id', userId).maybeSingle(),
     getSearchNowStatus(),
     loadPrimaryCv(supabase),
-    supabase.from('applications').select('job_id, title, company, source_id, board_columns(key, title)'),
+    supabase.from('applications').select('job_id, title, company, source_id, applied_at, first_response_at, outcome, board_columns(key, title)'),
   ]);
   // What the profile rules hid (level, role, format, region, exclude word): shown on demand so nothing is lost silently.
   const { data: ruleHiddenRows } = await baseQuery(['hidden'])
@@ -175,6 +176,15 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
   const matches = mergeMatches((bestRows ?? []).map(toMatch), (freshRows ?? []).map(toMatch)).filter((m) => m.onBoard === null || m.onBoardLeft.length > 0);
   const sourceIds = [...new Set(matches.flatMap((m) => m.postings.map((p) => p.sourceId)))];
 
+  // Four numbers over the feed: what is worth applying to today, and how the applications are doing.
+  const nowMs = Date.now();
+  const DAY = 86_400_000;
+  const stats = {
+    strong: matches.filter((m) => m.score >= 80 && Date.parse(m.firstSeenAt) > nowMs - DAY).length,
+    saved: (apps ?? []).filter((a) => a.outcome === 'open' && !a.applied_at).length,
+    silent: (apps ?? []).filter((a) => a.outcome === 'open' && a.applied_at && !a.first_response_at && Date.parse(a.applied_at) < nowMs - 14 * DAY).length,
+    week: (apps ?? []).filter((a) => a.applied_at && Date.parse(a.applied_at) > nowMs - 7 * DAY).length,
+  };
   // The technology the feed asks for most that the profile lacks: answering once sharpens every score.
   const skillTip = missingSkillTip(matches, parseUiPrefs(me?.ui_prefs).skillsDeclined ?? []);
 
@@ -199,6 +209,7 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
           <span aria-hidden className="text-ai">→</span>
         </Link>
       )}
+      {matches.length + (apps ?? []).length > 0 && <FeedStats {...stats} />}
       <SkillAnswers declined={parseUiPrefs(me?.ui_prefs).skillsDeclined ?? []}>
       {tips.length > 0 && <HideTips tips={tips} dismissed={parseUiPrefs(me?.ui_prefs).hideTipsDismissed ?? []} />}
       {skillTip && <SkillTipBanner skill={skillTip.skill} count={skillTip.count} />}
