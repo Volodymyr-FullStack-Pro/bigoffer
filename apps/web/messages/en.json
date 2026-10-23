@@ -156,7 +156,8 @@
     "caughtUp": "You are all caught up. New jobs show up after the next scan; meanwhile, check your board.",
     "refreshed": "Refreshed {ago}: still hiring",
     "yearsGap": "{years}+ years required",
-    "reqCount": "{have} of {total} met"
+    "reqCount": "{have} of {total} met",
+    "hiring": "Actively hiring · {count, plural, one {# job} other {# jobs}} this month"
   },
   "feed": {
     "progress": "{done} / {total}",

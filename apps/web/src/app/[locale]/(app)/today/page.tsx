@@ -12,6 +12,9 @@ import { feedStats } from './feed-stats-data';
 import { SkillAnswers, SkillTipBanner } from './skill-answers';
 import { missingSkillTip } from './skill-tips';
 import { marketBands, marketKey } from './market-salary';
+
+/** Open jobs in 30 days from which a company counts as actively hiring. */
+const HIRING_MIN = 3;
 import { Feed } from './feed';
 import { mergeMatches } from './feed-filter';
 import { SearchNow } from './search-now';
@@ -49,7 +52,7 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
     supabase
       .from('job_matches')
       .select(
-        'id, job_id, score, created_at, breakdown, explanation, search_profile_id, jobs!inner(title, role, location, remote_type, seniority, salary_min_usd, salary_max_usd, posted_at, first_seen_at, refreshed_at, summary, skills, description_text, tags, is_job, company_is_placeholder, companies(name), job_postings(source_id, url))',
+        'id, job_id, score, created_at, breakdown, explanation, search_profile_id, jobs!inner(title, role, location, remote_type, seniority, salary_min_usd, salary_max_usd, posted_at, first_seen_at, refreshed_at, summary, skills, description_text, tags, is_job, company_id, company_is_placeholder, companies(name), job_postings(source_id, url))',
       )
       .in('state', states)
       .eq('jobs.status', 'active')
@@ -153,6 +156,7 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
       location: m.jobs.location,
       remoteType: REMOTE.find((r) => r === m.jobs.remote_type) ?? 'unknown',
       seniority: (SENIORITIES as readonly string[]).includes(m.jobs.seniority ?? '') ? (m.jobs.seniority as Seniority) : null,
+      companyId: m.jobs.company_is_placeholder ? null : m.jobs.company_id,
       market: (() => {
         const key = marketKey(m.jobs.title, m.jobs.role, m.jobs.seniority);
         return key ? (market.get(key) ?? null) : null;
@@ -189,6 +193,14 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
   // A job on the board on every platform it is posted on lives there; one still open on another platform stays to apply there too.
   const matches = mergeMatches((bestRows ?? []).map(toMatch), (freshRows ?? []).map(toMatch)).filter((m) => m.onBoard === null || m.onBoardLeft.length > 0);
   const sourceIds = [...new Set(matches.flatMap((m) => m.postings.map((p) => p.sourceId)))];
+  // "Actively hiring": three or more open jobs from the same company in the last 30 days.
+  const companyIds = [...new Set(matches.flatMap((m) => (m.companyId ? [m.companyId] : [])))];
+  const { data: hiring } = companyIds.length ? await supabase.rpc('company_open_jobs', { p_company_ids: companyIds.slice(0, 500) }) : { data: [] };
+  const openByCompany = new Map((hiring ?? []).map((h) => [h.company_id, h.n]));
+  for (const m of matches) {
+    const n = m.companyId ? (openByCompany.get(m.companyId) ?? 0) : 0;
+    m.companyHiring = n >= HIRING_MIN ? n : null;
+  }
 
   // Four numbers over the feed: what is worth applying to today, and how the applications are doing.
   const stats = feedStats(matches, apps ?? []);

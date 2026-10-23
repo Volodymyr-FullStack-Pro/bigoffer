@@ -672,6 +672,11 @@ isOneToOne: false
 "hide_match":
 { Args: { "p_match_id": string }; Returns: string
                            },
+"company_open_jobs":
+{ Args: { "p_company_ids": (string)[] }; Returns: {
+              "company_id": string,"n": number
+            }[]
+                           },
 "jobs_to_enrich":
 { Args: { "p_job_ids"?: (string)[],"p_limit": number }; Returns: string[]
                            },

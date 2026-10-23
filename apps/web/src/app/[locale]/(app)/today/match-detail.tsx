@@ -401,7 +401,16 @@ export function MatchDetail({
             )}
           </p>
         )}
-        {!match.companyIsPlaceholder && <p className="text-muted-foreground">{match.company}</p>}
+        {!match.companyIsPlaceholder && (
+          <p className="flex flex-wrap items-center gap-2 text-muted-foreground">
+            {match.company}
+            {match.companyHiring != null && (
+              <span data-testid="hiring-detail" className="rounded-full bg-brand/15 px-2 py-0.5 text-xs font-semibold text-foreground ring-1 ring-inset ring-brand/40">
+                {t('hiring', { count: match.companyHiring })}
+              </span>
+            )}
+          </p>
+        )}
         <p className="flex flex-wrap items-center gap-x-4 gap-y-1.5 tabular-nums text-xs text-muted-foreground">
           {[...new Set(match.postings.map((p) => p.sourceId))].map((id) => (
             <SourceBadge key={id} sourceId={id} />
