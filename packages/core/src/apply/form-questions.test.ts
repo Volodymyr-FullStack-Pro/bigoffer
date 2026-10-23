@@ -49,3 +49,10 @@ describe('matchBankKey', () => {
     ]) expect(matchBankKey(q), q).toBeNull();
   });
 });
+
+describe('matchBankKey, salary phrasings', () => {
+  it('reads expectations-first salary questions in Ukrainian and Russian', () => {
+    expect(matchBankKey('Очікування щодо зарплати')).toBe('salary');
+    expect(matchBankKey('Ожидания по зарплате')).toBe('salary');
+  });
+});

@@ -1272,13 +1272,28 @@
     "profile": "Profile"
   },
   "saveButton": {
-    "title": "Save jobs from any site",
+    "title": "Extension: save jobs and fill forms",
     "intro": "LinkedIn, company career pages, Telegram channels: one browser button and the job is on your board. DOU, Djinni and robota.ua are read in full; other sites by their title and description.",
     "extTitle": "Chrome extension",
-    "extSteps": "Download and unzip, open chrome://extensions, turn on Developer mode → Load unpacked → pick the folder. Then press the BigOffer button on any job page.",
+    "extSteps": "Download and unzip, open chrome://extensions, turn on Developer mode → Load unpacked → pick the folder. Two buttons: “Save this job” puts the page on your board, “Fill this form” enters your name, contacts and saved answers. You send the form yourself.",
     "extDownload": "Download the extension",
     "bmTitle": "Or a bookmark, nothing to install",
     "bmSteps": "Drag the button below to your bookmarks bar. On a job page, click the bookmark — the board opens with that job.",
     "bmLabel": "+ To BigOffer"
+  },
+  "jobChat": {
+    "title": "Ask about this job",
+    "q1": "What matters most here, and do I fit?",
+    "q2": "What should I brush up on before the interview?",
+    "q3": "How do I answer about salary?",
+    "placeholder": "A question about the job…",
+    "send": "Send",
+    "thinking": "Thinking…",
+    "clear": "Clear",
+    "error_ai_unavailable": "AI is unavailable right now.",
+    "error_ai_limit": "Today’s AI limit is used up.",
+    "error_no_cv": "Upload your CV first.",
+    "error_not_found": "Job not found.",
+    "error_failed": "Couldn’t answer. Try again."
   }
 }
