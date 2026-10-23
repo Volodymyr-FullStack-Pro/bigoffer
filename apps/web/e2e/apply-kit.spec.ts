@@ -153,7 +153,8 @@ test('writes a CV for the job with every change marked, lets flagged lines go, a
   // ATS keywords: the CV had React (1 of 3); the tailored one adds GraphQL (2 of 3); Kafka is still missing.
   await expect(visible(page, 'tailored-cv-ats-after')).toContainText('2 of 3');
   await expect(visible(page, 'tailored-cv-ats')).toContainText('Kafka');
-  await visible(page, 'tailored-cv-remove').first().click();
+  // Drop the line the CV does not back.
+  await visible(page, 'cv-paper').locator('li[data-change="unverified"]').getByTestId('tailored-cv-remove').click();
   await expect(visible(page, 'tailored-cv-check')).toContainText('1 mark');
   await page.goto(`/en/cv/${jobId}`);
   await expect(page.getByTestId('cv-paper')).toContainText('Senior Full Stack Engineer [fake]');

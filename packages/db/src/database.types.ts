@@ -657,6 +657,11 @@ isOneToOne: false
             "bot_save_match":
 { Args: { "p_column_key": string,"p_match_id": string,"p_rank": string,"p_user_id": string }; Returns: string
                            },
+"company_open_jobs":
+{ Args: { "p_company_ids": (string)[] }; Returns: {
+              "company_id": string,"n": number
+            }[]
+                           },
 "consume_private_ai":
 { Args: { "p_limit": number }; Returns: boolean
                            },
@@ -671,11 +676,6 @@ isOneToOne: false
                            },
 "hide_match":
 { Args: { "p_match_id": string }; Returns: string
-                           },
-"company_open_jobs":
-{ Args: { "p_company_ids": (string)[] }; Returns: {
-              "company_id": string,"n": number
-            }[]
                            },
 "jobs_to_enrich":
 { Args: { "p_job_ids"?: (string)[],"p_limit": number }; Returns: string[]
