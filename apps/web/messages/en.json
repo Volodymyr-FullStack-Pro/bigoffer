@@ -1182,7 +1182,11 @@
     "error_ai_limit": "Today’s generation limit is used up.",
     "error_no_cv": "Upload your CV in the profile first.",
     "error_not_found": "Job not found.",
-    "error_failed": "Couldn’t write the CV. Try again."
+    "error_failed": "Couldn’t write the CV. Try again.",
+    "atsTitle": "ATS keywords",
+    "atsBefore": "your CV {n} of {total}",
+    "atsAfter": "this one {n} of {total} ({pct}%)",
+    "atsMissing": "Still missing (add if you have it):"
   },
   "feedStats": {
     "label": "Summary",

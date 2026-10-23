@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react';
 import { pill } from '@/components/ui/pill';
 import { Link } from '@/i18n/navigation';
 import { generateTailoredCv, getTailoredCv, type KitError, saveTailoredCv } from './actions';
+import type { AtsScore } from './ats';
 import { CvPaper } from './cv-paper';
 
 /**
@@ -16,12 +17,17 @@ import { CvPaper } from './cv-paper';
 export function TailoredCvSection({ jobId, lang, contacts }: { jobId: string; lang: 'auto' | 'en' | 'uk' | 'ru'; contacts: string[] }) {
   const t = useTranslations('tailoredCv');
   const [cv, setCv] = useState<TailoredCv | null>(null);
+  const [ats, setAts] = useState<AtsScore | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<KitError | null>(null);
 
   useEffect(() => {
     let alive = true;
-    void getTailoredCv(jobId).then((c) => alive && c && setCv(c));
+    void getTailoredCv(jobId).then((c) => {
+      if (!alive || !c) return;
+      setCv(c.cv);
+      setAts(c.ats);
+    });
     return () => {
       alive = false;
     };
@@ -32,8 +38,10 @@ export function TailoredCvSection({ jobId, lang, contacts }: { jobId: string; la
     setError(null);
     const res = await generateTailoredCv(jobId, lang).catch(() => ({ ok: false as const, error: 'failed' as const }));
     setLoading(false);
-    if (res.ok) setCv(res.cv);
-    else setError(res.error);
+    if (res.ok) {
+      setCv(res.cv);
+      setAts(res.ats);
+    } else setError(res.error);
   };
 
   const drop = (what: { skill: string } | { role: number; bullet: number }) => {
@@ -43,7 +51,9 @@ export function TailoredCvSection({ jobId, lang, contacts }: { jobId: string; la
         ? { ...cv, skills: cv.skills.filter((s) => s.name !== what.skill) }
         : { ...cv, experience: cv.experience.map((r, i) => (i === what.role ? { ...r, bullets: r.bullets.filter((_, j) => j !== what.bullet) } : r)) };
     setCv(next);
-    void saveTailoredCv(jobId, next).catch(() => undefined);
+    void saveTailoredCv(jobId, next)
+      .then((r) => r.ats && setAts(r.ats))
+      .catch(() => undefined);
   };
 
   const unverified = cv ? cv.skills.filter((s) => !s.inProfile).length + cv.experience.flatMap((r) => r.bullets).filter((b) => b.change === 'unverified').length : 0;
@@ -72,6 +82,7 @@ export function TailoredCvSection({ jobId, lang, contacts }: { jobId: string; la
       {error && <p role="alert" className="text-sm text-danger">{t(`error_${error}`)}</p>}
       {cv && (
         <>
+          {ats && <AtsBar ats={ats} />}
           <p className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
             <span className="flex items-center gap-1.5"><span aria-hidden className="size-3 rounded bg-[#fdf0c8]" />{t('legendBoosted')}</span>
             <span className="flex items-center gap-1.5"><span aria-hidden className="size-3 rounded bg-[#fde2e2]" />{t('legendUnverified')}</span>
@@ -100,5 +111,30 @@ export function TailoredCvSection({ jobId, lang, contacts }: { jobId: string; la
         </>
       )}
     </section>
+  );
+}
+
+/** "ATS keywords: 9 of 14 in your CV → 13 of 14 in this one", with the ones still missing. */
+function AtsBar({ ats }: { ats: AtsScore }) {
+  const t = useTranslations('tailoredCv');
+  const pct = (n: number) => Math.round((n / ats.total) * 100);
+  return (
+    <div data-testid="tailored-cv-ats" className="flex flex-col gap-2 rounded-lg bg-muted px-3 py-2.5 text-sm">
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <span className="font-semibold">{t('atsTitle')}</span>
+        <span className="tabular-nums text-muted-foreground">
+          {t('atsBefore', { n: ats.before, total: ats.total })} → <b data-testid="tailored-cv-ats-after" className="text-foreground">{t('atsAfter', { n: ats.after, total: ats.total, pct: pct(ats.after) })}</b>
+        </span>
+      </div>
+      <div aria-hidden className="relative h-2 overflow-hidden rounded-full bg-background">
+        <span className="absolute inset-y-0 left-0 rounded-full bg-status-neutral/50" style={{ width: `${pct(ats.before)}%` }} />
+        <span className="absolute inset-y-0 left-0 rounded-full bg-brand transition-[width]" style={{ width: `${pct(ats.after)}%`, opacity: 0.85 }} />
+      </div>
+      {ats.missing.length > 0 && (
+        <p className="text-xs text-muted-foreground">
+          {t('atsMissing')} <span className="font-medium text-foreground">{ats.missing.slice(0, 8).join(', ')}</span>
+        </p>
+      )}
+    </div>
   );
 }

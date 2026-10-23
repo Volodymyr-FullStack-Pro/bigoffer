@@ -10,6 +10,7 @@ import { cvSignedUrl, loadPrimaryCv } from '@/lib/cv';
 import { createClient } from '@/lib/supabase/server';
 import { parseUiPrefs } from '@/lib/ui-prefs';
 import { z } from 'zod';
+import { type AtsScore, atsScore } from './ats';
 import { kitCandidate } from './template';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -256,17 +257,25 @@ const tailoredSchema = z.object({
   languages: z.array(z.object({ language: z.string().max(40), level: z.string().max(40) })).max(10),
 });
 
-/** The CV already written for this job, if any. */
-export async function getTailoredCv(jobId: string): Promise<TailoredCv | null> {
+/** The job's technologies, for the ATS keyword check. */
+async function jobKeywords(supabase: Supabase, jobId: string): Promise<string[]> {
+  const { data } = await supabase.from('jobs').select('skills').eq('id', jobId).maybeSingle();
+  return data?.skills ?? [];
+}
+
+/** The CV already written for this job, if any, with its ATS keyword check against the original CV. */
+export async function getTailoredCv(jobId: string): Promise<{ cv: TailoredCv; ats: AtsScore | null } | null> {
   if (!(await getUserId()) || !UUID.test(jobId)) return null;
   const supabase = await createClient();
   const { data } = await supabase.from('tailored_cvs').select('cv').eq('job_id', jobId).maybeSingle();
   const parsed = tailoredSchema.safeParse(data?.cv);
-  return parsed.success ? parsed.data : null;
+  if (!parsed.success) return null;
+  const [keywords, original] = await Promise.all([jobKeywords(supabase, jobId), loadPrimaryCv(supabase)]);
+  return { cv: parsed.data, ats: original?.parsed && keywords.length > 0 ? atsScore(keywords, original.parsed, parsed.data) : null };
 }
 
 /** Writes the CV for this job from the user's primary CV (private AI: the CV is personal data). */
-export async function generateTailoredCv(jobId: string, lang: 'auto' | 'en' | 'uk' | 'ru'): Promise<{ ok: true; cv: TailoredCv } | { ok: false; error: KitError }> {
+export async function generateTailoredCv(jobId: string, lang: 'auto' | 'en' | 'uk' | 'ru'): Promise<{ ok: true; cv: TailoredCv; ats: AtsScore | null } | { ok: false; error: KitError }> {
   const userId = await getUserId();
   if (!userId || !UUID.test(jobId) || !['auto', 'en', 'uk', 'ru'].includes(lang)) return { ok: false, error: 'not_found' };
   if (!privateAiAvailable()) return { ok: false, error: 'ai_unavailable' };
@@ -283,7 +292,8 @@ export async function generateTailoredCv(jobId: string, lang: 'auto' | 'en' | 'u
     const row = { lang: tailored.lang, cv: tailored as unknown as NonNullable<Json>, generated_at: new Date().toISOString() };
     const { error } = await supabase.from('tailored_cvs').upsert({ user_id: userId, job_id: jobId, ...row }, { onConflict: 'user_id,job_id' });
     if (error) return { ok: false, error: 'failed' };
-    return { ok: true, cv: tailored };
+    const keywords = await jobKeywords(supabase, jobId);
+    return { ok: true, cv: tailored, ats: keywords.length > 0 ? atsScore(keywords, cv.parsed, tailored) : null };
   } catch (err) {
     logFail('generateTailoredCv', err);
     return { ok: false, error: 'failed' };
@@ -291,11 +301,12 @@ export async function generateTailoredCv(jobId: string, lang: 'auto' | 'en' | 'u
 }
 
 /** Keeps the user's edits (a removed bullet or skill) so the PDF and a reload show the same CV. */
-export async function saveTailoredCv(jobId: string, cv: TailoredCv): Promise<boolean> {
-  if (!(await getUserId()) || !UUID.test(jobId)) return false;
+export async function saveTailoredCv(jobId: string, cv: TailoredCv): Promise<{ ok: boolean; ats: AtsScore | null }> {
+  if (!(await getUserId()) || !UUID.test(jobId)) return { ok: false, ats: null };
   const parsed = tailoredSchema.safeParse(cv);
-  if (!parsed.success) return false;
+  if (!parsed.success) return { ok: false, ats: null };
   const supabase = await createClient();
   const { data, error } = await supabase.from('tailored_cvs').update({ cv: parsed.data as unknown as NonNullable<Json> }).eq('job_id', jobId).select('id');
-  return !error && (data?.length ?? 0) > 0;
+  const [keywords, original] = await Promise.all([jobKeywords(supabase, jobId), loadPrimaryCv(supabase)]);
+  return { ok: !error && (data?.length ?? 0) > 0, ats: original?.parsed && keywords.length > 0 ? atsScore(keywords, original.parsed, parsed.data) : null };
 }

@@ -11,7 +11,7 @@ const CONTACT_KEYS = ['email', 'phone', 'linkedin', 'github', 'portfolio', 'tele
 
 export async function generateMetadata({ params }: { params: Promise<{ jobId: string }> }): Promise<Metadata> {
   const { jobId } = await params;
-  const cv = await getTailoredCv(jobId);
+  const cv = (await getTailoredCv(jobId))?.cv;
   // The browser names the saved PDF after the title.
   return { title: cv?.fullName ? `${cv.fullName} — CV` : 'CV', robots: { index: false } };
 }
@@ -20,7 +20,7 @@ export async function generateMetadata({ params }: { params: Promise<{ jobId: st
 export default async function TailoredCvPage({ params }: { params: Promise<{ jobId: string }> }) {
   const { jobId } = await params;
   const userId = await requireUserId();
-  const cv = await getTailoredCv(jobId);
+  const cv = (await getTailoredCv(jobId))?.cv;
   if (!cv) notFound();
   const t = await getTranslations();
   const supabase = await createClient();
