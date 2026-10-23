@@ -278,7 +278,11 @@
     "skillAdded": "{skill} додано в профіль — оцінки оновляться за хвилину.",
     "appliedAsk": "Ти подався на цю вакансію?",
     "appliedAskYes": "Так, відгук надіслано",
-    "appliedAskNo": "Ще ні"
+    "appliedAskNo": "Ще ні",
+    "marketPay": "Ринок для цієї ролі й рівня: ${p25}–{p75}, медіана ${median} ({n} вакансій із зарплатою)",
+    "market_below": "нижче ринку",
+    "market_within": "у ринку",
+    "market_above": "вище ринку"
   },
   "comingSoon": {
     "badge": "Скоро",

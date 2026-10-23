@@ -12,6 +12,8 @@ export type FeedMatch = {
   location: string | null;
   remoteType: RemoteType;
   seniority: 'intern' | 'junior' | 'middle' | 'senior' | 'lead' | null;
+  /** Pay for this role and level on the market (recent jobs with a stated salary); null without enough data. */
+  market?: { p25: number; median: number; p75: number; n: number } | null;
   salaryMinUsd: number | null;
   salaryMaxUsd: number | null;
   /** Djinni's relative pay level (1 below average … 4 top) when no amount is published. */

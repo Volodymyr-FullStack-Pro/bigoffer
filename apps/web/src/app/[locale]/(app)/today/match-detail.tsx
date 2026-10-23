@@ -328,6 +328,25 @@ function PostingLinks({ match, onAction }: { match: FeedMatch; onAction?: (a: Ma
   );
 }
 
+/** "Market for Middle Full-stack: $2,500–3,800, median $3,200 (34 jobs)", and where this job's pay sits in it. */
+function MarketPay({ match }: { match: FeedMatch }) {
+  const tf = useTranslations('feed');
+  const m = match.market;
+  if (!m) return null;
+  const pay = match.salaryMaxUsd ?? match.salaryMinUsd;
+  const where = pay == null ? null : pay < m.p25 ? 'below' : pay > m.p75 ? 'above' : 'within';
+  return (
+    <p data-testid="market-pay" data-where={where ?? undefined} className="text-sm text-muted-foreground">
+      {tf('marketPay', { p25: m.p25, p75: m.p75, median: m.median, n: m.n })}
+      {where && (
+        <span className={`ml-2 rounded-full px-2 py-0.5 text-xs font-semibold ${where === 'below' ? 'bg-warning/20 text-warning' : where === 'above' ? 'bg-success/15 text-success' : 'bg-muted text-foreground'}`}>
+          {tf(`market_${where}`)}
+        </span>
+      )}
+    </p>
+  );
+}
+
 export function MatchDetail({
   match,
   onAction,
@@ -403,6 +422,7 @@ export function MatchDetail({
           </span>
         </p>
       </div>
+      <MarketPay match={match} />
       {match.summary && (
         <TextGenerateEffect
           key={`summary-${match.id}`}

@@ -278,7 +278,11 @@
     "skillAdded": "{skill} добавлен в профиль — оценки обновятся через минуту.",
     "appliedAsk": "Ты откликнулся на эту вакансию?",
     "appliedAskYes": "Да, отклик отправлен",
-    "appliedAskNo": "Ещё нет"
+    "appliedAskNo": "Ещё нет",
+    "marketPay": "Рынок для этой роли и уровня: ${p25}–{p75}, медиана ${median} ({n} вакансий с зарплатой)",
+    "market_below": "ниже рынка",
+    "market_within": "в рынке",
+    "market_above": "выше рынка"
   },
   "comingSoon": {
     "badge": "Скоро",

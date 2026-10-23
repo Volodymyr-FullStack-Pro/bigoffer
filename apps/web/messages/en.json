@@ -278,7 +278,11 @@
     "skillAdded": "{skill} added to your profile — scores update in a minute.",
     "appliedAsk": "Did you apply to this job?",
     "appliedAskYes": "Yes, application sent",
-    "appliedAskNo": "Not yet"
+    "appliedAskNo": "Not yet",
+    "marketPay": "Market for this role and level: ${p25}–{p75}, median ${median} ({n} jobs with a salary)",
+    "market_below": "below market",
+    "market_within": "at market",
+    "market_above": "above market"
   },
   "comingSoon": {
     "badge": "Soon",

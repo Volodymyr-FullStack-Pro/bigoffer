@@ -707,6 +707,9 @@ isOneToOne: false
 "restore_match":
 { Args: { "p_application_id"?: string,"p_match_id": string }; Returns: undefined
                            },
+"salary_points":
+{ Args: Record<PropertyKey, never>; Returns: Json
+                           },
 "save_match_to_board":
 { Args: { "p_column_key": string,"p_match_id": string,"p_rank": string }; Returns: {
               "application_id": string,"created": boolean

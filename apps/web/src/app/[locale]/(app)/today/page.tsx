@@ -11,6 +11,7 @@ import { FeedStats } from './feed-stats';
 import { feedStats } from './feed-stats-data';
 import { SkillAnswers, SkillTipBanner } from './skill-answers';
 import { missingSkillTip } from './skill-tips';
+import { marketBands, marketKey } from './market-salary';
 import { Feed } from './feed';
 import { mergeMatches } from './feed-filter';
 import { SearchNow } from './search-now';
@@ -48,7 +49,7 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
     supabase
       .from('job_matches')
       .select(
-        'id, job_id, score, created_at, breakdown, explanation, search_profile_id, jobs!inner(title, location, remote_type, seniority, salary_min_usd, salary_max_usd, posted_at, first_seen_at, refreshed_at, summary, skills, description_text, tags, is_job, company_is_placeholder, companies(name), job_postings(source_id, url))',
+        'id, job_id, score, created_at, breakdown, explanation, search_profile_id, jobs!inner(title, role, location, remote_type, seniority, salary_min_usd, salary_max_usd, posted_at, first_seen_at, refreshed_at, summary, skills, description_text, tags, is_job, company_is_placeholder, companies(name), job_postings(source_id, url))',
       )
       .in('state', states)
       .eq('jobs.status', 'active')
@@ -57,7 +58,7 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
       // a bumped vacancy first published weeks ago, or a match from last week that was never opened, still shows.
       .gte('jobs.last_seen_at', since);
   const cutoff = since24h();
-  const [{ data: bestRows }, { data: freshRows, error: freshError }, { data: profiles }, { data: me }, searchStatus, cv, { data: apps }] = await Promise.all([
+  const [{ data: bestRows }, { data: freshRows, error: freshError }, { data: profiles }, { data: me }, searchStatus, cv, { data: apps }, { data: salaryPoints }] = await Promise.all([
     baseQuery().order('score', { ascending: false }).order('created_at', { ascending: false }).limit(200),
     // Fresh jobs can score below the top 200, so fetch them separately for the "New in 24h" filter and "Newest" sort.
     // Same rule as the client filter: posted within 24h, or no posted_at and first seen within 24h.
@@ -70,7 +71,15 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
     getSearchNowStatus(),
     loadPrimaryCv(supabase),
     supabase.from('applications').select('job_id, title, company, source_id, applied_at, first_response_at, outcome, board_columns(key, title)'),
+    supabase.rpc('salary_points'),
   ]);
+  // Market pay per role and level, from the stated salaries of recent jobs.
+  const market = marketBands(
+    (Array.isArray(salaryPoints) ? salaryPoints : []).flatMap((x) => {
+      const q = x as { t?: unknown; r?: unknown; s?: unknown; v?: unknown };
+      return typeof q.t === 'string' && typeof q.v === 'number' ? [{ title: q.t, role: typeof q.r === 'string' ? q.r : null, seniority: typeof q.s === 'string' ? q.s : null, usd: q.v }] : [];
+    }),
+  );
   // What the profile rules hid (level, role, format, region, exclude word): shown on demand so nothing is lost silently.
   const { data: ruleHiddenRows } = await baseQuery(['hidden'])
     .not('breakdown->>excludedBy', 'is', null)
@@ -144,6 +153,10 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
       location: m.jobs.location,
       remoteType: REMOTE.find((r) => r === m.jobs.remote_type) ?? 'unknown',
       seniority: (SENIORITIES as readonly string[]).includes(m.jobs.seniority ?? '') ? (m.jobs.seniority as Seniority) : null,
+      market: (() => {
+        const key = marketKey(m.jobs.title, m.jobs.role, m.jobs.seniority);
+        return key ? (market.get(key) ?? null) : null;
+      })(),
       salaryMinUsd: m.jobs.salary_min_usd,
       salaryMaxUsd: m.jobs.salary_max_usd,
       summary: localized(m.jobs.summary as LocalizedText | null, locale) || null,
