@@ -82,7 +82,8 @@
     "soon": "soon",
     "signOut": "Sign out",
     "library": "Library",
-    "more": "More"
+    "more": "More",
+    "contacts": "Contacts"
   },
   "auth": {
     "title": "Sign in",
@@ -155,7 +156,8 @@
     "caughtUp": "You are all caught up. New jobs show up after the next scan; meanwhile, check your board.",
     "refreshed": "Refreshed {ago}: still hiring",
     "yearsGap": "{years}+ years required",
-    "reqCount": "{have} of {total} met"
+    "reqCount": "{have} of {total} met",
+    "hiring": "Actively hiring · {count, plural, one {# job} other {# jobs}} this month"
   },
   "feed": {
     "progress": "{done} / {total}",
@@ -278,7 +280,11 @@
     "skillAdded": "{skill} added to your profile — scores update in a minute.",
     "appliedAsk": "Did you apply to this job?",
     "appliedAskYes": "Yes, application sent",
-    "appliedAskNo": "Not yet"
+    "appliedAskNo": "Not yet",
+    "marketPay": "Market for this role and level: ${p25}–{p75}, median ${median} ({n} jobs with a salary)",
+    "market_below": "below market",
+    "market_within": "at market",
+    "market_above": "above market"
   },
   "comingSoon": {
     "badge": "Soon",
@@ -977,7 +983,10 @@
     "works_score": "Match score",
     "works_score_high": "80% and up",
     "works_score_mid": "60–79%",
-    "works_score_low": "Below 60%"
+    "works_score_low": "Below 60%",
+    "works_cv": "CV",
+    "works_cv_tailored": "CV for the job",
+    "works_cv_original": "Your usual CV"
   },
   "library": {
     "title": "Library",
@@ -1174,5 +1183,50 @@
     "week": "Applications this week",
     "weekHint": "Keep it up",
     "weekNone": "None yet"
+  },
+  "tailoredCv": {
+    "title": "CV for this job",
+    "intro": "We rewrite your CV for this job: the skills it asks for first, your experience in its words. Numbers, dates and employers stay as they are, and every change is visible.",
+    "generate": "Write the CV",
+    "again": "Write it again",
+    "writing": "Writing the CV…",
+    "download": "Download PDF",
+    "legendBoosted": "strengthened",
+    "legendUnverified": "not in your CV — check",
+    "check": "Check {count, plural, one {# mark} other {# marks}} before sending",
+    "remove": "Remove",
+    "experience": "Experience",
+    "skills": "Skills",
+    "languages": "Languages",
+    "summary": "Summary",
+    "present": "present",
+    "savePdf": "Save PDF",
+    "savePdfHint": "In the print dialog choose “Save as PDF”. The text stays text, so applicant tracking systems can read it.",
+    "error_ai_unavailable": "AI is unavailable right now.",
+    "error_ai_limit": "Today’s generation limit is used up.",
+    "error_no_cv": "Upload your CV in the profile first.",
+    "error_not_found": "Job not found.",
+    "error_failed": "Couldn’t write the CV. Try again.",
+    "atsTitle": "ATS keywords",
+    "atsBefore": "your CV {n} of {total}",
+    "atsAfter": "this one {n} of {total} ({pct}%)",
+    "atsMissing": "Still missing (add if you have it):"
+  },
+  "contacts": {
+    "title": "Contacts",
+    "intro": "Recruiters and everyone who wrote to you: which applications they are on and when they last got in touch.",
+    "empty": "Nobody yet. Contacts show up once you add a recruiter to a board card or log their message.",
+    "toBoard": "To the board",
+    "profile": "Profile"
+  },
+  "saveButton": {
+    "title": "Save jobs from any site",
+    "intro": "LinkedIn, company career pages, Telegram channels: one browser button and the job is on your board. DOU, Djinni and robota.ua are read in full; other sites by their title and description.",
+    "extTitle": "Chrome extension",
+    "extSteps": "Download and unzip, open chrome://extensions, turn on Developer mode → Load unpacked → pick the folder. Then press the BigOffer button on any job page.",
+    "extDownload": "Download the extension",
+    "bmTitle": "Or a bookmark, nothing to install",
+    "bmSteps": "Drag the button below to your bookmarks bar. On a job page, click the bookmark — the board opens with that job.",
+    "bmLabel": "+ To BigOffer"
   }
 }

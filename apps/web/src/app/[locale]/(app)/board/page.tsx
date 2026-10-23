@@ -8,7 +8,9 @@ import type { BoardCard, BoardColumn, BoardLabel } from './board-types';
 import { isReplyKind } from './reply-kinds';
 
 export default async function BoardPage({ searchParams }: { searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) {
-  const { card: openCard } = await searchParams;
+  const { card: openCard, add, title: addTitle } = await searchParams;
+  // The browser button sends the page the user was on; only web links are taken.
+  const addLink = typeof add === 'string' && /^https?:\/\//i.test(add) && add.length <= 2000 ? { url: add, title: typeof addTitle === 'string' ? addTitle.slice(0, 200) : '' } : null;
   const userId = await requireUserId();
   const t = await getTranslations('board');
   const rawLocale = await getLocale();
@@ -89,6 +91,7 @@ export default async function BoardPage({ searchParams }: { searchParams: Promis
         timeZone={await getTimeZone()}
         savedSort={parseUiPrefs(profile?.ui_prefs).boardSort}
         initialOpenId={typeof openCard === 'string' ? openCard : null}
+        addLink={addLink}
       />
     </section>
   );

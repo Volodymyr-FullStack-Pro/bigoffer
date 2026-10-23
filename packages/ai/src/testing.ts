@@ -51,6 +51,14 @@ export function fakeResponder(req: FakeRequest): unknown {
         experience: [{ company: 'Acme', title: 'Senior Developer', start: '2021', end: null, highlights: ['Built the payments platform'] }],
         contacts: { email: 'test.user@example.com', phone: null, linkedin: 'https://www.linkedin.com/in/test-user', github: null, portfolio: null, telegram: null },
       };
+    case 'tailor_cv':
+      return {
+        lang: 'en',
+        headline: 'Senior Full Stack Engineer [fake]',
+        summary: 'Full stack developer with six years of React and Node.js. [fake]',
+        skills: ['React', 'Node.js', 'GraphQL'],
+        experience: [{ index: 0, bullets: [{ text: 'Built the payments platform in React and Node.js', change: 'reworded' }, { text: 'Designed GraphQL APIs', change: 'unverified' }] }],
+      };
     case 'cover_letter':
       return { lang: 'en', cover_letter: 'Hello! I am a full stack developer with six years of React and Node.js. [fake]' };
     case 'apply_kit':

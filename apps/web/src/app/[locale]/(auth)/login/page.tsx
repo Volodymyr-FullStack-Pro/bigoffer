@@ -1,14 +1,14 @@
 import { safeRedirectPath } from '@jp/core';
 import { getTranslations } from 'next-intl/server';
-import { FlipWords } from '@/components/aceternity/flip-words';
-import { Spotlight } from '@/components/aceternity/spotlight-new';
+import { WatchingB } from '@/components/landing/watching-b';
+import { Link } from '@/i18n/navigation';
 import { LegalLinks } from '@/components/legal-links';
 import { LocaleSwitcher } from '@/components/locale-switcher';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { publicEnv } from '@/env';
 import { GoogleButton } from './google-button';
 import { LoginForm } from './login-form';
-import { Logo } from '@/components/brand/logo';
+import { Coin, Logo } from '@/components/brand/logo';
 
 export default async function LoginPage({
   searchParams,
@@ -21,30 +21,31 @@ export default async function LoginPage({
   const t = await getTranslations('auth');
   const tApp = await getTranslations('app');
   const tTheme = await getTranslations('theme');
+  const tLanding = await getTranslations('landing');
 
   return (
-    <div className="relative min-h-dvh overflow-hidden">
-      <Spotlight />
-      <header className="glass sticky top-0 z-20 rounded-none border-x-0 border-t-0">
-        <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
-          <span>
+    <div className="min-h-dvh">
+      <header className="border-b border-border">
+        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
+          <Link href="/" aria-label={tApp('name')}>
             <Logo name={tApp('name')} />
-          </span>
+          </Link>
           <div className="flex items-center gap-2">
             <LocaleSwitcher />
             <ThemeToggle labels={{ light: tTheme('light'), dark: tTheme('dark'), system: tTheme('system') }} />
           </div>
         </div>
       </header>
-      <main className="mx-auto flex max-w-6xl flex-col items-center gap-12 px-4 pt-16 pb-16 text-center md:pt-24">
-        {/* Apple-style hero: one big headline with a rotating word, a soft spotlight behind it. */}
-        <h2 className="max-w-4xl font-display text-5xl leading-[1.05] font-semibold tracking-[-0.035em] text-balance md:text-7xl">
-          <span>{tApp('heroBefore')} </span>
-          <FlipWords words={tApp('heroWords').split(',')} className="text-brand" />
-          <span> {tApp('heroAfter')}</span>
-        </h2>
-        <p className="-mt-6 max-w-xl text-lg text-muted-foreground md:text-xl">{tApp('tagline')}</p>
-        <section className="glass flex w-full max-w-md flex-col gap-5 rounded-3xl p-6 text-left shadow-[var(--shadow)] sm:p-8">
+      {/* The brand's pair beside the form: the happy b watching, the coin it found. */}
+      <main className="mx-auto grid max-w-6xl items-center gap-10 px-4 py-12 md:grid-cols-[minmax(0,1fr)_minmax(0,28rem)] md:py-20">
+        <div className="flex flex-col items-start gap-6">
+          <div className="flex items-end gap-1">
+            <WatchingB className="h-36 w-auto md:h-56" />
+            <Coin className="landing-coin mb-1 size-16 md:size-24" />
+          </div>
+          <h2 className="text-4xl leading-[1.05] md:text-5xl">{tLanding('heroTitle')}</h2>
+        </div>
+        <section className="brutal flex w-full flex-col gap-5 p-6 sm:p-8">
           <div>
             <h1 className="text-2xl">{t('title')}</h1>
             <p className="mt-1 text-muted-foreground">{t('subtitle')}</p>
@@ -61,8 +62,8 @@ export default async function LoginPage({
               <GoogleButton next={next} />
             </>
           )}
+          <LegalLinks className="text-xs text-muted-foreground" />
         </section>
-        <LegalLinks className="text-xs text-muted-foreground" />
       </main>
     </div>
   );

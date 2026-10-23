@@ -1,16 +1,23 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useModalDialog } from './use-modal-dialog';
 import { createApplication, previewJob } from './actions';
 import type { BoardCard, BoardColumn } from './board-types';
 
-export function AddCardDialog({ columns, onCreated, onClose }: { columns: BoardColumn[]; onCreated: (c: BoardCard) => void; onClose: () => void }) {
+export function AddCardDialog({ columns, onCreated, onClose, initialUrl = '', initialTitle = '' }: {
+  columns: BoardColumn[];
+  onCreated: (c: BoardCard) => void;
+  onClose: () => void;
+  /** From the browser button (?add=…&title=…): the page the user was on, read at once. */
+  initialUrl?: string;
+  initialTitle?: string;
+}) {
   const t = useTranslations('board');
   const [dialogRef, onDialogCancel] = useModalDialog(onClose);
-  const [url, setUrl] = useState('');
-  const [title, setTitle] = useState('');
+  const [url, setUrl] = useState(initialUrl);
+  const [title, setTitle] = useState(initialTitle);
   const [company, setCompany] = useState('');
   const [location, setLocation] = useState('');
   const [salary, setSalary] = useState('');
@@ -41,6 +48,15 @@ export function AddCardDialog({ columns, onCreated, onClose }: { columns: BoardC
     if (p.url) setUrl(p.url);
     if (p.jobId) setImported({ jobId: p.jobId, sourceId: p.sourceId, recruiter: p.recruiter });
   };
+
+  // Opened from the browser button: read the page right away, once.
+  const autoRead = useRef(false);
+  useEffect(() => {
+    if (!initialUrl || autoRead.current) return;
+    autoRead.current = true;
+    void fetchPreview(initialUrl);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialUrl]);
 
   return (
     <dialog ref={dialogRef} onCancel={onDialogCancel} aria-labelledby="add-title-h" data-testid="add-card-dialog" className="m-auto w-full max-w-lg bg-transparent p-4 text-foreground backdrop:bg-black/50">

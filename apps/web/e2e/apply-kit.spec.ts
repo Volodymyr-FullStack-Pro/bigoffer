@@ -136,3 +136,27 @@ test('no recruiter found: no contact block', async ({ context, page, isMobile })
   await expect(visible(page, 'match-detail')).toBeVisible();
   await expect(page.getByTestId('people-search')).toHaveCount(0);
 });
+
+test('writes a CV for the job with every change marked, lets flagged lines go, and opens it as a printable page', async ({ context, page, isMobile }) => {
+  const email = uniqueEmail('kit-cv');
+  await loginAs(context, email);
+  await seedCv(email);
+  const { jobId } = await seedMatch(email, { score: 90, skills: ['React', 'GraphQL', 'Kafka'] });
+  await page.goto('/en/today');
+  await openKit(page, isMobile);
+  await visible(page, 'tailored-cv-generate').click();
+  const paper = visible(page, 'cv-paper');
+  await expect(paper).toContainText('Senior Full Stack Engineer [fake]');
+  // Employers come from the CV itself; GraphQL (not in the CV) and the unverified line are both flagged.
+  await expect(paper).toContainText('Acme');
+  await expect(visible(page, 'tailored-cv-check')).toContainText('2 marks');
+  // ATS keywords: the CV had React (1 of 3); the tailored one adds GraphQL (2 of 3); Kafka is still missing.
+  await expect(visible(page, 'tailored-cv-ats-after')).toContainText('2 of 3');
+  await expect(visible(page, 'tailored-cv-ats')).toContainText('Kafka');
+  // Drop the line the CV does not back.
+  await visible(page, 'cv-paper').locator('li[data-change="unverified"]').getByTestId('tailored-cv-remove').click();
+  await expect(visible(page, 'tailored-cv-check')).toContainText('1 mark');
+  await page.goto(`/en/cv/${jobId}`);
+  await expect(page.getByTestId('cv-paper')).toContainText('Senior Full Stack Engineer [fake]');
+  await expect(page.getByTestId('cv-print')).toBeVisible();
+});

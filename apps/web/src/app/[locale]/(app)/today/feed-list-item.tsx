@@ -1,6 +1,6 @@
 'use client';
 
-import { Flag, RefreshCw } from 'lucide-react';
+import { Flag, RefreshCw, TrendingUp } from 'lucide-react';
 import { sourceInfo } from '@jp/core';
 import { useFormatter, useNow, useTranslations } from 'next-intl';
 import { ScoreMeter } from '@/components/ui/score-meter';
@@ -44,6 +44,12 @@ export function FeedListItem({
       <span className="font-display text-[15px] leading-snug font-bold">{match.title}</span>
       {match.excludedBy && <HiddenReason reason={match.excludedBy} />}
       <DomainBadges domains={match.domains} perks={match.perks} />
+      {match.companyHiring != null && (
+        <span data-testid="hiring-badge" className="self-start rounded-full bg-brand/15 px-2 py-0.5 text-xs font-semibold text-foreground ring-1 ring-inset ring-brand/40">
+          <TrendingUp aria-hidden className="mr-1 inline size-3 -translate-y-px text-success" />
+          {t('hiring', { count: match.companyHiring })}
+        </span>
+      )}
       {match.onBoard !== null && (
         <span
           data-testid="on-board-badge"

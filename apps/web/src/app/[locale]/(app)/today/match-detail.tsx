@@ -328,6 +328,25 @@ function PostingLinks({ match, onAction }: { match: FeedMatch; onAction?: (a: Ma
   );
 }
 
+/** "Market for Middle Full-stack: $2,500–3,800, median $3,200 (34 jobs)", and where this job's pay sits in it. */
+function MarketPay({ match }: { match: FeedMatch }) {
+  const tf = useTranslations('feed');
+  const m = match.market;
+  if (!m) return null;
+  const pay = match.salaryMaxUsd ?? match.salaryMinUsd;
+  const where = pay == null ? null : pay < m.p25 ? 'below' : pay > m.p75 ? 'above' : 'within';
+  return (
+    <p data-testid="market-pay" data-where={where ?? undefined} className="text-sm text-muted-foreground">
+      {tf('marketPay', { p25: m.p25, p75: m.p75, median: m.median, n: m.n })}
+      {where && (
+        <span className={`ml-2 rounded-full px-2 py-0.5 text-xs font-semibold ${where === 'below' ? 'bg-warning/20 text-warning' : where === 'above' ? 'bg-success/15 text-success' : 'bg-muted text-foreground'}`}>
+          {tf(`market_${where}`)}
+        </span>
+      )}
+    </p>
+  );
+}
+
 export function MatchDetail({
   match,
   onAction,
@@ -382,7 +401,16 @@ export function MatchDetail({
             )}
           </p>
         )}
-        {!match.companyIsPlaceholder && <p className="text-muted-foreground">{match.company}</p>}
+        {!match.companyIsPlaceholder && (
+          <p className="flex flex-wrap items-center gap-2 text-muted-foreground">
+            {match.company}
+            {match.companyHiring != null && (
+              <span data-testid="hiring-detail" className="rounded-full bg-brand/15 px-2 py-0.5 text-xs font-semibold text-foreground ring-1 ring-inset ring-brand/40">
+                {t('hiring', { count: match.companyHiring })}
+              </span>
+            )}
+          </p>
+        )}
         <p className="flex flex-wrap items-center gap-x-4 gap-y-1.5 tabular-nums text-xs text-muted-foreground">
           {[...new Set(match.postings.map((p) => p.sourceId))].map((id) => (
             <SourceBadge key={id} sourceId={id} />
@@ -403,6 +431,7 @@ export function MatchDetail({
           </span>
         </p>
       </div>
+      <MarketPay match={match} />
       {match.summary && (
         <TextGenerateEffect
           key={`summary-${match.id}`}
