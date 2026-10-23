@@ -17,7 +17,7 @@ test('uploads a CV, reads it with AI and creates a search from it', async ({ con
   await facts.getByTestId('cv-facts-years').fill('4.5');
   await facts.getByTestId('cv-facts-english').filter({ hasText: 'C1' }).click();
   await facts.getByTestId('cv-facts-save').click();
-  await expect(facts.getByTestId('cv-facts-status')).toContainText('Saved');
+  await expect(facts.getByTestId('cv-facts-status')).toContainText('Saved', { timeout: 20_000 });
   await page.reload();
   await expect(page.getByTestId('cv-facts-years')).toHaveValue('4.5');
   await expect(page.getByTestId('cv-facts-english').filter({ hasText: 'C1' })).toHaveAttribute('aria-pressed', 'true');

@@ -290,8 +290,15 @@ export async function generateTailoredCv(jobId: string, lang: 'auto' | 'en' | 'u
     const { data: profile } = await supabase.from('profiles').select('full_name').eq('id', userId).single();
     const tailored: TailoredCv = { ...out, fullName: profile?.full_name?.trim() || out.fullName };
     const row = { lang: tailored.lang, cv: tailored as unknown as NonNullable<Json>, generated_at: new Date().toISOString() };
-    const { error } = await supabase.from('tailored_cvs').upsert({ user_id: userId, job_id: jobId, ...row }, { onConflict: 'user_id,job_id' });
-    if (error) return { ok: false, error: 'failed' };
+    // Insert, or update an existing one: an upsert would need update rights on user_id and job_id, which users lack.
+    const { data: existing } = await supabase.from('tailored_cvs').select('id').eq('job_id', jobId).maybeSingle();
+    const { error } = existing
+      ? await supabase.from('tailored_cvs').update(row).eq('id', existing.id)
+      : await supabase.from('tailored_cvs').insert({ user_id: userId, job_id: jobId, ...row });
+    if (error) {
+      console.error('generateTailoredCv store failed', error.code);
+      return { ok: false, error: 'failed' };
+    }
     const keywords = await jobKeywords(supabase, jobId);
     return { ok: true, cv: tailored, ats: keywords.length > 0 ? atsScore(keywords, cv.parsed, tailored) : null };
   } catch (err) {
