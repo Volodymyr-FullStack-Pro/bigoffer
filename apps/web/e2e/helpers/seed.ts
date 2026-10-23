@@ -89,7 +89,7 @@ export async function countApplications(email: string): Promise<number> {
 
 export async function seedApplication(
   email: string,
-  opts: { column?: string; title?: string; company?: string; appliedDaysAgo?: number; nextActionInHours?: number; sourceId?: string } = {},
+  opts: { column?: string; title?: string; company?: string; appliedDaysAgo?: number; nextActionInHours?: number; sourceId?: string; contactName?: string } = {},
 ) {
   const db = admin();
   const userId = await userIdByEmail(email);
@@ -110,6 +110,7 @@ export async function seedApplication(
       source_id: opts.sourceId ?? null,
       applied_at: opts.appliedDaysAgo != null ? new Date(Date.now() - opts.appliedDaysAgo * day).toISOString() : null,
       next_action_at: opts.nextActionInHours != null ? new Date(Date.now() + opts.nextActionInHours * 3600 * 1000).toISOString() : null,
+      ...(opts.contactName ? { contact: { name: opts.contactName } } : {}),
     })
     .select('id')
     .single();

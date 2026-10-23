@@ -25,7 +25,7 @@ type PendingReject = { id: string; columnId: string; rank: string; reasons: Reje
 /** The stage a rejection most likely happened at, from where the card was. */
 const STAGE_BY_COLUMN: Record<string, RejectionStage> = { saved: 'application', applied: 'application', talking: 'screening', test_task: 'test_task', interview: 'technical' };
 
-export function Board({ columns, cards: initial, labels: initialLabels, rules, now: nowIso, timeZone, savedSort, initialOpenId = null }: {
+export function Board({ columns, cards: initial, labels: initialLabels, rules, now: nowIso, timeZone, savedSort, initialOpenId = null, addLink = null }: {
   columns: BoardColumn[];
   cards: BoardCard[];
   labels: BoardLabel[];
@@ -36,6 +36,8 @@ export function Board({ columns, cards: initial, labels: initialLabels, rules, n
   savedSort?: Record<string, 'smart' | 'manual'>;
   /** ?card=<id>: the card to open (a reload keeps the panel open). */
   initialOpenId?: string | null;
+  /** A page to save, from the browser button (?add=url&title=…): the add dialog opens with it. */
+  addLink?: { url: string; title: string } | null;
 }) {
   const t = useTranslations('board');
   const saveUiPrefs = useSaveUiPrefs();
@@ -53,7 +55,7 @@ export function Board({ columns, cards: initial, labels: initialLabels, rules, n
   const [activeId, setActiveId] = useState<string | null>(null);
   const [pendingReject, setPendingReject] = useState<PendingReject | null>(null);
   const [confetti, setConfetti] = useState(false);
-  const [adding, setAdding] = useState(false);
+  const [adding, setAdding] = useState(addLink !== null);
   const [filter, setFilter] = useState<BoardFilter>(EMPTY_FILTER);
   const { toast, show, close } = useToast();
   const sensors = useSensors(
@@ -319,7 +321,18 @@ export function Board({ columns, cards: initial, labels: initialLabels, rules, n
         />
       )}
       {pendingReject && <RejectDialog initialReasons={pendingReject.reasons} initialStage={pendingReject.stage} suggested={pendingReject.suggested} onConfirm={confirmReject} onCancel={() => setPendingReject(null)} />}
-      {adding && <AddCardDialog columns={columns} onCreated={(c) => setCards((list) => [...list, c])} onClose={() => setAdding(false)} />}
+      {adding && (
+        <AddCardDialog
+          columns={columns}
+          initialUrl={addLink?.url}
+          initialTitle={addLink?.title}
+          onCreated={(c) => setCards((list) => [...list, c])}
+          onClose={() => {
+            setAdding(false);
+            if (addLink) window.history.replaceState(null, '', window.location.pathname);
+          }}
+        />
+      )}
       {confetti && <Confetti onDone={() => setConfetti(false)} />}
       <Toast toast={toast} onClose={close} />
     </div>

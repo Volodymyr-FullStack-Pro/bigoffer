@@ -610,6 +610,31 @@ isOneToOne: false
                   Relationships: [
                     
                   ]
+                },"tailored_cvs": {
+                  Row: {
+                    "cv": NonNullable<Json>,"generated_at": string,"id": string,"job_id": string,"lang": string,"updated_at": string,"user_id": string
+                  }
+                  Insert: {
+                    "cv": NonNullable<Json>,"generated_at"?: string,"id"?: string,"job_id": string,"lang": string,"updated_at"?: string,"user_id": string
+                  }
+                  Update: {
+                    "cv"?: NonNullable<Json>,"generated_at"?: string,"id"?: string,"job_id"?: string,"lang"?: string,"updated_at"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "tailored_cvs_job_id_fkey"
+      columns: ["job_id"]
+isOneToOne: false
+      referencedRelation: "jobs"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "tailored_cvs_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"telegram_link_tokens": {
                   Row: {
                     "created_at": string,"expires_at": string,"token_hash": string,"user_id": string
@@ -631,6 +656,11 @@ isOneToOne: false
           Functions: {
             "bot_save_match":
 { Args: { "p_column_key": string,"p_match_id": string,"p_rank": string,"p_user_id": string }; Returns: string
+                           },
+"company_open_jobs":
+{ Args: { "p_company_ids": (string)[] }; Returns: {
+              "company_id": string,"n": number
+            }[]
                            },
 "consume_private_ai":
 { Args: { "p_limit": number }; Returns: boolean
@@ -681,6 +711,9 @@ isOneToOne: false
                            },
 "restore_match":
 { Args: { "p_application_id"?: string,"p_match_id": string }; Returns: undefined
+                           },
+"salary_points":
+{ Args: Record<PropertyKey, never>; Returns: Json
                            },
 "save_match_to_board":
 { Args: { "p_column_key": string,"p_match_id": string,"p_rank": string }; Returns: {

@@ -43,6 +43,13 @@ describe('cards moved without an applied date', () => {
 });
 
 describe('whatWorks', () => {
+  it('compares applications sent with a CV written for the job against the original CV', () => {
+    const b: AppRow = { column: 'applied', appliedAt: '2026-10-10T10:00:00Z', firstResponseAt: null, outcome: 'open', sourceId: 'djinni', rejectionReasons: [] };
+    const yes = { ...b, firstResponseAt: '2026-10-11T10:00:00Z' };
+    const w = whatWorks([{ ...yes, tailoredCv: true }, { ...yes, tailoredCv: true }, { ...b, tailoredCv: true }, { ...b, tailoredCv: false }, { ...b, tailoredCv: false }, { ...yes, tailoredCv: false }]);
+    expect(w.cv).toEqual([{ key: 'tailored', applied: 3, responded: 2 }, { key: 'original', applied: 3, responded: 1 }]);
+  });
+
   const base: AppRow = { column: 'applied', appliedAt: '2026-10-10T10:00:00Z', firstResponseAt: null, outcome: 'open', sourceId: 'djinni', rejectionReasons: [] };
   const answered = { ...base, firstResponseAt: '2026-10-11T10:00:00Z' };
   it('groups by letter, speed and score, hiding groups under the minimum', () => {
@@ -55,6 +62,7 @@ describe('whatWorks', () => {
     ];
     const w = whatWorks(rows);
     expect(w.letter).toEqual([{ key: 'full', applied: 3, responded: 2 }]);
+    expect(w.cv).toEqual([]);
     expect(w.speed).toEqual([{ key: 'day', applied: 3, responded: 2 }]);
     expect(w.score).toEqual([{ key: 'high', applied: 3, responded: 2 }]);
   });

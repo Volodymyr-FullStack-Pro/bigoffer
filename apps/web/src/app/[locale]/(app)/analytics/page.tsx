@@ -29,6 +29,8 @@ export default async function AnalyticsPage() {
   const jobIds = (apps ?? []).map((a) => a.job_id).filter((id): id is string => Boolean(id));
   const { data: matches } = jobIds.length ? await supabase.from('job_matches').select('job_id, score').in('job_id', jobIds.slice(0, 500)) : { data: [] };
   const scoreByJob = new Map((matches ?? []).map((m) => [m.job_id, m.score]));
+  const { data: tailored } = await supabase.from('tailored_cvs').select('job_id');
+  const tailoredJobs = new Set((tailored ?? []).map((x) => x.job_id));
   const rows: AppRow[] = (apps ?? []).map((a) => ({
     column: a.board_columns?.key ?? 'saved',
     appliedAt: a.applied_at,
@@ -39,9 +41,10 @@ export default async function AnalyticsPage() {
     letterKind: a.letter_kind === 'full' || a.letter_kind === 'short' || a.letter_kind === 'none' ? a.letter_kind : null,
     postedAt: a.jobs?.posted_at ?? null,
     score: a.job_id ? (scoreByJob.get(a.job_id) ?? null) : null,
+    tailoredCv: a.job_id ? tailoredJobs.has(a.job_id) : undefined,
   }));
   const works = whatWorks(rows);
-  const worksGroups: [string, WorksGroup[]][] = [['letter', works.letter], ['speed', works.speed], ['score', works.score]];
+  const worksGroups: [string, WorksGroup[]][] = [['letter', works.letter], ['cv', works.cv], ['speed', works.speed], ['score', works.score]];
   const goal = parseUiPrefs(me?.ui_prefs).genie?.goal ?? 5;
   const s = computeStats(rows, new Date(), me?.timezone ?? 'Europe/Kyiv');
   const peak = Math.max(goal, ...s.days.map((d) => d.count), 1);
@@ -155,7 +158,7 @@ export default async function AnalyticsPage() {
         {worksGroups.every(([, g]) => g.length === 0) ? (
           <p className="text-sm text-muted-foreground">{t('worksEmpty')}</p>
         ) : (
-          <div className="grid gap-5 md:grid-cols-3">
+          <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
             {worksGroups.filter(([, g]) => g.length > 0).map(([dim, groups]) => {
               const best = Math.max(...groups.map((g) => g.responded / g.applied));
               return (
