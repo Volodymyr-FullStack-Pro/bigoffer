@@ -497,3 +497,14 @@ test('a reload keeps the open card and an unsaved message', async ({ context, pa
   await expect(visible(page, 'card-panel')).toBeVisible();
   await expect(visible(page, 'reply-body')).toHaveValue('Thanks, I am free on Thursday.');
 });
+
+test('contacts lists the recruiter from a board card and links back to the card', async ({ context, page }) => {
+  const email = uniqueEmail('contacts');
+  await loginAs(context, email);
+  const { id } = await seedApplication(email, { title: 'Recruiter test', company: 'Acme Contacts', contactName: 'Olena Recruiter' });
+  await page.goto('/en/contacts');
+  const contact = page.getByTestId('contact').filter({ hasText: 'Olena Recruiter' });
+  await expect(contact).toContainText('Acme Contacts');
+  await contact.getByRole('link', { name: /Acme Contacts/ }).click();
+  await expect(page).toHaveURL(new RegExp(`/en/board\\?card=${id}`));
+});

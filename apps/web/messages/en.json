@@ -82,7 +82,8 @@
     "soon": "soon",
     "signOut": "Sign out",
     "library": "Library",
-    "more": "More"
+    "more": "More",
+    "contacts": "Contacts"
   },
   "auth": {
     "title": "Sign in",
@@ -1209,5 +1210,12 @@
     "atsBefore": "your CV {n} of {total}",
     "atsAfter": "this one {n} of {total} ({pct}%)",
     "atsMissing": "Still missing (add if you have it):"
+  },
+  "contacts": {
+    "title": "Contacts",
+    "intro": "Recruiters and everyone who wrote to you: which applications they are on and when they last got in touch.",
+    "empty": "Nobody yet. Contacts show up once you add a recruiter to a board card or log their message.",
+    "toBoard": "To the board",
+    "profile": "Profile"
   }
 }
