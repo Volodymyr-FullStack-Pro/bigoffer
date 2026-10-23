@@ -1220,10 +1220,10 @@
     "profile": "Profile"
   },
   "saveButton": {
-    "title": "Save jobs from any site",
+    "title": "Extension: save jobs and fill forms",
     "intro": "LinkedIn, company career pages, Telegram channels: one browser button and the job is on your board. DOU, Djinni and robota.ua are read in full; other sites by their title and description.",
     "extTitle": "Chrome extension",
-    "extSteps": "Download and unzip, open chrome://extensions, turn on Developer mode → Load unpacked → pick the folder. Then press the BigOffer button on any job page.",
+    "extSteps": "Download and unzip, open chrome://extensions, turn on Developer mode → Load unpacked → pick the folder. Two buttons: “Save this job” puts the page on your board, “Fill this form” enters your name, contacts and saved answers. You send the form yourself.",
     "extDownload": "Download the extension",
     "bmTitle": "Or a bookmark, nothing to install",
     "bmSteps": "Drag the button below to your bookmarks bar. On a job page, click the bookmark — the board opens with that job.",

@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      body { margin: 0; width: 260px; font: 14px/1.4 system-ui, sans-serif; background: #0f1116; color: #f5f5f7; }
+      main { display: flex; flex-direction: column; gap: 8px; padding: 14px; }
+      h1 { display: flex; align-items: center; gap: 8px; margin: 0 0 4px; font-size: 15px; }
+      button { border: 0; border-radius: 10px; padding: 10px 12px; font: 600 14px system-ui, sans-serif; cursor: pointer; text-align: left; }
+      .primary { background: #73f7b2; color: #0f1116; }
+      .quiet { background: #22252c; color: #f5f5f7; }
+      button:focus-visible { outline: 2px solid #73f7b2; outline-offset: 2px; }
+      p { margin: 2px 0 0; min-height: 1.4em; font-size: 12px; color: #a4b1c3; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1><img src="icons/32.png" width="20" height="20" alt="" /> BigOffer</h1>
+      <button id="save" class="primary" type="button">Save this job to the board</button>
+      <button id="fill" class="quiet" type="button">Fill this form</button>
+      <p id="status" role="status"></p>
+    </main>
+    <script src="popup.js"></script>
+  </body>
+</html>
