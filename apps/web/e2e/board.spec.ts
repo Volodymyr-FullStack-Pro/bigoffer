@@ -508,3 +508,12 @@ test('contacts lists the recruiter from a board card and links back to the card'
   await contact.getByRole('link', { name: /Acme Contacts/ }).click();
   await expect(page).toHaveURL(new RegExp(`/en/board\\?card=${id}`));
 });
+
+test('the browser button opens the add dialog with the page it was pressed on', async ({ context, page }) => {
+  await loginAs(context, uniqueEmail('board-add-link'));
+  await page.goto(`/en/board?add=${encodeURIComponent('https://example.com/careers/frontend')}&title=${encodeURIComponent('Frontend Engineer at Example')}`);
+  const dialog = page.getByTestId('add-card-dialog');
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByTestId('add-url')).toHaveValue(/example\.com/);
+  await expect(dialog.getByTestId('add-title')).not.toHaveValue('');
+});

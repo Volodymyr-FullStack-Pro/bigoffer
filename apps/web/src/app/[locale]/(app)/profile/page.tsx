@@ -5,6 +5,7 @@ import { requireUserId } from '@/lib/auth';
 import { createClient } from '@/lib/supabase/server';
 import { AnswerBank } from './answer-bank';
 import { CvSection } from './cv-section';
+import { SaveButtonSection } from './save-button';
 import { GenieSettings } from './genie-settings';
 import { ReminderSettings } from './reminder-settings';
 import { parseUiPrefs } from '@/lib/ui-prefs';
@@ -64,6 +65,7 @@ export default async function ProfilePage() {
       <AnswerBank answers={answers} locale={locale} />
       </div>
       <div className="flex min-w-0 flex-col gap-6">
+      <SaveButtonSection />
       <GenieSettings initial={parseUiPrefs(profile.ui_prefs).genie ?? {}} />
       <ReminderSettings
         initial={{ first: profile.follow_up_days?.[0] ?? 5, second: profile.follow_up_days?.[1] ?? 10, ghost: profile.ghost_after_days ?? 21 }}
