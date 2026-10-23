@@ -51,6 +51,8 @@ export function fakeResponder(req: FakeRequest): unknown {
         experience: [{ company: 'Acme', title: 'Senior Developer', start: '2021', end: null, highlights: ['Built the payments platform'] }],
         contacts: { email: 'test.user@example.com', phone: null, linkedin: 'https://www.linkedin.com/in/test-user', github: null, portfolio: null, telegram: null },
       };
+    case 'job_chat':
+      return { answer: 'The team builds React dashboards; your Acme payments work fits. Brush up on GraphQL. [fake]' };
     case 'tailor_cv':
       return {
         lang: 'en',
