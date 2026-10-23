@@ -400,3 +400,11 @@
     margin: 14mm 12mm;
   }
 }
+
+/* Landing radar: each new posting drops in at the top. */
+@keyframes radar-in {
+  from { opacity: 0; transform: translateY(-10px); background-color: color-mix(in srgb, var(--brand) 14%, transparent); }
+  to { opacity: 1; transform: translateY(0); background-color: transparent; }
+}
+.radar-in { animation: radar-in 600ms ease-out; }
+@media (prefers-reduced-motion: reduce) { .radar-in { animation: none; } }
