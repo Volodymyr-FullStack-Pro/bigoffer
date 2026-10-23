@@ -977,7 +977,10 @@
     "works_score": "Match score",
     "works_score_high": "80% and up",
     "works_score_mid": "60–79%",
-    "works_score_low": "Below 60%"
+    "works_score_low": "Below 60%",
+    "works_cv": "CV",
+    "works_cv_tailored": "CV for the job",
+    "works_cv_original": "Your usual CV"
   },
   "library": {
     "title": "Library",

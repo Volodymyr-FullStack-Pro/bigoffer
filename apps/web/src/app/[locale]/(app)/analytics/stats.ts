@@ -9,6 +9,8 @@ export type AppRow = {
   rejectionReasons: string[];
   /** The letter sent with the application: full cover letter, a short note, none (null: not recorded). */
   letterKind?: 'full' | 'short' | 'none' | null;
+  /** Whether a CV was written for this job (tailored_cvs). */
+  tailoredCv?: boolean;
   /** When the job was posted on its board (for "how fast did I apply"). */
   postedAt?: string | null;
   /** The match score the job had for this user. */
@@ -17,7 +19,7 @@ export type AppRow = {
 
 /** One group of "what works": how many applications it has and how many got a real answer. */
 export type WorksGroup = { key: string; applied: number; responded: number };
-export type WhatWorks = { letter: WorksGroup[]; speed: WorksGroup[]; score: WorksGroup[] };
+export type WhatWorks = { letter: WorksGroup[]; cv: WorksGroup[]; speed: WorksGroup[]; score: WorksGroup[] };
 
 /** Groups with fewer applications say nothing yet. */
 export const WORKS_MIN = 3;
@@ -98,6 +100,7 @@ export function whatWorks(rows: readonly AppRow[]): WhatWorks {
   };
   return {
     letter: group((r) => (r.letterKind === 'full' ? 'full' : r.letterKind === 'short' ? 'short' : r.letterKind === 'none' ? 'none' : null), ['full', 'short', 'none']),
+    cv: group((r) => (r.tailoredCv === undefined ? null : r.tailoredCv ? 'tailored' : 'original'), ['tailored', 'original']),
     speed: group((r) => {
       if (!r.postedAt || !r.appliedAt) return null;
       const hours = (Date.parse(r.appliedAt) - Date.parse(r.postedAt)) / 3_600_000;

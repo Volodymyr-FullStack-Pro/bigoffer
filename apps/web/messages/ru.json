@@ -977,7 +977,10 @@
     "works_score": "Совпадение с вакансией",
     "works_score_high": "80% и выше",
     "works_score_mid": "60–79%",
-    "works_score_low": "Ниже 60%"
+    "works_score_low": "Ниже 60%",
+    "works_cv": "CV",
+    "works_cv_tailored": "CV под вакансию",
+    "works_cv_original": "Обычное CV"
   },
   "library": {
     "title": "Библиотека",
