@@ -112,7 +112,7 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, companyC
   const [contactUrl, setContactUrl] = useState(card.contactUrl ?? '');
   const [meeting, setMeeting] = useState(card.meetingUrl ?? '');
   const [newLabel, setNewLabel] = useState('');
-  const [newColor, setNewColor] = useState('#C6F432');
+  const [newColor, setNewColor] = useState('#73F7B2');
   const [error, setError] = useState(false);
 
   const [threadLink, setThreadLink] = useState<string | null>(null);
