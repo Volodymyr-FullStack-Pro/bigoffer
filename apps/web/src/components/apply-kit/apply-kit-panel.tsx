@@ -11,6 +11,7 @@ import { tellGenie } from '@/lib/genie/events';
 import { downloadLetter } from '@/lib/letter-file';
 import { useSaveUiPrefs } from '@/lib/use-save-ui-prefs';
 import { answerFormQuestions, type FormAnswer, generateKit, getApplyKitData, type KitData, type KitError, markAppliedFromKit, saveKitLetter, type StoredKit } from './actions';
+import { JobChat } from './job-chat';
 import { TailoredCvSection } from './tailored-cv';
 import { ContactChips } from './contact-chips';
 import { PeopleSearch } from './people-search';
@@ -193,6 +194,8 @@ export function ApplyKitPanel({ jobId, onApplied, hidePeopleSearch }: { jobId: s
           {kit.salaryHint && <p data-testid="kit-salary" className="border-l-4 border-warning pl-3 text-sm">💰 {kit.salaryHint}</p>}
         </>
       )}
+
+      {data.aiAvailable && <JobChat jobId={jobId} />}
 
       {data.aiAvailable && data.hasCv && (
         <TailoredCvSection

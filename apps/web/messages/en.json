@@ -1228,5 +1228,20 @@
     "bmTitle": "Or a bookmark, nothing to install",
     "bmSteps": "Drag the button below to your bookmarks bar. On a job page, click the bookmark — the board opens with that job.",
     "bmLabel": "+ To BigOffer"
+  },
+  "jobChat": {
+    "title": "Ask about this job",
+    "q1": "What matters most here, and do I fit?",
+    "q2": "What should I brush up on before the interview?",
+    "q3": "How do I answer about salary?",
+    "placeholder": "A question about the job…",
+    "send": "Send",
+    "thinking": "Thinking…",
+    "clear": "Clear",
+    "error_ai_unavailable": "AI is unavailable right now.",
+    "error_ai_limit": "Today’s AI limit is used up.",
+    "error_no_cv": "Upload your CV first.",
+    "error_not_found": "Job not found.",
+    "error_failed": "Couldn’t answer. Try again."
   }
 }

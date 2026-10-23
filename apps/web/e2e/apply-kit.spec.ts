@@ -160,3 +160,17 @@ test('writes a CV for the job with every change marked, lets flagged lines go, a
   await expect(page.getByTestId('cv-paper')).toContainText('Senior Full Stack Engineer [fake]');
   await expect(page.getByTestId('cv-print')).toBeVisible();
 });
+
+test('answers a question about the job and keeps the conversation after a reload', async ({ context, page, isMobile }) => {
+  const email = uniqueEmail('kit-chat');
+  await loginAs(context, email);
+  await seedCv(email);
+  await seedMatch(email, { score: 90 });
+  await page.goto('/en/today');
+  await openKit(page, isMobile);
+  await visible(page, 'job-chat-starter').first().click();
+  await expect(visible(page, 'job-chat-turn').filter({ hasText: 'Brush up on GraphQL' })).toBeVisible();
+  await page.reload();
+  await openKit(page, isMobile);
+  await expect(visible(page, 'job-chat-turn')).toHaveCount(2);
+});
