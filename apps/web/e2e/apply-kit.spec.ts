@@ -171,6 +171,8 @@ test('answers a question about the job and keeps the conversation after a reload
   await visible(page, 'job-chat-starter').first().click();
   await expect(visible(page, 'job-chat-turn').filter({ hasText: 'Brush up on GraphQL' })).toBeVisible();
   await page.reload();
-  await openKit(page, isMobile);
+  // The open apply kit is remembered across the reload; open it only if it is not.
+  await page.waitForLoadState('networkidle');
+  if ((await visible(page, 'job-chat').count()) === 0) await openKit(page, isMobile);
   await expect(visible(page, 'job-chat-turn')).toHaveCount(2);
 });
