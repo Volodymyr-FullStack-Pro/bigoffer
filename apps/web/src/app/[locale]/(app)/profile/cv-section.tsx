@@ -199,7 +199,8 @@ export function CvSection({
                 {parsed.headline}
               </p>
               <CvFactsReview
-                key={JSON.stringify([parsed.headline, parsed.seniority, parsed.yearsExperience, parsed.skills.length])}
+                // Keyed by the file, not by the facts: saving them refreshes the page, and a remount would drop "Saved".
+                key={cv.fileName}
                 initial={{
                   headline: parsed.headline ?? '',
                   seniority: parsed.seniority,
