@@ -1,6 +1,6 @@
 'use server';
 
-import { answerForm, type ApplyKit, generateApplyKit, type KitJob, tailorCv, type TailoredCv } from '@jp/ai';
+import { answerForm, type ApplyKit, type ChatTurn, generateApplyKit, jobChat, type KitJob, tailorCv, type TailoredCv } from '@jp/ai';
 import { matchBankKey, rankAtTop, splitQuestions, textLang } from '@jp/core';
 import type { Json, TablesInsert } from '@jp/db';
 import { revalidatePath } from 'next/cache';
@@ -316,4 +316,28 @@ export async function saveTailoredCv(jobId: string, cv: TailoredCv): Promise<{ o
   const { data, error } = await supabase.from('tailored_cvs').update({ cv: parsed.data as unknown as NonNullable<Json> }).eq('job_id', jobId).select('id');
   const [keywords, original] = await Promise.all([jobKeywords(supabase, jobId), loadPrimaryCv(supabase)]);
   return { ok: !error && (data?.length ?? 0) > 0, ats: original?.parsed && keywords.length > 0 ? atsScore(keywords, original.parsed, parsed.data) : null };
+}
+
+const chatSchema = z.object({
+  question: z.string().trim().min(1).max(1500),
+  history: z.array(z.object({ role: z.enum(['user', 'assistant']), text: z.string().max(3000) })).max(20),
+});
+
+/** One answer from the job coach: the posting, the user's CV and the conversation so far (private model). */
+export async function askAboutJob(jobId: string, question: string, history: ChatTurn[]): Promise<{ ok: true; answer: string } | { ok: false; error: KitError }> {
+  if (!(await getUserId()) || !UUID.test(jobId)) return { ok: false, error: 'not_found' };
+  const input = chatSchema.safeParse({ question, history });
+  if (!input.success) return { ok: false, error: 'not_found' };
+  if (!privateAiAvailable()) return { ok: false, error: 'ai_unavailable' };
+  const supabase = await createClient();
+  if (!(await hasJobAccess(supabase, jobId))) return { ok: false, error: 'not_found' };
+  const [job, cv] = await Promise.all([loadJob(supabase, jobId), loadPrimaryCv(supabase)]);
+  if (!job) return { ok: false, error: 'not_found' };
+  if (!(await consumePrivateAi(supabase))) return { ok: false, error: 'ai_limit' };
+  try {
+    return { ok: true, answer: await jobChat(getLlm(), { job, cv: cv?.parsed ?? null, history: input.data.history, question: input.data.question }) };
+  } catch (err) {
+    logFail('askAboutJob', err);
+    return { ok: false, error: 'failed' };
+  }
 }

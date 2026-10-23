@@ -23,7 +23,7 @@ export function splitQuestions(text: string): string[] {
 }
 
 const PATTERNS: [BankKey, RegExp][] = [
-  ['salary', /salary|compensation expectation|rate expectation|зарплатн|зарплатные ожидания|заробітн|зарплат\w* очікуван/i],
+  ['salary', /salary|compensation expectation|rate expectation|зарплатн|зарплатные ожидания|заробітн|зарплат\w* очікуван|очікуван[а-яіїєґ]*(?: щодо)? (?:зарплат|заробітн)|ожидани[а-яё]*(?: по)? зарплат/i],
   ['start_date', /when can you start|start date|notice period|available to start|приступ|почат(?:и|ок) робот|вийти на робот|выйти на работ|готов(?:і|ы)? (?:почати|начать)/i],
   ['english', /english|англ/i],
   ['why_looking', /why (?:are you|do you want to|did you) (?:looking|leav|chang)\w*|why .*(?:looking for a new|leaving|change (?:job|company))|reason for (?:leaving|change)|чому .*(?:шука|зміню|йде)|почему .*(?:ищ|меня|уход)/i],
