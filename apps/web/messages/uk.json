@@ -4,7 +4,10 @@
     "tagline": "Свіжі вакансії. Швидкі відгуки. Жодного хаосу.",
     "heroBefore": "Твій наступний",
     "heroAfter": "— тут.",
-    "heroWords": "офер,крок,проєкт"
+    "heroWords": "офер,крок,проєкт",
+    "confirmCancel": "Скасувати",
+    "confirmDelete": "Видалити",
+    "confirmOk": "Так"
   },
   "legal": {
     "updated": "Останнє оновлення: {date}",

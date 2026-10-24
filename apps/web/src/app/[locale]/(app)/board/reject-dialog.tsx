@@ -3,7 +3,7 @@
 import { REJECTION_REASONS, REJECTION_STAGES, type RejectionInput, type RejectionReason, type RejectionStage } from '@jp/core';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
-import { useModalDialog } from './use-modal-dialog';
+import { useModalDialog } from '@/components/ui/use-modal-dialog';
 
 export function RejectDialog({ initialReasons = [], initialStage = 'application', suggested = false, onConfirm, onCancel }: {
   initialReasons?: RejectionReason[];
