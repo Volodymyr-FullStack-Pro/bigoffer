@@ -104,3 +104,11 @@ describe('parseJobPreview, a recruiter post', () => {
     expect(parseJobPreview(html)).toMatchObject({ title: 'Jun+/Middle Full-Stack Developer', company: null, recruiter: 'Daryna Vasylieva' });
   });
 });
+
+describe('parseJobPreview, a page that is not a job', () => {
+  it('says so when nothing reads like a job, and stays quiet on a career page', () => {
+    expect(parseJobPreview('<html><head><title>Best pasta recipes — Food blog</title></head></html>').looksLikeJob).toBe(false);
+    expect(parseJobPreview('<html><head><title>Frontend Engineer — Acme Careers</title></head></html>').looksLikeJob).toBeUndefined();
+    expect(parseJobPreview('<html><head><title>Acme</title><meta name="description" content="We are hiring! Join our team"></head></html>').looksLikeJob).toBeUndefined();
+  });
+});
