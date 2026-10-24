@@ -2,7 +2,7 @@
 
 import { tellGenie } from '@/lib/genie/events';
 import { applicationUrgency, type FollowUpRules, rankAtEnd, rankBetween, type RejectionInput, type RejectionReason, type RejectionStage, smartSort } from '@jp/core';
-import { closestCorners, DndContext, type DragEndEvent, DragOverlay, KeyboardSensor, PointerSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { closestCorners, DndContext, type DragEndEvent, DragOverlay, KeyboardSensor, MouseSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import { useTranslations } from 'next-intl';
 import { useMemo, useState } from 'react';
@@ -59,8 +59,10 @@ export function Board({ columns, cards: initial, labels: initialLabels, rules, n
   const [filter, setFilter] = useState<BoardFilter>(EMPTY_FILTER);
   const { toast, show, close } = useToast();
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
-    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 6 } }),
+    // Mouse and touch apart: a pointer sensor also fires on touch, so a swipe through the columns started a drag. A finger
+    // drags only after holding still for 250 ms; a swipe scrolls.
+    useSensor(MouseSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 8 } }),
     useSensor(KeyboardSensor, {
       keyboardCodes: { start: ['Space'], cancel: ['Escape'], end: ['Space'] },
       coordinateGetter: sortableKeyboardCoordinates,
@@ -258,7 +260,11 @@ export function Board({ columns, cards: initial, labels: initialLabels, rules, n
         <BoardFilterBar filter={filter} onChange={setFilter} cards={cards} labels={labels} labelName={labelName} found={found.length} onOpenOnly={() => found[0] && setOpenId(found[0].id)} />
       )}
       {filtering && found.length === 0 && <p data-testid="board-no-match" className="text-muted-foreground">{t('noMatch')}</p>}
-      <DndContext id="board-dnd" sensors={sensors} collisionDetection={closestCorners} onDragStart={({ active: a }) => setActiveId(String(a.id))} onDragCancel={() => setActiveId(null)} onDragEnd={onDragEnd}>
+      <DndContext id="board-dnd" sensors={sensors} collisionDetection={closestCorners} onDragStart={({ active: a, activatorEvent }) => {
+          setActiveId(String(a.id));
+          // A short buzz on the phone when the long press picks the card up.
+          if (typeof TouchEvent !== 'undefined' && activatorEvent instanceof TouchEvent) navigator.vibrate?.(12);
+        }} onDragCancel={() => setActiveId(null)} onDragEnd={onDragEnd}>
         {/* Phones scroll one column at a time; desktops show as many as fit. */}
         {/* On wide screens the columns run to the window's right edge instead of stopping at the page container. */}
         <div className="-mx-4 flex scroll-px-4 snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-4 sm:mx-0 sm:snap-none sm:px-0 sm:mr-[calc(-1*(max(0px,(100vw-80rem)/2)+1rem))] sm:pr-[calc(max(0px,(100vw-80rem)/2)+1rem)] sm:[mask-image:linear-gradient(to_right,black_calc(100%-56px),transparent)]">

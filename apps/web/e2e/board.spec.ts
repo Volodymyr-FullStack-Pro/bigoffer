@@ -117,6 +117,51 @@ test('drags a card to another column with the mouse', async ({ context, page, is
   await expect(column(page, 'applied').getByText(title)).toBeVisible();
 });
 
+/** A finger on the screen, through Chrome's own touch events (Playwright's touchscreen only taps). */
+async function touch(page: Page) {
+  const cdp = await page.context().newCDPSession(page);
+  const send = (type: 'touchStart' | 'touchMove' | 'touchEnd', x: number, y: number) =>
+    cdp.send('Input.dispatchTouchEvent', { type, touchPoints: type === 'touchEnd' ? [] : [{ x, y }] });
+  return {
+    async swipe(from: { x: number; y: number }, dx: number, dy: number) {
+      await send('touchStart', from.x, from.y);
+      for (let i = 1; i <= 10; i++) await send('touchMove', from.x + (dx * i) / 10, from.y + (dy * i) / 10);
+      await send('touchEnd', from.x + dx, from.y + dy);
+    },
+    async holdAndDrag(from: { x: number; y: number }, to: { x: number; y: number }) {
+      await send('touchStart', from.x, from.y);
+      await page.waitForTimeout(450);
+      for (let i = 1; i <= 15; i++) await send('touchMove', from.x + ((to.x - from.x) * i) / 15, from.y + ((to.y - from.y) * i) / 15);
+      await page.waitForTimeout(150);
+      await send('touchEnd', to.x, to.y);
+    },
+  };
+}
+
+test('touch: a swipe scrolls the columns without moving the card; a long press drags it', async ({ context, page, isMobile }) => {
+  test.skip(!isMobile, 'touch on the phone');
+  const email = uniqueEmail('board-touch');
+  await loginAs(context, email);
+  const { id, title } = await seedApplication(email, { column: 'saved' });
+  await page.goto('/en/board');
+  const finger = await touch(page);
+  const box = (await card(page, title).boundingBox())!;
+  const start = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+  const scroller = page.getByTestId('board-column').first().locator('xpath=..');
+  const before = await scroller.evaluate((el) => el.scrollLeft);
+  // A quick sideways swipe that starts on the card: the board scrolls, the card stays in Saved.
+  await finger.swipe(start, -220, 0);
+  await expect.poll(() => scroller.evaluate((el) => el.scrollLeft)).toBeGreaterThan(before + 50);
+  expect(await applicationColumnKey(id)).toBe('saved');
+  await scroller.evaluate((el) => el.scrollTo({ left: 0 }));
+  await page.waitForTimeout(300);
+  // Hold, then move down and right a little: the card is picked up and dropped into the next column.
+  const from = (await card(page, title).boundingBox())!;
+  const next = (await column(page, 'applied').boundingBox())!;
+  await finger.holdAndDrag({ x: from.x + 30, y: from.y + 20 }, { x: Math.min(next.x + 40, page.viewportSize()!.width - 10), y: next.y + 120 });
+  await expect.poll(() => applicationColumnKey(id)).toBe('applied');
+});
+
 test('keyboard: Enter opens the panel, Space drags to the next column', async ({ context, page, isMobile }) => {
   test.skip(isMobile, 'keyboard is a desktop feature');
   const email = uniqueEmail('board-keys');
