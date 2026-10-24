@@ -8,6 +8,7 @@ import { CHANNELS } from './reply-inbox';
 import { TONE_PILL, toneChip, toneColor, toneShape } from '@/components/ui/status-badge';
 import { REPLY_KINDS, REPLY_STYLE, type ReplyKind } from './reply-kinds';
 import { ReplyIcon } from './reply-icon';
+import { useConfirm } from '@/components/ui/confirm';
 
 type Message = Awaited<ReturnType<typeof listMessages>>[number];
 
@@ -20,6 +21,7 @@ export function Conversation({ applicationId, version, onDeleted, onKindChanged 
   onKindChanged: (r: { kind: ReplyKind; replyKind: ReplyKind | null; firstResponseAt: string | null }) => void;
 }) {
   const t = useTranslations('board');
+  const confirm = useConfirm();
   const format = useFormatter();
   const clock = useNow({ updateInterval: 60_000 });
   const [messages, setMessages] = useState<Message[] | null>(null);
@@ -75,7 +77,7 @@ export function Conversation({ applicationId, version, onDeleted, onKindChanged 
                   aria-label={t('conversationDelete')}
                   title={t('conversationDelete')}
                   onClick={async () => {
-                    if (!window.confirm(t('conversationDeleteConfirm'))) return;
+                    if (!(await confirm(t('conversationDeleteConfirm')))) return;
                     const res = await deleteMessage(applicationId, m.id).catch(() => null);
                     if (!res) return;
                     const left = messages.filter((x) => x.id !== m.id);

@@ -15,11 +15,12 @@ import { JoinMeeting } from './join-meeting';
 import { Conversation } from './conversation';
 import { columnForReply } from './reply-kinds';
 import { ReplyInbox, type RejectionSuggestion } from './reply-inbox';
-import { useModalDialog } from './use-modal-dialog';
+import { useModalDialog } from '@/components/ui/use-modal-dialog';
 import { fromZonedInput, toZonedInput } from './zoned-input';
 import { createLabel, getApplicationEvents, markPinged, setApplicationLabel, setFeedbackWait, updateApplication } from './actions';
 import { FeedbackWait } from './feedback-wait';
 import type { BoardCardView, BoardColumn, BoardLabel } from './board-types';
+import { useConfirm } from '@/components/ui/confirm';
 
 /** Cards that need something show what, in the card's urgency colour. */
 const PREP_KEYS: ReadonlySet<string> = new Set(PREP_COLUMNS);
@@ -62,6 +63,7 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, companyC
 }) {
   const t = useTranslations('board');
   const tk = useTranslations('kit');
+  const confirm = useConfirm();
   const rawLocale = useLocale();
   const locale: Locale = isLocale(rawLocale) ? rawLocale : 'en';
   const [kitOpen, setKitOpen] = useState(false);
@@ -412,7 +414,7 @@ export function CardPanel({ card, timeZone, columns, labels, labelName, companyC
       <div className="flex items-center gap-3">
         <button type="button" data-testid="panel-save" onClick={save} className="btn brutal-press bg-brand px-4 py-2 font-semibold text-brand-foreground">{t('save')}</button>
         {error && <span role="alert" className="text-sm text-danger">{t('saveError')}</span>}
-        <button type="button" data-testid="panel-delete" onClick={() => { if (window.confirm(t('deleteConfirm'))) onDelete(); }} className="ml-auto text-sm text-danger underline">{t('delete')}</button>
+        <button type="button" data-testid="panel-delete" onClick={async () => { if (await confirm(t('deleteConfirm'))) onDelete(); }} className="ml-auto text-sm text-danger underline">{t('delete')}</button>
       </div>
       <span ref={(el) => { anchors.current.history = el; }} aria-hidden className="block scroll-mt-36" />
       <section data-testid="panel-history" className="flex flex-col gap-1 border-t border-border pt-3">

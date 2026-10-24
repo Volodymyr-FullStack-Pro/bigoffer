@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
-import { useModalDialog } from './use-modal-dialog';
+import { useModalDialog } from '@/components/ui/use-modal-dialog';
 import { createApplication, previewJob } from './actions';
 import type { BoardCard, BoardColumn } from './board-types';
 

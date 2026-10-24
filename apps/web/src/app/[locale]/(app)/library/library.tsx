@@ -4,6 +4,7 @@ import { useTranslations } from 'next-intl';
 import { useMemo, useState } from 'react';
 import { deleteLink, previewLinkTitle, saveLink, updateLink } from './actions';
 import { type SavedLink, TOPIC_SUGGESTIONS } from './topics';
+import { useConfirm } from '@/components/ui/confirm';
 
 const field = 'brutal bg-card px-2 py-1.5 text-sm';
 
@@ -17,6 +18,7 @@ function host(url: string): string {
 
 export function Library({ initial }: { initial: SavedLink[] }) {
   const t = useTranslations('library');
+  const confirm = useConfirm();
   const [links, setLinks] = useState(initial);
   const [url, setUrl] = useState('');
   const [title, setTitle] = useState('');
@@ -185,7 +187,7 @@ export function Library({ initial }: { initial: SavedLink[] }) {
                     type="button"
                     data-testid="link-delete"
                     onClick={async () => {
-                      if (!window.confirm(t('deleteConfirm'))) return;
+                      if (!(await confirm(t('deleteConfirm')))) return;
                       if (await deleteLink(l.id).catch(() => false)) setLinks((list) => list.filter((x) => x.id !== l.id));
                     }}
                     className="text-danger underline"
