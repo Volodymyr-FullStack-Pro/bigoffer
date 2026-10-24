@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './helpers/test';
 
 const EMAIL = 'babihuk888@gmail.com';
 const H1 = {

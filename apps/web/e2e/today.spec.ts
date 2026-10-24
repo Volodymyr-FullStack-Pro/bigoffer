@@ -1,4 +1,4 @@
-import { expect, type Page, test } from '@playwright/test';
+import { expect, type Page, test } from './helpers/test';
 import { loginAs, uniqueEmail } from './helpers/auth';
 import { seedApplication, seedCardFromJob, seedCv, seedMatch, seedSearchProfile } from './helpers/seed';
 

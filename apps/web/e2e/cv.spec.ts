@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
-import { expect, test } from '@playwright/test';
+import { expect, test } from './helpers/test';
 import { loginAs, uniqueEmail } from './helpers/auth';
 
 test('uploads a CV, reads it with AI and creates a search from it', async ({ context, page }) => {
@@ -51,8 +51,14 @@ test('deletes the CV: the block empties and the stored file is gone', async ({ c
   const href = await page.getByTestId('cv-link').getAttribute('href');
   expect(href).toBeTruthy();
   expect((await page.request.get(href!)).status()).toBe(200);
-  page.once('dialog', (d) => void d.accept());
+  // The site's own confirm: Cancel keeps the CV, Delete removes it.
   await page.getByTestId('cv-delete').click();
+  await expect(page.getByTestId('confirm-dialog')).toContainText('Delete');
+  await page.getByTestId('confirm-cancel').click();
+  await expect(page.getByTestId('confirm-dialog')).toHaveCount(0);
+  await expect(page.getByTestId('cv-link')).toBeVisible();
+  await page.getByTestId('cv-delete').click();
+  await page.getByTestId('confirm-ok').click();
   await expect(page.getByTestId('cv-status')).toHaveText('CV deleted.');
   await expect(page.getByTestId('cv-link')).toHaveCount(0);
   await expect(page.getByTestId('cv-delete')).toHaveCount(0);

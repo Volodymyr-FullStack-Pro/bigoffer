@@ -3,7 +3,7 @@ import { SENIORITIES } from './job';
 import { regionBucket } from './normalize';
 import type { SearchProfile } from './search';
 import { remoteBlockedFor } from './regions';
-import { detectSeniority } from './detect';
+import { detectRemote, detectSeniority } from './detect';
 import { keywordForms } from './keywords';
 import { detectRoleFamilies, type RoleFamily, roleOffTarget, targetRoleFamilies } from './roles';
 
@@ -339,3 +339,22 @@ export function wantedByAnyProfile(profiles: readonly SearchProfile[], job: Scor
   });
 }
 
+
+/**
+ * The match score of a job saved by link from a site we do not parse (a LinkedIn post, a company page): only its title
+ * and text are known, so remote type and level are read from them. null when the profile would not match it at all.
+ */
+export function scorePastedJob(profile: SearchProfile, title: string, text: string): number | null {
+  const job: ScorableJob = {
+    title,
+    descriptionText: text,
+    tags: [],
+    remoteType: detectRemote(`${title}\n${text}`),
+    seniority: detectSeniority(title),
+    location: null,
+    salaryMinUsd: null,
+    salaryMaxUsd: null,
+  };
+  const result = scoreJob(profile, job);
+  return result ? Math.round(result.score) : null;
+}

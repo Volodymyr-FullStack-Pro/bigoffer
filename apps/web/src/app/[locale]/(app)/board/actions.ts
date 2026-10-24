@@ -1,7 +1,7 @@
 'use server';
 
 import type { Json } from '@jp/db';
-import { boardLink, type ApplicationPatch, applicationPatchSchema, rankAtTop, type RejectionInput, rejectionInputSchema } from '@jp/core';
+import { boardLink, type ApplicationPatch, applicationPatchSchema, rankAtTop, type RejectionInput, rejectionInputSchema, SEARCH_PROFILE_COLUMNS, type SearchProfileRow, scorePastedJob, toSearchProfile } from '@jp/core';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { getUserId } from '@/lib/auth';
@@ -189,9 +189,10 @@ const createInputSchema = z.object({
   jobId: z.string().regex(UUID).nullable().optional(),
   contactName: z.string().trim().max(120).nullable().optional(),
   sourceId: z.enum(['dou', 'djinni', 'robotaua']).nullable().optional(),
+  score: z.number().int().min(0).max(100).nullable().optional(),
 });
 
-export type CardPreview = JobPreview & { jobId?: string; sourceId?: string; url?: string; recruiter?: string | null };
+export type CardPreview = Omit<JobPreview, 'text'> & { jobId?: string; sourceId?: string; url?: string; recruiter?: string | null; score?: number | null };
 
 /**
  * What a pasted link says about the job. DOU, Djinni and robota.ua links are read by the board parsers and stored as
@@ -204,7 +205,19 @@ export async function previewJob(url: string): Promise<CardPreview | null> {
     const job = await importJobByLink(parsed.data);
     if (job) return { title: job.title, company: job.company || null, location: job.location, salary: job.salary, jobId: job.jobId, sourceId: job.sourceId, url: job.url, recruiter: job.recruiter };
   }
-  return fetchJobPreview(parsed.data);
+  const preview = await fetchJobPreview(parsed.data);
+  if (!preview) return null;
+  const { text, ...rest } = preview;
+  return { ...rest, score: await pastedScore(preview.title, text) };
+}
+
+/** The user's match score for a job read from a site we do not parse: what the card shows beside a reminder. */
+async function pastedScore(title: string | null, text: string | null | undefined): Promise<number | null> {
+  const supabase = await client();
+  const userId = await getUserId();
+  if (!supabase || !userId || !title) return null;
+  const { data } = await supabase.from('search_profiles').select(SEARCH_PROFILE_COLUMNS).eq('user_id', userId).limit(1).maybeSingle();
+  return data ? scorePastedJob(toSearchProfile(data as SearchProfileRow), title, text ?? '') : null;
 }
 
 export async function createApplication(raw: {
@@ -218,6 +231,8 @@ export async function createApplication(raw: {
   jobId?: string | null;
   contactName?: string | null;
   sourceId?: string | null;
+  /** Match score of a job saved from another site (board jobs are scored by the pipeline). */
+  score?: number | null;
 }): Promise<BoardCard | null> {
   const supabase = await client();
   const userId = await getUserId();
@@ -244,6 +259,7 @@ export async function createApplication(raw: {
       ...(input.jobId ? { job_id: input.jobId } : {}),
       ...(input.contactName ? { contact: { name: input.contactName } } : {}),
       ...(input.sourceId ? { source_id: input.sourceId } : {}),
+      ...(!input.jobId && input.score != null ? { match_score: input.score } : {}),
     })
     .select('id, rank, source_id')
     .single();
@@ -255,6 +271,7 @@ export async function createApplication(raw: {
   revalidatePath('/[locale]/board', 'page');
   return {
     id: data.id, jobId: input.jobId ?? null, columnId: input.columnId, rank: data.rank, title, company: input.company, url,
+    score: input.jobId ? null : (input.score ?? null),
     sourceId: data.source_id, salary: input.salary, notes: null, contactName: input.contactName ?? null, contactUrl: null,
     appliedAt, nextActionAt: null, feedbackDueAt: null, meetingUrl: null, firstResponseAt: null, lastActivityAt: null, followUpCount: 0, outcome: 'open', labelIds: [], replyKind: null, lastMessage: null, messageCount: 0, rejectionReasons: [], rejectionStage: null,
   };

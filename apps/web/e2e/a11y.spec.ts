@@ -1,5 +1,5 @@
 import AxeBuilder from '@axe-core/playwright';
-import { expect, type Page, test } from '@playwright/test';
+import { expect, type Page, test } from './helpers/test';
 import { loginAs, uniqueEmail } from './helpers/auth';
 import { seedMatch } from './helpers/seed';
 

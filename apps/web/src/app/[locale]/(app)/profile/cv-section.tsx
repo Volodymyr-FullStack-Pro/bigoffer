@@ -15,6 +15,7 @@ import {
   retryCvParse,
   type CvState,
 } from './cv-actions';
+import { useConfirm } from '@/components/ui/confirm';
 
 const MAX_BYTES = 5 * 1024 * 1024;
 
@@ -41,6 +42,7 @@ export function CvSection({
   cvLink: string | null;
 }) {
   const t = useTranslations('cv');
+  const confirm = useConfirm();
   const [state, setState] = useState<CvState>({ status: 'idle' });
   const [uploading, setUploading] = useState(false);
   const [registering, startTransition] = useTransition();
@@ -52,8 +54,8 @@ export function CvSection({
   const [chosen, setChosen] = useState<string | null>(null);
   const [retrying, startRetry] = useTransition();
 
-  function onDelete() {
-    if (!window.confirm(t('deleteConfirm'))) return;
+  async function onDelete() {
+    if (!(await confirm(t('deleteConfirm')))) return;
     startDelete(async () => {
       try {
         setDeleteResult((await deleteCv()).ok ? 'deleted' : 'error');

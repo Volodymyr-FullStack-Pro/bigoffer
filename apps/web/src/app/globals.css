@@ -151,6 +151,11 @@
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
   }
+  /* A long press on a board card picks it up: no text selection or iOS callout menu in the way. */
+  [data-testid='board-card'] {
+    -webkit-touch-callout: none;
+    user-select: none;
+  }
   /* Scrolling inside a dialog or panel never drags the page behind it. */
   dialog,
   [role='menu'] {

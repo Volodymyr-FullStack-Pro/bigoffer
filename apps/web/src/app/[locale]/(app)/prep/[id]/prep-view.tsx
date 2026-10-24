@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { Link, useRouter } from '@/i18n/navigation';
 import { JoinMeeting } from '../../board/join-meeting';
 import { deletePrep, getLesson, getPitch, setTopicDone } from '../actions';
+import { useConfirm } from '@/components/ui/confirm';
 
 type Card = { title: string; company: string; url: string | null; interviewAt: string | null; meetingUrl: string | null };
 
@@ -20,6 +21,7 @@ export function PrepView({ prepId, card, plan, lessons: initialLessons, pitch: i
 }) {
   const t = useTranslations('prep');
   const tb = useTranslations('board');
+  const confirm = useConfirm();
   const format = useFormatter();
   const router = useRouter();
   const [lessons, setLessons] = useState(initialLessons);
@@ -216,7 +218,7 @@ export function PrepView({ prepId, card, plan, lessons: initialLessons, pitch: i
       <button
         type="button"
         onClick={async () => {
-          if (!window.confirm(t('deleteConfirm'))) return;
+          if (!(await confirm(t('deleteConfirm')))) return;
           if (await deletePrep(prepId).catch(() => false)) router.push('/prep');
         }}
         className="self-start text-sm text-danger underline"

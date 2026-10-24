@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './helpers/test';
 import { loginAs, uniqueEmail } from './helpers/auth';
 
 test('answer bank: long custom question can be added, edited and deleted', async ({ context, page }) => {

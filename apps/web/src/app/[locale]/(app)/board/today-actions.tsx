@@ -7,6 +7,7 @@ import { useState, useSyncExternalStore } from 'react';
 import { ScoreMeter } from '@/components/ui/score-meter';
 import { JoinMeeting } from './join-meeting';
 import type { BoardCardView } from './board-types';
+import { useConfirm } from '@/components/ui/confirm';
 
 const noopSubscribe = () => () => undefined;
 function readTodayOpen(): boolean {
@@ -30,6 +31,7 @@ export function TodayActions({ cards, onPinged, onPingedMany, onOpen, onGhosted,
   onGhostedMany: (ids: string[]) => void;
 }) {
   const t = useTranslations('board');
+  const confirm = useConfirm();
   const format = useFormatter();
   const [pingsOpen, setPingsOpen] = useState(false);
   const [ghostsOpen, setGhostsOpen] = useState(false);
@@ -111,7 +113,7 @@ export function TodayActions({ cards, onPinged, onPingedMany, onOpen, onGhosted,
         <button
           type="button"
           data-testid={`today-${g.id}-all`}
-          onClick={() => { if (window.confirm(g.confirm)) g.onAll(); }}
+          onClick={async () => { if (await confirm(g.confirm, { danger: false, confirmLabel: g.all })) g.onAll(); }}
           className="btn brutal-press px-3 py-1 text-sm font-semibold"
         >
           {g.all}

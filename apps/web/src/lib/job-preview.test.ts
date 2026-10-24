@@ -102,6 +102,8 @@ describe('parseJobPreview, a recruiter post', () => {
       <meta name="description" content="Стек: React + TypeScript, Node.js (NestJS або Express)">
     </head></html>`;
     expect(parseJobPreview(html)).toMatchObject({ title: 'Jun+/Middle Full-Stack Developer', company: null, recruiter: 'Daryna Vasylieva' });
+    // The post text is kept for the match score.
+    expect(parseJobPreview(html).text).toContain('NestJS');
   });
 });
 
