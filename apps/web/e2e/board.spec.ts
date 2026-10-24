@@ -271,8 +271,8 @@ test('a recruiter question makes it your move until you answer', async ({ contex
   await visible(page, 'reply-save').click();
   await expect(visible(page, 'msg-item').last()).toHaveAttribute('data-direction', 'out');
   // A message logged by mistake can be removed.
-  page.once('dialog', (d) => void d.accept());
   await visible(page, 'msg-item').last().getByTestId('msg-delete').click();
+  await page.getByTestId('confirm-ok').click();
   await expect(visible(page, 'msg-item')).toHaveCount(1);
   await expect(visible(page, 'panel-next-step')).toHaveAttribute('data-urgency', 'your_move');
   await visible(page, 'reply-body').fill('Yes, happy to do it.');
@@ -450,8 +450,8 @@ test('a batch of follow-ups folds into one line and can be marked at once', asyn
   await expect(group.getByTestId('today-action')).toHaveCount(0);
   await group.getByTestId('today-pings-toggle').click();
   await expect(group.getByTestId('today-action')).toHaveCount(4);
-  page.once('dialog', (d) => void d.accept());
   await group.getByTestId('today-pings-all').click();
+  await page.getByTestId('confirm-ok').click();
   await expect(visible(page, 'today-pings')).toHaveCount(0);
   await page.reload();
   await expect(visible(page, 'today-pings')).toHaveCount(0);

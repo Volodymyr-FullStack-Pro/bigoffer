@@ -4,7 +4,10 @@
     "tagline": "Fresh jobs. Fast applications. Zero chaos.",
     "heroBefore": "Your next",
     "heroAfter": "starts here.",
-    "heroWords": "offer,interview,big move"
+    "heroWords": "offer,interview,big move",
+    "confirmCancel": "Cancel",
+    "confirmDelete": "Delete",
+    "confirmOk": "Yes"
   },
   "legal": {
     "updated": "Last updated: {date}",

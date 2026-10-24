@@ -31,7 +31,7 @@ test('saves a link by topic, filters, edits and deletes it', async ({ context, p
   // Its old topic is empty now: the list falls back to all links.
   await expect(visible(page, 'link-item').filter({ hasText: 'Event loop visualizer' })).toContainText('Browser');
 
-  page.once('dialog', (d) => void d.accept());
   await visible(page, 'link-item').filter({ hasText: 'Event loop visualizer' }).getByTestId('link-delete').click();
+  await page.getByTestId('confirm-ok').click();
   await expect(visible(page, 'link-item')).toHaveCount(0);
 });

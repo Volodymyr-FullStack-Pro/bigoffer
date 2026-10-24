@@ -4,7 +4,10 @@
     "tagline": "Свежие вакансии. Быстрые отклики. Никакого хаоса.",
     "heroBefore": "Твой следующий",
     "heroAfter": "— здесь.",
-    "heroWords": "оффер,шаг,проект"
+    "heroWords": "оффер,шаг,проект",
+    "confirmCancel": "Отмена",
+    "confirmDelete": "Удалить",
+    "confirmOk": "Да"
   },
   "legal": {
     "updated": "Последнее обновление: {date}",
