@@ -153,8 +153,9 @@ test('touch: a swipe scrolls the columns without moving the card; a long press d
   await finger.swipe(start, -220, 0);
   await expect.poll(() => scroller.evaluate((el) => el.scrollLeft)).toBeGreaterThan(before + 50);
   expect(await applicationColumnKey(id)).toBe('saved');
-  await scroller.evaluate((el) => el.scrollTo({ left: 0 }));
-  await page.waitForTimeout(300);
+  // The swipe's momentum and the column snap keep scrolling for a while: start the long press from a fresh board.
+  await page.reload();
+  await expect(card(page, title)).toBeInViewport();
   // Hold, then move toward the next column: the card is picked up and leaves Saved. On a phone the next column is at the
   // screen edge, so the board auto-scrolls under the finger and the exact column it lands in depends on timing.
   const from = (await card(page, title).boundingBox())!;
