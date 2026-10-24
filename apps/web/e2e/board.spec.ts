@@ -128,12 +128,15 @@ async function touch(page: Page) {
       for (let i = 1; i <= 10; i++) await send('touchMove', from.x + (dx * i) / 10, from.y + (dy * i) / 10);
       await send('touchEnd', from.x + dx, from.y + dy);
     },
-    async holdAndDrag(from: { x: number; y: number }, to: { x: number; y: number }) {
+    /** Long press, carry the card to the screen edge until `ready()` (the board scrolls under it), then drop mid-screen. */
+    async holdAndCarry(from: { x: number; y: number }, edgeX: number, ready: () => Promise<boolean>, dropX: number) {
       await send('touchStart', from.x, from.y);
       await page.waitForTimeout(450);
-      for (let i = 1; i <= 15; i++) await send('touchMove', from.x + ((to.x - from.x) * i) / 15, from.y + ((to.y - from.y) * i) / 15);
+      for (let i = 1; i <= 10; i++) await send('touchMove', from.x + ((edgeX - from.x) * i) / 10, from.y + 40);
+      await expect.poll(ready, { timeout: 8000 }).toBe(true);
+      for (let i = 1; i <= 5; i++) await send('touchMove', edgeX + ((dropX - edgeX) * i) / 5, from.y + 40);
       await page.waitForTimeout(150);
-      await send('touchEnd', to.x, to.y);
+      await send('touchEnd', dropX, from.y + 40);
     },
   };
 }
@@ -153,12 +156,15 @@ test('touch: a swipe scrolls the columns without moving the card; a long press d
   await finger.swipe(start, -220, 0);
   await expect.poll(() => scroller.evaluate((el) => el.scrollLeft)).toBeGreaterThan(before + 50);
   expect(await applicationColumnKey(id)).toBe('saved');
-  await scroller.evaluate((el) => el.scrollTo({ left: 0 }));
-  await page.waitForTimeout(300);
-  // Hold, then move down and right a little: the card is picked up and dropped into the next column.
+  // The swipe's momentum and the column snap keep scrolling for a while: start the long press from a fresh board.
+  await page.reload();
+  await expect(card(page, title)).toBeInViewport();
+  // Hold and carry the card to the edge, like a thumb would: the board scrolls until Applied is under the finger, then the
+  // card is dropped there.
   const from = (await card(page, title).boundingBox())!;
-  const next = (await column(page, 'applied').boundingBox())!;
-  await finger.holdAndDrag({ x: from.x + 30, y: from.y + 20 }, { x: Math.min(next.x + 40, page.viewportSize()!.width - 10), y: next.y + 120 });
+  const width = page.viewportSize()!.width;
+  const applied = column(page, 'applied');
+  await finger.holdAndCarry({ x: from.x + 30, y: from.y + 20 }, width - 8, async () => ((await applied.boundingBox())?.x ?? width) < width / 2 - 40, width / 2);
   await expect.poll(() => applicationColumnKey(id)).toBe('applied');
 });
 
