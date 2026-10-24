@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
-import { expect, test } from '@playwright/test';
+import { expect, test } from './helpers/test';
 import { loginAs, uniqueEmail } from './helpers/auth';
 
 test('uploads a CV, reads it with AI and creates a search from it', async ({ context, page }) => {

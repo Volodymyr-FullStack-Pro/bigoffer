@@ -1,4 +1,4 @@
-import { expect, type Page, test } from '@playwright/test';
+import { expect, type Page, test } from './helpers/test';
 import { loginAs, uniqueEmail } from './helpers/auth';
 
 const visible = (page: Page, id: string) => page.getByTestId(id).filter({ visible: true });

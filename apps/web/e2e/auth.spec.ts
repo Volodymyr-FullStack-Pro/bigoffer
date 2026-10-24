@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './helpers/test';
 import { ensureUser, magicLinkConfirmPath, uniqueEmail } from './helpers/auth';
 import { seedMatch } from './helpers/seed';
 

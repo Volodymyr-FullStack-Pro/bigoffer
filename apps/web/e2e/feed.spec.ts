@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './helpers/test';
 import { loginAs, uniqueEmail } from './helpers/auth';
 import { countApplications, matchState, seedMatch } from './helpers/seed';
 
