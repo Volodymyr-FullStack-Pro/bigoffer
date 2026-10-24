@@ -408,3 +408,11 @@
 }
 .radar-in { animation: radar-in 600ms ease-out; }
 @media (prefers-reduced-motion: reduce) { .radar-in { animation: none; } }
+
+/* Landing bento: the extension tile types the user's details in, one field after another. */
+@keyframes bento-type {
+  0%, 8% { max-width: 0; }
+  40%, 100% { max-width: 100%; }
+}
+.bento-type { display: inline-block; max-width: 0; animation: bento-type 6s steps(24, end) infinite; }
+@media (prefers-reduced-motion: reduce) { .bento-type { animation: none; max-width: 100%; } }

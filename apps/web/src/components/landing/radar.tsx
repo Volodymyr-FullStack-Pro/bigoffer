@@ -47,7 +47,7 @@ const STEP_MS = 1400;
  * to the feed and Telegram, the rest dim with the reason they are hidden. The b watches over it. Still and complete
  * for reduced motion.
  */
-export function Radar({ jobs, labels }: { jobs: RadarJob[]; labels: RadarLabels }) {
+export function Radar({ jobs, labels, watcher = true }: { jobs: RadarJob[]; labels: RadarLabels; watcher?: boolean }) {
   const list = jobs.length > 0 ? jobs : SAMPLE;
   const [tick, setTick] = useState(SHOWN);
   useEffect(() => {
@@ -61,7 +61,7 @@ export function Radar({ jobs, labels }: { jobs: RadarJob[]; labels: RadarLabels 
   });
   return (
     <div className="relative">
-      <WatchingB className="absolute -top-[5.25rem] left-4 z-10 h-24 w-auto md:-top-[6.25rem] md:h-28" />
+      {watcher && <WatchingB className="absolute -top-[5.25rem] left-4 z-10 h-24 w-auto md:-top-[6.25rem] md:h-28" />}
       <div className="brutal relative overflow-hidden p-0">
         <div className="flex items-center justify-between border-b border-border px-4 py-3">
           <span className="text-sm font-semibold">{labels.title}</span>
