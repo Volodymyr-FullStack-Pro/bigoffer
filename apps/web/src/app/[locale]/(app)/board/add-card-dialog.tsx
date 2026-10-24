@@ -24,6 +24,7 @@ export function AddCardDialog({ columns, onCreated, onClose, initialUrl = '', in
   const [columnId, setColumnId] = useState((columns.find((c) => c.key === 'saved') ?? columns.find((c) => c.kind === 'active'))?.id ?? '');
   const [loading, setLoading] = useState(false);
   const [failed, setFailed] = useState(false);
+  const [notJob, setNotJob] = useState(false);
   const [error, setError] = useState(false);
   // Set when the link was read by a board parser: the card links the stored job (apply kit, source badge).
   const [imported, setImported] = useState<{ jobId?: string; sourceId?: string; recruiter?: string | null } | null>(null);
@@ -33,6 +34,7 @@ export function AddCardDialog({ columns, onCreated, onClose, initialUrl = '', in
     setLoading(true);
     setFailed(false);
     setImported(null);
+    setNotJob(false);
     let p: Awaited<ReturnType<typeof previewJob>> = null;
     try {
       p = await previewJob(link.trim());
@@ -41,6 +43,12 @@ export function AddCardDialog({ columns, onCreated, onClose, initialUrl = '', in
     }
     setLoading(false);
     if (!p || !p.title) return setFailed(true);
+    // Nothing on the page reads like a job: say so, and leave the title for the user rather than save a random page.
+    if (p.looksLikeJob === false) {
+      setNotJob(true);
+      setTitle('');
+      return;
+    }
     setTitle(p.title);
     if (p.company) setCompany(p.company);
     if (p.location) setLocation(p.location);
@@ -113,6 +121,7 @@ export function AddCardDialog({ columns, onCreated, onClose, initialUrl = '', in
         {loading && <p data-testid="add-loading" className="text-sm text-muted-foreground">{t('addLoading')}</p>}
         {imported && <p data-testid="add-imported" className="text-sm text-success">✓ {t('addImported')}</p>}
         {failed && <p data-testid="add-preview-failed" className="text-sm text-warning">{t('addPreviewFailed')}</p>}
+        {notJob && <p data-testid="add-not-job" role="status" className="rounded-lg bg-warning/15 px-3 py-2 text-sm text-warning">{t('addNotJob')}</p>}
         <label className="flex flex-col gap-1 tabular-nums text-xs">{t('addJobTitle')}<input data-testid="add-title" required maxLength={300} value={title} onChange={(e) => setTitle(e.target.value)} className={field} /></label>
         <label className="flex flex-col gap-1 tabular-nums text-xs">{t('addCompany')}<input data-testid="add-company" maxLength={200} value={company} onChange={(e) => setCompany(e.target.value)} className={field} /></label>
         <label className="flex flex-col gap-1 tabular-nums text-xs">{t('addLocation')}<input maxLength={200} value={location} onChange={(e) => setLocation(e.target.value)} className={field} /></label>

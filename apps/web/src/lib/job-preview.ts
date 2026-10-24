@@ -4,7 +4,7 @@ import http from 'node:http';
 import https from 'node:https';
 import { isIP, type LookupFunction } from 'node:net';
 
-export type JobPreview = { title: string | null; company: string | null; location: string | null; salary: string | null; recruiter?: string | null };
+export type JobPreview = { title: string | null; company: string | null; location: string | null; salary: string | null; recruiter?: string | null; /** false when nothing on the page reads like a job (a random page saved by the bookmark). */ looksLikeJob?: boolean };
 
 const MAX_BYTES = 1_500_000;
 const TIMEOUT_MS = 8000;
@@ -242,6 +242,9 @@ function ldSalary(base: unknown): string | null {
 // A role named in a post: "Jun+/Middle Full-Stack Developer", "Senior React Engineer", "QA розробник"…
 const ROLE = /((?:(?:jun(?:ior)?\+?|middle\+?|mid|senior|strong|lead|trainee)[\s/+-]*){0,3}(?:full[\s-]?stack|front[\s-]?end|back[\s-]?end|react(?: native)?|node(?:\.js)?|typescript|javascript|python|java|php|\.net|golang|go|qa|aqa|devops|mobile|ios|android|data|ml|ai|web|software)?[\s/-]*(?:developer|engineer|розробник|разработчик|інженер|инженер))/i;
 
+/** Words a job page uses: hiring, vacancy, apply, requirements, salary… (EN / UK / RU). */
+const JOB_WORDS = /\b(?:hiring|vacanc|job opening|apply now|join our team|we are looking for|requirements|responsibilities|salary)|ваканс|шукаємо|шукаю|ищем|ищу|наймаємо|вимоги|требования|обов.язки|обязанности|зарплат|відгукнутися|откликнуться/i;
+
 /**
  * A recruiter's LinkedIn (or similar) post shared as a job: the page title is the post text, then the author, then a
  * comment count. Turn it into a card: the role it names as the title, the author as the recruiter.
@@ -262,7 +265,7 @@ function socialPost(found: Scan): JobPreview | null {
 
 export function parseJobPreview(html: string): JobPreview {
   const found = scan(html);
-  const done = (p: JobPreview): JobPreview => ({ title: cap(p.title, 300), company: cap(p.company, 200), location: cap(p.location, 200), salary: cap(p.salary, 120), ...(p.recruiter ? { recruiter: cap(p.recruiter, 120) } : {}) });
+  const done = (p: JobPreview): JobPreview => ({ title: cap(p.title, 300), company: cap(p.company, 200), location: cap(p.location, 200), salary: cap(p.salary, 120), ...(p.recruiter ? { recruiter: cap(p.recruiter, 120) } : {}), ...(p.looksLikeJob === false ? { looksLikeJob: false } : {}) });
   for (const body of found.ld) {
     let data: unknown;
     try {
@@ -282,8 +285,10 @@ export function parseJobPreview(html: string): JobPreview {
     });
   }
   const social = socialPost(found);
-  if (social) return done(social);
-  return done({ title: found.ogTitle ?? found.title, company: found.ogSite, location: null, salary: null });
+  const text = [found.ogTitle, found.title, found.ogDescription].filter(Boolean).join(' ');
+  const looksLikeJob = ROLE.test(text) || JOB_WORDS.test(text);
+  if (social) return done({ ...social, looksLikeJob });
+  return done({ title: found.ogTitle ?? found.title, company: found.ogSite, location: null, salary: null, looksLikeJob });
 }
 
 export async function fetchJobPreview(raw: string): Promise<JobPreview | null> {
