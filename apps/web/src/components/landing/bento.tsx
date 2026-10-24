@@ -29,9 +29,7 @@ export function Bento({ t, jobs, radar }: { t: BentoText; jobs: RadarJob[]; rada
   return (
     <div className="grid gap-4 md:grid-cols-6">
       <Tile title={t.radarTitle} text={t.radarText} className="md:col-span-4 md:row-span-2">
-        <div className="pt-16">
-          <Radar jobs={jobs} labels={radar} />
-        </div>
+        <Radar jobs={jobs} labels={radar} watcher={false} />
       </Tile>
       <Tile title={t.extTitle} text={t.extText} icon={<Puzzle aria-hidden className="size-5 text-brand" />} className="md:col-span-2" delay={80}>
         <div className="flex flex-col gap-2 rounded-xl bg-muted p-3 text-sm">
