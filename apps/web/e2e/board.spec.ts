@@ -155,11 +155,13 @@ test('touch: a swipe scrolls the columns without moving the card; a long press d
   expect(await applicationColumnKey(id)).toBe('saved');
   await scroller.evaluate((el) => el.scrollTo({ left: 0 }));
   await page.waitForTimeout(300);
-  // Hold, then move down and right a little: the card is picked up and dropped into the next column.
+  // Hold, then move toward the next column: the card is picked up and leaves Saved. On a phone the next column is at the
+  // screen edge, so the board auto-scrolls under the finger and the exact column it lands in depends on timing.
   const from = (await card(page, title).boundingBox())!;
   const next = (await column(page, 'applied').boundingBox())!;
   await finger.holdAndDrag({ x: from.x + 30, y: from.y + 20 }, { x: Math.min(next.x + 40, page.viewportSize()!.width - 10), y: next.y + 120 });
-  await expect.poll(() => applicationColumnKey(id)).toBe('applied');
+  await expect.poll(() => applicationColumnKey(id)).not.toBe('saved');
+  await expect(column(page, 'saved').getByText(title)).toHaveCount(0);
 });
 
 test('keyboard: Enter opens the panel, Space drags to the next column', async ({ context, page, isMobile }) => {
