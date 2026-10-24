@@ -27,7 +27,7 @@ export function AddCardDialog({ columns, onCreated, onClose, initialUrl = '', in
   const [notJob, setNotJob] = useState(false);
   const [error, setError] = useState(false);
   // Set when the link was read by a board parser: the card links the stored job (apply kit, source badge).
-  const [imported, setImported] = useState<{ jobId?: string; sourceId?: string; recruiter?: string | null } | null>(null);
+  const [imported, setImported] = useState<{ jobId?: string; sourceId?: string; recruiter?: string | null; score?: number | null } | null>(null);
   const field = 'brutal bg-card px-2 py-1 font-sans text-sm';
 
   const fetchPreview = async (link = url) => {
@@ -54,7 +54,7 @@ export function AddCardDialog({ columns, onCreated, onClose, initialUrl = '', in
     if (p.location) setLocation(p.location);
     if (p.salary) setSalary(p.salary);
     if (p.url) setUrl(p.url);
-    if (p.jobId || p.recruiter) setImported({ jobId: p.jobId, sourceId: p.sourceId, recruiter: p.recruiter });
+    if (p.jobId || p.recruiter || p.score != null) setImported({ jobId: p.jobId, sourceId: p.sourceId, recruiter: p.recruiter, score: p.score });
   };
 
   // Opened from the browser button: read the page right away, once.
@@ -85,6 +85,7 @@ export function AddCardDialog({ columns, onCreated, onClose, initialUrl = '', in
               jobId: imported?.jobId ?? null,
               sourceId: imported?.sourceId ?? null,
               contactName: imported?.recruiter ?? null,
+              score: imported?.score ?? null,
             });
           } catch {
             card = null;
@@ -119,7 +120,9 @@ export function AddCardDialog({ columns, onCreated, onClose, initialUrl = '', in
           </button>
         </div>
         {loading && <p data-testid="add-loading" className="text-sm text-muted-foreground">{t('addLoading')}</p>}
-        {imported && <p data-testid="add-imported" className="text-sm text-success">✓ {t('addImported')}</p>}
+        {imported?.jobId && <p data-testid="add-imported" className="text-sm text-success">✓ {t('addImported')}</p>}
+        {/* Another site: no apply kit, but the card keeps the match score and the recruiter from the post. */}
+        {imported && !imported.jobId && imported.score != null && <p data-testid="add-score" className="text-sm text-success">✓ {t('addScore', { score: imported.score })}</p>}
         {failed && <p data-testid="add-preview-failed" className="text-sm text-warning">{t('addPreviewFailed')}</p>}
         {notJob && <p data-testid="add-not-job" role="status" className="rounded-lg bg-warning/15 px-3 py-2 text-sm text-warning">{t('addNotJob')}</p>}
         <label className="flex flex-col gap-1 tabular-nums text-xs">{t('addJobTitle')}<input data-testid="add-title" required maxLength={300} value={title} onChange={(e) => setTitle(e.target.value)} className={field} /></label>

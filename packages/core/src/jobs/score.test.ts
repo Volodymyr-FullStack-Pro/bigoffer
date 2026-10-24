@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { SearchProfile } from './search';
-import { isTechTitle, missingCoreStacks, namedPlatforms, scoreJob, type ScorableJob, wantedByAnyProfile } from './score';
+import { isTechTitle, missingCoreStacks, namedPlatforms, scoreJob, scorePastedJob, type ScorableJob, wantedByAnyProfile } from './score';
 
 describe('isTechTitle', () => {
   it('keeps engineering roles and drops the rest', () => {
@@ -331,5 +331,16 @@ describe('generic skills', () => {
     const r = scoreJob(dev, { ...job, title: 'Senior Software Engineer', descriptionText: 'Node.js and TypeScript services, Git, CI/CD.' });
     expect(r).not.toBeNull();
     expect(r!.breakdown.matchedSkills).toEqual(expect.arrayContaining(['Node.js', 'TypeScript', 'Git']));
+  });
+});
+
+describe('scorePastedJob', () => {
+  it('scores a recruiter post by its role and text', () => {
+    const score = scorePastedJob(profile, 'Jun+/Middle Full-Stack Developer', 'We are hiring! Remote. Stack: React, Node.js, PostgreSQL.');
+    expect(score).toBeGreaterThan(50);
+  });
+
+  it('gives nothing for a post outside the profile', () => {
+    expect(scorePastedJob(profile, 'Senior 1C Developer', '1C, gambling project')).toBeNull();
   });
 });

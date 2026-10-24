@@ -5,7 +5,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useFormatter, useTranslations } from 'next-intl';
 import { ScoreMeter } from '@/components/ui/score-meter';
-import { SourceBadge } from '@/components/ui/source-badge';
+import { SiteBadge, SourceBadge } from '@/components/ui/source-badge';
 import { StatusBadge, type StatusTone, toneColor } from '@/components/ui/status-badge';
 import type { BoardCardView, BoardLabel } from './board-types';
 import { JoinMeeting } from './join-meeting';
@@ -115,7 +115,7 @@ export function BoardCardItem({ card, stripe, labels, labelName, now, timeZone, 
         </span>
       )}
       <span className="flex flex-wrap items-center gap-2 tabular-nums text-xs text-muted-foreground">
-        {card.sourceId && <SourceBadge sourceId={card.sourceId} />}
+        {card.sourceId ? <SourceBadge sourceId={card.sourceId} /> : <SiteBadge url={card.url} />}
         {card.messageCount > 0 && (
           <span data-testid="card-messages" title={t('conversationTitle', { count: card.messageCount })} className="rounded-full bg-muted px-1.5">
             <MessageSquare aria-hidden className="mr-1 inline size-3.5 -translate-y-px" />

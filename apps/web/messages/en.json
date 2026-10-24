@@ -633,7 +633,8 @@
     "sortTipManualTitle": "Manual order",
     "sortTipManual": "Cards stay where you dragged them. Click to keep the ones that need you on top.",
     "match": "match",
-    "addNotJob": "This page doesn’t look like a job posting. Check the link or type the title yourself."
+    "addNotJob": "This page doesn’t look like a job posting. Check the link or type the title yourself.",
+    "addScore": "Matches your search by {score}%. The card will show it when it is time to follow up."
   },
   "cv": {
     "title": "Your CV",

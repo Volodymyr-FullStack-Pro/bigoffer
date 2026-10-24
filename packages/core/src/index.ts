@@ -11,6 +11,7 @@ export * from './jobs/normalize';
 export * from './jobs/detect';
 export * from './jobs/job';
 export * from './jobs/search';
+export * from './jobs/profile-row';
 export * from './jobs/score';
 export * from './jobs/roles';
 export * from './jobs/experience';

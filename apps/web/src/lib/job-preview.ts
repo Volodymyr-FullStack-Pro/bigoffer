@@ -4,7 +4,7 @@ import http from 'node:http';
 import https from 'node:https';
 import { isIP, type LookupFunction } from 'node:net';
 
-export type JobPreview = { title: string | null; company: string | null; location: string | null; salary: string | null; recruiter?: string | null; /** false when nothing on the page reads like a job (a random page saved by the bookmark). */ looksLikeJob?: boolean };
+export type JobPreview = { title: string | null; company: string | null; location: string | null; salary: string | null; recruiter?: string | null; /** false when nothing on the page reads like a job (a random page saved by the bookmark). */ looksLikeJob?: boolean; /** The posting's text, for the match score (not shown). */ text?: string | null };
 
 const MAX_BYTES = 1_500_000;
 const TIMEOUT_MS = 8000;
@@ -265,7 +265,7 @@ function socialPost(found: Scan): JobPreview | null {
 
 export function parseJobPreview(html: string): JobPreview {
   const found = scan(html);
-  const done = (p: JobPreview): JobPreview => ({ title: cap(p.title, 300), company: cap(p.company, 200), location: cap(p.location, 200), salary: cap(p.salary, 120), ...(p.recruiter ? { recruiter: cap(p.recruiter, 120) } : {}), ...(p.looksLikeJob === false ? { looksLikeJob: false } : {}) });
+  const done = (p: JobPreview): JobPreview => ({ title: cap(p.title, 300), company: cap(p.company, 200), location: cap(p.location, 200), salary: cap(p.salary, 120), ...(p.recruiter ? { recruiter: cap(p.recruiter, 120) } : {}), ...(p.looksLikeJob === false ? { looksLikeJob: false } : {}), ...(p.text ? { text: cap(p.text, 6000) } : {}) });
   for (const body of found.ld) {
     let data: unknown;
     try {
@@ -282,13 +282,14 @@ export function parseJobPreview(html: string): JobPreview {
       company: str((job.hiringOrganization as Ld | undefined)?.name),
       location: str(loc?.address?.addressLocality) ?? str(loc?.address?.addressCountry),
       salary: ldSalary(job.baseSalary),
+      text: str(job.description)?.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ') ?? null,
     });
   }
   const social = socialPost(found);
   const text = [found.ogTitle, found.title, found.ogDescription].filter(Boolean).join(' ');
   const looksLikeJob = ROLE.test(text) || JOB_WORDS.test(text);
-  if (social) return done({ ...social, looksLikeJob });
-  return done({ title: found.ogTitle ?? found.title, company: found.ogSite, location: null, salary: null, looksLikeJob });
+  if (social) return done({ ...social, looksLikeJob, text });
+  return done({ title: found.ogTitle ?? found.title, company: found.ogSite, location: null, salary: null, looksLikeJob, text: found.ogDescription });
 }
 
 export async function fetchJobPreview(raw: string): Promise<JobPreview | null> {
