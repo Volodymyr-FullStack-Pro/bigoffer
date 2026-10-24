@@ -1259,7 +1259,9 @@
       "tgMsg": "New job · 96% · Middle Full-Stack",
       "peopleTitle": "Contacts",
       "peopleText": "Every recruiter from your applications and who wrote when."
-    }
+    },
+    "statDayLong": "new jobs in 24 hours. We read every one while you slept.",
+    "faqText": "The rest takes a few minutes after you sign in — and it’s free."
   },
   "feedStats": {
     "label": "Summary",

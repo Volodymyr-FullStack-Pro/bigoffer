@@ -1,3 +1,4 @@
+import { Ban } from 'lucide-react';
 import { getTranslations } from 'next-intl/server';
 import { Coin, Logo } from '@/components/brand/logo';
 import { LegalLinks } from '@/components/legal-links';
@@ -94,27 +95,34 @@ export async function Landing({ stats }: { stats: LandingStats | null }) {
           </div>
         </section>
 
-        {/* Numbers from the boards, counting up. */}
-        <section className="mt-20 border-y border-border bg-card/40 md:mt-28">
-          <dl className="mx-auto grid max-w-6xl grid-cols-2 md:grid-cols-4">
-            {[
-              [stats?.day ?? null, t('statDay')],
-              [stats?.week ?? null, t('statWeek')],
-              [3, t('statBoards')],
-              [10, t('statRadar')],
-            ].map(([value, label], i) => (
-              <div key={label as string} className={`px-4 py-9 ${i % 2 ? 'border-l' : ''} ${i >= 2 ? 'border-t md:border-t-0' : ''} ${i === 2 ? 'md:border-l' : ''} border-border`}>
-                <dt className="sr-only">{label as string}</dt>
-                <dd>
-                  <span className="block font-display text-5xl font-extrabold tracking-[-0.04em] tabular-nums md:text-6xl">
-                    {i === 3 && <span className="text-muted-foreground">≤</span>}
-                    {typeof value === 'number' ? <CountUp value={value} /> : '—'}
-                  </span>
-                  <span className="mt-1 block text-sm text-muted-foreground">{label as string}</span>
-                </dd>
-              </div>
-            ))}
-          </dl>
+        {/* Numbers from the boards: one huge figure on the left, the rest stepping down on the right. */}
+        <section className="mt-24 border-y border-border bg-card/40 md:mt-32">
+          <div className="mx-auto grid max-w-6xl gap-10 px-4 py-14 md:grid-cols-12 md:py-20">
+            <Reveal className="md:col-span-7">
+              <span className="block font-display text-[6.5rem] leading-[0.85] font-extrabold tracking-[-0.06em] text-brand tabular-nums md:text-[11rem]">
+                {stats?.day ? <CountUp value={stats.day} /> : '—'}
+              </span>
+              <span className="mt-4 block max-w-[30ch] text-xl md:text-2xl">{t('statDayLong')}</span>
+            </Reveal>
+            <dl className="flex flex-col md:col-span-5">
+              {[
+                [stats?.week ?? null, t('statWeek'), ''],
+                [3, t('statBoards'), 'md:ml-10'],
+                [10, t('statRadar'), 'md:ml-20'],
+              ].map(([value, label, indent], i) => (
+                <Reveal key={label as string} delay={120 * (i + 1)} className={`border-b border-border py-5 last:border-b-0 ${indent as string}`}>
+                  <dt className="sr-only">{label as string}</dt>
+                  <dd className="flex items-baseline gap-4">
+                    <span className="w-28 shrink-0 font-display text-5xl font-extrabold tracking-[-0.04em] tabular-nums">
+                      {i === 2 && <span className="text-muted-foreground">≤</span>}
+                      {typeof value === 'number' ? <CountUp value={value} /> : '—'}
+                    </span>
+                    <span className="text-muted-foreground">{label as string}</span>
+                  </dd>
+                </Reveal>
+              ))}
+            </dl>
+          </div>
         </section>
 
         {/* The story of one application, told as you scroll: the screen beside it changes with each step. */}
@@ -140,47 +148,66 @@ export async function Landing({ stats }: { stats: LandingStats | null }) {
           />
         </section>
 
-        {/* What we refuse to do, set as a crossed-out list: the promise reads at a glance. */}
-        <section className="border-t border-border">
-          <div className="mx-auto max-w-6xl px-4 py-16 md:py-24">
-            <h2 className="text-3xl md:text-4xl">{t('notTitle')}</h2>
-            <ul className="mt-8 flex flex-col divide-y divide-border">
-              {([1, 2, 3] as const).map((i) => (
-                <li key={i} className="grid gap-1 py-5 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] md:items-baseline md:gap-8">
-                  <span className="text-2xl font-semibold tracking-[-0.02em] text-muted-foreground line-through decoration-danger decoration-2 md:text-3xl">{t(`not${i}`)}</span>
-                  <span className="text-muted-foreground">{t(`not${i}Text`)}</span>
-                </li>
-              ))}
-            </ul>
+        {/* What we refuse to do: three cards, each crossed out. */}
+        <section className="mx-auto max-w-6xl px-4 pb-20 md:pb-28">
+          <Reveal className="mb-10 max-w-2xl">
+            <h2 className="text-4xl tracking-[-0.035em] md:text-6xl">{t('notTitle')}</h2>
+          </Reveal>
+          <div className="grid gap-4 md:grid-cols-3">
+            {([1, 2, 3] as const).map((i) => (
+              <Reveal key={i} delay={i * 100} className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-6">
+                <span aria-hidden className="grid size-11 place-items-center rounded-full bg-danger/15 text-danger">
+                  <Ban className="size-5" />
+                </span>
+                <span className="text-2xl font-bold tracking-[-0.02em] line-through decoration-danger decoration-2">{t(`not${i}`)}</span>
+                <span className="text-muted-foreground">{t(`not${i}Text`)}</span>
+              </Reveal>
+            ))}
           </div>
         </section>
 
-        <section className="border-t border-border">
-          <div className="mx-auto max-w-6xl px-4 py-16 md:py-20">
-            <h2 className="text-3xl md:text-4xl">{t('faqTitle')}</h2>
-            <dl className="mt-8 grid gap-x-10 gap-y-6 md:grid-cols-2">
-              {([1, 2, 3, 4] as const).map((i) => (
-                <div key={i}>
-                  <dt className="font-semibold">{t(`q${i}`)}</dt>
-                  <dd className="mt-1 text-muted-foreground">{t(`a${i}`)}</dd>
-                </div>
-              ))}
-            </dl>
-          </div>
-        </section>
-
+        {/* Short answers, as cards that open. */}
         <section className="border-t border-border bg-card/40">
-          <div className="mx-auto flex max-w-6xl flex-col items-start gap-6 px-4 py-16 sm:flex-row sm:items-center md:py-20">
-            <span className="flex shrink-0 items-end gap-1">
-              <WatchingB className="h-24 w-auto" />
-              <Coin className="mb-0.5 size-11" />
-            </span>
-            <div className="flex-1">
-              <h2 className="text-3xl md:text-4xl">{t('finalTitle')}</h2>
-              <p className="mt-2 text-muted-foreground">{t('finalText')}</p>
+          <div className="mx-auto grid max-w-6xl gap-10 px-4 py-20 md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] md:py-28">
+            <Reveal>
+              <h2 className="text-4xl tracking-[-0.035em] md:text-6xl">{t('faqTitle')}</h2>
+              <p className="mt-4 text-muted-foreground">{t('faqText')}</p>
+            </Reveal>
+            <div className="flex flex-col gap-3">
+              {([1, 2, 3, 4] as const).map((i) => (
+                <details key={i} className="group rounded-2xl border border-border bg-background px-5 py-4 open:border-brand/40">
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-lg font-semibold">
+                    {t(`q${i}`)}
+                    <span aria-hidden className="grid size-8 shrink-0 place-items-center rounded-full bg-muted text-xl leading-none transition-transform group-open:rotate-45 group-open:bg-brand group-open:text-brand-foreground">+</span>
+                  </summary>
+                  <p className="mt-3 text-muted-foreground">{t(`a${i}`)}</p>
+                </details>
+              ))}
             </div>
-            <Link href="/login" className={`${cta} bg-brand text-brand-foreground`}>{t('start')}</Link>
           </div>
+        </section>
+
+        {/* The closing banner: solid mint, the two characters large, one button. */}
+        <section className="mx-auto max-w-6xl px-4 py-20 md:py-28">
+          <Reveal>
+            <div className="relative overflow-hidden rounded-[2rem] bg-brand px-6 py-12 text-brand-foreground md:px-14 md:py-16">
+              <div className="relative z-10 max-w-xl">
+                <h2 className="text-5xl leading-[1] font-extrabold tracking-[-0.045em] md:text-7xl">{t('finalTitle')}</h2>
+                <p className="mt-5 text-lg text-brand-foreground/75 md:text-xl">{t('finalText')}</p>
+                <Link href="/login" data-testid="landing-final" className="btn brutal-press mt-8 inline-flex items-center rounded-xl bg-[#0f1116] px-6 py-3.5 font-semibold text-white">
+                  {t('start')}
+                </Link>
+              </div>
+              <div aria-hidden className="pointer-events-none absolute right-6 -bottom-6 hidden items-end gap-3 md:flex">
+                <span className="rounded-[2.5rem] bg-[#0f1116] p-5">
+                  <WatchingB className="h-44 w-auto" />
+                </span>
+                <span className="landing-coin mb-4 rounded-full bg-[#0f1116] p-3">
+                  <Coin className="size-24" />
+                </span>
+              </div>
+            </div>
+          </Reveal>
         </section>
       </main>
 

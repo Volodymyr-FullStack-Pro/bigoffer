@@ -34,10 +34,8 @@ export function TiltIn({ children }: { children: ReactNode }) {
     const on = () => {
       cancelAnimationFrame(frame);
       frame = requestAnimationFrame(() => {
-        const box = ref.current?.getBoundingClientRect();
-        if (!box) return;
-        // 0 while the window's top sits low in the viewport, 1 once it reaches the upper third.
-        setP(Math.min(1, Math.max(0, (window.innerHeight - box.top) / (window.innerHeight * 0.75))));
+        // Fully leaning back at the top of the page, flat after about two thirds of a screen of scrolling.
+        setP(Math.min(1, window.scrollY / (window.innerHeight * 0.65)));
       });
     };
     on();
@@ -52,7 +50,7 @@ export function TiltIn({ children }: { children: ReactNode }) {
   const e = 1 - (1 - p) ** 3;
   return (
     <div ref={ref} style={{ perspective: '1600px' }}>
-      <div style={{ transform: `rotateX(${(1 - e) * 22}deg) scale(${0.9 + e * 0.1})`, transformOrigin: '50% 0%', transition: 'transform 80ms linear' }}>{children}</div>
+      <div style={{ transform: `translateY(${(1 - e) * 70}px) rotateX(${(1 - e) * 38}deg) scale(${0.78 + e * 0.22})`, transformOrigin: '50% 0%', opacity: 0.55 + e * 0.45, transition: 'transform 60ms linear, opacity 60ms linear' }}>{children}</div>
     </div>
   );
 }
@@ -116,11 +114,14 @@ export function CountUp({ value, className = '' }: { value: number; className?: 
 }
 
 /**
- * Scroll story: steps on the left, one sticky app window on the right whose screen changes as each step reaches the
- * middle of the viewport. On a phone each step shows its own screen under it.
+ * Scroll story: steps on the left along a line that fills with mint as you scroll, each number lighting up when the
+ * line reaches it; one sticky app window on the right whose screen changes with the step in the middle of the screen.
+ * On a phone each step shows its own screen under it.
  */
 export function StickyStory({ steps }: { steps: { title: string; text: string; url: string; screen: ReactNode }[] }) {
   const [active, setActive] = useState(0);
+  const [fill, setFill] = useState(0);
+  const list = useRef<HTMLOListElement>(null);
   const refs = useRef<(HTMLLIElement | null)[]>([]);
   useEffect(() => {
     const io = new IntersectionObserver(
@@ -130,29 +131,55 @@ export function StickyStory({ steps }: { steps: { title: string; text: string; u
       { rootMargin: '-45% 0px -45% 0px' },
     );
     for (const el of refs.current) if (el) io.observe(el);
-    return () => io.disconnect();
+    let frame = 0;
+    const on = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        const box = list.current?.getBoundingClientRect();
+        if (!box) return;
+        // How far the middle of the screen has travelled down the list.
+        setFill(Math.min(1, Math.max(0, (window.innerHeight / 2 - box.top) / box.height)));
+      });
+    };
+    on();
+    window.addEventListener('scroll', on, { passive: true });
+    return () => {
+      io.disconnect();
+      cancelAnimationFrame(frame);
+      window.removeEventListener('scroll', on);
+    };
   }, []);
   return (
     <div className="grid gap-10 md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] md:gap-14">
-      <ol className="flex flex-col">
-        {steps.map((s, i) => (
-          <li
-            key={s.title}
-            ref={(el) => {
-              refs.current[i] = el;
-            }}
-            data-step={i}
-            data-testid="story-step"
-            className="flex min-h-[60vh] flex-col justify-center gap-3 py-8 md:min-h-[75vh]"
-          >
-            <span className={`font-mono text-sm transition-colors ${active === i ? 'text-brand' : 'text-muted-foreground'}`}>{String(i + 1).padStart(2, '0')}</span>
-            <h3 className={`text-3xl leading-tight tracking-[-0.03em] transition-opacity md:text-4xl ${active === i ? 'opacity-100' : 'opacity-40'}`}>{s.title}</h3>
-            <p className={`max-w-[46ch] text-lg text-muted-foreground transition-opacity ${active === i ? 'opacity-100' : 'opacity-50'}`}>{s.text}</p>
-            <div className="mt-4 md:hidden">
-              <AppFrame url={s.url}>{s.screen}</AppFrame>
-            </div>
-          </li>
-        ))}
+      <ol ref={list} className="relative flex flex-col pl-14">
+        <span aria-hidden className="absolute top-0 bottom-0 left-[1.1rem] w-0.5 rounded-full bg-border" />
+        <span aria-hidden className="absolute top-0 left-[1.1rem] w-0.5 rounded-full bg-brand shadow-[0_0_12px_var(--brand)]" style={{ height: `${fill * 100}%` }} />
+        {steps.map((s, i) => {
+          const on = i <= active;
+          return (
+            <li
+              key={s.title}
+              ref={(el) => {
+                refs.current[i] = el;
+              }}
+              data-step={i}
+              data-testid="story-step"
+              className="relative flex min-h-[60vh] flex-col justify-center gap-3 py-8 md:min-h-[75vh]"
+            >
+              <span
+                aria-hidden
+                className={`absolute top-1/2 -left-14 grid size-9 -translate-y-1/2 place-items-center rounded-full border-2 font-mono text-sm font-bold transition-all duration-300 ${on ? 'scale-110 border-brand bg-brand text-brand-foreground' : 'border-border bg-background text-muted-foreground'}`}
+              >
+                {i + 1}
+              </span>
+              <h3 className={`text-3xl leading-tight tracking-[-0.03em] transition-opacity md:text-4xl ${active === i ? 'opacity-100' : 'opacity-40'}`}>{s.title}</h3>
+              <p className={`max-w-[46ch] text-lg text-muted-foreground transition-opacity ${active === i ? 'opacity-100' : 'opacity-50'}`}>{s.text}</p>
+              <div className="mt-4 md:hidden">
+                <AppFrame url={s.url}>{s.screen}</AppFrame>
+              </div>
+            </li>
+          );
+        })}
       </ol>
       <div className="hidden md:block">
         <div className="sticky top-[12vh]">
