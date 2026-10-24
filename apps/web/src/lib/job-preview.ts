@@ -4,7 +4,7 @@ import http from 'node:http';
 import https from 'node:https';
 import { isIP, type LookupFunction } from 'node:net';
 
-export type JobPreview = { title: string | null; company: string | null; location: string | null; salary: string | null };
+export type JobPreview = { title: string | null; company: string | null; location: string | null; salary: string | null; recruiter?: string | null };
 
 const MAX_BYTES = 1_500_000;
 const TIMEOUT_MS = 8000;
@@ -177,14 +177,14 @@ function attrs(tag: string): Record<string, string> {
   return out;
 }
 
-type Scan = { ld: string[]; ogTitle: string | null; ogSite: string | null; title: string | null };
+type Scan = { ld: string[]; ogTitle: string | null; ogSite: string | null; ogDescription: string | null; title: string | null };
 
 /** Linear single-pass scan: every regex is anchored (sticky) and bounded, bodies are found with indexOf. */
 function scan(html: string): Scan {
   const text = html.slice(0, MAX_PARSE_CHARS);
   const lower = text.toLowerCase();
   const headEnd = lower.indexOf('</head');
-  const out: Scan = { ld: [], ogTitle: null, ogSite: null, title: null };
+  const out: Scan = { ld: [], ogTitle: null, ogSite: null, ogDescription: null, title: null };
   // JSON-LD may sit in <body>, so only the meta/title search is limited to <head> when it exists.
   const metaLimit = headEnd === -1 ? text.length : headEnd;
   let titleDone = false;
@@ -203,6 +203,7 @@ function scan(html: string): Scan {
         const content = a.content ? decode(a.content) || null : null;
         if (key === 'og:title') out.ogTitle ??= content;
         else if (key === 'og:site_name') out.ogSite ??= content;
+        else if (key === 'og:description' || key === 'description') out.ogDescription ??= content;
       } else if (kind === 'title' && i < metaLimit && !titleDone) {
         // Search for the closing tag once: either it is found (and we skip past it) or no later <title> can close either.
         titleDone = true;
@@ -238,9 +239,30 @@ function ldSalary(base: unknown): string | null {
   return [range, str(b.currency), str(b.value.unitText) ? `/ ${str(b.value.unitText)}` : null].filter(Boolean).join(' ');
 }
 
+// A role named in a post: "Jun+/Middle Full-Stack Developer", "Senior React Engineer", "QA розробник"…
+const ROLE = /((?:(?:jun(?:ior)?\+?|middle\+?|mid|senior|strong|lead|trainee)[\s/+-]*){0,3}(?:full[\s-]?stack|front[\s-]?end|back[\s-]?end|react(?: native)?|node(?:\.js)?|typescript|javascript|python|java|php|\.net|golang|go|qa|aqa|devops|mobile|ios|android|data|ml|ai|web|software)?[\s/-]*(?:developer|engineer|розробник|разработчик|інженер|инженер))/i;
+
+/**
+ * A recruiter's LinkedIn (or similar) post shared as a job: the page title is the post text, then the author, then a
+ * comment count. Turn it into a card: the role it names as the title, the author as the recruiter.
+ */
+function socialPost(found: Scan): JobPreview | null {
+  const site = (found.ogSite ?? '').toLowerCase();
+  const raw = found.ogTitle ?? found.title ?? '';
+  if (!/linkedin|facebook|x\.com|twitter|telegram/.test(site) && !/\|\s*(?:коментарі|комментарии|comments)\s*\(\d+\)/i.test(raw)) return null;
+  const parts = raw.split(/\s+\|\s+/).map((x) => x.trim()).filter(Boolean);
+  const text = [parts[0] ?? '', found.ogDescription ?? ''].join(' ');
+  const author = parts.find((x, i) => i > 0 && !/linkedin|коментарі|комментарии|comments|\(\d+\)/i.test(x) && /^\p{Lu}[\p{L}'’-]+(?:\s+\p{Lu}[\p{L}'’-]+){1,2}$/u.test(x)) ?? null;
+  const m = ROLE.exec(text);
+  const role = m?.[1]?.replace(/\s+/g, ' ').trim();
+  // Only a role with something before "developer" ("Full-Stack Developer"), never the bare word.
+  const title = role && role.split(' ').length > 1 ? role.replace(/^./, (c) => c.toUpperCase()) : (parts[0] ?? raw).slice(0, 90).replace(/\s+\S*$/, '…');
+  return { title, company: null, location: null, salary: null, recruiter: author };
+}
+
 export function parseJobPreview(html: string): JobPreview {
   const found = scan(html);
-  const done = (p: JobPreview): JobPreview => ({ title: cap(p.title, 300), company: cap(p.company, 200), location: cap(p.location, 200), salary: cap(p.salary, 120) });
+  const done = (p: JobPreview): JobPreview => ({ title: cap(p.title, 300), company: cap(p.company, 200), location: cap(p.location, 200), salary: cap(p.salary, 120), ...(p.recruiter ? { recruiter: cap(p.recruiter, 120) } : {}) });
   for (const body of found.ld) {
     let data: unknown;
     try {
@@ -259,6 +281,8 @@ export function parseJobPreview(html: string): JobPreview {
       salary: ldSalary(job.baseSalary),
     });
   }
+  const social = socialPost(found);
+  if (social) return done(social);
   return done({ title: found.ogTitle ?? found.title, company: found.ogSite, location: null, salary: null });
 }
 

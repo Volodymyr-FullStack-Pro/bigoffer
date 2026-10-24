@@ -93,3 +93,14 @@ describe.skipIf(!process.env.PERF)('parseJobPreview is linear on adversarial inp
     expect(parseJobPreview('<head><meta content="Acme" name="og:site_name"></head>').company).toBe('Acme');
   });
 });
+
+describe('parseJobPreview, a recruiter post', () => {
+  it('takes the role the post names as the title and its author as the recruiter', () => {
+    const html = `<html><head>
+      <meta property="og:site_name" content="LinkedIn">
+      <title>Шукаю Jun+/Middle Full-Stack Developer і вирішила спробувати написати ще й тут - раптом комусь відгукнеться ця можливість :) Стек: React + TypeScript Node.js | Daryna Vasylieva | коментарі (22)</title>
+      <meta name="description" content="Стек: React + TypeScript, Node.js (NestJS або Express)">
+    </head></html>`;
+    expect(parseJobPreview(html)).toMatchObject({ title: 'Jun+/Middle Full-Stack Developer', company: null, recruiter: 'Daryna Vasylieva' });
+  });
+});

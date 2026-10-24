@@ -46,7 +46,7 @@ export function AddCardDialog({ columns, onCreated, onClose, initialUrl = '', in
     if (p.location) setLocation(p.location);
     if (p.salary) setSalary(p.salary);
     if (p.url) setUrl(p.url);
-    if (p.jobId) setImported({ jobId: p.jobId, sourceId: p.sourceId, recruiter: p.recruiter });
+    if (p.jobId || p.recruiter) setImported({ jobId: p.jobId, sourceId: p.sourceId, recruiter: p.recruiter });
   };
 
   // Opened from the browser button: read the page right away, once.
