@@ -1261,7 +1261,8 @@
       "peopleText": "Every recruiter from your applications and who wrote when."
     },
     "statDayLong": "new jobs in 24 hours. We read every one while you slept.",
-    "faqText": "The rest takes a few minutes after you sign in — and it’s free."
+    "faqText": "The rest takes a few minutes after you sign in — and it’s free.",
+    "statsFallback": "100+"
   },
   "feedStats": {
     "label": "Summary",

@@ -100,7 +100,7 @@ export async function Landing({ stats }: { stats: LandingStats | null }) {
           <div className="mx-auto grid max-w-6xl gap-10 px-4 py-14 md:grid-cols-12 md:py-20">
             <Reveal className="md:col-span-7">
               <span className="block font-display text-[6.5rem] leading-[0.85] font-extrabold tracking-[-0.06em] text-brand tabular-nums md:text-[11rem]">
-                {stats?.day ? <CountUp value={stats.day} /> : '—'}
+                {stats?.day ? <CountUp value={stats.day} /> : t('statsFallback')}
               </span>
               <span className="mt-4 block max-w-[30ch] text-xl md:text-2xl">{t('statDayLong')}</span>
             </Reveal>
