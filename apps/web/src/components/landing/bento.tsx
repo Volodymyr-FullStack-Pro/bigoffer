@@ -1,4 +1,4 @@
-import { Chrome, Coins, Send, Users } from 'lucide-react';
+import { Coins, Puzzle, Send, Users } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Coin } from '@/components/brand/logo';
 import { Reveal } from './motion';
@@ -33,7 +33,7 @@ export function Bento({ t, jobs, radar }: { t: BentoText; jobs: RadarJob[]; rada
           <Radar jobs={jobs} labels={radar} />
         </div>
       </Tile>
-      <Tile title={t.extTitle} text={t.extText} icon={<Chrome aria-hidden className="size-5 text-brand" />} className="md:col-span-2" delay={80}>
+      <Tile title={t.extTitle} text={t.extText} icon={<Puzzle aria-hidden className="size-5 text-brand" />} className="md:col-span-2" delay={80}>
         <div className="flex flex-col gap-2 rounded-xl bg-muted p-3 text-sm">
           {[t.extName, t.extEmail, t.extSalary].map((v, i) => (
             <span key={v} className="flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2">

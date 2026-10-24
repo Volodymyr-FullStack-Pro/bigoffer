@@ -26,7 +26,10 @@ export function TiltIn({ children }: { children: ReactNode }) {
   const ref = useRef<HTMLDivElement>(null);
   const [p, setP] = useState(0);
   useEffect(() => {
-    if (reduced()) return setP(1);
+    if (reduced()) {
+      const id = requestAnimationFrame(() => setP(1));
+      return () => cancelAnimationFrame(id);
+    }
     let frame = 0;
     const on = () => {
       cancelAnimationFrame(frame);
@@ -59,7 +62,10 @@ export function Reveal({ children, delay = 0, className = '' }: { children: Reac
   const ref = useRef<HTMLDivElement>(null);
   const [shown, setShown] = useState(false);
   useEffect(() => {
-    if (reduced()) return setShown(true);
+    if (reduced()) {
+      const id = requestAnimationFrame(() => setShown(true));
+      return () => cancelAnimationFrame(id);
+    }
     const io = new IntersectionObserver(([e]) => e?.isIntersecting && (setShown(true), io.disconnect()), { rootMargin: '0px 0px -12% 0px' });
     if (ref.current) io.observe(ref.current);
     return () => io.disconnect();
@@ -80,7 +86,10 @@ export function CountUp({ value, className = '' }: { value: number; className?: 
   const ref = useRef<HTMLSpanElement>(null);
   const [n, setN] = useState(0);
   useEffect(() => {
-    if (reduced()) return setN(value);
+    if (reduced()) {
+      const id = requestAnimationFrame(() => setN(value));
+      return () => cancelAnimationFrame(id);
+    }
     let raf = 0;
     const io = new IntersectionObserver(([e]) => {
       if (!e?.isIntersecting) return;
