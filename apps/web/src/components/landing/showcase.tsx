@@ -11,10 +11,10 @@ const TABS = ['feed', 'cv', 'board', 'telegram', 'chat'] as const;
 type Tab = (typeof TABS)[number];
 
 function Frame({ children }: { children: ReactNode }) {
-  return <div className="brutal flex min-h-[22rem] flex-col justify-center gap-3 p-5">{children}</div>;
+  return <div className="flex h-full flex-col justify-center gap-3 p-5">{children}</div>;
 }
 
-function Feed({ t }: { t: ShowcaseText }) {
+export function FeedScreen({ t }: { t: ShowcaseText }) {
   return (
     <Frame>
       <div className="flex items-start justify-between gap-4">
@@ -40,7 +40,7 @@ function Feed({ t }: { t: ShowcaseText }) {
   );
 }
 
-function Cv({ t }: { t: ShowcaseText }) {
+export function CvScreen({ t }: { t: ShowcaseText }) {
   return (
     <Frame>
       <div className="flex flex-col gap-2 rounded-lg bg-muted px-3 py-2.5 text-sm">
@@ -71,7 +71,7 @@ function Cv({ t }: { t: ShowcaseText }) {
   );
 }
 
-function Board({ t }: { t: ShowcaseText }) {
+export function BoardScreen({ t }: { t: ShowcaseText }) {
   const card = (title: string, sub: string, badge: ReactNode, tone: string, note?: string) => (
     <div className="flex flex-col gap-1">
       <div className="brutal flex flex-col gap-1.5 p-3" style={{ borderLeftColor: `var(--status-${tone})`, borderLeftWidth: 3 }}>
@@ -94,7 +94,7 @@ function Board({ t }: { t: ShowcaseText }) {
   );
 }
 
-function Telegram({ t }: { t: ShowcaseText }) {
+export function TelegramScreen({ t }: { t: ShowcaseText }) {
   return (
     <Frame>
       <div className="mx-auto flex w-full max-w-sm flex-col gap-2 rounded-2xl bg-[#17212b] p-3 text-[#f5f5f7]">
@@ -116,7 +116,7 @@ function Telegram({ t }: { t: ShowcaseText }) {
   );
 }
 
-function Chat({ t }: { t: ShowcaseText }) {
+export function ChatScreen({ t }: { t: ShowcaseText }) {
   return (
     <Frame>
       <span className="flex items-center gap-2 text-sm font-semibold"><MessageCircleQuestion aria-hidden className="size-4 text-brand" />{t.chatTitle}</span>
@@ -151,11 +151,11 @@ export function Showcase({ t }: { t: ShowcaseText }) {
         ))}
       </div>
       <div role="tabpanel">
-        {tab === 'feed' && <Feed t={t} />}
-        {tab === 'cv' && <Cv t={t} />}
-        {tab === 'board' && <Board t={t} />}
-        {tab === 'telegram' && <Telegram t={t} />}
-        {tab === 'chat' && <Chat t={t} />}
+        {tab === 'feed' && <FeedScreen t={t} />}
+        {tab === 'cv' && <CvScreen t={t} />}
+        {tab === 'board' && <BoardScreen t={t} />}
+        {tab === 'telegram' && <TelegramScreen t={t} />}
+        {tab === 'chat' && <ChatScreen t={t} />}
       </div>
     </div>
   );
